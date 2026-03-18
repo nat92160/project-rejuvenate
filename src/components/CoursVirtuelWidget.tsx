@@ -60,27 +60,39 @@ const CoursVirtuelWidget = () => {
     const text = selectedCours
       ? `📚 ${selectedCours.title}\n👨‍🏫 ${selectedCours.teacher}\n📅 ${selectedCours.day} à ${selectedCours.time}\n🔗 ${selectedCours.zoomLink}`
       : "";
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    const pendingWindow = window.open("about:blank", "_blank");
+
     if (!posterRef.current) {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+      if (pendingWindow) pendingWindow.location.href = whatsappUrl;
+      else window.open(whatsappUrl, "_blank");
       return;
     }
+
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(posterRef.current, { scale: 2, useCORS: true, backgroundColor: null });
+
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+          if (pendingWindow) pendingWindow.location.href = whatsappUrl;
+          else window.open(whatsappUrl, "_blank");
           return;
         }
+
         if (navigator.share && navigator.canShare?.({ files: [new File([blob], "a.png", { type: "image/png" })] })) {
+          if (pendingWindow) pendingWindow.close();
           const file = new File([blob], "cours.png", { type: "image/png" });
           await navigator.share({ files: [file], title: selectedCours?.title || "Cours", text });
+        } else if (pendingWindow) {
+          pendingWindow.location.href = whatsappUrl;
         } else {
-          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+          window.open(whatsappUrl, "_blank");
         }
       }, "image/png");
     } catch {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+      if (pendingWindow) pendingWindow.location.href = whatsappUrl;
+      else window.open(whatsappUrl, "_blank");
     }
   };
 
