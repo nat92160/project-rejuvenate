@@ -35,7 +35,14 @@ const CreateMinyanForm = ({ onBack }: { onBack: () => void }) => {
   const [success, setSuccess] = useState(false);
 
   const handleCreate = async () => {
-    if (!form.office_date || !form.office_time || !user) return;
+    if (!form.office_date || !form.office_time) {
+      toast.error("Veuillez remplir la date et l'heure");
+      return;
+    }
+    if (!user) {
+      toast.error("Vous devez être connecté");
+      return;
+    }
     setSubmitting(true);
     const { error } = await supabase.from("minyan_sessions").insert({
       creator_id: user.id,
@@ -44,7 +51,11 @@ const CreateMinyanForm = ({ onBack }: { onBack: () => void }) => {
       office_time: form.office_time,
       target_count: parseInt(form.target_count) || 10,
     });
-    if (!error) {
+    if (error) {
+      toast.error("Erreur: vérifiez que vous avez le rôle Président.");
+      console.error("Minyan session create error:", error);
+    } else {
+      toast.success("✅ Session de Minyan créée !");
       setSuccess(true);
       setTimeout(() => onBack(), 1500);
     }
