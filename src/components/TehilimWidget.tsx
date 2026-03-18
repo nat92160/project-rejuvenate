@@ -171,14 +171,23 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
   const [creating, setCreating] = useState(false);
 
   const handleCreate = async () => {
-    if (!user) return;
+    if (!user) {
+      toast.error("Vous devez être connecté pour créer une chaîne");
+      return;
+    }
     setCreating(true);
-    await supabase.from("tehilim_chains").insert({
+    const { error } = await supabase.from("tehilim_chains").insert({
       creator_id: user.id,
       title,
       dedication: dedication || null,
       dedication_type: dedicationType,
     });
+    if (error) {
+      toast.error("Erreur: vérifiez que vous avez le rôle Président pour créer une chaîne.");
+      console.error("Chain create error:", error);
+    } else {
+      toast.success("✅ Chaîne de Tehilim créée !");
+    }
     setCreating(false);
     onCreated();
   };
