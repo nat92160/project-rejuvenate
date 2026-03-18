@@ -128,7 +128,7 @@ const AfficheChabbatWidget = () => {
           const file = new File([blob], "affiche-chabbat.png", { type: "image/png" });
           await navigator.share({ files: [file], title: "Affiche de Chabbat", text });
         } else {
-          window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
         }
       }, "image/png");
     } catch {
