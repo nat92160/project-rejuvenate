@@ -120,41 +120,14 @@ const AfficheChabbatWidget = () => {
     const popup = window.open(url, "_blank", "noopener,noreferrer");
     if (popup) return;
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    window.location.href = url;
   };
 
-  const shareWhatsApp = async () => {
+  const shareWhatsApp = () => {
     const text = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
 
-    if (!canvasRef.current || !navigator.share || !navigator.canShare) {
-      openWhatsAppLink(whatsappUrl);
-      return;
-    }
-
-    try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: null });
-
-      canvas.toBlob(async (blob) => {
-        const file = blob ? new File([blob], "affiche-chabbat.png", { type: "image/png" }) : null;
-
-        if (file && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], title: "Affiche de Chabbat", text });
-          return;
-        }
-
-        openWhatsAppLink(whatsappUrl);
-      }, "image/png");
-    } catch {
-      openWhatsAppLink(whatsappUrl);
-    }
+    openWhatsAppLink(whatsappUrl);
   };
 
   const TimeLine = ({ label, value, note }: TimeRow) => (
