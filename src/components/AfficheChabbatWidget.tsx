@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
+import { supabase } from "@/integrations/supabase/client";
 
 type Theme = "tradition" | "moderne" | "chaud" | "prestige" | "blanc";
 type FontChoice = "greatvibes" | "playfairsc" | "playfair" | "lora";
@@ -143,21 +144,37 @@ const AfficheChabbatWidget = () => {
     window.location.href = url;
   };
 
+  const uploadPosterAndGetUrl = async (blob: Blob): Promise<string | null> => {
+    const filename = `affiche-${city.name}-${Date.now()}.png`;
+    const { error } = await supabase.storage.from("affiches").upload(filename, blob, {
+      contentType: "image/png",
+      upsert: true,
+    });
+    if (error) return null;
+    const { data: urlData } = supabase.storage.from("affiches").getPublicUrl(filename);
+    return urlData?.publicUrl || null;
+  };
+
   const shareWhatsApp = async () => {
-    const text = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     const blob = await generatePosterBlob();
     const file = blob ? new File([blob], `affiche-chabbat-${city.name}.png`, { type: "image/png" }) : null;
+    const baseText = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
 
+    // Mobile: native share with file
     if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title: "Affiche de Chabbat", text });
+      await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText });
       return;
     }
 
+    // Desktop: upload image, include URL in WhatsApp message
+    let imageUrl = "";
     if (blob) {
-      downloadPosterBlob(blob, `affiche-chabbat-${city.name}.png`);
+      const url = await uploadPosterAndGetUrl(blob);
+      if (url) imageUrl = url;
     }
 
+    const text = imageUrl ? `${baseText}\n\n🖼️ Voir l'affiche : ${imageUrl}` : baseText;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     openWhatsAppLink(whatsappUrl);
   };
 
