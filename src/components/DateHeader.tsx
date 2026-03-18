@@ -45,11 +45,13 @@ const DateHeader = () => {
         style={{ borderBottom: "1px solid hsl(var(--border))" }}
       >
         <span className="text-foreground font-medium">{formatted}</span>
-        <div className="w-px h-4 bg-border" />
-        {hebrewDate && (
-          <span className="font-hebrew font-semibold text-primary" style={{ direction: "rtl" }}>
-            {hebrewDate}
-          </span>
+        {hebrewDateFr && (
+          <>
+            <span className="text-muted-foreground">•</span>
+            <span className="font-semibold text-primary">
+              {hebrewDateFr}
+            </span>
+          </>
         )}
       </div>
 
