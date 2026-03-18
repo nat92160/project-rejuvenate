@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface MinyanSession {
   id: string;
@@ -32,21 +33,25 @@ const MinyanLiveWidget = () => {
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch today's sessions
   useEffect(() => {
     const fetchSessions = async () => {
       const today = new Date().toISOString().split("T")[0];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("minyan_sessions")
         .select("*")
         .gte("office_date", today)
         .order("office_date")
         .order("office_time");
 
+      if (error) {
+        toast.error("Erreur lors du chargement des sessions");
+        setLoading(false);
+        return;
+      }
+
       if (data && data.length > 0) {
         setSessions(data);
         setSelectedSession(data[0].id);
-        // Fetch registrations for all sessions
         const { data: regs } = await supabase
           .from("minyan_registrations")
           .select("*")
@@ -65,7 +70,7 @@ const MinyanLiveWidget = () => {
     fetchSessions();
   }, []);
 
-  // Realtime subscription for registrations
+  // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel("minyan-realtime")
@@ -102,36 +107,51 @@ const MinyanLiveWidget = () => {
   const isRegistered = user && currentRegs.some((r) => r.user_id === user.id);
 
   const handleRegister = async () => {
-    if (!user || !selectedSession) return;
+    if (!user || !selectedSession) {
+      toast.error("Connectez-vous pour vous inscrire");
+      return;
+    }
     const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Anonyme";
-    await supabase.from("minyan_registrations").insert({
+    const { error } = await supabase.from("minyan_registrations").insert({
       session_id: selectedSession,
       user_id: user.id,
       display_name: displayName,
     });
+    if (error) {
+      toast.error("Erreur lors de l'inscription. Vérifiez que vous êtes connecté.");
+      console.error("Minyan register error:", error);
+    } else {
+      toast.success("✅ Vous êtes inscrit au Minyan !");
+    }
   };
 
   const handleUnregister = async () => {
     if (!user || !selectedSession) return;
-    await supabase
+    const { error } = await supabase
       .from("minyan_registrations")
       .delete()
       .eq("session_id", selectedSession)
       .eq("user_id", user.id);
+    if (error) {
+      toast.error("Erreur lors de la désinscription");
+    } else {
+      toast.success("Vous avez quitté le Minyan");
+    }
   };
 
-  // Share via WhatsApp with text (image generation handled separately)
   const handleShareWhatsApp = () => {
     if (!currentSession) return;
     const label = OFFICE_LABELS[currentSession.office_type] || currentSession.office_type;
-    const text = `🕍 Minyan ${label}\n📅 ${currentSession.office_date}\n🕐 ${currentSession.office_time}\n👥 ${count}/${target} inscrits\n${isFull ? "✅ Minyan atteint !" : `Encore ${needed} personne(s) nécessaire(s)`}\n\nRejoignez-nous sur Chabbat Chalom !`;
+    const appUrl = "https://www.chabbat-chalom.com";
+    const text = `🕍 Minyan ${label}\n📅 ${currentSession.office_date}\n🕐 ${currentSession.office_time}\n👥 ${count}/${target} inscrits\n${isFull ? "✅ Minyan atteint !" : `⚠️ Encore ${needed} personne(s) nécessaire(s)`}\n\n📲 Rejoignez-nous et inscrivez-vous :\n${appUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   if (loading) {
     return (
       <div className="rounded-2xl bg-card p-8 text-center border border-border">
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+        <p className="text-sm text-muted-foreground mt-3">Chargement...</p>
       </div>
     );
   }
@@ -145,7 +165,7 @@ const MinyanLiveWidget = () => {
           </h3>
           <p className="text-sm text-muted-foreground mb-2">Aucune session de Minyan programmée.</p>
           <p className="text-xs text-muted-foreground/60 italic">
-            Le Président peut créer des sessions depuis l'espace Président.
+            Le Président peut créer des sessions depuis l'espace Président → Créer Minyan.
           </p>
         </div>
       </motion.div>
@@ -288,6 +308,16 @@ const MinyanLiveWidget = () => {
         <div className="text-center py-4">
           <p className="text-xs text-muted-foreground mb-2">Connectez-vous pour vous inscrire au Minyan</p>
         </div>
+      )}
+
+      {/* Always show WhatsApp share */}
+      {user && isRegistered && (
+        <button
+          onClick={handleShareWhatsApp}
+          className="w-full mt-3 py-3 rounded-xl font-bold text-sm bg-green-600 text-white border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+        >
+          📲 Partager via WhatsApp
+        </button>
       )}
     </motion.div>
   );

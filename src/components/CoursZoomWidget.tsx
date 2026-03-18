@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface CoursZoom {
   id: string;
@@ -42,7 +43,14 @@ const CoursZoomWidget = () => {
   }, []);
 
   const handleAdd = async () => {
-    if (!form.title.trim() || !form.zoom_link.trim() || !user) return;
+    if (!form.title.trim() || !form.zoom_link.trim()) {
+      toast.error("Veuillez remplir le titre et le lien Zoom");
+      return;
+    }
+    if (!user) {
+      toast.error("Vous devez être connecté");
+      return;
+    }
     setSubmitting(true);
     const { data, error } = await supabase.from("cours_zoom").insert({
       creator_id: user.id,
@@ -54,10 +62,14 @@ const CoursZoomWidget = () => {
       description: form.description.trim(),
     }).select().single();
 
-    if (data && !error) {
+    if (error) {
+      toast.error("Erreur: vérifiez que vous avez le rôle Président.");
+      console.error("Cours create error:", error);
+    } else if (data) {
       setCours((prev) => [...prev, data]);
       setShowForm(false);
       setForm({ title: "", rav: "", day_of_week: "Lundi", course_time: "", zoom_link: "", description: "" });
+      toast.success("✅ Cours publié !");
     }
     setSubmitting(false);
   };

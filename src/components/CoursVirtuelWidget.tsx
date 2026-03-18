@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface CoursVirtuel {
   id: string;
@@ -53,7 +54,14 @@ const CoursVirtuelWidget = () => {
   }, []);
 
   const handleAdd = async () => {
-    if (!newTitle.trim() || !newLink.trim() || !user) return;
+    if (!newTitle.trim() || !newLink.trim()) {
+      toast.error("Veuillez remplir le titre et le lien Zoom");
+      return;
+    }
+    if (!user) {
+      toast.error("Vous devez être connecté");
+      return;
+    }
     setSubmitting(true);
     const { data, error } = await supabase.from("cours_zoom").insert({
       creator_id: user.id,
@@ -65,7 +73,10 @@ const CoursVirtuelWidget = () => {
       description: newDesc.trim(),
     }).select().single();
 
-    if (data && !error) {
+    if (error) {
+      toast.error("Erreur: vérifiez que vous avez le rôle Président.");
+      console.error("Cours virtuel create error:", error);
+    } else if (data) {
       setCours((prev) => [...prev, data as CoursVirtuel]);
       setShowForm(false);
       setNewTitle("");
@@ -74,6 +85,7 @@ const CoursVirtuelWidget = () => {
       setNewTime("");
       setNewLink("");
       setNewDesc("");
+      toast.success("✅ Cours publié !");
     }
     setSubmitting(false);
   };

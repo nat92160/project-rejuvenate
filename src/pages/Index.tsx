@@ -35,8 +35,11 @@ const IndexContent = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
-  const { role, setRole, isPresident } = useRole();
+  const { role, setRole } = useRole();
   const { user, dbRole, signOut } = useAuth();
+
+  // Sync local role with DB role when user is logged in
+  const isPresident = dbRole === "president" || role === "president";
 
   const handleContinue = (selectedRole?: string) => {
     if (selectedRole === "admin") {

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
+import { toast } from "sonner";
 
 // ─── Data ──────────────────────────────────────────────
 const TEHILIM_DAILY = [
@@ -170,14 +171,23 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
   const [creating, setCreating] = useState(false);
 
   const handleCreate = async () => {
-    if (!user) return;
+    if (!user) {
+      toast.error("Vous devez être connecté pour créer une chaîne");
+      return;
+    }
     setCreating(true);
-    await supabase.from("tehilim_chains").insert({
+    const { error } = await supabase.from("tehilim_chains").insert({
       creator_id: user.id,
       title,
       dedication: dedication || null,
       dedication_type: dedicationType,
     });
+    if (error) {
+      toast.error("Erreur: vérifiez que vous avez le rôle Président pour créer une chaîne.");
+      console.error("Chain create error:", error);
+    } else {
+      toast.success("✅ Chaîne de Tehilim créée !");
+    }
     setCreating(false);
     onCreated();
   };
@@ -250,20 +260,29 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
   }, [chain.id, fetchClaims]);
 
   const claimGroup = async (group: { start: number; end: number }) => {
-    if (!user) return;
+    if (!user) {
+      toast.error("Connectez-vous pour prendre un groupe de psaumes");
+      return;
+    }
     const { data: profile } = await supabase
       .from("profiles")
       .select("display_name")
       .eq("user_id", user.id)
       .single();
 
-    await supabase.from("tehilim_claims").insert({
+    const { error } = await supabase.from("tehilim_claims").insert({
       chain_id: chain.id,
       user_id: user.id,
       display_name: profile?.display_name || user.email || "Anonyme",
       chapter_start: group.start,
       chapter_end: group.end,
     });
+    if (error) {
+      toast.error("Erreur lors de la réservation");
+      console.error("Claim error:", error);
+    } else {
+      toast.success(`✅ Chapitres ${group.start}-${group.end} réservés !`);
+    }
   };
 
   const toggleComplete = async (claim: Claim) => {
