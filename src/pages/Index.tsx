@@ -10,6 +10,7 @@ import ShabbatWidget from "@/components/ShabbatWidget";
 import ZmanimWidget from "@/components/ZmanimWidget";
 import HolidaysWidget from "@/components/HolidaysWidget";
 import ParashaSearchWidget from "@/components/ParashaSearchWidget";
+import FestivalCalendar from "@/components/FestivalCalendar";
 import BottomNav from "@/components/BottomNav";
 
 const Index = () => {
