@@ -46,7 +46,14 @@ const EvenementsWidget = () => {
   }, []);
 
   const handleAdd = async () => {
-    if (!form.title.trim() || !form.event_date || !user) return;
+    if (!form.title.trim() || !form.event_date) {
+      toast.error("Veuillez remplir le titre et la date");
+      return;
+    }
+    if (!user) {
+      toast.error("Vous devez être connecté");
+      return;
+    }
     setSubmitting(true);
     const { data, error } = await supabase.from("evenements").insert({
       creator_id: user.id,
@@ -59,10 +66,14 @@ const EvenementsWidget = () => {
       zoom_link: form.zoom_link.trim() || null,
     }).select().single();
 
-    if (data && !error) {
+    if (error) {
+      toast.error("Erreur: vérifiez que vous avez le rôle Président.");
+      console.error("Event create error:", error);
+    } else if (data) {
       setEvents((prev) => [...prev, data].sort((a, b) => a.event_date.localeCompare(b.event_date)));
       setShowForm(false);
       setForm({ title: "", description: "", event_date: "", event_time: "", location: "", event_type: "autre", zoom_link: "" });
+      toast.success("✅ Événement créé !");
     }
     setSubmitting(false);
   };
