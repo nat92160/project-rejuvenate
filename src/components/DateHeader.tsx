@@ -6,11 +6,17 @@ import { fetchShabbatTimes } from "@/lib/hebcal";
 
 const DateHeader = () => {
   const [hebrewDate, setHebrewDate] = useState("");
+  const [hebrewDateFr, setHebrewDateFr] = useState("");
   const [parasha, setParasha] = useState("");
   const { city } = useCity();
 
   useEffect(() => {
-    fetchHebrewDate().then((d) => { if (d) setHebrewDate(d.hebrew); });
+    fetchHebrewDate().then((d) => {
+      if (d) {
+        setHebrewDate(d.hebrew);
+        setHebrewDateFr(`${d.heDateParts.d} ${d.heDateParts.m} ${d.heDateParts.y}`);
+      }
+    });
   }, []);
 
   useEffect(() => {
