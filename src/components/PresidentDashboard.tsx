@@ -33,6 +33,7 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
       case "minyan": return <MinyanLiveWidget />;
       case "evenements": return <EvenementsWidget />;
       case "cours": return <CoursZoomWidget />;
+      case "coursvirtuel": return <CoursVirtuelWidget />;
       default: return null;
     }
   };
