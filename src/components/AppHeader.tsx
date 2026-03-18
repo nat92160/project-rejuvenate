@@ -2,15 +2,15 @@ import StarOfDavid from "./StarOfDavid";
 
 const AppHeader = () => {
   return (
-    <div className="text-center py-3 px-5">
-      <div className="flex items-center justify-center gap-2">
-        <StarOfDavid size={34} />
-        <h1 className="font-hebrew text-2xl font-bold" style={{ color: "#1E293B", letterSpacing: "0.5px" }}>
-          Chabbat Chalom
+    <div className="text-center py-4 px-5">
+      <div className="flex items-center justify-center gap-2.5">
+        <StarOfDavid size={32} />
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">
+          Chabbat <span className="text-primary">Chalom</span>
         </h1>
       </div>
-      <div className="font-hebrew text-sm mt-0.5" style={{ color: "#D4AF37", opacity: 0.5, direction: "rtl" }}>
-        לוח השנה העברי
+      <div className="font-hebrew text-sm mt-1 text-primary/50" style={{ direction: "rtl" }}>
+        שבת שלום
       </div>
     </div>
   );
