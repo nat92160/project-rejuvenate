@@ -101,6 +101,18 @@ const IndexContent = () => {
         return <MariagesWidget />;
       case "reveil":
         return <AlarmWidget />;
+      case "annonces":
+        return <AnnoncesWidget />;
+      case "refoua":
+        return <RefouaChelemaWidget />;
+      case "minyan":
+        return <MinyanLiveWidget />;
+      case "evenements":
+        return <EvenementsWidget />;
+      case "courszoom":
+        return <CoursZoomWidget />;
+      case "affiche":
+        return <AfficheChabbatWidget />;
       case "shabbatspec":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
