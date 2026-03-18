@@ -20,6 +20,12 @@ import RoshHodeshWidget from "@/components/RoshHodeshWidget";
 import MariagesWidget from "@/components/MariagesWidget";
 import AlarmWidget from "@/components/AlarmWidget";
 import PresidentDashboard from "@/components/PresidentDashboard";
+import AfficheChabbatWidget from "@/components/AfficheChabbatWidget";
+import AnnoncesWidget from "@/components/AnnoncesWidget";
+import RefouaChelemaWidget from "@/components/RefouaChelemaWidget";
+import MinyanLiveWidget from "@/components/MinyanLiveWidget";
+import EvenementsWidget from "@/components/EvenementsWidget";
+import CoursZoomWidget from "@/components/CoursZoomWidget";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
@@ -95,6 +101,18 @@ const IndexContent = () => {
         return <MariagesWidget />;
       case "reveil":
         return <AlarmWidget />;
+      case "annonces":
+        return <AnnoncesWidget />;
+      case "refoua":
+        return <RefouaChelemaWidget />;
+      case "minyan":
+        return <MinyanLiveWidget />;
+      case "evenements":
+        return <EvenementsWidget />;
+      case "courszoom":
+        return <CoursZoomWidget />;
+      case "affiche":
+        return <AfficheChabbatWidget />;
       case "shabbatspec":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
