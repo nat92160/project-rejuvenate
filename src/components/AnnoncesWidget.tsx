@@ -1,33 +1,75 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Annonce {
   id: string;
   title: string;
   content: string;
-  date: string;
-  priority: "normal" | "urgent";
+  priority: string;
+  created_at: string;
+  creator_id: string;
 }
 
-const DEMO_ANNONCES: Annonce[] = [
-  { id: "1", title: "Kidouch ce Chabbat", content: "Un grand Kidouch est organisé ce Chabbat après l'office de Cha'harit, offert par la famille Cohen à l'occasion du Bar Mitsva de leur fils.", date: "20 mars 2026", priority: "normal" },
-  { id: "2", title: "Cours de Guémara", content: "Le cours de Guémara du Rav reprend tous les mardis soirs à 20h30.", date: "18 mars 2026", priority: "normal" },
-  { id: "3", title: "Collecte urgente", content: "Une famille de la communauté a besoin d'aide urgente. Merci de contacter le président.", date: "17 mars 2026", priority: "urgent" },
-];
-
 const AnnoncesWidget = () => {
-  const [annonces] = useState<Annonce[]>(DEMO_ANNONCES);
+  const { user, dbRole } = useAuth();
+  const [annonces, setAnnonces] = useState<Annonce[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
+  const [newPriority, setNewPriority] = useState("normal");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleAdd = () => {
-    if (!newTitle.trim()) return;
-    // In future: save to DB
-    setShowForm(false);
-    setNewTitle("");
-    setNewContent("");
+  useEffect(() => {
+    const fetchAnnonces = async () => {
+      const { data } = await supabase
+        .from("annonces")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      setAnnonces(data || []);
+      setLoading(false);
+    };
+    fetchAnnonces();
+  }, []);
+
+  const handleAdd = async () => {
+    if (!newTitle.trim() || !user) return;
+    setSubmitting(true);
+    const { data, error } = await supabase.from("annonces").insert({
+      creator_id: user.id,
+      title: newTitle.trim(),
+      content: newContent.trim(),
+      priority: newPriority,
+    }).select().single();
+
+    if (data && !error) {
+      setAnnonces((prev) => [data, ...prev]);
+      setShowForm(false);
+      setNewTitle("");
+      setNewContent("");
+      setNewPriority("normal");
+    }
+    setSubmitting(false);
   };
+
+  const handleDelete = async (id: string) => {
+    await supabase.from("annonces").delete().eq("id", id);
+    setAnnonces((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  const handleShareWhatsApp = (a: Annonce) => {
+    const text = `📢 ${a.title}\n\n${a.content}\n\n— Chabbat Chalom`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const formatDate = (d: string) => {
+    return new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  };
+
+  const isPresident = dbRole === "president";
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -35,13 +77,15 @@ const AnnoncesWidget = () => {
         <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
           📢 Annonces
         </h3>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
-          style={{ background: "var(--gradient-gold)" }}
-        >
-          + Nouvelle
-        </button>
+        {isPresident && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
+            style={{ background: "var(--gradient-gold)" }}
+          >
+            + Nouvelle
+          </button>
+        )}
       </div>
 
       <AnimatePresence>
@@ -66,40 +110,87 @@ const AnnoncesWidget = () => {
               rows={3}
               className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3 resize-none"
             />
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => setNewPriority("normal")}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border ${
+                  newPriority === "normal" ? "border-primary/30 bg-primary/5 text-foreground" : "border-border text-muted-foreground bg-card"
+                }`}
+              >
+                Normal
+              </button>
+              <button
+                onClick={() => setNewPriority("urgent")}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border ${
+                  newPriority === "urgent" ? "border-destructive/30 bg-destructive/5 text-destructive" : "border-border text-muted-foreground bg-card"
+                }`}
+              >
+                🔴 Urgent
+              </button>
+            </div>
             <button
               onClick={handleAdd}
-              className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer"
+              disabled={submitting || !newTitle.trim()}
+              className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
               style={{ background: "var(--gradient-gold)" }}
             >
-              Publier
+              {submitting ? "Publication..." : "Publier"}
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="space-y-3">
-        {annonces.map((a, i) => (
-          <motion.div
-            key={a.id}
-            className="rounded-2xl bg-card p-5 border border-border"
-            style={{ boxShadow: "var(--shadow-card)" }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <h4 className="font-display text-sm font-bold text-foreground">{a.title}</h4>
-              {a.priority === "urgent" && (
-                <span className="text-[9px] font-bold uppercase px-2 py-1 rounded-full bg-destructive/10 text-destructive whitespace-nowrap">
-                  Urgent
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{a.content}</p>
-            <p className="text-[10px] text-muted-foreground/60 mt-3">{a.date}</p>
-          </motion.div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="text-center py-8 text-sm text-muted-foreground">Chargement...</div>
+      ) : annonces.length === 0 ? (
+        <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
+          <p className="text-sm text-muted-foreground">Aucune annonce pour le moment.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {annonces.map((a, i) => (
+            <motion.div
+              key={a.id}
+              className="rounded-2xl bg-card p-5 border border-border"
+              style={{ boxShadow: "var(--shadow-card)" }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <h4 className="font-display text-sm font-bold text-foreground">{a.title}</h4>
+                <div className="flex items-center gap-1.5">
+                  {a.priority === "urgent" && (
+                    <span className="text-[9px] font-bold uppercase px-2 py-1 rounded-full bg-destructive/10 text-destructive whitespace-nowrap">
+                      Urgent
+                    </span>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{a.content}</p>
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-[10px] text-muted-foreground/60">{formatDate(a.created_at)}</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleShareWhatsApp(a)}
+                    className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-green-500/10 text-green-600 border-none cursor-pointer hover:bg-green-500/20 transition-colors"
+                  >
+                    📲 WhatsApp
+                  </button>
+                  {isPresident && user?.id === a.creator_id && (
+                    <button
+                      onClick={() => handleDelete(a.id)}
+                      className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-destructive/10 text-destructive border-none cursor-pointer hover:bg-destructive/20 transition-colors"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };

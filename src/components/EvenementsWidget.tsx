@@ -1,22 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
-interface Event {
+interface Evenement {
   id: string;
   title: string;
-  date: string;
-  time: string;
-  location: string;
   description: string;
-  type: "kidouch" | "cours" | "fete" | "autre";
+  event_date: string;
+  event_time: string;
+  location: string;
+  event_type: string;
+  zoom_link: string | null;
+  creator_id: string;
 }
-
-const DEMO_EVENTS: Event[] = [
-  { id: "1", title: "Grand Kidouch communautaire", date: "21 mars 2026", time: "12:00", location: "Synagogue", description: "Offert par la famille Lévy pour la naissance de leur fille", type: "kidouch" },
-  { id: "2", title: "Soirée de Pourim", date: "3 mars 2026", time: "19:30", location: "Salle des fêtes", description: "Lecture de la Méguila, déguisements, buffet", type: "fete" },
-  { id: "3", title: "Conférence du Rav", date: "25 mars 2026", time: "20:30", location: "Zoom + Synagogue", description: "Les clés du Chalom Bayit — ouvert à tous", type: "cours" },
-  { id: "4", title: "Vente de Hametz", date: "30 mars 2026", time: "10:00-17:00", location: "Bureau du Rav", description: "Dernière date pour la vente du Hametz avant Pessa'h", type: "autre" },
-];
 
 const typeConfig: Record<string, { emoji: string; color: string }> = {
   kidouch: { emoji: "🍷", color: "bg-purple-500/10 text-purple-600" },
@@ -26,80 +23,141 @@ const typeConfig: Record<string, { emoji: string; color: string }> = {
 };
 
 const EvenementsWidget = () => {
-  const [events] = useState<Event[]>(DEMO_EVENTS);
+  const { user, dbRole } = useAuth();
+  const [events, setEvents] = useState<Evenement[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ title: "", description: "", event_date: "", event_time: "", location: "", event_type: "autre", zoom_link: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const isPresident = dbRole === "president";
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("evenements")
+        .select("*")
+        .order("event_date", { ascending: true })
+        .limit(20);
+      setEvents(data || []);
+      setLoading(false);
+    };
+    fetch();
+  }, []);
+
+  const handleAdd = async () => {
+    if (!form.title.trim() || !form.event_date || !user) return;
+    setSubmitting(true);
+    const { data, error } = await supabase.from("evenements").insert({
+      creator_id: user.id,
+      title: form.title.trim(),
+      description: form.description.trim(),
+      event_date: form.event_date,
+      event_time: form.event_time || "00:00",
+      location: form.location.trim(),
+      event_type: form.event_type,
+      zoom_link: form.zoom_link.trim() || null,
+    }).select().single();
+
+    if (data && !error) {
+      setEvents((prev) => [...prev, data].sort((a, b) => a.event_date.localeCompare(b.event_date)));
+      setShowForm(false);
+      setForm({ title: "", description: "", event_date: "", event_time: "", location: "", event_type: "autre", zoom_link: "" });
+    }
+    setSubmitting(false);
+  };
+
+  const formatDate = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-          📅 Événements
-        </h3>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
-          style={{ background: "var(--gradient-gold)" }}
-        >
-          + Créer
-        </button>
+        <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">📅 Événements</h3>
+        {isPresident && (
+          <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground" style={{ background: "var(--gradient-gold)" }}>
+            + Créer
+          </button>
+        )}
       </div>
 
       <AnimatePresence>
         {showForm && (
-          <motion.div
-            className="rounded-2xl bg-card p-5 mb-4 border border-primary/20"
-            style={{ boxShadow: "var(--shadow-card)" }}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-          >
-            <p className="text-xs text-muted-foreground text-center py-4">
-              Formulaire de création d'événement — Connectez-vous pour utiliser cette fonctionnalité
-            </p>
+          <motion.div className="rounded-2xl bg-card p-5 mb-4 border border-primary/20" style={{ boxShadow: "var(--shadow-card)" }}
+            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
+            <div className="space-y-3">
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Titre"
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" rows={2}
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
+              <div className="grid grid-cols-2 gap-3">
+                <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                <input type="time" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Lieu"
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <select value={form.event_type} onChange={(e) => setForm({ ...form, event_type: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                <option value="kidouch">🍷 Kidouch</option>
+                <option value="cours">📖 Cours</option>
+                <option value="fete">🎉 Fête</option>
+                <option value="autre">📌 Autre</option>
+              </select>
+              <input value={form.zoom_link} onChange={(e) => setForm({ ...form, zoom_link: e.target.value })} placeholder="Lien Zoom (optionnel)"
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <button onClick={handleAdd} disabled={submitting || !form.title.trim() || !form.event_date}
+                className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
+                style={{ background: "var(--gradient-gold)" }}>
+                {submitting ? "Création..." : "Créer l'événement"}
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Timeline */}
-      <div className="relative">
-        <div className="absolute left-5 top-0 bottom-0 w-px bg-border" />
-        
-        <div className="space-y-4">
-          {events.map((ev, i) => {
-            const tc = typeConfig[ev.type] || typeConfig.autre;
-            return (
-              <motion.div
-                key={ev.id}
-                className="relative pl-12"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.08 }}
-              >
-                {/* Timeline dot */}
-                <div className="absolute left-3 top-5 w-5 h-5 rounded-full border-2 border-border bg-card flex items-center justify-center text-[10px]">
-                  {tc.emoji}
-                </div>
-
-                <div className="rounded-2xl bg-card p-5 border border-border hover:border-primary/20 transition-all"
-                  style={{ boxShadow: "var(--shadow-soft)" }}>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${tc.color}`}>
-                      {ev.type}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{ev.date}</span>
-                  </div>
-                  <h4 className="font-display text-sm font-bold text-foreground">{ev.title}</h4>
-                  <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">{ev.description}</p>
-                  <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground/80">
-                    <span>🕐 {ev.time}</span>
-                    <span>📍 {ev.location}</span>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+      {loading ? (
+        <div className="text-center py-8 text-sm text-muted-foreground">Chargement...</div>
+      ) : events.length === 0 ? (
+        <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
+          <p className="text-sm text-muted-foreground">Aucun événement programmé.</p>
         </div>
-      </div>
+      ) : (
+        <div className="relative">
+          <div className="absolute left-5 top-0 bottom-0 w-px bg-border" />
+          <div className="space-y-4">
+            {events.map((ev, i) => {
+              const tc = typeConfig[ev.event_type] || typeConfig.autre;
+              return (
+                <motion.div key={ev.id} className="relative pl-12"
+                  initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}>
+                  <div className="absolute left-3 top-5 w-5 h-5 rounded-full border-2 border-border bg-card flex items-center justify-center text-[10px]">
+                    {tc.emoji}
+                  </div>
+                  <div className="rounded-2xl bg-card p-5 border border-border hover:border-primary/20 transition-all" style={{ boxShadow: "var(--shadow-soft)" }}>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${tc.color}`}>{ev.event_type}</span>
+                      <span className="text-xs text-muted-foreground">{formatDate(ev.event_date)}</span>
+                    </div>
+                    <h4 className="font-display text-sm font-bold text-foreground">{ev.title}</h4>
+                    <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">{ev.description}</p>
+                    <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground/80">
+                      <span>🕐 {ev.event_time}</span>
+                      {ev.location && <span>📍 {ev.location}</span>}
+                    </div>
+                    {ev.zoom_link && (
+                      <a href={ev.zoom_link} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 rounded-xl text-xs font-bold text-white no-underline transition-all hover:scale-105"
+                        style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: "0 4px 12px rgba(45,140,255,0.3)" }}>
+                        🎥 Rejoindre le Zoom
+                      </a>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };
