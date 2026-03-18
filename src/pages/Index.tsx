@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CityProvider } from "@/hooks/useCity";
 import { RoleProvider, useRole } from "@/hooks/useRole";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import HeroSection from "@/components/HeroSection";
 import AppHeader from "@/components/AppHeader";
 import DateHeader from "@/components/DateHeader";
@@ -21,11 +22,14 @@ import AlarmWidget from "@/components/AlarmWidget";
 import PresidentDashboard from "@/components/PresidentDashboard";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import BottomNav from "@/components/BottomNav";
+import AuthModal from "@/components/AuthModal";
 
 const IndexContent = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [authOpen, setAuthOpen] = useState(false);
   const { role, setRole, isPresident } = useRole();
+  const { user, dbRole, signOut } = useAuth();
 
   const handleContinue = (selectedRole?: string) => {
     if (selectedRole === "admin") {
@@ -41,7 +45,7 @@ const IndexContent = () => {
   const renderTabContent = () => {
     // President-specific dashboard
     if (isPresident && activeTab === "dashboard") {
-      return <PresidentDashboard />;
+      return <PresidentDashboard onLoginClick={() => setAuthOpen(true)} />;
     }
 
     switch (activeTab) {
@@ -78,7 +82,7 @@ const IndexContent = () => {
       case "tehilim":
         return <TehilimWidget />;
       case "synagogue":
-        return <PresidentDashboard />;
+        return <PresidentDashboard onLoginClick={() => setAuthOpen(true)} />;
       case "fetes":
         return <FestivalCalendar />;
       case "convertisseur":
@@ -137,21 +141,36 @@ const IndexContent = () => {
             <div className="flex justify-between items-center py-2.5">
               <DarkModeToggle />
               <div className="flex items-center gap-2">
-                {isPresident && (
+                {(isPresident || dbRole === "president") && (
                   <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full"
                     style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}>
                     🏛️ Président
                   </span>
                 )}
-                <button
-                  className="px-5 py-2.5 rounded-full text-xs font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 text-primary-foreground border-none"
-                  style={{
-                    background: "var(--gradient-gold)",
-                    boxShadow: "var(--shadow-gold)",
-                  }}
-                >
-                  🔑 Connexion
-                </button>
+                {user ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                      {user.user_metadata?.full_name || user.email?.split("@")[0]}
+                    </span>
+                    <button
+                      onClick={signOut}
+                      className="px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 bg-muted text-muted-foreground border-none"
+                    >
+                      Déconnexion
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setAuthOpen(true)}
+                    className="px-5 py-2.5 rounded-full text-xs font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 text-primary-foreground border-none"
+                    style={{
+                      background: "var(--gradient-gold)",
+                      boxShadow: "var(--shadow-gold)",
+                    }}
+                  >
+                    🔑 Connexion
+                  </button>
+                )}
               </div>
             </div>
 
@@ -174,6 +193,8 @@ const IndexContent = () => {
           <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
       )}
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </>
   );
 };
@@ -182,7 +203,9 @@ const Index = () => {
   return (
     <CityProvider>
       <RoleProvider>
-        <IndexContent />
+        <AuthProvider>
+          <IndexContent />
+        </AuthProvider>
       </RoleProvider>
     </CityProvider>
   );
