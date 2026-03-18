@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface Annonce {
   id: string;
@@ -24,11 +25,15 @@ const AnnoncesWidget = () => {
 
   useEffect(() => {
     const fetchAnnonces = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("annonces")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(20);
+      if (error) {
+        toast.error("Erreur lors du chargement des annonces");
+        console.error("Annonces fetch error:", error);
+      }
       setAnnonces(data || []);
       setLoading(false);
     };
@@ -36,7 +41,18 @@ const AnnoncesWidget = () => {
   }, []);
 
   const handleAdd = async () => {
-    if (!newTitle.trim() || !user) return;
+    if (!newTitle.trim()) {
+      toast.error("Veuillez entrer un titre");
+      return;
+    }
+    if (!user) {
+      toast.error("Vous devez être connecté pour publier");
+      return;
+    }
+    if (dbRole !== "president") {
+      toast.error("Seul le président peut publier des annonces");
+      return;
+    }
     setSubmitting(true);
     const { data, error } = await supabase.from("annonces").insert({
       creator_id: user.id,
@@ -45,23 +61,32 @@ const AnnoncesWidget = () => {
       priority: newPriority,
     }).select().single();
 
-    if (data && !error) {
+    if (error) {
+      toast.error("Erreur lors de la publication. Vérifiez vos permissions.");
+      console.error("Annonce insert error:", error);
+    } else if (data) {
       setAnnonces((prev) => [data, ...prev]);
       setShowForm(false);
       setNewTitle("");
       setNewContent("");
       setNewPriority("normal");
+      toast.success("✅ Annonce publiée !");
     }
     setSubmitting(false);
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("annonces").delete().eq("id", id);
-    setAnnonces((prev) => prev.filter((a) => a.id !== id));
+    const { error } = await supabase.from("annonces").delete().eq("id", id);
+    if (error) {
+      toast.error("Erreur lors de la suppression");
+    } else {
+      setAnnonces((prev) => prev.filter((a) => a.id !== id));
+      toast.success("Annonce supprimée");
+    }
   };
 
   const handleShareWhatsApp = (a: Annonce) => {
-    const text = `📢 ${a.title}\n\n${a.content}\n\n— Chabbat Chalom`;
+    const text = `📢 ${a.title}\n\n${a.content}\n\n— Chabbat Chalom\n📲 https://www.chabbat-chalom.com`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -145,6 +170,11 @@ const AnnoncesWidget = () => {
       ) : annonces.length === 0 ? (
         <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
           <p className="text-sm text-muted-foreground">Aucune annonce pour le moment.</p>
+          {!isPresident && (
+            <p className="text-xs text-muted-foreground/60 mt-2 italic">
+              Le président de la synagogue peut publier des annonces.
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
