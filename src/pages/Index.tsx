@@ -16,6 +16,8 @@ import TehilimWidget from "@/components/TehilimWidget";
 import DateConverterWidget from "@/components/DateConverterWidget";
 import MizrahCompass from "@/components/MizrahCompass";
 import RoshHodeshWidget from "@/components/RoshHodeshWidget";
+import MariagesWidget from "@/components/MariagesWidget";
+import AlarmWidget from "@/components/AlarmWidget";
 import PresidentDashboard from "@/components/PresidentDashboard";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import BottomNav from "@/components/BottomNav";
