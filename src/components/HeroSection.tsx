@@ -1,7 +1,11 @@
 import { motion } from "framer-motion";
 import starOfDavid from "@/assets/star-of-david.png";
 
-const HeroSection = () => {
+interface HeroSectionProps {
+  onContinue?: () => void;
+}
+
+const HeroSection = ({ onContinue }: HeroSectionProps) => {
   return (
     <section className="relative min-h-[85vh] flex flex-col items-center justify-center px-6 overflow-hidden"
       style={{ background: "var(--gradient-hero)" }}>
