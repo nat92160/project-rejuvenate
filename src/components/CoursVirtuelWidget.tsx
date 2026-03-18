@@ -80,7 +80,7 @@ const CoursVirtuelWidget = () => {
         }
       }, "image/png");
     } catch {
-      window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
     }
   };
 
