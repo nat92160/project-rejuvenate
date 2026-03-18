@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CityProvider } from "@/hooks/useCity";
+import { RoleProvider, useRole } from "@/hooks/useRole";
 import HeroSection from "@/components/HeroSection";
 import AppHeader from "@/components/AppHeader";
 import DateHeader from "@/components/DateHeader";
@@ -11,13 +12,36 @@ import ZmanimWidget from "@/components/ZmanimWidget";
 import HolidaysWidget from "@/components/HolidaysWidget";
 import ParashaSearchWidget from "@/components/ParashaSearchWidget";
 import FestivalCalendar from "@/components/FestivalCalendar";
+import TehilimWidget from "@/components/TehilimWidget";
+import DateConverterWidget from "@/components/DateConverterWidget";
+import MizrahCompass from "@/components/MizrahCompass";
+import RoshHodeshWidget from "@/components/RoshHodeshWidget";
+import PresidentDashboard from "@/components/PresidentDashboard";
+import DarkModeToggle from "@/components/DarkModeToggle";
 import BottomNav from "@/components/BottomNav";
 
-const Index = () => {
+const IndexContent = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { role, setRole, isPresident } = useRole();
+
+  const handleContinue = (selectedRole?: string) => {
+    if (selectedRole === "admin") {
+      setRole("president");
+    } else if (selectedRole === "fidele") {
+      setRole("fidele");
+    } else {
+      setRole("guest");
+    }
+    setShowDashboard(true);
+  };
 
   const renderTabContent = () => {
+    // President-specific dashboard
+    if (isPresident && activeTab === "dashboard") {
+      return <PresidentDashboard />;
+    }
+
     switch (activeTab) {
       case "dashboard":
         return (
@@ -50,41 +74,37 @@ const Index = () => {
           </div>
         );
       case "tehilim":
+        return <TehilimWidget />;
+      case "synagogue":
+        return <PresidentDashboard />;
+      case "fetes":
+        return <FestivalCalendar />;
+      case "convertisseur":
+        return <DateConverterWidget />;
+      case "mizrah":
+        return <MizrahCompass />;
+      case "roshhodesh":
+        return <RoshHodeshWidget />;
+      case "shabbatspec":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-            <span className="text-5xl">📖</span>
-            <h3 className="font-display text-lg font-bold mt-4 text-foreground">Tehilim</h3>
+            <span className="text-5xl">✨</span>
+            <h3 className="font-display text-lg font-bold mt-4 text-foreground">Chabbatot spéciaux</h3>
             <p className="text-sm mt-2 text-muted-foreground">
-              Chaînes communautaires de Tehilim
+              Chabbat Hagadol, Chabbat Chouva, Chabbat Zakhor...
             </p>
             <p className="text-xs mt-3 text-muted-foreground/60 italic">Bientôt disponible</p>
           </div>
         );
-      case "synagogue":
+      case "communaute":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-            <span className="text-5xl">🏛️</span>
-            <h3 className="font-display text-lg font-bold mt-4 text-foreground">Ma Synagogue</h3>
-            <p className="text-sm mt-2 text-muted-foreground">Connectez-vous pour gérer votre synagogue</p>
-            <button
-              className="mt-5 px-7 py-3.5 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95"
-              style={{
-                background: "var(--gradient-gold)",
-                boxShadow: "var(--shadow-gold)",
-              }}
-            >
-              🔑 Se connecter
-            </button>
-          </div>
-        );
-      case "fetes":
-        return <FestivalCalendar />;
-      case "convertisseur":
-        return (
-          <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-            <span className="text-5xl">🔄</span>
-            <h3 className="font-display text-lg font-bold mt-4 text-foreground">Convertisseur de dates</h3>
-            <p className="text-sm mt-2 text-muted-foreground">Bientôt disponible</p>
+            <span className="text-5xl">👥</span>
+            <h3 className="font-display text-lg font-bold mt-4 text-foreground">Communauté</h3>
+            <p className="text-sm mt-2 text-muted-foreground">
+              Rejoignez votre communauté locale
+            </p>
+            <p className="text-xs mt-3 text-muted-foreground/60 italic">Bientôt disponible</p>
           </div>
         );
       default:
@@ -101,23 +121,32 @@ const Index = () => {
   };
 
   return (
-    <CityProvider>
+    <>
       {!showDashboard ? (
-        <HeroSection onContinue={() => setShowDashboard(true)} />
+        <HeroSection onContinue={handleContinue} />
       ) : (
         <div className="relative min-h-screen bg-background">
           <div className="max-w-[600px] mx-auto px-4 pb-24">
             {/* Auth bar */}
-            <div className="flex justify-end py-2.5">
-              <button
-                className="px-5 py-2.5 rounded-full text-xs font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 text-primary-foreground border-none"
-                style={{
-                  background: "var(--gradient-gold)",
-                  boxShadow: "var(--shadow-gold)",
-                }}
-              >
-                🔑 Connexion
-              </button>
+            <div className="flex justify-between items-center py-2.5">
+              <DarkModeToggle />
+              <div className="flex items-center gap-2">
+                {isPresident && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full"
+                    style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}>
+                    🏛️ Président
+                  </span>
+                )}
+                <button
+                  className="px-5 py-2.5 rounded-full text-xs font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 text-primary-foreground border-none"
+                  style={{
+                    background: "var(--gradient-gold)",
+                    boxShadow: "var(--shadow-gold)",
+                  }}
+                >
+                  🔑 Connexion
+                </button>
+              </div>
             </div>
 
             <AppHeader />
@@ -139,6 +168,16 @@ const Index = () => {
           <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
       )}
+    </>
+  );
+};
+
+const Index = () => {
+  return (
+    <CityProvider>
+      <RoleProvider>
+        <IndexContent />
+      </RoleProvider>
     </CityProvider>
   );
 };
