@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Frank+Ruhl+Libre:wght@400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,19 +9,19 @@
     --background: 40 33% 97%;
     --foreground: 220 30% 15%;
 
-    --card: 40 30% 99%;
+    --card: 0 0% 100%;
     --card-foreground: 220 30% 15%;
 
-    --popover: 40 30% 99%;
+    --popover: 0 0% 100%;
     --popover-foreground: 220 30% 15%;
 
-    --primary: 220 35% 22%;
-    --primary-foreground: 40 30% 97%;
+    --primary: 40 80% 42%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 40 25% 93%;
     --secondary-foreground: 220 30% 15%;
 
-    --muted: 40 20% 94%;
+    --muted: 220 14% 96%;
     --muted-foreground: 220 10% 46%;
 
     --accent: 40 80% 55%;
@@ -30,76 +30,83 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 20% 90%;
-    --input: 40 20% 90%;
-    --ring: 40 80% 55%;
+    --bordeaux: 4 70% 25%;
+    --bordeaux-foreground: 0 0% 100%;
 
-    --radius: 0.75rem;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 40 80% 50%;
 
-    --gold: 40 80% 55%;
-    --gold-light: 40 60% 85%;
-    --gold-dark: 40 70% 40%;
-    --navy: 220 35% 22%;
+    --radius: 0.875rem;
+
+    --gold: 40 80% 50%;
+    --gold-light: 40 50% 88%;
+    --gold-dark: 40 70% 38%;
+    --gold-matte: 38 55% 45%;
+    --navy: 220 35% 15%;
     --navy-light: 220 25% 35%;
     --cream: 40 33% 97%;
     --cream-dark: 40 25% 93%;
 
-    --gradient-gold: linear-gradient(135deg, hsl(40 80% 55%), hsl(35 85% 45%));
+    --gradient-gold: linear-gradient(135deg, hsl(38 55% 45%), hsl(40 80% 50%));
     --gradient-hero: linear-gradient(180deg, hsl(40 33% 97%) 0%, hsl(40 40% 92%) 50%, hsl(220 20% 92%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(40 30% 99%), hsl(40 25% 96%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(40 25% 97%));
 
-    --shadow-soft: 0 2px 8px -2px hsl(220 30% 15% / 0.06);
-    --shadow-card: 0 4px 16px -4px hsl(220 30% 15% / 0.08), 0 1px 3px hsl(220 30% 15% / 0.04);
-    --shadow-elevated: 0 8px 32px -8px hsl(220 30% 15% / 0.12), 0 2px 8px hsl(220 30% 15% / 0.06);
-    --shadow-gold: 0 4px 20px -4px hsl(40 80% 55% / 0.3);
+    --shadow-soft: 0 2px 8px -2px hsl(220 30% 15% / 0.05);
+    --shadow-card: 0 4px 20px -4px hsl(220 30% 15% / 0.07), 0 1px 3px hsl(220 30% 15% / 0.04);
+    --shadow-elevated: 0 12px 40px -8px hsl(220 30% 15% / 0.12), 0 4px 12px hsl(220 30% 15% / 0.06);
+    --shadow-gold: 0 4px 24px -4px hsl(40 80% 50% / 0.25);
 
-    --sidebar-background: 40 30% 99%;
+    --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 30% 25%;
-    --sidebar-primary: 220 35% 22%;
-    --sidebar-primary-foreground: 40 30% 97%;
+    --sidebar-primary: 40 80% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 40 25% 93%;
     --sidebar-accent-foreground: 220 35% 22%;
-    --sidebar-border: 40 20% 90%;
-    --sidebar-ring: 40 80% 55%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 40 80% 50%;
   }
 
   .dark {
-    --background: 220 30% 8%;
+    --background: 220 30% 6%;
     --foreground: 40 20% 92%;
 
-    --card: 220 25% 12%;
+    --card: 220 25% 10%;
     --card-foreground: 40 20% 92%;
 
-    --popover: 220 25% 12%;
+    --popover: 220 25% 10%;
     --popover-foreground: 40 20% 92%;
 
-    --primary: 40 80% 55%;
+    --primary: 40 80% 50%;
     --primary-foreground: 220 30% 8%;
 
-    --secondary: 220 20% 18%;
+    --secondary: 220 20% 16%;
     --secondary-foreground: 40 20% 92%;
 
-    --muted: 220 20% 18%;
+    --muted: 220 20% 16%;
     --muted-foreground: 220 10% 55%;
 
-    --accent: 40 80% 55%;
+    --accent: 40 80% 50%;
     --accent-foreground: 220 30% 8%;
+
+    --bordeaux: 4 60% 35%;
+    --bordeaux-foreground: 0 0% 100%;
 
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 18%;
-    --input: 220 20% 18%;
-    --ring: 40 80% 55%;
+    --border: 220 20% 16%;
+    --input: 220 20% 16%;
+    --ring: 40 80% 50%;
 
-    --sidebar-background: 220 30% 8%;
+    --sidebar-background: 220 30% 6%;
     --sidebar-foreground: 40 20% 92%;
-    --sidebar-primary: 40 80% 55%;
+    --sidebar-primary: 40 80% 50%;
     --sidebar-primary-foreground: 220 30% 8%;
-    --sidebar-accent: 220 20% 15%;
+    --sidebar-accent: 220 20% 14%;
     --sidebar-accent-foreground: 40 20% 92%;
-    --sidebar-border: 220 20% 15%;
-    --sidebar-ring: 40 80% 55%;
+    --sidebar-border: 220 20% 14%;
+    --sidebar-ring: 40 80% 50%;
   }
 }
 
@@ -110,11 +117,14 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Montserrat', sans-serif;
     letter-spacing: -0.02em;
+    font-weight: 700;
   }
 
   .font-hebrew {
@@ -128,7 +138,7 @@
   }
   
   .gold-shimmer {
-    background: linear-gradient(90deg, hsl(40 80% 55%), hsl(35 85% 65%), hsl(40 80% 55%));
+    background: linear-gradient(90deg, hsl(38 55% 45%), hsl(40 80% 58%), hsl(38 55% 45%));
     background-size: 200% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -150,7 +160,29 @@
   }
 
   @keyframes landingStar {
-    0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 12px rgba(212,175,55,0.2)); }
-    50% { transform: scale(1.05); filter: drop-shadow(0 6px 20px rgba(212,175,55,0.35)); }
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 16px hsl(40 80% 50% / 0.2)); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 8px 24px hsl(40 80% 50% / 0.35)); }
+  }
+
+  @keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(40 80% 50% / 0.3); }
+    50% { box-shadow: 0 0 0 8px hsl(40 80% 50% / 0); }
+  }
+
+  .animate-pulse-gold {
+    animation: pulse-gold 2s ease-in-out infinite;
+  }
+
+  /* Bottom sheet backdrop */
+  .bottom-sheet-backdrop {
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+  }
+
+  /* Glass morphism */
+  .glass {
+    background: hsl(0 0% 100% / 0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
 }
