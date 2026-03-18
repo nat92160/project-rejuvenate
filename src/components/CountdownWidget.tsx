@@ -41,36 +41,31 @@ const CountdownWidget = () => {
 
   return (
     <motion.div
-      className="text-center p-4 rounded-3xl mb-4"
+      className="text-center p-5 rounded-2xl mb-4 border border-primary/10"
       style={{
-        background: "linear-gradient(135deg, rgba(184, 134, 11, 0.06), rgba(212, 168, 67, 0.03))",
-        border: "1px solid rgba(212, 168, 67, 0.12)",
+        background: "linear-gradient(135deg, hsl(var(--gold) / 0.05), hsl(var(--gold) / 0.02))",
       }}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
     >
-      <div className="text-xs uppercase tracking-[2px] mb-1" style={{ color: "#94A3B8" }}>
+      <div className="text-[10px] uppercase tracking-[3px] mb-1 text-muted-foreground font-semibold">
         Temps avant Chabbat
       </div>
-      <div className="font-hebrew text-base mb-2" style={{ color: "#B8860B" }}>
-        Prochain Chabbat
-      </div>
-      <div className="flex justify-center gap-3">
+      <div className="flex justify-center gap-3 mt-3">
         {blocks.map((b) => (
           <div key={b.label} className="flex flex-col items-center">
             <div
-              className="text-2xl font-bold font-hebrew tabular-nums px-3 py-2 rounded-xl"
+              className="text-2xl font-extrabold font-display tabular-nums px-3.5 py-2.5 rounded-xl border border-primary/12 bg-card"
               style={{
-                color: "#B8860B",
-                background: "rgba(212, 168, 67, 0.08)",
-                border: "1px solid rgba(212, 168, 67, 0.15)",
-                minWidth: "52px",
+                color: "hsl(var(--gold-matte))",
+                minWidth: "54px",
+                boxShadow: "var(--shadow-soft)",
               }}
             >
               {String(b.value).padStart(2, "0")}
             </div>
-            <span className="text-[10px] uppercase tracking-wider mt-1" style={{ color: "#94A3B8" }}>
+            <span className="text-[9px] uppercase tracking-widest mt-1.5 text-muted-foreground font-medium">
               {b.label}
             </span>
           </div>
