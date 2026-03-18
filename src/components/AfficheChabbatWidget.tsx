@@ -143,9 +143,20 @@ const AfficheChabbatWidget = () => {
     window.location.href = url;
   };
 
-  const shareWhatsApp = () => {
+  const shareWhatsApp = async () => {
     const text = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    const blob = await generatePosterBlob();
+    const file = blob ? new File([blob], `affiche-chabbat-${city.name}.png`, { type: "image/png" }) : null;
+
+    if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Affiche de Chabbat", text });
+      return;
+    }
+
+    if (blob) {
+      downloadPosterBlob(blob, `affiche-chabbat-${city.name}.png`);
+    }
 
     openWhatsAppLink(whatsappUrl);
   };
