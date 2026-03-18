@@ -44,7 +44,14 @@ const RefouaChelemaWidget = () => {
   }, []);
 
   const handleAdd = async () => {
-    if (!name.trim() || !user) return;
+    if (!name.trim()) {
+      toast.error("Veuillez entrer un prénom hébreu");
+      return;
+    }
+    if (!user) {
+      toast.error("Vous devez être connecté pour ajouter un nom");
+      return;
+    }
     setSubmitting(true);
     const { data, error } = await supabase.from("refoua_chelema").insert({
       hebrew_name: name.trim(),
@@ -52,11 +59,15 @@ const RefouaChelemaWidget = () => {
       added_by: user.id,
     }).select().single();
 
-    if (data && !error) {
+    if (error) {
+      toast.error("Erreur lors de l'ajout. Vérifiez votre connexion.");
+      console.error("Refoua add error:", error);
+    } else if (data) {
       setPatients((prev) => [data, ...prev]);
       setShowForm(false);
       setName("");
       setMother("");
+      toast.success("✅ Nom ajouté à la liste !");
     }
     setSubmitting(false);
   };
