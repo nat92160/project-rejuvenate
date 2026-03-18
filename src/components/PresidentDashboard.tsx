@@ -39,7 +39,11 @@ const features = [
   },
 ];
 
-const PresidentDashboard = () => {
+interface PresidentDashboardProps {
+  onLoginClick?: () => void;
+}
+
+const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       {/* Welcome banner */}
@@ -89,6 +93,7 @@ const PresidentDashboard = () => {
           Connectez-vous pour accéder à toutes les fonctionnalités de gestion.
         </p>
         <button
+          onClick={onLoginClick}
           className="px-7 py-3.5 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95"
           style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
         >
