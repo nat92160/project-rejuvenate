@@ -148,4 +148,9 @@
   .animate-float {
     animation: float 4s ease-in-out infinite;
   }
+
+  @keyframes landingStar {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 12px rgba(212,175,55,0.2)); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 6px 20px rgba(212,175,55,0.35)); }
+  }
 }
