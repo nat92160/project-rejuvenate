@@ -3,11 +3,13 @@ import { motion } from "framer-motion";
 import { fetchHebrewDate } from "@/lib/hebcal";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes } from "@/lib/hebcal";
+import { getHilloulaForDate, HilloulaEntry } from "@/lib/hilloula";
 
 const DateHeader = () => {
   const [hebrewDate, setHebrewDate] = useState("");
   const [hebrewDateFr, setHebrewDateFr] = useState("");
   const [parasha, setParasha] = useState("");
+  const [hilloulot, setHilloulot] = useState<HilloulaEntry[]>([]);
   const { city } = useCity();
 
   useEffect(() => {
@@ -15,6 +17,10 @@ const DateHeader = () => {
       if (d) {
         setHebrewDate(d.hebrew);
         setHebrewDateFr(`${d.heDateParts.d} ${d.heDateParts.m} ${d.heDateParts.y}`);
+
+        // Check for hilloulot
+        const h = getHilloulaForDate(d.heDateParts.m, d.heDateParts.d);
+        setHilloulot(h);
       }
     });
   }, []);
@@ -59,10 +65,22 @@ const DateHeader = () => {
       {parasha && (
         <div
           className="flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-semibold tracking-wide uppercase bg-card"
+          style={{ borderBottom: hilloulot.length > 0 ? "1px solid hsl(var(--border))" : "none" }}
         >
           <span className="text-muted-foreground">📖</span>
-          <span className="text-gold-matte">
+          <span style={{ color: "hsl(var(--gold-matte))" }}>
             Semaine de la {parasha}
+          </span>
+        </div>
+      )}
+
+      {/* Hilloula band */}
+      {hilloulot.length > 0 && (
+        <div className="flex items-center justify-center gap-2 px-5 py-2.5 text-xs bg-card"
+          style={{ background: "hsl(var(--gold) / 0.04)" }}>
+          <span>🕯️</span>
+          <span className="font-semibold text-foreground">
+            Hilloula : {hilloulot.map((h) => h.name).join(", ")}
           </span>
         </div>
       )}
