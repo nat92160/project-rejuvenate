@@ -15,69 +15,61 @@ const ShabbatWidget = () => {
 
   return (
     <motion.div
-      className="rounded-3xl bg-white p-6 mb-4"
-      style={{
-        border: "1px solid rgba(0,0,0,0.06)",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)",
-      }}
+      className="rounded-2xl bg-card p-6 mb-4 border border-border"
+      style={{ boxShadow: "var(--shadow-card)" }}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
     >
-      <h3 className="font-hebrew text-lg font-semibold flex items-center gap-2" style={{ color: "#1E293B" }}>
+      <h3 className="font-display text-base font-bold flex items-center gap-2 text-foreground">
         🕯️ Horaires de Chabbat
       </h3>
-      <p className="text-xs mt-1" style={{ color: "#94A3B8" }}>{city.name}</p>
+      <p className="text-xs mt-1 text-muted-foreground">{city.name}</p>
 
       {loading ? (
         <div className="mt-5 space-y-4">
-          <div className="h-20 rounded-3xl animate-pulse" style={{ background: "#F1F5F9" }} />
-          <div className="h-20 rounded-3xl animate-pulse" style={{ background: "#F1F5F9" }} />
+          <div className="h-20 rounded-xl animate-pulse bg-muted" />
+          <div className="h-20 rounded-xl animate-pulse bg-muted" />
         </div>
       ) : data ? (
         <>
-          <div className="grid grid-cols-2 gap-4 mt-5">
-            <div className="rounded-3xl p-5 text-center transition-all duration-300 hover:border-gold"
-              style={{ background: "#F1F5F9", border: "1px solid rgba(0,0,0,0.06)" }}>
-              <div className="text-xs uppercase tracking-wider mb-2" style={{ color: "#94A3B8", letterSpacing: "1.5px" }}>
+          <div className="grid grid-cols-2 gap-3 mt-5">
+            <div className="rounded-xl p-5 text-center bg-muted border border-border transition-all hover:border-primary/20">
+              <div className="text-[10px] uppercase tracking-[2px] mb-2 text-muted-foreground font-semibold">
                 Allumage
               </div>
-              <div className="text-3xl font-bold font-hebrew" style={{ color: "#B8860B" }}>
+              <div className="text-3xl font-extrabold font-display text-primary">
                 {data.candleLighting || "--:--"}
               </div>
-              <div className="text-xs mt-1 capitalize" style={{ color: "#475569" }}>
+              <div className="text-[11px] mt-1.5 capitalize text-muted-foreground">
                 {data.candleLightingDate}
               </div>
             </div>
 
-            <div className="rounded-3xl p-5 text-center transition-all duration-300 hover:border-gold"
-              style={{ background: "#F1F5F9", border: "1px solid rgba(0,0,0,0.06)" }}>
-              <div className="text-xs uppercase tracking-wider mb-2" style={{ color: "#94A3B8", letterSpacing: "1.5px" }}>
+            <div className="rounded-xl p-5 text-center bg-muted border border-border transition-all hover:border-primary/20">
+              <div className="text-[10px] uppercase tracking-[2px] mb-2 text-muted-foreground font-semibold">
                 Havdala
               </div>
-              <div className="text-3xl font-bold font-hebrew" style={{ color: "#B8860B" }}>
+              <div className="text-3xl font-extrabold font-display text-primary">
                 {data.havdalah || "--:--"}
               </div>
-              <div className="text-xs mt-1 capitalize" style={{ color: "#475569" }}>
+              <div className="text-[11px] mt-1.5 capitalize text-muted-foreground">
                 {data.havdalahDate}
               </div>
             </div>
           </div>
 
           {data.parasha && (
-            <div className="mt-4 p-4 rounded-3xl text-center"
-              style={{
-                background: "rgba(212,175,55,0.06)",
-                border: "1px solid rgba(212,175,55,0.15)",
-              }}>
-              <div className="text-xs uppercase tracking-wider mb-1" style={{ color: "#94A3B8", letterSpacing: "1.5px" }}>
+            <div className="mt-4 p-4 rounded-xl text-center border border-primary/12"
+              style={{ background: "hsl(var(--gold) / 0.04)" }}>
+              <div className="text-[10px] uppercase tracking-[2px] mb-1 text-muted-foreground font-semibold">
                 Paracha de la semaine
               </div>
-              <div className="font-hebrew text-xl font-bold" style={{ color: "#1E293B" }}>
+              <div className="font-display text-lg font-bold text-foreground">
                 {data.parasha}
               </div>
               {data.parashaHebrew && (
-                <div className="font-hebrew text-lg mt-1" style={{ color: "#D4AF37", direction: "rtl", opacity: 0.8 }}>
+                <div className="font-hebrew text-base mt-1 text-primary/70" style={{ direction: "rtl" }}>
                   {data.parashaHebrew}
                 </div>
               )}
@@ -85,7 +77,7 @@ const ShabbatWidget = () => {
           )}
         </>
       ) : (
-        <p className="mt-4 text-sm" style={{ color: "#94A3B8" }}>Impossible de charger les horaires</p>
+        <p className="mt-4 text-sm text-muted-foreground">Impossible de charger les horaires</p>
       )}
     </motion.div>
   );

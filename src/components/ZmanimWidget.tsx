@@ -15,47 +15,42 @@ const ZmanimWidget = () => {
 
   return (
     <motion.div
-      className="rounded-3xl bg-white p-6 mb-4"
-      style={{
-        border: "1px solid rgba(0,0,0,0.06)",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)",
-      }}
+      className="rounded-2xl bg-card p-6 mb-4 border border-border"
+      style={{ boxShadow: "var(--shadow-card)" }}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: 0.1 }}
     >
-      <h3 className="font-hebrew text-lg font-semibold flex items-center gap-2" style={{ color: "#1E293B" }}>
+      <h3 className="font-display text-base font-bold flex items-center gap-2 text-foreground">
         ⏰ Zmanim du jour
       </h3>
-      <p className="text-sm mt-1 capitalize" style={{ color: "#475569" }}>{city.name}</p>
+      <p className="text-xs mt-1 capitalize text-muted-foreground">{city.name}</p>
 
       {loading ? (
         <div className="mt-5 space-y-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-12 rounded-lg animate-pulse" style={{ background: "#F1F5F9" }} />
+            <div key={i} className="h-12 rounded-lg animate-pulse bg-muted" />
           ))}
         </div>
       ) : (
-        <div className="mt-5 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.06)" }}>
+        <div className="mt-5 rounded-xl overflow-hidden border border-border">
           {zmanim.map((z, i) => (
             <div
               key={z.label}
-              className="flex items-center gap-3.5 py-3 px-4 transition-colors duration-200"
+              className="flex items-center gap-3.5 py-3 px-4 transition-colors duration-150 hover:bg-muted/50"
               style={{
-                borderBottom: i !== zmanim.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
+                borderBottom: i !== zmanim.length - 1 ? "1px solid hsl(var(--border))" : "none",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(212, 168, 67, 0.04)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              <span className="text-lg font-bold font-hebrew" style={{ color: "#B8860B", minWidth: "54px" }}>
+              <span className="text-base font-extrabold font-display text-primary" style={{ minWidth: "54px" }}>
                 {z.time}
               </span>
               <div className="flex-1">
-                <span className="text-sm font-medium" style={{ color: "#1E293B" }}>
+                <span className="text-sm font-semibold text-foreground">
                   {z.icon} {z.label}
                 </span>
-                <p className="text-xs mt-0.5" style={{ color: "#94A3B8" }}>{z.description}</p>
+                <p className="text-[11px] mt-0.5 text-muted-foreground">{z.description}</p>
               </div>
             </div>
           ))}
