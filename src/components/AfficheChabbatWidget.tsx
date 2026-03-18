@@ -118,7 +118,7 @@ const AfficheChabbatWidget = () => {
 
   const shareWhatsApp = async () => {
     if (!canvasRef.current) return;
-    const text = `🕯️ Chabbat Chalom !\n\n🏛️ ${synagogueName}\n⏰ Allumage : ${candleTime}\n🌙 Havdala : ${havdalaTime}\n📖 Paracha : ${parasha}`;
+    const text = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: null });
