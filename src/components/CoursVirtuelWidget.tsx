@@ -76,7 +76,7 @@ const CoursVirtuelWidget = () => {
           const file = new File([blob], "cours.png", { type: "image/png" });
           await navigator.share({ files: [file], title: selectedCours?.title || "Cours", text });
         } else {
-          window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
         }
       }, "image/png");
     } catch {
