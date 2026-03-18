@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface CoursVirtuel {
   id: string;
