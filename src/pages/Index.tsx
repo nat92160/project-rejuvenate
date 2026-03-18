@@ -1,16 +1,38 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import HeroSection from "@/components/HeroSection";
+import DateHeader from "@/components/DateHeader";
+import CountdownWidget from "@/components/CountdownWidget";
+import ShabbatWidget from "@/components/ShabbatWidget";
+import ZmanimWidget from "@/components/ZmanimWidget";
+import HolidaysWidget from "@/components/HolidaysWidget";
+import HalakhaWidget from "@/components/HalakhaWidget";
+import BottomNav from "@/components/BottomNav";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const [showDashboard, setShowDashboard] = useState(false);
+
+  if (!showDashboard) {
+    return (
+      <div className="min-h-screen">
+        <HeroSection onContinue={() => setShowDashboard(true)} />
+        <BottomNav />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="min-h-screen pb-20">
+      <DateHeader />
+      <div className="max-w-lg mx-auto px-4 space-y-6">
+        <CountdownWidget />
+        <HalakhaWidget />
+        <ShabbatWidget />
+        <ZmanimWidget />
+        <HolidaysWidget />
+      </div>
+      <BottomNav />
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
