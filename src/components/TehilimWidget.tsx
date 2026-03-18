@@ -99,9 +99,12 @@ const TehilimWidget = () => {
           <motion.div key="popular" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="grid grid-cols-2 gap-2.5">
               {POPULAR_PSALMS.map((p) => (
-                <div
+                <a
                   key={p.num}
-                  className="p-4 rounded-xl border border-border bg-card hover:bg-muted/30 hover:border-primary/15 transition-all cursor-pointer"
+                  href={`https://www.sefaria.org/Psalms.${p.num}?lang=he`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-4 rounded-xl border border-border bg-card hover:bg-muted/30 hover:border-primary/15 transition-all cursor-pointer no-underline"
                 >
                   <div className="flex items-center gap-2 mb-1.5">
                     <span
@@ -113,7 +116,7 @@ const TehilimWidget = () => {
                     <span className="text-xs font-bold text-foreground">{p.title}</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-snug">{p.desc}</p>
-                </div>
+                </a>
               ))}
             </div>
           </motion.div>
