@@ -116,37 +116,44 @@ const AfficheChabbatWidget = () => {
     }
   };
 
-  const shareWhatsApp = async () => {
-    if (!canvasRef.current) return;
+  const openWhatsAppLink = (url: string) => {
+    const popup = window.open(url, "_blank", "noopener,noreferrer");
+    if (popup) return;
 
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const shareWhatsApp = async () => {
     const text = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    const pendingWindow = window.open("about:blank", "_blank");
+
+    if (!canvasRef.current || !navigator.share || !navigator.canShare) {
+      openWhatsAppLink(whatsappUrl);
+      return;
+    }
 
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: null });
 
       canvas.toBlob(async (blob) => {
-        if (!blob) {
-          if (pendingWindow) pendingWindow.location.href = whatsappUrl;
-          else window.open(whatsappUrl, "_blank");
+        const file = blob ? new File([blob], "affiche-chabbat.png", { type: "image/png" }) : null;
+
+        if (file && navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], title: "Affiche de Chabbat", text });
           return;
         }
 
-        if (navigator.share && navigator.canShare?.({ files: [new File([blob], "a.png", { type: "image/png" })] })) {
-          if (pendingWindow) pendingWindow.close();
-          const file = new File([blob], "affiche-chabbat.png", { type: "image/png" });
-          await navigator.share({ files: [file], title: "Affiche de Chabbat", text });
-        } else if (pendingWindow) {
-          pendingWindow.location.href = whatsappUrl;
-        } else {
-          window.open(whatsappUrl, "_blank");
-        }
+        openWhatsAppLink(whatsappUrl);
       }, "image/png");
     } catch {
-      if (pendingWindow) pendingWindow.location.href = whatsappUrl;
-      else window.open(whatsappUrl, "_blank");
+      openWhatsAppLink(whatsappUrl);
     }
   };
 
