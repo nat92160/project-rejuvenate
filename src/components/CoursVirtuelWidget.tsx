@@ -61,7 +61,7 @@ const CoursVirtuelWidget = () => {
       ? `📚 ${selectedCours.title}\n👨‍🏫 ${selectedCours.teacher}\n📅 ${selectedCours.day} à ${selectedCours.time}\n🔗 ${selectedCours.zoomLink}`
       : "";
     if (!posterRef.current) {
-      window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
       return;
     }
     try {
@@ -69,18 +69,18 @@ const CoursVirtuelWidget = () => {
       const canvas = await html2canvas(posterRef.current, { scale: 2, useCORS: true, backgroundColor: null });
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
           return;
         }
         if (navigator.share && navigator.canShare?.({ files: [new File([blob], "a.png", { type: "image/png" })] })) {
           const file = new File([blob], "cours.png", { type: "image/png" });
           await navigator.share({ files: [file], title: selectedCours?.title || "Cours", text });
         } else {
-          window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
         }
       }, "image/png");
     } catch {
-      window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
     }
   };
 
