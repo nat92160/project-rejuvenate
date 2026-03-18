@@ -118,20 +118,21 @@ const AfficheChabbatWidget = () => {
 
   const shareWhatsApp = async () => {
     if (!canvasRef.current) return;
+    const text = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: null });
       canvas.toBlob(async (blob) => {
         if (!blob) return;
-        if (navigator.share) {
+        if (navigator.share && navigator.canShare?.({ files: [new File([blob], "a.png", { type: "image/png" })] })) {
           const file = new File([blob], "affiche-chabbat.png", { type: "image/png" });
-          await navigator.share({ files: [file], title: "Affiche de Chabbat" });
+          await navigator.share({ files: [file], title: "Affiche de Chabbat", text });
         } else {
-          window.open(`https://wa.me/?text=${encodeURIComponent("Chabbat Chalom ! 🕯️")}`);
+          window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
         }
       }, "image/png");
     } catch {
-      window.open(`https://wa.me/?text=${encodeURIComponent("Chabbat Chalom ! 🕯️")}`);
+      window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     }
   };
 
