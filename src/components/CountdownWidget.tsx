@@ -41,20 +41,38 @@ const CountdownWidget = () => {
 
   return (
     <motion.div
-      className="rounded-2xl p-6 text-center"
-      style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+      className="text-center p-4 rounded-3xl mb-4"
+      style={{
+        background: "linear-gradient(135deg, rgba(184, 134, 11, 0.06), rgba(212, 168, 67, 0.03))",
+        border: "1px solid rgba(212, 168, 67, 0.12)",
+      }}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
     >
-      <p className="text-sm font-semibold text-accent-foreground/80">Temps avant Chabbat</p>
-      <div className="flex justify-center gap-4 mt-4">
+      <div className="text-xs uppercase tracking-[2px] mb-1" style={{ color: "#94A3B8" }}>
+        Temps avant Chabbat
+      </div>
+      <div className="font-hebrew text-base mb-2" style={{ color: "#B8860B" }}>
+        Prochain Chabbat
+      </div>
+      <div className="flex justify-center gap-3">
         {blocks.map((b) => (
           <div key={b.label} className="flex flex-col items-center">
-            <span className="text-3xl md:text-4xl font-serif font-bold text-accent-foreground tabular-nums">
+            <div
+              className="text-2xl font-bold font-hebrew tabular-nums px-3 py-2 rounded-xl"
+              style={{
+                color: "#B8860B",
+                background: "rgba(212, 168, 67, 0.08)",
+                border: "1px solid rgba(212, 168, 67, 0.15)",
+                minWidth: "52px",
+              }}
+            >
               {String(b.value).padStart(2, "0")}
+            </div>
+            <span className="text-[10px] uppercase tracking-wider mt-1" style={{ color: "#94A3B8" }}>
+              {b.label}
             </span>
-            <span className="text-xs text-accent-foreground/70 mt-1">{b.label}</span>
           </div>
         ))}
       </div>
