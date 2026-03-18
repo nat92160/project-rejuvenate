@@ -102,18 +102,38 @@ const AfficheChabbatWidget = () => {
   const f = fontConfig[font];
   const cornerBg = cornerSvg(t.ornamentColor);
 
-  const handleExport = async () => {
-    if (!canvasRef.current) return;
+  const generatePosterBlob = async () => {
+    if (!canvasRef.current) return null;
+
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: null });
-      const link = document.createElement("a");
-      link.download = `affiche-chabbat-${city.name}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+
+      return await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), "image/png");
+      });
     } catch {
-      alert("Export non disponible. Faites une capture d'écran.");
+      return null;
     }
+  };
+
+  const downloadPosterBlob = (blob: Blob, filename: string) => {
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = objectUrl;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  };
+
+  const handleExport = async () => {
+    const blob = await generatePosterBlob();
+    if (!blob) {
+      alert("Export non disponible. Faites une capture d'écran.");
+      return;
+    }
+
+    downloadPosterBlob(blob, `affiche-chabbat-${city.name}.png`);
   };
 
   const openWhatsAppLink = (url: string) => {
