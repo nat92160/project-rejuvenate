@@ -6,6 +6,7 @@ import RefouaChelemaWidget from "./RefouaChelemaWidget";
 import MinyanLiveWidget from "./MinyanLiveWidget";
 import EvenementsWidget from "./EvenementsWidget";
 import CoursZoomWidget from "./CoursZoomWidget";
+import CoursVirtuelWidget from "./CoursVirtuelWidget";
 
 const features = [
   { id: "affiche", icon: "📋", title: "Affiche Chabbat" },
@@ -13,7 +14,8 @@ const features = [
   { id: "refoua", icon: "🙏", title: "Refoua Chelema" },
   { id: "minyan", icon: "👥", title: "Minyan Live" },
   { id: "evenements", icon: "📅", title: "Événements" },
-  { id: "cours", icon: "🎥", title: "Cours Zoom" },
+  { id: "cours", icon: "📚", title: "Cours Zoom" },
+  { id: "coursvirtuel", icon: "🎥", title: "Cours Virtuel" },
 ];
 
 interface PresidentDashboardProps {
