@@ -260,20 +260,29 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
   }, [chain.id, fetchClaims]);
 
   const claimGroup = async (group: { start: number; end: number }) => {
-    if (!user) return;
+    if (!user) {
+      toast.error("Connectez-vous pour prendre un groupe de psaumes");
+      return;
+    }
     const { data: profile } = await supabase
       .from("profiles")
       .select("display_name")
       .eq("user_id", user.id)
       .single();
 
-    await supabase.from("tehilim_claims").insert({
+    const { error } = await supabase.from("tehilim_claims").insert({
       chain_id: chain.id,
       user_id: user.id,
       display_name: profile?.display_name || user.email || "Anonyme",
       chapter_start: group.start,
       chapter_end: group.end,
     });
+    if (error) {
+      toast.error("Erreur lors de la réservation");
+      console.error("Claim error:", error);
+    } else {
+      toast.success(`✅ Chapitres ${group.start}-${group.end} réservés !`);
+    }
   };
 
   const toggleComplete = async (claim: Claim) => {
