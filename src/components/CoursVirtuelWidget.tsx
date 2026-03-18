@@ -69,7 +69,7 @@ const CoursVirtuelWidget = () => {
       const canvas = await html2canvas(posterRef.current, { scale: 2, useCORS: true, backgroundColor: null });
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
           return;
         }
         if (navigator.share && navigator.canShare?.({ files: [new File([blob], "a.png", { type: "image/png" })] })) {
