@@ -44,6 +44,83 @@ export type Database = {
         }
         Relationships: []
       }
+      tehilim_chains: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          creator_id: string
+          dedication: string | null
+          dedication_type: string | null
+          id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          creator_id: string
+          dedication?: string | null
+          dedication_type?: string | null
+          id?: string
+          status?: string
+          title?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          creator_id?: string
+          dedication?: string | null
+          dedication_type?: string | null
+          id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      tehilim_claims: {
+        Row: {
+          chain_id: string
+          chapter_end: number
+          chapter_start: number
+          claimed_at: string
+          completed: boolean
+          completed_at: string | null
+          display_name: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          chain_id: string
+          chapter_end: number
+          chapter_start: number
+          claimed_at?: string
+          completed?: boolean
+          completed_at?: string | null
+          display_name: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          chain_id?: string
+          chapter_end?: number
+          chapter_start?: number
+          claimed_at?: string
+          completed?: boolean
+          completed_at?: string | null
+          display_name?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tehilim_claims_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "tehilim_chains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
