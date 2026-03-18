@@ -6,8 +6,10 @@ const menuItems = [
   { id: "fetes", icon: "📅", label: "Fêtes & Jeûnes" },
   { id: "roshhodesh", icon: "🌙", label: "Roch Hodech" },
   { id: "shabbatspec", icon: "✨", label: "Chabbatot spéciaux" },
+  { id: "mariages", icon: "💍", label: "Mariages" },
   { id: "convertisseur", icon: "🔄", label: "Convertisseur" },
   { id: "mizrah", icon: "🧭", label: "Mizra'h" },
+  { id: "reveil", icon: "⏰", label: "Réveil" },
   { id: "synagogue", icon: "🏛️", label: "Ma Synagogue" },
   { id: "communaute", icon: "👥", label: "Communauté" },
 ];

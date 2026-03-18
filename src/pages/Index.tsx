@@ -16,6 +16,8 @@ import TehilimWidget from "@/components/TehilimWidget";
 import DateConverterWidget from "@/components/DateConverterWidget";
 import MizrahCompass from "@/components/MizrahCompass";
 import RoshHodeshWidget from "@/components/RoshHodeshWidget";
+import MariagesWidget from "@/components/MariagesWidget";
+import AlarmWidget from "@/components/AlarmWidget";
 import PresidentDashboard from "@/components/PresidentDashboard";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import BottomNav from "@/components/BottomNav";
@@ -85,6 +87,10 @@ const IndexContent = () => {
         return <MizrahCompass />;
       case "roshhodesh":
         return <RoshHodeshWidget />;
+      case "mariages":
+        return <MariagesWidget />;
+      case "reveil":
+        return <AlarmWidget />;
       case "shabbatspec":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
