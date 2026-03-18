@@ -118,21 +118,35 @@ const AfficheChabbatWidget = () => {
 
   const shareWhatsApp = async () => {
     if (!canvasRef.current) return;
+
     const text = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    const pendingWindow = window.open("about:blank", "_blank");
+
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: null });
+
       canvas.toBlob(async (blob) => {
-        if (!blob) return;
+        if (!blob) {
+          if (pendingWindow) pendingWindow.location.href = whatsappUrl;
+          else window.open(whatsappUrl, "_blank");
+          return;
+        }
+
         if (navigator.share && navigator.canShare?.({ files: [new File([blob], "a.png", { type: "image/png" })] })) {
+          if (pendingWindow) pendingWindow.close();
           const file = new File([blob], "affiche-chabbat.png", { type: "image/png" });
           await navigator.share({ files: [file], title: "Affiche de Chabbat", text });
+        } else if (pendingWindow) {
+          pendingWindow.location.href = whatsappUrl;
         } else {
-          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+          window.open(whatsappUrl, "_blank");
         }
       }, "image/png");
     } catch {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+      if (pendingWindow) pendingWindow.location.href = whatsappUrl;
+      else window.open(whatsappUrl, "_blank");
     }
   };
 
