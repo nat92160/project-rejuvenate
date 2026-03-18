@@ -61,7 +61,7 @@ const CoursVirtuelWidget = () => {
       ? `📚 ${selectedCours.title}\n👨‍🏫 ${selectedCours.teacher}\n📅 ${selectedCours.day} à ${selectedCours.time}\n🔗 ${selectedCours.zoomLink}`
       : "";
     if (!posterRef.current) {
-      window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
       return;
     }
     try {
