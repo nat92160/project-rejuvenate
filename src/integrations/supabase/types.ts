@@ -14,6 +14,176 @@ export type Database = {
   }
   public: {
     Tables: {
+      annonces: {
+        Row: {
+          content: string
+          created_at: string
+          creator_id: string
+          id: string
+          priority: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          creator_id: string
+          id?: string
+          priority?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          creator_id?: string
+          id?: string
+          priority?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cours_zoom: {
+        Row: {
+          course_time: string
+          created_at: string
+          creator_id: string
+          day_of_week: string
+          description: string
+          id: string
+          rav: string
+          title: string
+          zoom_link: string
+        }
+        Insert: {
+          course_time: string
+          created_at?: string
+          creator_id: string
+          day_of_week: string
+          description?: string
+          id?: string
+          rav?: string
+          title: string
+          zoom_link?: string
+        }
+        Update: {
+          course_time?: string
+          created_at?: string
+          creator_id?: string
+          day_of_week?: string
+          description?: string
+          id?: string
+          rav?: string
+          title?: string
+          zoom_link?: string
+        }
+        Relationships: []
+      }
+      evenements: {
+        Row: {
+          created_at: string
+          creator_id: string
+          description: string
+          event_date: string
+          event_time: string
+          event_type: string
+          id: string
+          location: string
+          title: string
+          zoom_link: string | null
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          description?: string
+          event_date: string
+          event_time: string
+          event_type?: string
+          id?: string
+          location?: string
+          title: string
+          zoom_link?: string | null
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          description?: string
+          event_date?: string
+          event_time?: string
+          event_type?: string
+          id?: string
+          location?: string
+          title?: string
+          zoom_link?: string | null
+        }
+        Relationships: []
+      }
+      minyan_registrations: {
+        Row: {
+          display_name: string
+          id: string
+          registered_at: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          display_name: string
+          id?: string
+          registered_at?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string
+          id?: string
+          registered_at?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "minyan_registrations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "minyan_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      minyan_sessions: {
+        Row: {
+          created_at: string
+          creator_id: string
+          id: string
+          office_date: string
+          office_time: string
+          office_type: string
+          synagogue_id: string | null
+          target_count: number
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          id?: string
+          office_date?: string
+          office_time: string
+          office_type?: string
+          synagogue_id?: string | null
+          target_count?: number
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          id?: string
+          office_date?: string
+          office_time?: string
+          office_type?: string
+          synagogue_id?: string | null
+          target_count?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           city: string | null
