@@ -214,6 +214,30 @@ export type Database = {
         }
         Relationships: []
       }
+      refoua_chelema: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          hebrew_name: string
+          id: string
+          mother_name: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          hebrew_name: string
+          id?: string
+          mother_name?: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          hebrew_name?: string
+          id?: string
+          mother_name?: string
+        }
+        Relationships: []
+      }
       tehilim_chains: {
         Row: {
           completed_at: string | null
