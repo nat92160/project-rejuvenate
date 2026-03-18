@@ -14,7 +14,7 @@ const Index = () => {
   if (!showDashboard) {
     return (
       <div className="min-h-screen">
-        <HeroSection />
+        <HeroSection onContinue={() => setShowDashboard(true)} />
         <BottomNav />
       </div>
     );
