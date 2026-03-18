@@ -1,25 +1,19 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CoursVirtuel {
   id: string;
   title: string;
-  teacher: string;
-  day: string;
-  time: string;
-  zoomLink: string;
+  rav: string;
+  day_of_week: string;
+  course_time: string;
+  zoom_link: string;
   description: string;
-  isLive?: boolean;
-  sponsor?: string;
+  creator_id: string;
 }
-
-const DEMO_COURS: CoursVirtuel[] = [
-  { id: "1", title: "Guémara Baba Metsia", teacher: "Rav David Cohen", day: "Lundi", time: "20:30", zoomLink: "https://zoom.us/j/123456789", description: "Étude approfondie du traité Baba Metsia", isLive: false },
-  { id: "2", title: "Halakha quotidienne", teacher: "Rav Yossef Lévy", day: "Mardi", time: "21:00", zoomLink: "https://zoom.us/j/987654321", description: "Les lois du Chabbat — chapitre par chapitre" },
-  { id: "3", title: "Paracha de la semaine", teacher: "Rav Moché Berdugo", day: "Mercredi", time: "20:00", zoomLink: "https://zoom.us/j/456789123", description: "Commentaires et enseignements sur la Paracha", sponsor: "Offert par la famille Lévy" },
-  { id: "4", title: "Moussar & Développement", teacher: "Rav Itshak Zerbib", day: "Jeudi", time: "21:30", zoomLink: "https://zoom.us/j/321654987", description: "Travail sur les Midot et le développement personnel" },
-];
 
 const dayColors: Record<string, string> = {
   "Lundi": "#3b82f6", "Mardi": "#8b5cf6", "Mercredi": "#22c55e",
@@ -28,19 +22,67 @@ const dayColors: Record<string, string> = {
 
 const CoursVirtuelWidget = () => {
   const { city } = useCity();
-  const [cours] = useState<CoursVirtuel[]>(DEMO_COURS);
+  const { user, dbRole } = useAuth();
+  const [cours, setCours] = useState<CoursVirtuel[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedCours, setSelectedCours] = useState<CoursVirtuel | null>(null);
   const [synaName] = useState("Ma Synagogue");
   const posterRef = useRef<HTMLDivElement>(null);
+  const isPresident = dbRole === "president";
 
-  // Form
+  // Form state
   const [newTitle, setNewTitle] = useState("");
   const [newTeacher, setNewTeacher] = useState("");
   const [newDay, setNewDay] = useState("Lundi");
   const [newTime, setNewTime] = useState("");
   const [newLink, setNewLink] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchCours = async () => {
+      const { data } = await supabase
+        .from("cours_zoom")
+        .select("*")
+        .order("created_at");
+      setCours((data || []) as CoursVirtuel[]);
+      setLoading(false);
+    };
+    fetchCours();
+  }, []);
+
+  const handleAdd = async () => {
+    if (!newTitle.trim() || !newLink.trim() || !user) return;
+    setSubmitting(true);
+    const { data, error } = await supabase.from("cours_zoom").insert({
+      creator_id: user.id,
+      title: newTitle.trim(),
+      rav: newTeacher.trim(),
+      day_of_week: newDay,
+      course_time: newTime || "20:00",
+      zoom_link: newLink.trim(),
+      description: newDesc.trim(),
+    }).select().single();
+
+    if (data && !error) {
+      setCours((prev) => [...prev, data as CoursVirtuel]);
+      setShowForm(false);
+      setNewTitle("");
+      setNewTeacher("");
+      setNewDay("Lundi");
+      setNewTime("");
+      setNewLink("");
+      setNewDesc("");
+    }
+    setSubmitting(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    await supabase.from("cours_zoom").delete().eq("id", id);
+    setCours((prev) => prev.filter((c) => c.id !== id));
+    if (selectedCours?.id === id) setSelectedCours(null);
+  };
 
   const handleExportPoster = async () => {
     if (!posterRef.current) return;
@@ -58,7 +100,7 @@ const CoursVirtuelWidget = () => {
 
   const shareCoursWhatsApp = async () => {
     const text = selectedCours
-      ? `📚 ${selectedCours.title}\n👨‍🏫 ${selectedCours.teacher}\n📅 ${selectedCours.day} à ${selectedCours.time}\n🔗 ${selectedCours.zoomLink}`
+      ? `📚 ${selectedCours.title}\n👨‍🏫 ${selectedCours.rav}\n📅 ${selectedCours.day_of_week} à ${selectedCours.course_time}\n🔗 ${selectedCours.zoom_link}`
       : "";
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     const pendingWindow = window.open("about:blank", "_blank");
@@ -110,11 +152,13 @@ const CoursVirtuelWidget = () => {
               Cours en ligne via Zoom • Générez des affiches à partager
             </p>
           </div>
-          <button onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
-            style={{ background: "var(--gradient-gold)" }}>
-            + Ajouter
-          </button>
+          {isPresident && (
+            <button onClick={() => setShowForm(!showForm)}
+              className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
+              style={{ background: "var(--gradient-gold)" }}>
+              + Ajouter
+            </button>
+          )}
         </div>
       </div>
 
@@ -140,9 +184,10 @@ const CoursVirtuelWidget = () => {
                 className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
               <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Description du cours" rows={2}
                 className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
-              <button className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer"
+              <button onClick={handleAdd} disabled={submitting || !newTitle.trim() || !newLink.trim()}
+                className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
                 style={{ background: "var(--gradient-gold)" }}>
-                Publier le cours
+                {submitting ? "Publication..." : "Publier le cours"}
               </button>
             </div>
           </motion.div>
@@ -170,7 +215,7 @@ const CoursVirtuelWidget = () => {
                     {selectedCours.title}
                   </div>
                   <div style={{ fontSize: "0.95rem", opacity: 0.85, marginTop: "6px", color: "#fff" }}>
-                    👨‍🏫 {selectedCours.teacher}
+                    👨‍🏫 {selectedCours.rav}
                   </div>
                   <div style={{
                     display: "inline-block", background: "rgba(212,175,55,0.25)", border: "1px solid rgba(212,175,55,0.5)",
@@ -184,8 +229,8 @@ const CoursVirtuelWidget = () => {
                 {/* Body */}
                 <div style={{ padding: "24px" }}>
                   {[
-                    { icon: "📅", label: "JOUR", value: selectedCours.day, bgColor: "#EFF6FF" },
-                    { icon: "🕐", label: "HEURE", value: selectedCours.time, bgColor: "#FFF8E1" },
+                    { icon: "📅", label: "JOUR", value: selectedCours.day_of_week, bgColor: "#EFF6FF" },
+                    { icon: "🕐", label: "HEURE", value: selectedCours.course_time?.slice(0, 5), bgColor: "#FFF8E1" },
                     { icon: "📍", label: "LIEU", value: "Zoom — En ligne", bgColor: "#F0FDF4" },
                   ].map((row) => (
                     <div key={row.label} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 0", borderBottom: "1px solid #f0f0f0" }}>
@@ -206,7 +251,7 @@ const CoursVirtuelWidget = () => {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: "0.78rem", color: "#94a3b8", textTransform: "uppercase" }}>LIEN ZOOM</div>
-                      <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#2D8CFF", wordBreak: "break-all" as const }}>{selectedCours.zoomLink}</div>
+                      <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#2D8CFF", wordBreak: "break-all" as const }}>{selectedCours.zoom_link}</div>
                     </div>
                   </div>
 
@@ -214,13 +259,6 @@ const CoursVirtuelWidget = () => {
                   <div style={{ marginTop: "16px", padding: "14px 16px", background: "#F8FAFC", borderRadius: "12px", fontSize: "0.88rem", color: "#475569", lineHeight: 1.55, borderLeft: "3px solid #b8860b" }}>
                     {selectedCours.description}
                   </div>
-
-                  {/* Sponsor */}
-                  {selectedCours.sponsor && (
-                    <div style={{ marginTop: "14px", padding: "10px 16px", background: "#FFF8E1", borderRadius: "12px", fontSize: "0.85rem", color: "#92400e", textAlign: "center", fontWeight: 500 }}>
-                      {selectedCours.sponsor}
-                    </div>
-                  )}
                 </div>
 
                 {/* Footer */}
@@ -252,56 +290,67 @@ const CoursVirtuelWidget = () => {
 
       {/* Course list */}
       {!selectedCours && (
-        <div className="space-y-3">
-          {cours.map((c, i) => {
-            const dotColor = dayColors[c.day] || "#94a3b8";
-            return (
-              <motion.div
-                key={c.id}
-                className="rounded-2xl bg-card p-5 border border-border hover:border-primary/20 transition-all cursor-pointer"
-                style={{ boxShadow: "var(--shadow-card)" }}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                onClick={() => setSelectedCours(c)}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
-                        style={{ background: `${dotColor}15`, color: dotColor }}>
-                        {c.day}
-                      </span>
-                      <span className="text-xs font-bold text-foreground">{c.time}</span>
-                      {c.isLive && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-red-500">
-                          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> EN DIRECT
+        loading ? (
+          <div className="text-center py-8 text-sm text-muted-foreground">Chargement...</div>
+        ) : cours.length === 0 ? (
+          <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
+            <p className="text-sm text-muted-foreground">Aucun cours virtuel programmé.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {cours.map((c, i) => {
+              const dotColor = dayColors[c.day_of_week] || "#94a3b8";
+              return (
+                <motion.div
+                  key={c.id}
+                  className="rounded-2xl bg-card p-5 border border-border hover:border-primary/20 transition-all cursor-pointer"
+                  style={{ boxShadow: "var(--shadow-card)" }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  onClick={() => setSelectedCours(c)}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
+                          style={{ background: `${dotColor}15`, color: dotColor }}>
+                          {c.day_of_week}
                         </span>
-                      )}
+                        <span className="text-xs font-bold text-foreground">{c.course_time?.slice(0, 5)}</span>
+                      </div>
+                      <h4 className="font-display text-sm font-bold text-foreground mt-1">{c.title}</h4>
+                      <p className="text-xs text-primary/80 font-medium mt-0.5">👨‍🏫 {c.rav}</p>
+                      <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">{c.description}</p>
                     </div>
-                    <h4 className="font-display text-sm font-bold text-foreground mt-1">{c.title}</h4>
-                    <p className="text-xs text-primary/80 font-medium mt-0.5">👨‍🏫 {c.teacher}</p>
-                    <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">{c.description}</p>
+                    <div className="flex flex-col items-center gap-2">
+                      {c.zoom_link && (
+                        <a href={c.zoom_link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                          className="w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95 no-underline"
+                          style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: "0 4px 12px rgba(45,140,255,0.3)" }}>
+                          🎥
+                        </a>
+                      )}
+                      <span className="text-[9px] text-muted-foreground font-medium">Rejoindre</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <a href={c.zoomLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95"
-                      style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: "0 4px 12px rgba(45,140,255,0.3)" }}>
-                      🎥
-                    </a>
-                    <span className="text-[9px] text-muted-foreground font-medium">Rejoindre</span>
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={(e) => { e.stopPropagation(); setSelectedCours(c); }}
+                      className="text-[10px] font-bold px-3 py-1.5 rounded-lg border border-border bg-muted text-muted-foreground cursor-pointer hover:border-primary/20">
+                      📋 Affiche
+                    </button>
+                    {isPresident && user?.id === c.creator_id && (
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }}
+                        className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border-none cursor-pointer hover:bg-destructive/20">
+                        🗑️ Supprimer
+                      </button>
+                    )}
                   </div>
-                </div>
-                <div className="flex gap-2 mt-3">
-                  <button onClick={(e) => { e.stopPropagation(); setSelectedCours(c); }}
-                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border border-border bg-muted text-muted-foreground cursor-pointer hover:border-primary/20">
-                    📋 Affiche
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )
       )}
     </motion.div>
   );
