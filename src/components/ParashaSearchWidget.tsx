@@ -24,52 +24,38 @@ const ParashaSearchWidget = () => {
 
   return (
     <motion.div
-      className="rounded-3xl bg-white p-6 mb-4"
-      style={{
-        border: "1px solid rgba(0,0,0,0.06)",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)",
-      }}
+      className="rounded-2xl bg-card p-6 mb-4 border border-border"
+      style={{ boxShadow: "var(--shadow-card)" }}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
     >
-      <h3 className="font-hebrew text-lg font-semibold flex items-center gap-2" style={{ color: "#1E293B" }}>
+      <h3 className="font-display text-base font-bold flex items-center gap-2 text-foreground">
         📅 Quelle paracha pour une date ?
       </h3>
-      <p className="text-xs mt-1 mb-3" style={{ color: "#475569" }}>Recherchez par date civile</p>
+      <p className="text-xs mt-1 mb-3 text-muted-foreground">Recherchez par date civile</p>
 
       <div className="flex items-center gap-2.5 flex-wrap">
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="px-3 py-2 rounded-[10px] text-sm"
-          style={{
-            border: "1px solid rgba(0,0,0,0.06)",
-            background: "rgba(0,0,0,0.02)",
-            color: "#1E293B",
-            fontFamily: "'Inter', sans-serif",
-          }}
+          className="px-3 py-2.5 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30"
         />
         <button
           onClick={search}
           disabled={loading}
-          className="px-5 py-2 rounded-[10px] text-sm font-semibold text-white border-none cursor-pointer transition-all disabled:opacity-50"
-          style={{
-            background: "linear-gradient(135deg, #B8860B, #D4AF37)",
-            minHeight: "40px",
-          }}
+          className="px-5 py-2.5 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-95"
+          style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
         >
           {loading ? "..." : "Rechercher"}
         </button>
       </div>
 
       {result && (
-        <div className="mt-3 p-3 rounded-xl text-center" style={{
-          background: "rgba(212,175,55,0.06)",
-          border: "1px solid rgba(212,175,55,0.15)",
-        }}>
-          <p className="font-hebrew text-lg font-semibold" style={{ color: "#1E293B" }}>{result}</p>
+        <div className="mt-3 p-4 rounded-xl text-center border border-primary/12"
+          style={{ background: "hsl(var(--gold) / 0.04)" }}>
+          <p className="font-display text-lg font-bold text-foreground">{result}</p>
         </div>
       )}
     </motion.div>
