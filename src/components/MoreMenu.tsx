@@ -17,6 +17,7 @@ const menuItems = [
   { id: "evenements", icon: "📅", label: "Événements" },
   { id: "courszoom", icon: "🎥", label: "Cours Zoom" },
   { id: "affiche", icon: "📋", label: "Affiche Chabbat" },
+  { id: "coursvirtuel", icon: "🎥", label: "Cours Virtuel" },
   { id: "communaute", icon: "👥", label: "Communauté" },
 ];
 
