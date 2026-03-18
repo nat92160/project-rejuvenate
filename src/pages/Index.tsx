@@ -87,6 +87,10 @@ const IndexContent = () => {
         return <MizrahCompass />;
       case "roshhodesh":
         return <RoshHodeshWidget />;
+      case "mariages":
+        return <MariagesWidget />;
+      case "reveil":
+        return <AlarmWidget />;
       case "shabbatspec":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
