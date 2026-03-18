@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import MoreMenu from "./MoreMenu";
 
 const tabs = [
-  { id: "dashboard", icon: "🏠", label: "Dashboard" },
-  { id: "explorer", icon: "🗺️", label: "Explorer" },
+  { id: "dashboard", icon: "🏠", label: "Accueil" },
+  { id: "zmanim", icon: "⏰", label: "Zmanim" },
   { id: "tehilim", icon: "📖", label: "Tehilim" },
-  { id: "menu", icon: "☰", label: "Menu" },
+  { id: "menu", icon: "☰", label: "Plus" },
 ];
 
 interface BottomNavProps {
@@ -49,17 +50,23 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
               }}
             >
               {isActive && (
-                <div
+                <motion.div
                   className="absolute top-0 left-1/2 -translate-x-1/2 h-[3px] rounded-b-full"
+                  layoutId="bottomNavIndicator"
                   style={{
                     width: "28px",
                     background: "linear-gradient(90deg, hsl(var(--gold)), hsl(var(--gold-matte)))",
                   }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 />
               )}
-              <span className="text-xl leading-none flex items-center justify-center h-7">
+              <motion.span
+                className="text-xl leading-none flex items-center justify-center h-7"
+                animate={{ scale: isActive ? 1.15 : 1 }}
+                transition={{ type: "spring", damping: 15 }}
+              >
                 {tab.icon}
-              </span>
+              </motion.span>
               <span
                 className="text-[10px] tracking-wide uppercase"
                 style={{
