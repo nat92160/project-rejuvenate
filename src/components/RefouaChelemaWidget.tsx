@@ -73,8 +73,14 @@ const RefouaChelemaWidget = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("refoua_chelema").delete().eq("id", id);
-    setPatients((prev) => prev.filter((p) => p.id !== id));
+    if (!confirm("Retirer ce nom de la liste ?")) return;
+    const { error } = await supabase.from("refoua_chelema").delete().eq("id", id);
+    if (error) {
+      toast.error("Erreur lors de la suppression");
+    } else {
+      setPatients((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Nom retiré de la liste");
+    }
   };
 
   const formatDate = (d: string) =>

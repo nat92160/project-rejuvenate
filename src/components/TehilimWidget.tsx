@@ -307,6 +307,32 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
     zivougue: "💍 Zivougué",
   };
 
+  const shareUrl = `${window.location.origin}/?tehilim=${chain.id}`;
+
+  const shareWhatsApp = () => {
+    const text = `📖 Chaîne de Tehilim : ${chain.title}${chain.dedication ? `\n🙏 ${chain.dedication}` : ""}\n\n${totalClaimed}/${CHAIN_GROUPS.length} réservés • ${totalCompleted} terminés\n\nChoisissez un groupe de psaumes :\n${shareUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const shareSMS = () => {
+    const text = `Chaîne de Tehilim : ${chain.title} - ${shareUrl}`;
+    window.open(`sms:?body=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const shareEmail = () => {
+    const subject = `Chaîne de Tehilim : ${chain.title}`;
+    const body = `Bonjour,\n\nUne chaîne de Tehilim a été lancée :\n${chain.title}${chain.dedication ? `\n${chain.dedication}` : ""}\n\nChoisissez un groupe de psaumes en cliquant ici :\n${shareUrl}\n\nMerci !`;
+    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_blank");
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      toast.success("Lien copié !");
+    }).catch(() => {
+      toast.error("Impossible de copier le lien");
+    });
+  };
+
   return (
     <div>
       <button onClick={onBack} className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline mb-3">
@@ -336,6 +362,27 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
               }}
             />
           </div>
+        </div>
+
+        {/* Share buttons */}
+        <div className="flex gap-2 mt-3 flex-wrap">
+          <button onClick={shareWhatsApp}
+            className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border-none text-white"
+            style={{ background: "#25d366" }}>
+            📲 WhatsApp
+          </button>
+          <button onClick={copyLink}
+            className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border border-border bg-muted text-muted-foreground hover:border-primary/20">
+            📋 Copier le lien
+          </button>
+          <button onClick={shareSMS}
+            className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border border-border bg-muted text-muted-foreground hover:border-primary/20">
+            💬 SMS
+          </button>
+          <button onClick={shareEmail}
+            className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border border-border bg-muted text-muted-foreground hover:border-primary/20">
+            ✉️ Email
+          </button>
         </div>
       </div>
 

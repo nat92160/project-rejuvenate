@@ -5,6 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+// ─── Constants ────────────────────────────────────────
+const ZOOM_PROXY_URL = "https://chabbat-chalom-zoom.onrender.com";
+const ZOOM_API_SECRET = "chabbat-chalom-zoom-2024";
+
 interface CoursVirtuel {
   id: string;
   title: string;
@@ -17,10 +21,207 @@ interface CoursVirtuel {
 }
 
 const dayColors: Record<string, string> = {
-  "Lundi": "#3b82f6", "Mardi": "#8b5cf6", "Mercredi": "#22c55e",
-  "Jeudi": "#f97316", "Vendredi": "#ef4444", "Dimanche": "#eab308",
+  Lundi: "#3b82f6", Mardi: "#8b5cf6", Mercredi: "#22c55e",
+  Jeudi: "#f97316", Vendredi: "#ef4444", Dimanche: "#eab308",
 };
 
+// ─── Zoom Meeting Creator ─────────────────────────────
+const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: string, topic: string) => void }) => {
+  const [title, setTitle] = useState("");
+  const [datetime, setDatetime] = useState("");
+  const [duration, setDuration] = useState("60");
+  const [passcode, setPasscode] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [zoomConnected, setZoomConnected] = useState(false);
+  const [checkingZoom, setCheckingZoom] = useState(true);
+  const { user } = useAuth();
+
+  // Check Zoom connection (via localStorage flag set after OAuth return)
+  useEffect(() => {
+    const connected = localStorage.getItem("zoom_connected") === "true";
+    setZoomConnected(connected);
+    setCheckingZoom(false);
+
+    // Handle OAuth return
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("zoom_connected") === "true") {
+      const accessToken = params.get("zoom_access_token");
+      const refreshToken = params.get("zoom_refresh_token");
+      if (accessToken && refreshToken) {
+        localStorage.setItem("zoom_connected", "true");
+        localStorage.setItem("zoom_access_token", accessToken);
+        localStorage.setItem("zoom_refresh_token", refreshToken);
+        setZoomConnected(true);
+        toast.success("Compte Zoom connecté !");
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    if (params.get("zoom_error")) {
+      toast.error("Erreur connexion Zoom: " + params.get("zoom_error"));
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  const connectZoom = () => {
+    // Redirect to Render proxy OAuth flow
+    const synaId = user?.id || "default";
+    window.location.href = `${ZOOM_PROXY_URL}/auth/zoom?synaId=${encodeURIComponent(synaId)}`;
+  };
+
+  const disconnectZoom = () => {
+    if (!confirm("Déconnecter votre compte Zoom ?")) return;
+    localStorage.removeItem("zoom_connected");
+    localStorage.removeItem("zoom_access_token");
+    localStorage.removeItem("zoom_refresh_token");
+    setZoomConnected(false);
+    toast.success("Compte Zoom déconnecté");
+  };
+
+  const createMeeting = async () => {
+    const accessToken = localStorage.getItem("zoom_access_token");
+    const refreshToken = localStorage.getItem("zoom_refresh_token");
+    if (!accessToken) {
+      toast.error("Connectez d'abord votre compte Zoom");
+      return;
+    }
+
+    setCreating(true);
+    const isScheduled = !!datetime;
+
+    try {
+      const payload: Record<string, unknown> = {
+        title: title.trim() || "Cours en direct",
+        duration: parseInt(duration),
+        access_token: accessToken,
+      };
+      if (isScheduled) {
+        payload.start_time = datetime;
+        payload.timezone = "Europe/Paris";
+      }
+      if (passcode) payload.passcode = passcode;
+
+      let response = await fetch(`${ZOOM_PROXY_URL}/create-meeting`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Secret": ZOOM_API_SECRET },
+        body: JSON.stringify(payload),
+      });
+      let result = await response.json();
+
+      // Token expired → refresh
+      if (response.status === 401 && result.needRefresh && refreshToken) {
+        const refreshResp = await fetch(`${ZOOM_PROXY_URL}/refresh-token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-API-Secret": ZOOM_API_SECRET },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        const refreshResult = await refreshResp.json();
+        if (refreshResp.ok && refreshResult.success) {
+          localStorage.setItem("zoom_access_token", refreshResult.access_token);
+          localStorage.setItem("zoom_refresh_token", refreshResult.refresh_token);
+          payload.access_token = refreshResult.access_token;
+          response = await fetch(`${ZOOM_PROXY_URL}/create-meeting`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-API-Secret": ZOOM_API_SECRET },
+            body: JSON.stringify(payload),
+          });
+          result = await response.json();
+        } else {
+          localStorage.removeItem("zoom_connected");
+          localStorage.removeItem("zoom_access_token");
+          localStorage.removeItem("zoom_refresh_token");
+          setZoomConnected(false);
+          toast.error("Session Zoom expirée. Reconnectez votre compte.");
+          setCreating(false);
+          return;
+        }
+      }
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Erreur de création Zoom");
+      }
+
+      onMeetingCreated(result.joinUrl, result.topic || title.trim());
+
+      if (isScheduled) {
+        const dateStr = new Date(datetime).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" });
+        toast.success(`Cours programmé pour le ${dateStr}`);
+      } else {
+        toast.success("Cours en direct lancé !");
+        if (result.startUrl) window.open(result.startUrl, "_blank");
+      }
+
+      setTitle("");
+      setDatetime("");
+      setPasscode("");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Erreur inconnue";
+      toast.error("Erreur Zoom: " + msg);
+    }
+    setCreating(false);
+  };
+
+  if (checkingZoom) return null;
+
+  if (!zoomConnected) {
+    return (
+      <div className="rounded-2xl bg-card p-6 mb-4 border border-border text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+        <span className="text-4xl">🎥</span>
+        <h4 className="font-display text-sm font-bold mt-3 text-foreground">Connecter votre compte Zoom</h4>
+        <p className="text-xs text-muted-foreground mt-2 mb-4">
+          Connectez votre compte Zoom pour créer des cours en direct ou programmés.
+        </p>
+        <button onClick={connectZoom}
+          className="px-6 py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer transition-all hover:-translate-y-0.5"
+          style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: "0 4px 12px rgba(45,140,255,0.3)" }}>
+          🔗 Connecter Zoom
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl bg-card p-5 mb-4 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-green-500" />
+          <span className="text-xs font-bold text-green-600">Zoom connecté</span>
+        </div>
+        <button onClick={disconnectZoom}
+          className="text-[10px] text-destructive bg-transparent border-none cursor-pointer hover:underline">
+          Déconnecter
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre du cours"
+          className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+        <input type="datetime-local" value={datetime} onChange={(e) => setDatetime(e.target.value)}
+          className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+        <p className="text-[10px] text-muted-foreground -mt-1">
+          Laissez vide pour lancer en direct immédiatement
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <select value={duration} onChange={(e) => setDuration(e.target.value)}
+            className="w-full px-3 py-3 rounded-xl bg-background border border-border text-foreground text-sm">
+            <option value="30">30 min</option>
+            <option value="60">1 heure</option>
+            <option value="90">1h30</option>
+            <option value="120">2 heures</option>
+          </select>
+          <input value={passcode} onChange={(e) => setPasscode(e.target.value)} placeholder="Code (optionnel)"
+            className="w-full px-3 py-3 rounded-xl bg-background border border-border text-foreground text-sm" />
+        </div>
+        <button onClick={createMeeting} disabled={creating}
+          className="w-full py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer disabled:opacity-50 transition-all"
+          style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: "0 4px 12px rgba(45,140,255,0.3)" }}>
+          {creating ? "⏳ Création..." : datetime ? "📅 Programmer le cours" : "🎥 Lancer le cours en direct"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─── Main Widget ──────────────────────────────────────
 const CoursVirtuelWidget = () => {
   const { city } = useCity();
   const { user, dbRole } = useAuth();
@@ -79,21 +280,27 @@ const CoursVirtuelWidget = () => {
     } else if (data) {
       setCours((prev) => [...prev, data as CoursVirtuel]);
       setShowForm(false);
-      setNewTitle("");
-      setNewTeacher("");
-      setNewDay("Lundi");
-      setNewTime("");
-      setNewLink("");
-      setNewDesc("");
+      setNewTitle(""); setNewTeacher(""); setNewDay("Lundi"); setNewTime(""); setNewLink(""); setNewDesc("");
       toast.success("✅ Cours publié !");
     }
     setSubmitting(false);
   };
 
+  const handleMeetingCreated = (joinUrl: string, topic: string) => {
+    setNewLink(joinUrl);
+    setNewTitle(topic);
+  };
+
   const handleDelete = async (id: string) => {
-    await supabase.from("cours_zoom").delete().eq("id", id);
-    setCours((prev) => prev.filter((c) => c.id !== id));
-    if (selectedCours?.id === id) setSelectedCours(null);
+    if (!confirm("Supprimer ce cours ?")) return;
+    const { error } = await supabase.from("cours_zoom").delete().eq("id", id);
+    if (error) {
+      toast.error("Erreur lors de la suppression");
+    } else {
+      setCours((prev) => prev.filter((c) => c.id !== id));
+      if (selectedCours?.id === id) setSelectedCours(null);
+      toast.success("Cours supprimé");
+    }
   };
 
   const handleExportPoster = async () => {
@@ -105,49 +312,36 @@ const CoursVirtuelWidget = () => {
       link.download = `cours-${selectedCours?.title || "virtuel"}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
+      toast.success("Image téléchargée !");
     } catch {
-      alert("Export non disponible.");
+      toast.error("Export non disponible.");
     }
   };
 
   const shareCoursWhatsApp = async () => {
     const text = selectedCours
-      ? `📚 ${selectedCours.title}\n👨‍🏫 ${selectedCours.rav}\n📅 ${selectedCours.day_of_week} à ${selectedCours.course_time}\n🔗 ${selectedCours.zoom_link}`
+      ? `📚 ${selectedCours.title}\n👨‍🏫 ${selectedCours.rav}\n📅 ${selectedCours.day_of_week} à ${selectedCours.course_time}\n🔗 ${selectedCours.zoom_link}\n\n✡️ chabbat-chalom.com`
       : "";
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    const pendingWindow = window.open("about:blank", "_blank");
 
+    // Try Web Share API first (mobile)
     if (!posterRef.current) {
-      if (pendingWindow) pendingWindow.location.href = whatsappUrl;
-      else window.open(whatsappUrl, "_blank");
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
       return;
     }
 
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(posterRef.current, { scale: 2, useCORS: true, backgroundColor: null });
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          if (pendingWindow) pendingWindow.location.href = whatsappUrl;
-          else window.open(whatsappUrl, "_blank");
-          return;
-        }
+      if (blob && navigator.share && navigator.canShare?.({ files: [new File([blob], "a.png", { type: "image/png" })] })) {
+        const file = new File([blob], "cours.png", { type: "image/png" });
+        await navigator.share({ files: [file], title: selectedCours?.title || "Cours", text });
+        return;
+      }
+    } catch { /* fallback */ }
 
-        if (navigator.share && navigator.canShare?.({ files: [new File([blob], "a.png", { type: "image/png" })] })) {
-          if (pendingWindow) pendingWindow.close();
-          const file = new File([blob], "cours.png", { type: "image/png" });
-          await navigator.share({ files: [file], title: selectedCours?.title || "Cours", text });
-        } else if (pendingWindow) {
-          pendingWindow.location.href = whatsappUrl;
-        } else {
-          window.open(whatsappUrl, "_blank");
-        }
-      }, "image/png");
-    } catch {
-      if (pendingWindow) pendingWindow.location.href = whatsappUrl;
-      else window.open(whatsappUrl, "_blank");
-    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   return (
@@ -173,6 +367,9 @@ const CoursVirtuelWidget = () => {
           )}
         </div>
       </div>
+
+      {/* Zoom integration (president only) */}
+      {isPresident && <ZoomMeetingCreator onMeetingCreated={handleMeetingCreated} />}
 
       {/* Add form */}
       <AnimatePresence>
@@ -218,7 +415,6 @@ const CoursVirtuelWidget = () => {
             {/* Course poster */}
             <div className="rounded-2xl overflow-hidden mb-4" style={{ padding: "8px", background: "hsl(var(--muted))" }}>
               <div ref={posterRef} style={{ borderRadius: "18px", overflow: "hidden", background: "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", fontFamily: "'Inter', sans-serif", maxWidth: "480px", margin: "0 auto" }}>
-                {/* Header gradient */}
                 <div style={{ background: "linear-gradient(135deg, #1E293B, #334155)", padding: "28px 24px 22px", textAlign: "center" }}>
                   <div style={{ fontSize: "0.85rem", opacity: 0.7, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "10px", color: "#fff", fontFamily: "'Frank Ruhl Libre', serif" }}>
                     {synaName}
@@ -238,7 +434,6 @@ const CoursVirtuelWidget = () => {
                   </div>
                 </div>
 
-                {/* Body */}
                 <div style={{ padding: "24px" }}>
                   {[
                     { icon: "📅", label: "JOUR", value: selectedCours.day_of_week, bgColor: "#EFF6FF" },
@@ -256,7 +451,6 @@ const CoursVirtuelWidget = () => {
                     </div>
                   ))}
 
-                  {/* Zoom link */}
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 0" }}>
                     <div style={{ width: "40px", height: "40px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", background: "#EFF6FF" }}>
                       🎥
@@ -267,13 +461,13 @@ const CoursVirtuelWidget = () => {
                     </div>
                   </div>
 
-                  {/* Description */}
-                  <div style={{ marginTop: "16px", padding: "14px 16px", background: "#F8FAFC", borderRadius: "12px", fontSize: "0.88rem", color: "#475569", lineHeight: 1.55, borderLeft: "3px solid #b8860b" }}>
-                    {selectedCours.description}
-                  </div>
+                  {selectedCours.description && (
+                    <div style={{ marginTop: "16px", padding: "14px 16px", background: "#F8FAFC", borderRadius: "12px", fontSize: "0.88rem", color: "#475569", lineHeight: 1.55, borderLeft: "3px solid #b8860b" }}>
+                      {selectedCours.description}
+                    </div>
+                  )}
                 </div>
 
-                {/* Footer */}
                 <div style={{ textAlign: "center", padding: "14px 24px 18px", borderTop: "1px solid #f0f0f0" }}>
                   <div style={{ fontSize: "0.78rem", color: "#94a3b8" }}>{synaName} • {city.name}</div>
                   <div style={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: "0.7rem", color: "#b8860b", marginTop: "4px", letterSpacing: "1px" }}>
