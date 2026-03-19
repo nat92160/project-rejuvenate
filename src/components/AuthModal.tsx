@@ -62,6 +62,7 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
         setError(error.message);
       } else {
         setPassword("");
+        setEmail("");
         onClose();
       }
     }

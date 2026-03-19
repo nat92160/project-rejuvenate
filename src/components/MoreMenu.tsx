@@ -73,7 +73,7 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
                     <span className="text-sm">👤</span>
                     <span className="text-xs text-muted-foreground truncate">{user.user_metadata?.full_name || user.email?.split("@")[0] || "Compte"}</span>
                   </div>
-                  <button onClick={() => { void signOut(); onClose(); }} className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer bg-destructive/10 text-destructive border-none shrink-0">🔓 Déconnexion</button>
+                  <button type="button" onClick={(e) => { e.preventDefault(); void signOut(); }} className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer bg-destructive/10 text-destructive border-none shrink-0">🔓 Déconnexion</button>
                 </div>
                 <div className="rounded-xl border border-border bg-muted/50 p-3">
                   <div className="flex items-center justify-between gap-3">

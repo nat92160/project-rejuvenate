@@ -144,14 +144,14 @@ const MinyanLiveWidget = () => {
     toast.success("Session supprimée"); fetchSessions();
   };
 
-  const handleShareWhatsApp = () => {
-    if (!currentSession || !selectedSession) return;
+  const whatsappShareUrl = (() => {
+    if (!currentSession || !selectedSession) return "";
     const label = OFFICE_LABELS[currentSession.office_type] || currentSession.office_type;
     const joinUrl = `${window.location.origin}/minyan/${selectedSession}`;
     const dateStr = new Date(currentSession.office_date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
     const text = `🕍 Minyan ${label}\n📅 ${dateStr} à ${currentSession.office_time?.slice(0, 5)}\n👥 ${count}/${target}\n${isFull ? "✅ Minyan atteint !" : `⚠️ Encore ${needed} personne(s)`}\n\n📲 ${joinUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-  };
+    return `https://wa.me/?text=${encodeURIComponent(text)}`;
+  })();
 
   if (loading) return <div className="rounded-2xl bg-card p-8 text-center border border-border"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" /></div>;
 
@@ -239,13 +239,13 @@ const MinyanLiveWidget = () => {
             ) : (
               <>
                 <button onClick={handleRegister} className="py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>➕ Je suis là</button>
-                <button onClick={handleShareWhatsApp} className="py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer" style={{ background: "#25d366" }}>📲 WhatsApp</button>
+                <a href={whatsappShareUrl} target="_blank" rel="noopener noreferrer" className="py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer text-center no-underline inline-block" style={{ background: "#25d366" }}>📲 WhatsApp</a>
               </>
             )}
           </div>
 
           {isRegistered && (
-            <button onClick={handleShareWhatsApp} className="w-full mt-3 py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer" style={{ background: "#25d366" }}>📲 Partager via WhatsApp</button>
+            <a href={whatsappShareUrl} target="_blank" rel="noopener noreferrer" className="w-full mt-3 py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer text-center no-underline block" style={{ background: "#25d366" }}>📲 Partager via WhatsApp</a>
           )}
 
           {/* Calendar .ics button */}
