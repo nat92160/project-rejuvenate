@@ -26,11 +26,12 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "evenements", icon: "📅", label: "Événements", modes: ["fidele", "president"] },
   { id: "coursvirtuel", icon: "🎥", label: "Cours", modes: ["fidele", "president"] },
   { id: "affiche", icon: "📋", label: "Affiche", modes: ["president"] },
+  { id: "masynagogue", icon: "🏛️", label: "Ma Synagogue", modes: ["president"] },
 ];
 
 export const DEFAULT_BOTTOM_TABS_BY_MODE: Record<BottomNavMode, string[]> = {
   fidele: ["dashboard", "chabbat", "zmanim", "synagogue"],
-  president: ["dashboard", "affiche", "annonces", "minyan"],
+  president: ["dashboard", "affiche", "masynagogue", "annonces"],
 };
 
 export function getBottomNavStorageKey(mode: BottomNavMode) {

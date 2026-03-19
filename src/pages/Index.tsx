@@ -28,6 +28,7 @@ import MinyanLiveWidget from "@/components/MinyanLiveWidget";
 import EvenementsWidget from "@/components/EvenementsWidget";
 import CoursVirtuelWidget from "@/components/CoursVirtuelWidget";
 import FideleSynagogueView from "@/components/FideleSynagogueView";
+import SynaProfileManager from "@/components/SynaProfileManager";
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
 
@@ -92,6 +93,7 @@ const IndexContent = () => {
       case "courszoom":
       case "coursvirtuel": return <CoursVirtuelWidget />;
       case "affiche": return <AfficheChabbatWidget />;
+      case "masynagogue": return <SynaProfileManager />;
       case "shabbatspec": return <ShabbatSpeciauxWidget />;
       case "communaute":
         return (
