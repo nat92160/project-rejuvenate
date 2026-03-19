@@ -37,8 +37,10 @@ const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: 
         duration: parseInt(duration),
       };
       if (datetime) {
+        // datetime-local gives "YYYY-MM-DDTHH:mm" in local time
+        // Pass it directly — the edge function adds :00 and sets timezone to Europe/Paris
         payload.start_time = datetime;
-        payload.timezone = "Europe/Paris";
+        payload.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris";
       }
       if (passcode) payload.passcode = passcode;
 
