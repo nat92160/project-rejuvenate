@@ -86,6 +86,26 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
                 </button>
               ))}
             </div>
+
+            {/* Account section */}
+            {user && (
+              <div className="mt-5 pt-4 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm">👤</span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {user.user_metadata?.full_name || user.email?.split("@")[0] || "Compte"}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => { signOut(); onClose(); }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 bg-destructive/10 text-destructive border-none"
+                  >
+                    🔓 Déconnexion
+                  </button>
+                </div>
+              </div>
+            )}
           </motion.div>
         </>
       )}
