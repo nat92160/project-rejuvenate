@@ -305,9 +305,9 @@ const AnnoncesWidget = () => {
               {/* Actions */}
               <div className="mt-4 space-y-2">
                 <button onClick={exportAndShare} disabled={exporting}
-                  className="w-full py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer disabled:opacity-50"
-                  style={{ background: "#25d366" }}>
-                  {exporting ? "⏳ Génération..." : "💬 Partager sur WhatsApp"}
+                  className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
+                  style={{ background: "var(--gradient-gold)" }}>
+                  {exporting ? "⏳ Génération..." : "📤 Partager"}
                 </button>
                 <button onClick={() => setPosterAnnonce(null)}
                   className="w-full py-2.5 rounded-xl text-xs font-bold bg-muted text-muted-foreground border-none cursor-pointer">
