@@ -406,13 +406,15 @@ const AfficheChabbatWidget = () => {
 
                   <PosterSection icon="🌅" title="Chabbat matin">
                     {shaharit && <TimeLine label="Shaharit" value={shaharit} note={notes.shaharit} big />}
+                    {torahReader && <TimeLine label="Lecteur" value={torahReader} />}
                     <TimeLine label="Lecture de la Torah" value={data?.parasha?.replace("Parashat ", "") || ""} note={notes.torahReading} />
                     {moussaf && <TimeLine label="Moussaf" value={moussaf} note={notes.moussaf} />}
                   </PosterSection>
 
-                  {(minhaSat || notes.minhaSat) && (
+                  {(minhaSat || notes.minhaSat || shiourSamedi) && (
                     <PosterSection icon="📚" title="Chabbat après-midi">
                       {minhaSat && <TimeLine label="Minha" value={minhaSat} note={notes.minhaSat} big />}
+                      {shiourSamedi && <TimeLine label="Shiour" value={shiourSamedi} />}
                     </PosterSection>
                   )}
 
