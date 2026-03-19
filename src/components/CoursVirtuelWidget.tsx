@@ -192,7 +192,7 @@ const CoursVirtuelWidget = () => {
       <div className="rounded-2xl p-4 mb-4 border border-primary/15" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">🎥 Cours en ligne</h3>
+            <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">🎥 Cours de Torah</h3>
             <p className="text-xs text-muted-foreground mt-1">Cours via Zoom</p>
           </div>
           {isPresident && (
