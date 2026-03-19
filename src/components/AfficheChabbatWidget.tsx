@@ -443,7 +443,7 @@ const AfficheChabbatWidget = () => {
               {freeNote && <div style={{ background: t.blockBg, borderLeft: `2px solid ${t.accent}`, padding: "5px 10px", borderRadius: "0 4px 4px 0", marginBottom: "4px" }}><p style={{ fontSize: "0.6rem", color: t.labelColor, whiteSpace: "pre-wrap" }}>{freeNote}</p></div>}
 
               <div style={{ textAlign: "center", marginTop: "8px", paddingTop: "6px", borderTop: `1px solid ${t.blockBorder}` }}>
-                <div style={{ fontFamily: f.family, fontSize: "0.75rem", fontWeight: 700, color: t.valueColor }}>{synaName} — <span style={{ color: t.accent }}>Chabbat Chalom !</span></div>
+                <div style={{ fontFamily: f.family, fontSize: "0.75rem", fontWeight: 600, color: t.labelColor }}>{synaName} — <span style={{ color: t.accent }}>Chabbat Chalom !</span></div>
                 <div style={{ fontSize: "0.45rem", color: t.footerColor, marginTop: "3px", letterSpacing: "1px", textTransform: "uppercase" }}>Généré sur chabbat-chalom.com</div>
               </div>
             </div>
