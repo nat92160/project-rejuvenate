@@ -79,6 +79,7 @@ const SINGLE_HOLIDAYS: Record<string, { name: string; emoji: string; category: F
   "tu bishvat": { name: "Tou Bichvat", emoji: "🌳", category: "minor" },
   "lag baomer": { name: "Lag BaOmer", emoji: "🔥", category: "minor" },
   "tish'a b'av": { name: "Ticha Béav", emoji: "😢", category: "jeune" },
+  "erev tish'a b'av": { name: "Erev Ticha Béav", emoji: "😢", category: "jeune" },
   "tzom gedaliah": { name: "Jeûne de Guédalia", emoji: "🕯️", category: "jeune" },
   "asara b'tevet": { name: "10 Tévet", emoji: "🕯️", category: "jeune" },
   "ta'anit bechorot": { name: "Jeûne des premiers-nés", emoji: "🕯️", category: "jeune" },
