@@ -91,7 +91,7 @@ const CoursCard = ({
     >
       {/* Hidden poster for PNG export */}
       <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-        <MasterPosterTemplate ref={posterRef} profile={synaProfile} content={posterContent} />
+        <TicketPosterTemplate ref={posterRef} profile={synaProfile} content={ticketContent} />
       </div>
 
       {/* Visible card */}
