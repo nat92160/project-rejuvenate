@@ -249,7 +249,7 @@ const MinyanLiveWidget = () => {
           </div>
 
           {isRegistered && (
-            <a href={whatsappShareUrl} target="_blank" rel="noopener noreferrer" className="w-full mt-3 py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer text-center no-underline block" style={{ background: "#25d366" }}>📲 Partager via WhatsApp</a>
+            <button onClick={shareMinyan} className="w-full mt-3 py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer text-center" style={{ background: "#25d366" }}>📲 Partager via WhatsApp</button>
           )}
 
           {/* Calendar .ics button */}
