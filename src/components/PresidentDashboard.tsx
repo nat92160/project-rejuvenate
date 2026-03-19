@@ -8,7 +8,6 @@ import AnnoncesWidget from "./AnnoncesWidget";
 import RefouaChelemaWidget from "./RefouaChelemaWidget";
 import MinyanLiveWidget from "./MinyanLiveWidget";
 import EvenementsWidget from "./EvenementsWidget";
-import CoursZoomWidget from "./CoursZoomWidget";
 import CoursVirtuelWidget from "./CoursVirtuelWidget";
 
 const features = [
@@ -18,8 +17,7 @@ const features = [
   { id: "minyan", icon: "👥", title: "Minyan Live" },
   { id: "create-minyan", icon: "➕", title: "Créer Minyan" },
   { id: "evenements", icon: "📅", title: "Événements" },
-  { id: "cours", icon: "📚", title: "Cours Zoom" },
-  { id: "coursvirtuel", icon: "🎥", title: "Cours Virtuel" },
+  { id: "cours", icon: "🎥", title: "Cours en ligne" },
   { id: "stats", icon: "📊", title: "Statistiques" },
 ];
 
@@ -243,8 +241,7 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
       case "minyan": return <MinyanLiveWidget />;
       case "create-minyan": return <CreateMinyanForm onBack={() => setActiveFeature(null)} />;
       case "evenements": return <EvenementsWidget />;
-      case "cours": return <CoursZoomWidget />;
-      case "coursvirtuel": return <CoursVirtuelWidget />;
+      case "cours": return <CoursVirtuelWidget />;
       case "stats": return <StatsDashboard />;
       default: return null;
     }

@@ -25,7 +25,6 @@ import AnnoncesWidget from "@/components/AnnoncesWidget";
 import RefouaChelemaWidget from "@/components/RefouaChelemaWidget";
 import MinyanLiveWidget from "@/components/MinyanLiveWidget";
 import EvenementsWidget from "@/components/EvenementsWidget";
-import CoursZoomWidget from "@/components/CoursZoomWidget";
 import CoursVirtuelWidget from "@/components/CoursVirtuelWidget";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import BottomNav from "@/components/BottomNav";
@@ -121,7 +120,6 @@ const IndexContent = () => {
       case "evenements":
         return <EvenementsWidget />;
       case "courszoom":
-        return <CoursZoomWidget />;
       case "coursvirtuel":
         return <CoursVirtuelWidget />;
       case "affiche":

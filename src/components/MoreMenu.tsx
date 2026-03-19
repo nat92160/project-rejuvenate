@@ -15,9 +15,8 @@ const menuItems = [
   { id: "refoua", icon: "🙏", label: "Refoua Chelema" },
   { id: "minyan", icon: "👥", label: "Minyan Live" },
   { id: "evenements", icon: "📅", label: "Événements" },
-  { id: "courszoom", icon: "🎥", label: "Cours Zoom" },
+  { id: "coursvirtuel", icon: "🎥", label: "Cours en ligne" },
   { id: "affiche", icon: "📋", label: "Affiche Chabbat" },
-  { id: "coursvirtuel", icon: "🎥", label: "Cours Virtuel" },
   { id: "communaute", icon: "👥", label: "Communauté" },
 ];
 

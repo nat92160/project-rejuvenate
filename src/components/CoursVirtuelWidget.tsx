@@ -5,10 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
-// ─── Constants ────────────────────────────────────────
-const ZOOM_PROXY_URL = "https://chabbat-chalom-zoom.onrender.com";
-const ZOOM_API_SECRET = "chabbat-chalom-zoom-2024";
-
 interface CoursVirtuel {
   id: string;
   title: string;
@@ -32,122 +28,36 @@ const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: 
   const [duration, setDuration] = useState("60");
   const [passcode, setPasscode] = useState("");
   const [creating, setCreating] = useState(false);
-  const [zoomConnected, setZoomConnected] = useState(false);
-  const [checkingZoom, setCheckingZoom] = useState(true);
-  const { user } = useAuth();
-
-  // Check Zoom connection (via localStorage flag set after OAuth return)
-  useEffect(() => {
-    const connected = localStorage.getItem("zoom_connected") === "true";
-    setZoomConnected(connected);
-    setCheckingZoom(false);
-
-    // Handle OAuth return
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("zoom_connected") === "true") {
-      const accessToken = params.get("zoom_access_token");
-      const refreshToken = params.get("zoom_refresh_token");
-      if (accessToken && refreshToken) {
-        localStorage.setItem("zoom_connected", "true");
-        localStorage.setItem("zoom_access_token", accessToken);
-        localStorage.setItem("zoom_refresh_token", refreshToken);
-        setZoomConnected(true);
-        toast.success("Compte Zoom connecté !");
-      }
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-    if (params.get("zoom_error")) {
-      toast.error("Erreur connexion Zoom: " + params.get("zoom_error"));
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []);
-
-  const connectZoom = () => {
-    // Redirect to Render proxy OAuth flow
-    const synaId = user?.id || "default";
-    window.location.href = `${ZOOM_PROXY_URL}/auth/zoom?synaId=${encodeURIComponent(synaId)}`;
-  };
-
-  const disconnectZoom = () => {
-    if (!confirm("Déconnecter votre compte Zoom ?")) return;
-    localStorage.removeItem("zoom_connected");
-    localStorage.removeItem("zoom_access_token");
-    localStorage.removeItem("zoom_refresh_token");
-    setZoomConnected(false);
-    toast.success("Compte Zoom déconnecté");
-  };
 
   const createMeeting = async () => {
-    const accessToken = localStorage.getItem("zoom_access_token");
-    const refreshToken = localStorage.getItem("zoom_refresh_token");
-    if (!accessToken) {
-      toast.error("Connectez d'abord votre compte Zoom");
-      return;
-    }
-
     setCreating(true);
-    const isScheduled = !!datetime;
-
     try {
       const payload: Record<string, unknown> = {
         title: title.trim() || "Cours en direct",
         duration: parseInt(duration),
-        access_token: accessToken,
       };
-      if (isScheduled) {
+      if (datetime) {
         payload.start_time = datetime;
         payload.timezone = "Europe/Paris";
       }
       if (passcode) payload.passcode = passcode;
 
-      let response = await fetch(`${ZOOM_PROXY_URL}/create-meeting`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Secret": ZOOM_API_SECRET },
-        body: JSON.stringify(payload),
+      const { data, error } = await supabase.functions.invoke("zoom-proxy?action=create-meeting", {
+        body: payload,
       });
-      let result = await response.json();
 
-      // Token expired → refresh
-      if (response.status === 401 && result.needRefresh && refreshToken) {
-        const refreshResp = await fetch(`${ZOOM_PROXY_URL}/refresh-token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-API-Secret": ZOOM_API_SECRET },
-          body: JSON.stringify({ refresh_token: refreshToken }),
-        });
-        const refreshResult = await refreshResp.json();
-        if (refreshResp.ok && refreshResult.success) {
-          localStorage.setItem("zoom_access_token", refreshResult.access_token);
-          localStorage.setItem("zoom_refresh_token", refreshResult.refresh_token);
-          payload.access_token = refreshResult.access_token;
-          response = await fetch(`${ZOOM_PROXY_URL}/create-meeting`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-API-Secret": ZOOM_API_SECRET },
-            body: JSON.stringify(payload),
-          });
-          result = await response.json();
-        } else {
-          localStorage.removeItem("zoom_connected");
-          localStorage.removeItem("zoom_access_token");
-          localStorage.removeItem("zoom_refresh_token");
-          setZoomConnected(false);
-          toast.error("Session Zoom expirée. Reconnectez votre compte.");
-          setCreating(false);
-          return;
-        }
+      if (error || !data?.success) {
+        throw new Error(data?.error || error?.message || "Erreur Zoom");
       }
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || "Erreur de création Zoom");
-      }
+      onMeetingCreated(data.joinUrl, data.topic || title.trim());
 
-      onMeetingCreated(result.joinUrl, result.topic || title.trim());
-
-      if (isScheduled) {
+      if (datetime) {
         const dateStr = new Date(datetime).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" });
         toast.success(`Cours programmé pour le ${dateStr}`);
       } else {
         toast.success("Cours en direct lancé !");
-        if (result.startUrl) window.open(result.startUrl, "_blank");
+        if (data.startUrl) window.open(data.startUrl, "_blank");
       }
 
       setTitle("");
@@ -160,36 +70,11 @@ const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: 
     setCreating(false);
   };
 
-  if (checkingZoom) return null;
-
-  if (!zoomConnected) {
-    return (
-      <div className="rounded-2xl bg-card p-6 mb-4 border border-border text-center" style={{ boxShadow: "var(--shadow-card)" }}>
-        <span className="text-4xl">🎥</span>
-        <h4 className="font-display text-sm font-bold mt-3 text-foreground">Connecter votre compte Zoom</h4>
-        <p className="text-xs text-muted-foreground mt-2 mb-4">
-          Connectez votre compte Zoom pour créer des cours en direct ou programmés.
-        </p>
-        <button onClick={connectZoom}
-          className="px-6 py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer transition-all hover:-translate-y-0.5"
-          style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: "0 4px 12px rgba(45,140,255,0.3)" }}>
-          🔗 Connecter Zoom
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="rounded-2xl bg-card p-5 mb-4 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-xs font-bold text-green-600">Zoom connecté</span>
-        </div>
-        <button onClick={disconnectZoom}
-          className="text-[10px] text-destructive bg-transparent border-none cursor-pointer hover:underline">
-          Déconnecter
-        </button>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="w-2 h-2 rounded-full bg-blue-500" />
+        <span className="text-xs font-bold text-blue-600">Créer via Zoom API</span>
       </div>
 
       <div className="space-y-3">
@@ -228,6 +113,7 @@ const CoursVirtuelWidget = () => {
   const [cours, setCours] = useState<CoursVirtuel[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showZoomCreator, setShowZoomCreator] = useState(false);
   const [selectedCours, setSelectedCours] = useState<CoursVirtuel | null>(null);
   const [synaName] = useState("Ma Synagogue");
   const posterRef = useRef<HTMLDivElement>(null);
@@ -289,6 +175,9 @@ const CoursVirtuelWidget = () => {
   const handleMeetingCreated = (joinUrl: string, topic: string) => {
     setNewLink(joinUrl);
     setNewTitle(topic);
+    setShowZoomCreator(false);
+    setShowForm(true);
+    toast.success("Lien Zoom généré ! Complétez les informations et publiez.");
   };
 
   const handleDelete = async (id: string) => {
@@ -323,7 +212,6 @@ const CoursVirtuelWidget = () => {
       ? `📚 ${selectedCours.title}\n👨‍🏫 ${selectedCours.rav}\n📅 ${selectedCours.day_of_week} à ${selectedCours.course_time}\n🔗 ${selectedCours.zoom_link}\n\n✡️ chabbat-chalom.com`
       : "";
 
-    // Try Web Share API first (mobile)
     if (!posterRef.current) {
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
       return;
@@ -352,26 +240,39 @@ const CoursVirtuelWidget = () => {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-              🎥 Cours Virtuels
+              🎥 Cours en ligne
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Cours en ligne via Zoom • Générez des affiches à partager
+              Cours via Zoom • Générez des affiches à partager
             </p>
           </div>
           {isPresident && (
-            <button onClick={() => setShowForm(!showForm)}
-              className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
-              style={{ background: "var(--gradient-gold)" }}>
-              + Ajouter
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => { setShowZoomCreator(!showZoomCreator); setShowForm(false); }}
+                className="px-3 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-white"
+                style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)" }}>
+                🎥 Zoom
+              </button>
+              <button onClick={() => { setShowForm(!showForm); setShowZoomCreator(false); }}
+                className="px-3 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
+                style={{ background: "var(--gradient-gold)" }}>
+                + Manuel
+              </button>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Zoom integration (president only) */}
-      {isPresident && <ZoomMeetingCreator onMeetingCreated={handleMeetingCreated} />}
+      {/* Zoom meeting creator (president only) */}
+      <AnimatePresence>
+        {isPresident && showZoomCreator && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
+            <ZoomMeetingCreator onMeetingCreated={handleMeetingCreated} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Add form */}
+      {/* Manual add form */}
       <AnimatePresence>
         {showForm && (
           <motion.div className="rounded-2xl bg-card p-5 mb-4 border border-primary/20" style={{ boxShadow: "var(--shadow-card)" }}
@@ -482,7 +383,7 @@ const CoursVirtuelWidget = () => {
               <button onClick={handleExportPoster}
                 className="flex-1 py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer"
                 style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
-                💾 Télécharger
+                💾 Télécharger JPG
               </button>
               <button onClick={shareCoursWhatsApp}
                 className="flex-1 py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer"
@@ -500,7 +401,13 @@ const CoursVirtuelWidget = () => {
           <div className="text-center py-8 text-sm text-muted-foreground">Chargement...</div>
         ) : cours.length === 0 ? (
           <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-            <p className="text-sm text-muted-foreground">Aucun cours virtuel programmé.</p>
+            <span className="text-4xl">📚</span>
+            <p className="text-sm text-muted-foreground mt-3">Aucun cours programmé.</p>
+            {isPresident && (
+              <p className="text-xs text-muted-foreground/60 mt-2 italic">
+                Utilisez les boutons ci-dessus pour ajouter un cours manuellement ou via Zoom.
+              </p>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
