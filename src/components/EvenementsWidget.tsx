@@ -97,9 +97,9 @@ const EvenementsWidget = () => {
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
             <div className="space-y-3">
               <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="✏️ Titre de l'événement"
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="📝 Description (optionnel)" rows={2}
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
+                className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
               <div className="grid grid-cols-2 gap-3">
                 <div className="relative">
                   <label className="absolute -top-2 left-3 px-1 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10">📅 Date</label>
