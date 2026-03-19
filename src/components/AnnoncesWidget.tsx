@@ -221,16 +221,11 @@ const AnnoncesWidget = () => {
               <div className="flex items-center justify-between mt-3">
                 <p className="text-[10px] text-muted-foreground/60">{formatDate(a.created_at)}</p>
                 <div className="flex gap-1.5">
-                  <button onClick={() => handleShareJPG(a)} disabled={sharingId === a.id}
-                    className="text-[10px] font-bold px-2.5 py-1.5 rounded-full border-none cursor-pointer transition-colors disabled:opacity-50"
+                  <a href={getShareUrl(a)} target="_blank" rel="noopener noreferrer"
+                    className="text-[10px] font-bold px-2.5 py-1.5 rounded-full no-underline cursor-pointer"
                     style={{ background: "#25d366", color: "#fff" }}>
-                    {sharingId === a.id ? "⏳" : "📲 JPG"}
-                  </button>
-                  <button onClick={() => handleShareText(a)}
-                    className="text-[10px] font-bold px-2.5 py-1.5 rounded-full border-none cursor-pointer transition-colors"
-                    style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}>
-                    💬 Texte
-                  </button>
+                    💬 WhatsApp
+                  </a>
                   {isPresident && user?.id === a.creator_id && (
                     <button onClick={() => handleDelete(a.id)}
                       className="text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-destructive/10 text-destructive border-none cursor-pointer">
