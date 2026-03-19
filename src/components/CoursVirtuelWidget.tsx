@@ -16,13 +16,32 @@ interface CoursVirtuel {
   creator_id: string;
 }
 
+interface MeetingCreatedPayload {
+  joinUrl: string;
+  topic: string;
+  scheduledAt: string | null;
+}
+
 const dayColors: Record<string, string> = {
-  Lundi: "#3b82f6", Mardi: "#8b5cf6", Mercredi: "#22c55e",
-  Jeudi: "#f97316", Vendredi: "#ef4444", Dimanche: "#eab308",
+  Lundi: "#3b82f6",
+  Mardi: "#8b5cf6",
+  Mercredi: "#22c55e",
+  Jeudi: "#f97316",
+  Vendredi: "#ef4444",
+  Dimanche: "#eab308",
 };
 
-// ─── Zoom Meeting Creator ─────────────────────────────
-const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: string, topic: string) => void }) => {
+const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+
+const ZoomMeetingCreator = ({
+  onMeetingCreated,
+  onDisconnectZoom,
+  zoomConnected,
+}: {
+  onMeetingCreated: (payload: MeetingCreatedPayload) => Promise<void>;
+  onDisconnectZoom: () => void;
+  zoomConnected: boolean | null;
+}) => {
   const [title, setTitle] = useState("");
   const [datetime, setDatetime] = useState("");
   const [duration, setDuration] = useState("60");
@@ -35,34 +54,31 @@ const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: 
       const payload: Record<string, unknown> = {
         action: "create-meeting",
         title: title.trim() || "Cours en direct",
-        duration: parseInt(duration),
+        duration: parseInt(duration, 10),
       };
+
       if (datetime) {
         payload.start_time = datetime;
         payload.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris";
       }
-      if (passcode) payload.passcode = passcode;
-
-      console.log("Zoom create payload:", JSON.stringify(payload));
+      if (passcode.trim()) payload.passcode = passcode.trim();
 
       const { data, error } = await supabase.functions.invoke("zoom-proxy", {
         body: payload,
       });
 
-      console.log("Zoom response:", JSON.stringify(data), error);
-
       if (error || !data?.success) {
         throw new Error(data?.error || error?.message || "Erreur Zoom");
       }
 
-      onMeetingCreated(data.joinUrl, data.topic || title.trim());
+      await onMeetingCreated({
+        joinUrl: data.joinUrl,
+        topic: data.topic || title.trim() || "Cours en ligne",
+        scheduledAt: datetime || null,
+      });
 
-      if (datetime) {
-        const dateStr = new Date(datetime).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" });
-        toast.success(`Cours programmé pour le ${dateStr}`);
-      } else {
-        toast.success("Cours en direct lancé !");
-        if (data.startUrl) window.open(data.startUrl, "_blank");
+      if (!datetime && data.startUrl) {
+        window.open(data.startUrl, "_blank", "noopener,noreferrer");
       }
 
       setTitle("");
@@ -77,46 +93,88 @@ const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: 
 
   return (
     <div className="rounded-2xl bg-card p-5 mb-4 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-      <div className="flex items-center gap-2 mb-4">
-        <span className="w-2 h-2 rounded-full" style={{ background: "#2D8CFF" }} />
-        <span className="text-xs font-bold" style={{ color: "#2D8CFF" }}>Créer via Zoom API</span>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full" style={{ background: "#2D8CFF" }} />
+            <span className="text-xs font-bold" style={{ color: "#2D8CFF" }}>Créer via Zoom API</span>
+          </div>
+          {zoomConnected !== null && (
+            <p className={`text-[10px] mt-2 font-bold ${zoomConnected ? "text-green-600" : "text-destructive"}`}>
+              {zoomConnected ? "✅ Zoom connecté" : "❌ Zoom non connecté"}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={onDisconnectZoom}
+          className="px-3 py-2 rounded-xl text-[11px] font-bold border border-border bg-muted text-foreground cursor-pointer"
+        >
+          ↗ Se déconnecter de Zoom
+        </button>
       </div>
 
       <div className="space-y-3">
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre du cours"
-          className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Titre du cours"
+          className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+        />
+
         <div>
           <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
-            📅 Date et heure (obligatoire pour programmer)
+            📅 Date et heure pour programmer
           </label>
-          <input type="datetime-local" value={datetime} onChange={(e) => setDatetime(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          <input
+            type="datetime-local"
+            value={datetime}
+            onChange={(e) => setDatetime(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
           <p className="text-[10px] text-muted-foreground mt-1">
-            ⚠️ Sans date, le cours sera lancé <strong>en direct immédiatement</strong>
+            Sans date, la réunion démarre tout de suite en direct. Avec une date, elle sera créée puis affichée automatiquement dans la liste.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <select value={duration} onChange={(e) => setDuration(e.target.value)}
-            className="w-full px-3 py-3 rounded-xl bg-background border border-border text-foreground text-sm">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <select
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            className="w-full px-3 py-3 rounded-xl bg-background border border-border text-foreground text-sm"
+          >
             <option value="30">30 min</option>
             <option value="60">1 heure</option>
             <option value="90">1h30</option>
             <option value="120">2 heures</option>
           </select>
-          <input value={passcode} onChange={(e) => setPasscode(e.target.value)} placeholder="Code (optionnel)"
-            className="w-full px-3 py-3 rounded-xl bg-background border border-border text-foreground text-sm" />
+          <input
+            value={passcode}
+            onChange={(e) => setPasscode(e.target.value)}
+            placeholder="Code (optionnel)"
+            className="w-full px-3 py-3 rounded-xl bg-background border border-border text-foreground text-sm"
+          />
         </div>
-        <button onClick={createMeeting} disabled={creating}
+
+        <button
+          onClick={createMeeting}
+          disabled={creating}
           className="w-full py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer disabled:opacity-50 transition-all"
-          style={{ background: datetime ? "linear-gradient(135deg, #22c55e, #16a34a)" : "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: datetime ? "0 4px 12px rgba(34,197,94,0.3)" : "0 4px 12px rgba(45,140,255,0.3)" }}>
-          {creating ? "⏳ Création..." : datetime ? "📅 Programmer le cours" : "🎥 Lancer en direct MAINTENANT"}
+          style={{
+            background: datetime
+              ? "linear-gradient(135deg, #22c55e, #16a34a)"
+              : "linear-gradient(135deg, #2D8CFF, #1a6fdd)",
+            boxShadow: datetime
+              ? "0 4px 12px rgba(34,197,94,0.3)"
+              : "0 4px 12px rgba(45,140,255,0.3)",
+          }}
+        >
+          {creating ? "⏳ Création..." : datetime ? "📅 Programmer et publier" : "🎥 Lancer en direct maintenant"}
         </button>
       </div>
     </div>
   );
 };
 
-// ─── Main Widget ──────────────────────────────────────
 const CoursVirtuelWidget = () => {
   const { city } = useCity();
   const { user, dbRole } = useAuth();
@@ -129,7 +187,6 @@ const CoursVirtuelWidget = () => {
   const posterRef = useRef<HTMLDivElement>(null);
   const isPresident = dbRole === "president";
 
-  // Form state
   const [newTitle, setNewTitle] = useState("");
   const [newTeacher, setNewTeacher] = useState("");
   const [newDay, setNewDay] = useState("Lundi");
@@ -137,8 +194,6 @@ const CoursVirtuelWidget = () => {
   const [newLink, setNewLink] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  // Zoom connection status
   const [zoomConnected, setZoomConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -146,22 +201,31 @@ const CoursVirtuelWidget = () => {
       const { data } = await supabase
         .from("cours_zoom")
         .select("*")
-        .order("created_at");
+        .order("created_at", { ascending: false });
       setCours((data || []) as CoursVirtuel[]);
       setLoading(false);
     };
-    fetchCours();
+
+    void fetchCours();
   }, []);
 
   useEffect(() => {
     if (isPresident) {
-      supabase.functions.invoke("zoom-proxy", {
-        body: { action: "check-status" },
-      }).then(({ data }) => {
-        setZoomConnected(data?.connected ?? false);
-      }).catch(() => setZoomConnected(false));
+      supabase.functions
+        .invoke("zoom-proxy", {
+          body: { action: "check-status" },
+        })
+        .then(({ data }) => {
+          setZoomConnected(data?.connected ?? false);
+        })
+        .catch(() => setZoomConnected(false));
     }
   }, [isPresident]);
+
+  const disconnectZoom = () => {
+    window.open("https://zoom.us/signout", "_blank", "noopener,noreferrer");
+    toast.success("Page de déconnexion Zoom ouverte");
+  };
 
   const handleAdd = async () => {
     if (!newTitle.trim() || !newLink.trim()) {
@@ -172,29 +236,76 @@ const CoursVirtuelWidget = () => {
       toast.error("Vous devez être connecté");
       return;
     }
+
     setSubmitting(true);
-    const { data, error } = await supabase.from("cours_zoom").insert({
-      creator_id: user.id,
-      title: newTitle.trim(),
-      rav: newTeacher.trim(),
-      day_of_week: newDay,
-      course_time: newTime || "20:00",
-      zoom_link: newLink.trim(),
-      description: newDesc.trim(),
-    }).select().single();
+    const { data, error } = await supabase
+      .from("cours_zoom")
+      .insert({
+        creator_id: user.id,
+        title: newTitle.trim(),
+        rav: newTeacher.trim(),
+        day_of_week: newDay,
+        course_time: newTime || "20:00",
+        zoom_link: newLink.trim(),
+        description: newDesc.trim(),
+      })
+      .select()
+      .single();
 
     if (error) {
       toast.error("Erreur: vérifiez que vous avez le rôle Président.");
     } else if (data) {
-      setCours((prev) => [...prev, data as CoursVirtuel]);
+      setCours((prev) => [data as CoursVirtuel, ...prev]);
       setShowForm(false);
-      setNewTitle(""); setNewTeacher(""); setNewDay("Lundi"); setNewTime(""); setNewLink(""); setNewDesc("");
+      setNewTitle("");
+      setNewTeacher("");
+      setNewDay("Lundi");
+      setNewTime("");
+      setNewLink("");
+      setNewDesc("");
       toast.success("✅ Cours publié !");
     }
     setSubmitting(false);
   };
 
-  const handleMeetingCreated = (joinUrl: string, topic: string) => {
+  const handleMeetingCreated = async ({ joinUrl, topic, scheduledAt }: MeetingCreatedPayload) => {
+    if (scheduledAt && user) {
+      const meetingDate = new Date(scheduledAt);
+      const derivedDay = dayNames[meetingDate.getDay()] || "Lundi";
+      const derivedTime = scheduledAt.split("T")[1]?.slice(0, 5) || "20:00";
+
+      const { data, error } = await supabase
+        .from("cours_zoom")
+        .insert({
+          creator_id: user.id,
+          title: topic,
+          rav: "",
+          day_of_week: derivedDay,
+          course_time: derivedTime,
+          zoom_link: joinUrl,
+          description: "Cours programmé via Zoom",
+        })
+        .select()
+        .single();
+
+      if (error) {
+        setNewLink(joinUrl);
+        setNewTitle(topic);
+        setNewDay(derivedDay);
+        setNewTime(derivedTime);
+        setShowZoomCreator(false);
+        setShowForm(true);
+        toast.error("Réunion créée, mais publication impossible. Complétez puis publiez manuellement.");
+        return;
+      }
+
+      setCours((prev) => [data as CoursVirtuel, ...prev]);
+      setShowZoomCreator(false);
+      setSelectedCours(data as CoursVirtuel);
+      toast.success("✅ Cours programmé et ajouté à la liste");
+      return;
+    }
+
     setNewLink(joinUrl);
     setNewTitle(topic);
     setShowZoomCreator(false);
@@ -249,17 +360,20 @@ const CoursVirtuelWidget = () => {
         await navigator.share({ files: [file], title: selectedCours?.title || "Cours", text });
         return;
       }
-    } catch { /* fallback */ }
+    } catch {
+      // fallback to text sharing below
+    }
 
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      {/* Header */}
-      <div className="rounded-2xl p-6 mb-4 border border-primary/15"
-        style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}>
-        <div className="flex items-center justify-between">
+      <div
+        className="rounded-2xl p-4 sm:p-6 mb-4 border border-primary/15"
+        style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
               🎥 Cours en ligne
@@ -268,21 +382,40 @@ const CoursVirtuelWidget = () => {
               Cours via Zoom • Générez des affiches à partager
             </p>
             {isPresident && zoomConnected !== null && (
-              <p className={`text-[10px] mt-1 font-bold ${zoomConnected ? "text-green-600" : "text-destructive"}`}>
-                {zoomConnected ? "✅ Zoom connecté" : "❌ Zoom non connecté"}
-              </p>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <p className={`text-[10px] font-bold ${zoomConnected ? "text-green-600" : "text-destructive"}`}>
+                  {zoomConnected ? "✅ Zoom connecté" : "❌ Zoom non connecté"}
+                </p>
+                <button
+                  onClick={disconnectZoom}
+                  className="text-[10px] font-bold text-foreground bg-transparent border-none cursor-pointer p-0 text-left hover:underline"
+                >
+                  Se déconnecter de Zoom
+                </button>
+              </div>
             )}
           </div>
+
           {isPresident && (
-            <div className="flex gap-2">
-              <button onClick={() => { setShowZoomCreator(!showZoomCreator); setShowForm(false); }}
-                className="px-3 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-white"
-                style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)" }}>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => {
+                  setShowZoomCreator(!showZoomCreator);
+                  setShowForm(false);
+                }}
+                className="px-3 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-white w-full sm:w-auto"
+                style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)" }}
+              >
                 🎥 Zoom
               </button>
-              <button onClick={() => { setShowForm(!showForm); setShowZoomCreator(false); }}
-                className="px-3 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
-                style={{ background: "var(--gradient-gold)" }}>
+              <button
+                onClick={() => {
+                  setShowForm(!showForm);
+                  setShowZoomCreator(false);
+                }}
+                className="px-3 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground w-full sm:w-auto"
+                style={{ background: "var(--gradient-gold)" }}
+              >
                 + Manuel
               </button>
             </div>
@@ -290,40 +423,76 @@ const CoursVirtuelWidget = () => {
         </div>
       </div>
 
-      {/* Zoom meeting creator (president only) */}
       <AnimatePresence>
         {isPresident && showZoomCreator && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-            <ZoomMeetingCreator onMeetingCreated={handleMeetingCreated} />
+            <ZoomMeetingCreator
+              onMeetingCreated={handleMeetingCreated}
+              onDisconnectZoom={disconnectZoom}
+              zoomConnected={zoomConnected}
+            />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Manual add form */}
       <AnimatePresence>
         {showForm && (
-          <motion.div className="rounded-2xl bg-card p-5 mb-4 border border-primary/20" style={{ boxShadow: "var(--shadow-card)" }}
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
+          <motion.div
+            className="rounded-2xl bg-card p-5 mb-4 border border-primary/20"
+            style={{ boxShadow: "var(--shadow-card)" }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+          >
             <div className="space-y-3">
-              <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Titre du cours"
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-              <input value={newTeacher} onChange={(e) => setNewTeacher(e.target.value)} placeholder="Nom du Rav"
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-              <div className="grid grid-cols-2 gap-3">
-                <select value={newDay} onChange={(e) => setNewDay(e.target.value)}
-                  className="w-full px-3 py-3 rounded-xl bg-background border border-border text-foreground text-sm">
-                  {["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Dimanche"].map(d => <option key={d}>{d}</option>)}
+              <input
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="Titre du cours"
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <input
+                value={newTeacher}
+                onChange={(e) => setNewTeacher(e.target.value)}
+                placeholder="Nom du Rav"
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <select
+                  value={newDay}
+                  onChange={(e) => setNewDay(e.target.value)}
+                  className="w-full px-3 py-3 rounded-xl bg-background border border-border text-foreground text-sm"
+                >
+                  {["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Dimanche"].map((d) => (
+                    <option key={d}>{d}</option>
+                  ))}
                 </select>
-                <input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)}
-                  className="w-full px-3 py-3 rounded-xl bg-background border border-border text-foreground text-sm" />
+                <input
+                  type="time"
+                  value={newTime}
+                  onChange={(e) => setNewTime(e.target.value)}
+                  className="w-full px-3 py-3 rounded-xl bg-background border border-border text-foreground text-sm"
+                />
               </div>
-              <input value={newLink} onChange={(e) => setNewLink(e.target.value)} placeholder="Lien Zoom"
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-              <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Description du cours" rows={2}
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
-              <button onClick={handleAdd} disabled={submitting || !newTitle.trim() || !newLink.trim()}
+              <input
+                value={newLink}
+                onChange={(e) => setNewLink(e.target.value)}
+                placeholder="Lien Zoom"
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <textarea
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                placeholder="Description du cours"
+                rows={2}
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+              />
+              <button
+                onClick={handleAdd}
+                disabled={submitting || !newTitle.trim() || !newLink.trim()}
                 className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
-                style={{ background: "var(--gradient-gold)" }}>
+                style={{ background: "var(--gradient-gold)" }}
+              >
                 {submitting ? "Publication..." : "Publier le cours"}
               </button>
             </div>
@@ -331,16 +500,16 @@ const CoursVirtuelWidget = () => {
         )}
       </AnimatePresence>
 
-      {/* Course poster preview (when selected) */}
       <AnimatePresence>
         {selectedCours && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}>
-            <button onClick={() => setSelectedCours(null)}
-              className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline mb-3">
+            <button
+              onClick={() => setSelectedCours(null)}
+              className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline mb-3"
+            >
               ← Retour à la liste
             </button>
 
-            {/* Course poster */}
             <div className="rounded-2xl overflow-hidden mb-4" style={{ padding: "8px", background: "hsl(var(--muted))" }}>
               <div ref={posterRef} style={{ borderRadius: "18px", overflow: "hidden", background: "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", fontFamily: "'Inter', sans-serif", maxWidth: "480px", margin: "0 auto" }}>
                 <div style={{ background: "linear-gradient(135deg, #1E293B, #334155)", padding: "28px 24px 22px", textAlign: "center" }}>
@@ -353,11 +522,7 @@ const CoursVirtuelWidget = () => {
                   <div style={{ fontSize: "0.95rem", opacity: 0.85, marginTop: "6px", color: "#fff" }}>
                     👨‍🏫 {selectedCours.rav}
                   </div>
-                  <div style={{
-                    display: "inline-block", background: "rgba(212,175,55,0.25)", border: "1px solid rgba(212,175,55,0.5)",
-                    color: "#f0d68a", padding: "4px 14px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600,
-                    textTransform: "uppercase", letterSpacing: "1px", marginTop: "12px",
-                  }}>
+                  <div style={{ display: "inline-block", background: "rgba(212,175,55,0.25)", border: "1px solid rgba(212,175,55,0.5)", color: "#f0d68a", padding: "4px 14px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", marginTop: "12px" }}>
                     Cours en ligne
                   </div>
                 </div>
@@ -405,16 +570,11 @@ const CoursVirtuelWidget = () => {
               </div>
             </div>
 
-            {/* Share buttons */}
-            <div className="flex gap-3">
-              <button onClick={handleExportPoster}
-                className="flex-1 py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer"
-                style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button onClick={handleExportPoster} className="flex-1 py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
                 💾 Télécharger JPG
               </button>
-              <button onClick={shareCoursWhatsApp}
-                className="flex-1 py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer"
-                style={{ background: "#25d366" }}>
+              <button onClick={shareCoursWhatsApp} className="flex-1 py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer" style={{ background: "#25d366" }}>
                 💬 WhatsApp
               </button>
             </div>
@@ -422,7 +582,6 @@ const CoursVirtuelWidget = () => {
         )}
       </AnimatePresence>
 
-      {/* Course list */}
       {!selectedCours && (
         loading ? (
           <div className="text-center py-8 text-sm text-muted-foreground">Chargement...</div>
@@ -443,7 +602,7 @@ const CoursVirtuelWidget = () => {
               return (
                 <motion.div
                   key={c.id}
-                  className="rounded-2xl bg-card p-5 border border-border hover:border-primary/20 transition-all cursor-pointer"
+                  className="rounded-2xl bg-card p-4 sm:p-5 border border-border hover:border-primary/20 transition-all cursor-pointer"
                   style={{ boxShadow: "var(--shadow-card)" }}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -451,37 +610,32 @@ const CoursVirtuelWidget = () => {
                   onClick={() => setSelectedCours(c)}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
-                          style={{ background: `${dotColor}15`, color: dotColor }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style={{ background: `${dotColor}15`, color: dotColor }}>
                           {c.day_of_week}
                         </span>
                         <span className="text-xs font-bold text-foreground">{c.course_time?.slice(0, 5)}</span>
                       </div>
-                      <h4 className="font-display text-sm font-bold text-foreground mt-1">{c.title}</h4>
-                      <p className="text-xs text-primary/80 font-medium mt-0.5">👨‍🏫 {c.rav}</p>
-                      <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">{c.description}</p>
+                      <h4 className="font-display text-sm font-bold text-foreground mt-1 break-words">{c.title}</h4>
+                      <p className="text-xs text-primary/80 font-medium mt-0.5">👨‍🏫 {c.rav || "Cours Zoom"}</p>
+                      <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed break-words">{c.description}</p>
                     </div>
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center gap-2 shrink-0">
                       {c.zoom_link && (
-                        <a href={c.zoom_link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                          className="w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95 no-underline"
-                          style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: "0 4px 12px rgba(45,140,255,0.3)" }}>
+                        <a href={c.zoom_link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95 no-underline" style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: "0 4px 12px rgba(45,140,255,0.3)" }}>
                           🎥
                         </a>
                       )}
                       <span className="text-[9px] text-muted-foreground font-medium">Rejoindre</span>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-3">
-                    <button onClick={(e) => { e.stopPropagation(); setSelectedCours(c); }}
-                      className="text-[10px] font-bold px-3 py-1.5 rounded-lg border border-border bg-muted text-muted-foreground cursor-pointer hover:border-primary/20">
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <button onClick={(e) => { e.stopPropagation(); setSelectedCours(c); }} className="text-[10px] font-bold px-3 py-1.5 rounded-lg border border-border bg-muted text-muted-foreground cursor-pointer hover:border-primary/20">
                       📋 Affiche
                     </button>
                     {isPresident && user?.id === c.creator_id && (
-                      <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }}
-                        className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border-none cursor-pointer hover:bg-destructive/20">
+                      <button onClick={(e) => { e.stopPropagation(); void handleDelete(c.id); }} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border-none cursor-pointer hover:bg-destructive/20">
                         🗑️ Supprimer
                       </button>
                     )}
