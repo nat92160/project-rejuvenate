@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
@@ -24,6 +24,25 @@ const fontConfig: Record<FontChoice, { name: string; sample: string; family: str
 
 const cornerSvg = (color: string) => `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M2 2 L14 2 L14 5 L5 5 L5 14 L2 14 Z' fill='${color}'/%3E%3Cpath d='M8 8 L16 8 L16 10 L10 10 L10 16 L8 16 Z' fill='${color}' opacity='0.4'/%3E%3C/svg%3E")`;
 
+/** Isolated input that keeps its own local state — parent never re-renders it mid-typing */
+const IsolatedInput = memo(({ initialValue, onCommit, placeholder, className, readOnly }: {
+  initialValue: string; onCommit: (v: string) => void; placeholder?: string; className?: string; readOnly?: boolean;
+}) => {
+  const [val, setVal] = useState(initialValue);
+  const committed = useRef(initialValue);
+  useEffect(() => { if (initialValue !== committed.current) { setVal(initialValue); committed.current = initialValue; } }, [initialValue]);
+  return (
+    <input
+      value={val}
+      readOnly={readOnly}
+      onChange={e => setVal(e.target.value)}
+      onBlur={() => { if (val !== committed.current) { committed.current = val; onCommit(val); } }}
+      placeholder={placeholder}
+      className={className || "w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"}
+    />
+  );
+});
+
 const AfficheChabbatWidget = () => {
   const { city } = useCity();
   const [data, setData] = useState<ShabbatTimes | null>(null);
@@ -36,17 +55,15 @@ const AfficheChabbatWidget = () => {
   const [synaAddress, setSynaAddress] = useState("");
   const [synaRav, setSynaRav] = useState("");
 
-  // Use refs for free-text fields to prevent cursor jumping
-  const notesRef = useRef<Record<string, string>>({
+  // Notes stored in state object — IsolatedInput handles its own local state
+  const [notes, setNotes] = useState<Record<string, string>>({
     candleLighting: "", minhaFri: "", kabbalat: "", arvitFri: "",
     shaharit: "", torahReading: "", moussaf: "", minhaSat: "",
     havdalah: "", arvitMotse: "",
   });
-  const [, forceRender] = useState(0);
-  const setNote = useCallback((key: string, val: string) => {
-    notesRef.current[key] = val;
-    forceRender(n => n + 1);
-  }, []);
+  const setNote = (key: string, val: string) => {
+    setNotes(prev => ({ ...prev, [key]: val }));
+  };
 
   const [minhaFri, setMinhaFri] = useState("");
   const [kabbalat, setKabbalat] = useState("");
@@ -65,7 +82,7 @@ const AfficheChabbatWidget = () => {
   const t = themeConfig[theme];
   const f = fontConfig[font];
   const cornerBg = cornerSvg(t.ornamentColor);
-  const notes = notesRef.current;
+  
 
   const generatePosterBlob = async () => {
     if (!canvasRef.current) return null;
@@ -108,16 +125,19 @@ const AfficheChabbatWidget = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  // Input row using defaultValue to prevent cursor jump
-  const NoteInput = ({ noteKey, placeholder }: { noteKey: string; placeholder?: string }) => (
-    <input
-      defaultValue={notes[noteKey] || ""}
-      onBlur={(e) => setNote(noteKey, e.target.value)}
-      onChange={(e) => { notesRef.current[noteKey] = e.target.value; }}
-      placeholder={placeholder || "Remarque libre"}
-      className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"
-    />
-  );
+  // Isolated note input — never re-renders parent during typing
+  const NoteInput = memo(({ noteKey, placeholder }: { noteKey: string; placeholder?: string }) => {
+    const [val, setVal] = useState(notes[noteKey] || "");
+    return (
+      <input
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={(e) => setNote(noteKey, e.target.value)}
+        placeholder={placeholder || "Remarque libre"}
+        className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"
+      />
+    );
+  });
 
   const TimeInputRow = ({ label, value, onChange, noteKey, readOnly = false }: { label: string; value: string; onChange?: (v: string) => void; noteKey: string; readOnly?: boolean }) => (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
@@ -265,12 +285,12 @@ const AfficheChabbatWidget = () => {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
                     <div style={{ background: t.blockBg, borderRadius: "8px", padding: "16px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
                       <div style={{ fontSize: "0.75rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>🕯️ Allumage</div>
-                      <div style={{ fontSize: "2rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.candleLighting || "--:--"}</div>
+                      <div style={{ fontSize: "1.6rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.candleLighting || "--:--"}</div>
                       {notes.candleLighting && <div style={{ fontSize: "0.75rem", color: t.labelColor, fontStyle: "italic", marginTop: "4px" }}>{notes.candleLighting}</div>}
                     </div>
                     <div style={{ background: t.blockBg, borderRadius: "8px", padding: "16px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
                       <div style={{ fontSize: "0.75rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>✨ Sortie</div>
-                      <div style={{ fontSize: "2rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.havdalah || "--:--"}</div>
+                      <div style={{ fontSize: "1.6rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.havdalah || "--:--"}</div>
                       {notes.havdalah && <div style={{ fontSize: "0.75rem", color: t.labelColor, fontStyle: "italic", marginTop: "4px" }}>{notes.havdalah}</div>}
                     </div>
                   </div>
