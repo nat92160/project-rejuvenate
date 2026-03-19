@@ -91,14 +91,7 @@ const IndexContent = () => {
       case "courszoom":
       case "coursvirtuel": return <CoursVirtuelWidget />;
       case "affiche": return <AfficheChabbatWidget />;
-      case "shabbatspec":
-        return (
-          <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-            <span className="text-5xl">✨</span>
-            <h3 className="font-display text-lg font-bold mt-4 text-foreground">Chabbatot spéciaux</h3>
-            <p className="text-xs mt-3 text-muted-foreground/60 italic">Bientôt disponible</p>
-          </div>
-        );
+      case "shabbatspec": return <ShabbatSpeciauxWidget />;
       case "communaute":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
