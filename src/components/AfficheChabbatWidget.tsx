@@ -46,6 +46,7 @@ interface SavedFormData {
   font: FontChoice;
   torahReader: string;
   shiourSamedi: string;
+  freeNote: string;
 }
 
 const loadSaved = (): Partial<SavedFormData> => {
