@@ -46,6 +46,7 @@ interface SavedFormData {
   font: FontChoice;
   torahReader: string;
   shiourSamedi: string;
+  freeNote: string;
 }
 
 const loadSaved = (): Partial<SavedFormData> => {
@@ -86,6 +87,7 @@ const AfficheChabbatWidget = () => {
   const [ravMessage, setRavMessage] = useState(saved.current.ravMessage || "");
   const [torahReader, setTorahReader] = useState(saved.current.torahReader || "");
   const [shiourSamedi, setShiourSamedi] = useState(saved.current.shiourSamedi || "");
+  const [freeNote, setFreeNote] = useState(saved.current.freeNote || "");
   const [step, setStep] = useState(1);
 
   const setNote = useCallback((key: string, val: string) => {
@@ -96,12 +98,12 @@ const AfficheChabbatWidget = () => {
     const toSave: SavedFormData = {
       synaName, synaAddress, synaRav, minhaFri, kabbalat, arvitFri,
       shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage,
-      notes, theme, font, torahReader, shiourSamedi,
+      notes, theme, font, torahReader, shiourSamedi, freeNote,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     } catch {}
-  }, [synaName, synaAddress, synaRav, minhaFri, kabbalat, arvitFri, shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage, notes, theme, font, torahReader, shiourSamedi]);
+  }, [synaName, synaAddress, synaRav, minhaFri, kabbalat, arvitFri, shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage, notes, theme, font, torahReader, shiourSamedi, freeNote]);
 
   useEffect(() => {
     setLoading(true);
@@ -196,7 +198,7 @@ const AfficheChabbatWidget = () => {
   const TimeLine = ({ label, value, note, big }: { label: string; value: string; note?: string; big?: boolean }) => (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "6px", padding: "3px 0", borderBottom: `1px solid ${t.blockBorder}22` }}>
       <span style={{ color: t.labelColor, fontSize: "0.7rem", fontWeight: 400 }}>{label}</span>
-      <span style={{ fontWeight: big ? 700 : 600, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "0.8rem" : "0.75rem", whiteSpace: "nowrap" }}>
+      <span style={{ fontWeight: big ? 600 : 500, color: t.accent, textAlign: "right", fontSize: big ? "0.8rem" : "0.75rem", whiteSpace: "nowrap" }}>
         {value}{note && <span style={{ fontWeight: 400, fontSize: "0.6rem", color: t.labelColor, fontStyle: "italic", marginLeft: "4px" }}>({note})</span>}
       </span>
     </div>
@@ -344,6 +346,10 @@ const AfficheChabbatWidget = () => {
               <label className="text-xs font-bold text-muted-foreground mb-1.5 block">💬 Message du Rav</label>
               <textarea value={ravMessage} onChange={(e) => setRavMessage(e.target.value)} placeholder="Ex : Pensée de la semaine, message inspirant…" rows={3} className={`${inputClass} resize-none`} style={{ minHeight: "88px" }} />
             </div>
+            <div>
+              <label className="text-xs font-bold text-muted-foreground mb-1.5 block">✏️ Champ libre (bas de l'affiche)</label>
+              <textarea value={freeNote} onChange={(e) => setFreeNote(e.target.value)} placeholder="Ex : Mazal Tov à la famille…, Horaire spécial…" rows={3} className={`${inputClass} resize-none`} style={{ minHeight: "88px" }} />
+            </div>
           </div>
           <div className="flex gap-3">
             <button onClick={() => setStep(1)} className="flex-1 py-4 rounded-xl font-bold text-sm bg-muted text-muted-foreground border border-border cursor-pointer active:scale-95 transition-transform">← Retour</button>
@@ -382,7 +388,7 @@ const AfficheChabbatWidget = () => {
               <div style={{ position: "absolute", inset: "8px", border: `0.5px solid ${t.border}33`, pointerEvents: "none", zIndex: 1 }} />
 
               <div style={{ textAlign: "center", marginBottom: "8px" }}>
-                <div style={{ fontFamily: f.family, fontSize: "clamp(0.95rem, 4vw, 1.2rem)", fontWeight: 700, color: t.valueColor }}>{synaName || "Nom de votre synagogue"}</div>
+                <div style={{ fontFamily: f.family, fontSize: "clamp(0.95rem, 4vw, 1.2rem)", fontWeight: 600, color: t.labelColor }}>{synaName || "Nom de votre synagogue"}</div>
                 {synaAddress && <div style={{ fontSize: "0.6rem", color: t.labelColor, marginTop: "2px" }}>{synaAddress}</div>}
                 {synaRav && <div style={{ fontSize: "0.6rem", color: t.labelColor, marginTop: "1px", fontStyle: "italic" }}>{synaRav}</div>}
               </div>
@@ -391,7 +397,7 @@ const AfficheChabbatWidget = () => {
 
               <div style={{ textAlign: "center", marginBottom: "10px" }}>
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.65rem", color: t.accent, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "2px" }}>CHABBAT PARACHA</div>
-                <div style={{ fontFamily: f.family, fontSize: "clamp(1rem, 5vw, 1.3rem)", fontWeight: 800, color: t.valueColor }}>{data?.parasha?.replace("Parashat ", "") || "..."}</div>
+                <div style={{ fontFamily: f.family, fontSize: "clamp(1rem, 5vw, 1.3rem)", fontWeight: 800, color: "#1a1a1a" }}>{data?.parasha?.replace("Parashat ", "") || "..."}</div>
                 <div style={{ fontSize: "0.65rem", color: t.labelColor, marginTop: "2px" }}>{data?.candleLightingDate || ""}</div>
               </div>
 
@@ -406,8 +412,14 @@ const AfficheChabbatWidget = () => {
 
                   <PosterSection icon="🌅" title="Chabbat matin">
                     {shaharit && <TimeLine label="Shaharit" value={shaharit} note={notes.shaharit} big />}
-                    {torahReader && <TimeLine label="Lecteur" value={torahReader} />}
-                    <TimeLine label="Lecture de la Torah" value={data?.parasha?.replace("Parashat ", "") || ""} note={notes.torahReading} />
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "6px", padding: "3px 0", borderBottom: `1px solid ${t.blockBorder}22` }}>
+                      <span style={{ color: t.labelColor, fontSize: "0.7rem", fontWeight: 400 }}>Lecture de la Torah</span>
+                      <span style={{ fontWeight: 600, color: t.accent, textAlign: "right", fontSize: "0.75rem", whiteSpace: "nowrap" }}>
+                        {data?.parasha?.replace("Parashat ", "") || ""}
+                        {torahReader && <span style={{ fontWeight: 400, fontSize: "0.58rem", color: t.labelColor, fontStyle: "italic", marginLeft: "4px" }}>({torahReader})</span>}
+                        {notes.torahReading && <span style={{ fontWeight: 400, fontSize: "0.58rem", color: t.labelColor, fontStyle: "italic", marginLeft: "4px" }}>({notes.torahReading})</span>}
+                      </span>
+                    </div>
                     {moussaf && <TimeLine label="Moussaf" value={moussaf} note={notes.moussaf} />}
                   </PosterSection>
 
@@ -428,9 +440,10 @@ const AfficheChabbatWidget = () => {
               {sponsor && <div style={{ background: t.blockBg, borderLeft: `2px solid ${t.accent}`, padding: "5px 10px", borderRadius: "0 4px 4px 0", marginBottom: "4px" }}><h4 style={{ color: t.h4Color, fontSize: "0.65rem", marginBottom: "2px" }}>🎉 Séouda / Kiddouch</h4><p style={{ fontSize: "0.6rem", color: t.labelColor }}>{sponsor}</p></div>}
               {announce && <div style={{ background: t.blockBg, borderLeft: `2px solid ${t.accent}`, padding: "5px 10px", borderRadius: "0 4px 4px 0", marginBottom: "4px" }}><h4 style={{ color: t.h4Color, fontSize: "0.65rem", marginBottom: "2px" }}>📢 Annonce</h4><p style={{ fontSize: "0.6rem", color: t.labelColor, textTransform: "uppercase" }}>{announce}</p></div>}
               {ravMessage && <div style={{ background: t.blockBg, borderLeft: `2px solid ${t.accent}`, padding: "5px 10px", borderRadius: "0 4px 4px 0", marginBottom: "4px" }}><h4 style={{ color: t.h4Color, fontSize: "0.65rem", marginBottom: "2px" }}>💬 Message du Rav</h4><p style={{ fontSize: "0.6rem", color: t.labelColor }}>{ravMessage}</p></div>}
+              {freeNote && <div style={{ background: t.blockBg, borderLeft: `2px solid ${t.accent}`, padding: "5px 10px", borderRadius: "0 4px 4px 0", marginBottom: "4px" }}><p style={{ fontSize: "0.6rem", color: t.labelColor, whiteSpace: "pre-wrap" }}>{freeNote}</p></div>}
 
               <div style={{ textAlign: "center", marginTop: "8px", paddingTop: "6px", borderTop: `1px solid ${t.blockBorder}` }}>
-                <div style={{ fontFamily: f.family, fontSize: "0.75rem", fontWeight: 700, color: t.valueColor }}>{synaName} — <span style={{ color: t.accent }}>Chabbat Chalom !</span></div>
+                <div style={{ fontFamily: f.family, fontSize: "0.75rem", fontWeight: 600, color: t.labelColor }}>{synaName} — <span style={{ color: t.accent }}>Chabbat Chalom !</span></div>
                 <div style={{ fontSize: "0.45rem", color: t.footerColor, marginTop: "3px", letterSpacing: "1px", textTransform: "uppercase" }}>Généré sur chabbat-chalom.com</div>
               </div>
             </div>
