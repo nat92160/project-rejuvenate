@@ -241,6 +241,48 @@ export type Database = {
         }
         Relationships: []
       }
+      synagogue_profiles: {
+        Row: {
+          created_at: string
+          font_family: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          president_id: string
+          primary_color: string | null
+          secondary_color: string | null
+          signature: string | null
+          speakers: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          font_family?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          president_id: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          signature?: string | null
+          speakers?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          font_family?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          president_id?: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          signature?: string | null
+          speakers?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tehilim_chains: {
         Row: {
           completed_at: string | null
