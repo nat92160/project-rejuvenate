@@ -22,7 +22,6 @@ const AnnoncesWidget = () => {
   const [newContent, setNewContent] = useState("");
   const [newPriority, setNewPriority] = useState("normal");
   const [submitting, setSubmitting] = useState(false);
-  
 
   useEffect(() => {
     const fetchAnnonces = async () => {
@@ -66,80 +65,113 @@ const AnnoncesWidget = () => {
   const getShareText = (a: Annonce) =>
     `📢 *${a.title}*${a.priority === "urgent" ? " 🔴 URGENT" : ""}\n\n${a.content}\n\n📅 ${formatDate(a.created_at)}\n— Chabbat Chalom\n📲 chabbat-chalom.com`;
 
-  const getShareUrl = (a: Annonce) =>
-    `https://wa.me/?text=${encodeURIComponent(getShareText(a))}`;
-
+  const shareAnnonce = (a: Annonce) => {
+    const text = getShareText(a);
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    }
+  };
 
   const isPresident = dbRole === "president";
+  const inputClass = "w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">📢 Annonces</h3>
-        {isPresident && (
-          <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground" style={{ background: "var(--gradient-gold)" }}>
-            {showForm ? "✕" : "+ Nouvelle"}
-          </button>
-        )}
+      {/* Header */}
+      <div className="rounded-2xl p-4 mb-4 border border-primary/15" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">📢 Annonces</h3>
+            <p className="text-xs text-muted-foreground mt-1">Informations de la communauté</p>
+          </div>
+          {isPresident && (
+            <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground" style={{ background: "var(--gradient-gold)" }}>
+              {showForm ? "✕" : "+ Nouvelle"}
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* Form */}
       <AnimatePresence>
         {showForm && (
           <motion.div className="rounded-2xl bg-card p-5 mb-4 border border-primary/20" style={{ boxShadow: "var(--shadow-card)" }}
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-            <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Titre de l'annonce"
-              className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3" />
-            <textarea value={newContent} onChange={e => setNewContent(e.target.value)} placeholder="Contenu de l'annonce..." rows={3}
-              className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3 resize-none" />
-            <div className="flex gap-2 mb-3">
-              <button onClick={() => setNewPriority("normal")}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border ${newPriority === "normal" ? "border-primary/30 bg-primary/5 text-foreground" : "border-border text-muted-foreground bg-card"}`}>
-                Normal
-              </button>
-              <button onClick={() => setNewPriority("urgent")}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border ${newPriority === "urgent" ? "border-destructive/30 bg-destructive/5 text-destructive" : "border-border text-muted-foreground bg-card"}`}>
-                🔴 Urgent
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Titre</label>
+                <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Titre de l'annonce" className={inputClass} />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Contenu</label>
+                <textarea value={newContent} onChange={e => setNewContent(e.target.value)} placeholder="Contenu de l'annonce..." rows={3} className={`${inputClass} resize-none`} />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setNewPriority("normal")}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border ${newPriority === "normal" ? "border-primary/30 bg-primary/5 text-foreground" : "border-border text-muted-foreground bg-card"}`}>
+                  Normal
+                </button>
+                <button onClick={() => setNewPriority("urgent")}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border ${newPriority === "urgent" ? "border-destructive/30 bg-destructive/5 text-destructive" : "border-border text-muted-foreground bg-card"}`}>
+                  🔴 Urgent
+                </button>
+              </div>
+              <button onClick={handleAdd} disabled={submitting || !newTitle.trim()}
+                className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
+                style={{ background: "var(--gradient-gold)" }}>
+                {submitting ? "Publication..." : "Publier"}
               </button>
             </div>
-            <button onClick={handleAdd} disabled={submitting || !newTitle.trim()}
-              className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
-              style={{ background: "var(--gradient-gold)" }}>
-              {submitting ? "Publication..." : "Publier"}
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* List */}
       {loading ? (
         <div className="text-center py-8 text-sm text-muted-foreground">Chargement...</div>
       ) : annonces.length === 0 ? (
         <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-          <p className="text-sm text-muted-foreground">Aucune annonce pour le moment.</p>
+          <span className="text-4xl">📢</span>
+          <p className="text-sm text-muted-foreground mt-3">Aucune annonce pour le moment.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {annonces.map((a, i) => (
-            <motion.div key={a.id} className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}
+            <motion.div key={a.id}
+              className={`rounded-2xl bg-card overflow-hidden border ${a.priority === "urgent" ? "border-destructive/30" : "border-border"}`}
+              style={{ boxShadow: "var(--shadow-card)" }}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <div className="flex items-start justify-between gap-2">
-                <h4 className="font-display text-sm font-bold text-foreground">{a.title}</h4>
-                {a.priority === "urgent" && (
-                  <span className="text-[9px] font-bold uppercase px-2 py-1 rounded-full bg-destructive/10 text-destructive whitespace-nowrap">Urgent</span>
+              {/* Urgent banner */}
+              {a.priority === "urgent" && (
+                <div className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-center text-destructive-foreground bg-destructive">
+                  🔴 Annonce urgente
+                </div>
+              )}
+              <div className="p-5">
+                <div className="flex items-start gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${a.priority === "urgent" ? "bg-destructive/10" : "bg-primary/10"}`}>
+                    {a.priority === "urgent" ? "🚨" : "📢"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-display text-sm font-bold text-foreground leading-tight">{a.title}</h4>
+                    <p className="text-[10px] text-muted-foreground/60 mt-1">📅 {formatDate(a.created_at)}</p>
+                  </div>
+                </div>
+                {a.content && (
+                  <p className="text-xs text-muted-foreground mt-3 leading-relaxed pl-[52px]">{a.content}</p>
                 )}
-              </div>
-              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{a.content}</p>
-              <div className="flex items-center justify-between mt-3">
-                <p className="text-[10px] text-muted-foreground/60">{formatDate(a.created_at)}</p>
-                <div className="flex gap-1.5">
-                  <a href={getShareUrl(a)} target="_blank" rel="noopener noreferrer"
-                    className="text-[10px] font-bold px-2.5 py-1.5 rounded-full no-underline cursor-pointer"
+                <div className="flex flex-wrap gap-2 mt-4 pl-[52px]">
+                  <button onClick={() => shareAnnonce(a)}
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer"
                     style={{ background: "#25d366", color: "#fff" }}>
-                    💬 WhatsApp
-                  </a>
+                    💬 Partager
+                  </button>
                   {isPresident && user?.id === a.creator_id && (
                     <button onClick={() => handleDelete(a.id)}
-                      className="text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-destructive/10 text-destructive border-none cursor-pointer">
-                      🗑️
+                      className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border-none cursor-pointer">
+                      🗑️ Supprimer
                     </button>
                   )}
                 </div>

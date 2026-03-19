@@ -344,11 +344,11 @@ const CoursVirtuelWidget = () => {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
-                  <a href={getShareUrl(c)} target="_blank" rel="noopener noreferrer"
-                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg no-underline cursor-pointer"
+                  <button onClick={() => shareCours(c)}
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer"
                     style={{ background: "#25d366", color: "#fff" }}>
-                    💬 WhatsApp
-                  </a>
+                    💬 Partager
+                  </button>
                   {isPresident && user?.id === c.creator_id && (
                     <button onClick={() => void handleDelete(c.id)}
                       className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border-none cursor-pointer hover:bg-destructive/20">
