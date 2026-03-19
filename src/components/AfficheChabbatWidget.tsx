@@ -2,8 +2,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
+import { useSynaProfile } from "@/hooks/useSynaProfile";
 import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
 import { TimeInputRow } from "@/components/affiche-chabbat/TimeInputRow";
+import MasterPosterTemplate, { type PosterContentBlock } from "@/components/poster/MasterPosterTemplate";
+import { exportPosterPng } from "@/components/poster/usePosterExport";
 
 type Theme = "tradition" | "moderne" | "chaud" | "prestige" | "blanc";
 type FontChoice = "greatvibes" | "playfairsc" | "playfair" | "lora";
@@ -60,6 +63,7 @@ const loadSaved = (): Partial<SavedFormData> => {
 
 const AfficheChabbatWidget = () => {
   const { city } = useCity();
+  const { profile: synaProfile } = useSynaProfile();
   const [data, setData] = useState<ShabbatTimes | null>(null);
   const [loading, setLoading] = useState(true);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -117,71 +121,46 @@ const AfficheChabbatWidget = () => {
   const f = fontConfig[font];
   const cornerBg = cornerSvg(t.ornamentColor);
 
-  const generatePosterBlob = async () => {
-    if (!canvasRef.current) return null;
-    try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(canvasRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        onclone: (clonedDoc) => {
-          clonedDoc.documentElement.classList.remove("dark");
-          const el = clonedDoc.getElementById("affiche-export-canvas") as HTMLDivElement | null;
-          if (el) {
-            el.style.background = t.bg;
-            el.style.colorScheme = "light";
-          }
-        },
-      });
-      return await new Promise<Blob | null>((resolve) => canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.95));
-    } catch {
-      return null;
-    }
+  const posterContent: PosterContentBlock = {
+    category: "PARASHAT",
+    title: data?.parasha?.replace("Parashat ", "") || "Chabbat",
+    date: data?.candleLightingDate || "",
+    details: [
+      { section: "VENDREDI SOIR", label: "Allumage des bougies", value: data?.candleLighting || "--:--" },
+      ...(minhaFri ? [{ section: "VENDREDI SOIR", label: "Minha", value: minhaFri, sub: notes.minhaFri || undefined }] : []),
+      ...(kabbalat ? [{ section: "VENDREDI SOIR", label: "Kabbalat Chabbat", value: kabbalat, sub: notes.kabbalat || undefined }] : []),
+      ...(arvitFri ? [{ section: "VENDREDI SOIR", label: "Arvit", value: arvitFri, sub: notes.arvitFri || undefined }] : []),
+      ...(shaharit ? [{ section: "CHABBAT MATIN", label: "Shaharit", value: shaharit, sub: notes.shaharit || undefined }] : []),
+      {
+        section: "CHABBAT MATIN",
+        label: "Lecture de la Torah",
+        value: data?.parasha?.replace("Parashat ", "") || "",
+        sub: torahReader || notes.torahReading || undefined,
+      },
+      ...(moussaf ? [{ section: "CHABBAT MATIN", label: "Moussaf", value: moussaf, sub: notes.moussaf || undefined }] : []),
+      ...(minhaSat ? [{ section: "CHABBAT APRÈS-MIDI", label: "Minha", value: minhaSat, sub: notes.minhaSat || undefined }] : []),
+      ...(shiourSamedi ? [{ section: "CHABBAT APRÈS-MIDI", label: "Shiour", value: shiourSamedi }] : []),
+      { section: "MOTSÉ CHABBAT", label: "Havdala", value: data?.havdalah || "--:--", sub: notes.havdalah || undefined },
+      ...(arvitMotse ? [{ section: "MOTSÉ CHABBAT", label: "Arvit", value: arvitMotse, sub: notes.arvitMotse || undefined }] : []),
+      ...(sponsor ? [{ section: "ANNONCES", label: "Séouda / Kiddouch", value: sponsor }] : []),
+      ...(announce ? [{ section: "ANNONCES", label: "Annonce", value: announce }] : []),
+      ...(ravMessage ? [{ section: "ANNONCES", label: "Message du Rav", value: ravMessage }] : []),
+      ...(freeNote ? [{ section: "ANNONCES", label: "Note", value: freeNote }] : []),
+    ],
+    description: synaProfile.name || synaName ? `${synaProfile.name || synaName} — Chabbat Chalom` : undefined,
   };
 
   const handleExport = async () => {
-    const blob = await generatePosterBlob();
-    if (!blob) {
-      alert("Export non disponible.");
-      return;
-    }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.download = `affiche-chabbat-${city.name}.jpg`;
-    a.href = url;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    await exportPosterPng(canvasRef.current, `affiche-chabbat-${city.name}.png`);
   };
 
   const sharePoster = async () => {
-    const blob = await generatePosterBlob();
-    const file = blob ? new File([blob], `affiche-chabbat-${city.name}.jpg`, { type: "image/jpeg" }) : null;
-    const baseText = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
-    try {
-      if (file && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText });
-        return;
-      }
-      if (navigator.share) {
-        await navigator.share({ title: "Affiche de Chabbat", text: baseText });
-        return;
-      }
-    } catch (err: any) {
-      if (err?.name === "AbortError") return;
-    }
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.download = `affiche-chabbat-${city.name}.jpg`;
-      a.href = url;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+    await handleExport();
+    const baseText = `Chabbat Chalom — ${synaProfile.name || synaName}\nAllumage : ${data?.candleLighting || ""}\nHavdala : ${data?.havdalah || ""}\nParacha : ${data?.parasha || ""}`;
     try {
       await navigator.clipboard.writeText(baseText);
     } catch {}
-    toast.success("Image téléchargée et texte copié !");
+    toast.success("Affiche téléchargée et texte copié !");
   };
 
   const inputClass = "w-full px-4 py-4 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50";
@@ -365,95 +344,22 @@ const AfficheChabbatWidget = () => {
           <button onClick={() => setStep(2)} className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline">← Modifier</button>
 
           <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
-            <div
-              id="affiche-export-canvas"
-              ref={canvasRef}
-              style={{
-                background: t.bg,
-                border: `2px solid ${t.border}`,
-                outline: `0.5px solid ${t.border}`,
-                outlineOffset: "3px",
-                borderRadius: "6px",
-                padding: "18px 14px 12px",
-                position: "relative",
-                overflow: "hidden",
-                color: t.text,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-                colorScheme: "light",
-                maxWidth: "100%",
-                width: "100%",
-              }}
-            >
-              {["top:5px;left:5px", "top:5px;right:5px;transform:rotate(90deg)", "bottom:5px;left:5px;transform:rotate(270deg)", "bottom:5px;right:5px;transform:rotate(180deg)"].map((pos, index) => (
-                <div key={index} style={{ position: "absolute", width: "32px", height: "32px", pointerEvents: "none", zIndex: 2, backgroundImage: cornerBg, backgroundSize: "contain", backgroundRepeat: "no-repeat", ...(Object.fromEntries(pos.split(";").map((part) => { const [property, value] = part.split(":"); return [property.trim(), value.trim()]; })) as Record<string, string>) }} />
-              ))}
-              <div style={{ position: "absolute", inset: "8px", border: `0.5px solid ${t.border}33`, pointerEvents: "none", zIndex: 1 }} />
-
-              <div style={{ textAlign: "center", marginBottom: "10px" }}>
-                <div style={{ fontFamily: "'Lora', serif", fontSize: "clamp(0.85rem, 3.5vw, 1.05rem)", fontWeight: 400, color: "#2F2F2F", letterSpacing: "0.5px" }}>{synaName || "Nom de votre synagogue"}</div>
-                {synaAddress && <div style={{ fontFamily: "'Lora', serif", fontSize: "0.55rem", color: "#999", marginTop: "3px" }}>{synaAddress}</div>}
-                {synaRav && <div style={{ fontFamily: "'Lora', serif", fontSize: "0.55rem", color: "#999", marginTop: "1px", fontStyle: "italic" }}>{synaRav}</div>}
-              </div>
-
-              <div style={{ width: "50px", height: "0.5px", background: "linear-gradient(90deg, transparent, #c8b47a, transparent)", margin: "0 auto 10px" }} />
-
-              <div style={{ textAlign: "center", marginBottom: "12px" }}>
-                <div style={{ fontFamily: "'Lora', serif", fontSize: "0.58rem", color: "#c8b47a", letterSpacing: "2.5px", textTransform: "uppercase", marginBottom: "3px" }}>Parashat</div>
-                <div style={{ fontFamily: "'Lora', serif", fontSize: "clamp(1.1rem, 5vw, 1.4rem)", fontWeight: 700, color: "#1a1a1a" }}>{data?.parasha?.replace("Parashat ", "") || "..."}</div>
-                <div style={{ fontFamily: "'Lora', serif", fontSize: "0.58rem", color: "#999", marginTop: "3px" }}>{data?.candleLightingDate || ""}</div>
-              </div>
-
-              {loading ? <div style={{ textAlign: "center", padding: "20px", fontFamily: "'Lora', serif", color: "#999" }}>Chargement...</div> : (
-                <>
-                  <PosterSection title="Vendredi soir">
-                    <TimeLine label="Allumage des bougies" value={data?.candleLighting || "--:--"} note={notes.candleLighting} />
-                    {minhaFri && <TimeLine label="Minha" value={minhaFri} note={notes.minhaFri} />}
-                    {kabbalat && <TimeLine label="Kabbalat Chabbat" value={kabbalat} note={notes.kabbalat} />}
-                    {arvitFri && <TimeLine label="Arvit" value={arvitFri} note={notes.arvitFri} />}
-                  </PosterSection>
-
-                  <PosterSection title="Chabbat matin">
-                    {shaharit && <TimeLine label="Shaharit" value={shaharit} note={notes.shaharit} />}
-                    <div style={{ display: "flex", justifyContent: "center", alignItems: "baseline", gap: "8px", padding: "2.5px 0" }}>
-                      <span style={{ color: "#6b6b6b", fontSize: "0.65rem", fontFamily: "'Lora', serif", fontWeight: 400 }}>Lecture de la Torah</span>
-                      <span style={{ fontFamily: "'Lora', serif", fontWeight: 400, color: "#2F2F2F", fontSize: "0.72rem" }}>
-                        {data?.parasha?.replace("Parashat ", "") || ""}
-                        {torahReader && <span style={{ fontSize: "0.52rem", color: "#999", fontStyle: "italic", marginLeft: "4px" }}>({torahReader})</span>}
-                        {notes.torahReading && <span style={{ fontSize: "0.52rem", color: "#999", fontStyle: "italic", marginLeft: "4px" }}>({notes.torahReading})</span>}
-                      </span>
-                    </div>
-                    {moussaf && <TimeLine label="Moussaf" value={moussaf} note={notes.moussaf} />}
-                  </PosterSection>
-
-                  {(minhaSat || notes.minhaSat || shiourSamedi) && (
-                    <PosterSection title="Chabbat après-midi">
-                      {minhaSat && <TimeLine label="Minha" value={minhaSat} note={notes.minhaSat} />}
-                      {shiourSamedi && <TimeLine label="Shiour" value={shiourSamedi} />}
-                    </PosterSection>
-                  )}
-
-                  <PosterSection title="Motsé Chabbat">
-                    <TimeLine label="Havdala" value={data?.havdalah || "--:--"} note={notes.havdalah} />
-                    {arvitMotse && <TimeLine label="Arvit" value={arvitMotse} note={notes.arvitMotse} />}
-                  </PosterSection>
-                </>
-              )}
-
-              {sponsor && <div style={{ textAlign: "center", padding: "5px 10px", marginBottom: "4px" }}><div style={{ fontFamily: "'Lora', serif", fontSize: "0.58rem", color: "#c8b47a", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "2px" }}>Séouda / Kiddouch</div><p style={{ fontFamily: "'Lora', serif", fontSize: "0.6rem", color: "#2F2F2F", margin: 0 }}>{sponsor}</p></div>}
-              {announce && <div style={{ textAlign: "center", padding: "5px 10px", marginBottom: "4px" }}><div style={{ fontFamily: "'Lora', serif", fontSize: "0.58rem", color: "#c8b47a", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "2px" }}>Annonce</div><p style={{ fontFamily: "'Lora', serif", fontSize: "0.6rem", color: "#2F2F2F", margin: 0 }}>{announce}</p></div>}
-              {ravMessage && <div style={{ textAlign: "center", padding: "5px 10px", marginBottom: "4px" }}><div style={{ fontFamily: "'Lora', serif", fontSize: "0.58rem", color: "#c8b47a", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "2px" }}>Message du Rav</div><p style={{ fontFamily: "'Lora', serif", fontSize: "0.6rem", color: "#2F2F2F", margin: 0 }}>{ravMessage}</p></div>}
-              {freeNote && <div style={{ textAlign: "center", padding: "5px 10px", marginBottom: "4px" }}><p style={{ fontFamily: "'Lora', serif", fontSize: "0.6rem", color: "#2F2F2F", margin: 0, whiteSpace: "pre-wrap" }}>{freeNote}</p></div>}
-
-              <div style={{ width: "50px", height: "0.5px", background: "linear-gradient(90deg, transparent, #c8b47a, transparent)", margin: "8px auto 6px" }} />
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "'Lora', serif", fontSize: "0.65rem", fontWeight: 400, color: "#2F2F2F" }}>{synaName} — <span style={{ color: "#c8b47a" }}>Chabbat Chalom</span></div>
-                <div style={{ fontFamily: "'Lora', serif", fontSize: "0.42rem", color: "#bbb", marginTop: "3px", letterSpacing: "1.5px", textTransform: "uppercase" }}>chabbat-chalom.com</div>
+            <div style={{ transform: "scale(0.28)", transformOrigin: "top center", height: 620, overflow: "hidden" }}>
+              <div ref={canvasRef}>
+                <MasterPosterTemplate
+                  profile={{
+                    ...synaProfile,
+                    name: synaProfile.name || synaName,
+                    signature: `${synaProfile.name || synaName} — Chabbat Chalom`,
+                  }}
+                  content={posterContent}
+                />
               </div>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <button onClick={handleExport} className="flex-1 py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>💾 Télécharger JPG</button>
+            <button onClick={handleExport} className="flex-1 py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>💾 Télécharger PNG</button>
             <button onClick={sharePoster} className="flex-1 py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)" }}>📤 Partager</button>
           </div>
         </div>
