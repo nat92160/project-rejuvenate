@@ -85,7 +85,7 @@ const FideleSynagogueView = () => {
     setSynError(null);
     setSynagogues([]);
 
-    fetchNearbySynagogues(city.lat, city.lng, controller.signal)
+    fetchNearbySynagogues(city.lat, city.lng)
       .then((results) => {
         if (!controller.signal.aborted) {
           setSynagogues(results);
