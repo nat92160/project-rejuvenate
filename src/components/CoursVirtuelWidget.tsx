@@ -267,14 +267,15 @@ const CoursVirtuelWidget = () => {
                     📋
                   </button>
                 </div>
-                <button onClick={() => {
+                <button onClick={async () => {
                     const text = `🎥 Rejoignez le cours en direct !\n${lastCreatedLink}\n\n✡️ Chabbat Chalom`;
-                    if (navigator.share) { navigator.share({ text }).catch(() => {}); }
-                    else { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer"); }
+                    if (navigator.share) { try { await navigator.share({ text }); return; } catch {} }
+                    await navigator.clipboard?.writeText(text);
+                    toast.success("Lien copié dans le presse-papier !");
                   }}
-                  className="mt-3 w-full py-2.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer flex items-center justify-center gap-2"
-                  style={{ background: "#25d366" }}>
-                  💬 Partager sur WhatsApp
+                  className="mt-3 w-full py-2.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer flex items-center justify-center gap-2"
+                  style={{ background: "var(--gradient-gold)" }}>
+                  📤 Partager
                 </button>
               </div>
             )}
