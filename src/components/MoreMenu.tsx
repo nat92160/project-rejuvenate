@@ -16,6 +16,7 @@ const menuItems = [
   { id: "minyan", icon: "👥", label: "Minyan Live" },
   { id: "evenements", icon: "📅", label: "Événements" },
   { id: "coursvirtuel", icon: "🎥", label: "Cours en ligne" },
+  { id: "affiche", icon: "📋", label: "Affiche Chabbat" },
   { id: "communaute", icon: "👥", label: "Communauté" },
 ];
 
