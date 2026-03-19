@@ -13,7 +13,7 @@ export const exportPosterPng = async (
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
-      backgroundColor: "#ffffff",
+      backgroundColor: "#F5F5F5",
       logging: false,
     });
     const url = canvas.toDataURL("image/png");
