@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ const TehilimJoinContent = () => {
   const [notFound, setNotFound] = useState(false);
   const [guestPromptOpen, setGuestPromptOpen] = useState(false);
   const [pendingPsalm, setPendingPsalm] = useState<number | null>(null);
+  const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
 
   const fetchClaims = useCallback(async () => {
     if (!id) return;
@@ -75,7 +76,8 @@ const TehilimJoinContent = () => {
 
   const isOwnClaim = (claim: Claim) => {
     if (user && claim.user_id === user.id) return true;
-    if (!user && !claim.user_id && claim.display_name === getGuestName()) return true;
+    const guestName = getGuestName();
+    if (guestName && !claim.user_id && claim.display_name === guestName) return true;
     return false;
   };
 
@@ -128,6 +130,7 @@ const TehilimJoinContent = () => {
   const unclaimPsalm = async (claim: Claim) => {
     if (!isOwnClaim(claim)) return;
     setClaims(prev => prev.filter(c => c.id !== claim.id));
+    setSelectedClaim(null);
     toast.success("Réservation annulée");
     const { error } = await supabase.from("tehilim_claims").delete().eq("id", claim.id);
     if (error) { toast.error("Erreur"); fetchClaims(); }
@@ -137,6 +140,7 @@ const TehilimJoinContent = () => {
     if (!isOwnClaim(claim)) return;
     const newCompleted = !claim.completed;
     setClaims(prev => prev.map(c => c.id === claim.id ? { ...c, completed: newCompleted } : c));
+    setSelectedClaim(null);
     await supabase
       .from("tehilim_claims")
       .update({ completed: newCompleted, completed_at: newCompleted ? new Date().toISOString() : null })
@@ -148,6 +152,17 @@ const TehilimJoinContent = () => {
   const progress = Math.round((totalClaimed / TOTAL_PSALMS) * 100);
 
   const myClaims = claims.filter(c => isOwnClaim(c));
+
+  const shareChain = async () => {
+    if (!chain) return;
+    const shareUrl = `${window.location.origin}/tehilim/${chain.id}`;
+    const text = `📖 Chaîne de Tehilim : ${chain.title}${chain.dedication ? `\n🙏 ${chain.dedication}` : ""}\n\n${totalClaimed}/150 réservés • ${totalCompleted} terminés\n\nChoisissez un psaume :\n${shareUrl}`;
+    if (navigator.share) {
+      try { await navigator.share({ text, url: shareUrl }); return; } catch {}
+    }
+    await navigator.clipboard?.writeText(text);
+    toast.success("Lien copié dans le presse-papier !");
+  };
 
   if (loading) {
     return (
@@ -198,13 +213,18 @@ const TehilimJoinContent = () => {
                   initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.8 }} />
               </div>
             </div>
+            <div className="flex gap-2 mt-3">
+              <button onClick={shareChain} className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border-none text-primary-foreground" style={{ background: "var(--gradient-gold)" }}>
+                📤 Partager
+              </button>
+            </div>
           </div>
         )}
 
-        {/* My claims summary */}
+        {/* My claims summary with cancel buttons */}
         {myClaims.length > 0 && (
           <div className="p-4 rounded-xl border border-primary/20 mb-4" style={{ background: "hsl(var(--gold) / 0.06)" }}>
-            <p className="text-xs font-bold text-foreground mb-2">📖 Mes psaumes réservés :</p>
+            <p className="text-xs font-bold text-foreground mb-2">📖 Mes psaumes ({myClaims.length}) :</p>
             <div className="flex flex-wrap gap-1.5">
               {myClaims.map(c => (
                 <div key={c.id} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold border" style={{
@@ -212,9 +232,14 @@ const TehilimJoinContent = () => {
                   borderColor: c.completed ? "hsl(142 76% 36% / 0.3)" : "hsl(var(--gold) / 0.2)",
                   color: c.completed ? "hsl(142 76% 36%)" : "hsl(var(--gold-matte))",
                 }}>
-                  <span>{c.chapter_start}</span>
-                  {c.completed ? <span>✅</span> : (
-                    <button onClick={() => unclaimPsalm(c)} className="ml-1 text-destructive bg-transparent border-none cursor-pointer text-[10px] hover:scale-110 transition-transform p-0">✕</button>
+                  <span>Ps {c.chapter_start}</span>
+                  {c.completed ? (
+                    <span>✅</span>
+                  ) : (
+                    <>
+                      <button onClick={() => toggleComplete(c)} className="ml-1 bg-transparent border-none cursor-pointer text-[10px] p-0 hover:scale-110 transition-transform" title="Marquer comme lu">✔️</button>
+                      <button onClick={() => unclaimPsalm(c)} className="ml-0.5 text-destructive bg-transparent border-none cursor-pointer text-[10px] p-0 hover:scale-110 transition-transform" title="Annuler">✕</button>
+                    </>
                   )}
                 </div>
               ))}
@@ -232,9 +257,8 @@ const TehilimJoinContent = () => {
               <button
                 key={num}
                 onClick={() => {
-                  if (claim?.completed) return;
-                  if (isMine && claim) { toggleComplete(claim); return; }
-                  if (!claim) claimPsalm(num);
+                  if (!claim) { claimPsalm(num); return; }
+                  if (isMine) { setSelectedClaim(claim); return; }
                 }}
                 disabled={!!claim && !isMine}
                 className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-all cursor-pointer border ${
@@ -263,7 +287,7 @@ const TehilimJoinContent = () => {
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500/15 inline-block" /> Terminé</span>
         </div>
         <p className="text-center text-[10px] text-muted-foreground mt-2">
-          💡 Cliquez sur un psaume libre pour le réserver, puis recliquez pour marquer comme lu
+          💡 Cliquez sur un psaume libre pour le réserver, cliquez sur votre psaume pour le gérer
         </p>
 
         <div className="text-center mt-8">
@@ -272,6 +296,69 @@ const TehilimJoinContent = () => {
           </button>
         </div>
       </div>
+
+      {/* Action menu for own claims */}
+      <AnimatePresence>
+        {selectedClaim && isOwnClaim(selectedClaim) && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-[400]"
+              style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setSelectedClaim(null)}
+            />
+            <motion.div
+              className="fixed bottom-0 left-0 right-0 z-[410] rounded-t-3xl bg-card p-6 border-t border-border"
+              style={{ paddingBottom: "calc(24px + env(safe-area-inset-bottom, 0px))", boxShadow: "var(--shadow-elevated)" }}
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            >
+              <div className="flex justify-center mb-4">
+                <div className="w-10 h-1 rounded-full bg-border" />
+              </div>
+              <h3 className="font-display text-base font-bold text-foreground text-center mb-1">
+                Psaume {selectedClaim.chapter_start}
+              </h3>
+              <p className="text-xs text-muted-foreground text-center mb-5">
+                {selectedClaim.completed ? "Ce psaume est marqué comme lu" : "Que souhaitez-vous faire ?"}
+              </p>
+              <div className="space-y-2.5">
+                {!selectedClaim.completed && (
+                  <button
+                    onClick={() => toggleComplete(selectedClaim)}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                    style={{ background: "var(--gradient-gold)" }}
+                  >
+                    ✅ Marquer comme lu
+                  </button>
+                )}
+                {selectedClaim.completed && (
+                  <button
+                    onClick={() => toggleComplete(selectedClaim)}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold border border-border bg-card text-foreground cursor-pointer"
+                  >
+                    ↩️ Marquer comme non lu
+                  </button>
+                )}
+                {!selectedClaim.completed && (
+                  <button
+                    onClick={() => unclaimPsalm(selectedClaim)}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold border border-destructive/30 bg-destructive/5 text-destructive cursor-pointer"
+                  >
+                    🗑️ Annuler ma réservation
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedClaim(null)}
+                  className="w-full py-3 rounded-xl text-xs font-bold bg-muted text-muted-foreground border-none cursor-pointer"
+                >
+                  ✕ Fermer
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
     </div>
