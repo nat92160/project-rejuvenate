@@ -9,14 +9,16 @@ import RefouaChelemaWidget from "./RefouaChelemaWidget";
 import MinyanLiveWidget from "./MinyanLiveWidget";
 import EvenementsWidget from "./EvenementsWidget";
 import CoursVirtuelWidget from "./CoursVirtuelWidget";
+import SynaProfileManager from "./SynaProfileManager";
 
 const features = [
+  { id: "syna-profile", icon: "🏛️", title: "Mon Espace Syna" },
   { id: "affiche", icon: "📋", title: "Affiche Chabbat" },
   { id: "annonces", icon: "📢", title: "Annonces" },
   { id: "refoua", icon: "🙏", title: "Refoua Chelema" },
   { id: "minyan", icon: "👥", title: "Minyan Live" },
   { id: "evenements", icon: "📅", title: "Événements" },
-  { id: "cours", icon: "🎥", title: "Cours en ligne" },
+  { id: "cours", icon: "🎥", title: "Cours de Torah" },
   { id: "stats", icon: "📊", title: "Statistiques" },
 ];
 
@@ -135,10 +137,10 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
 
   const renderFeature = () => {
     switch (activeFeature) {
+      case "syna-profile": return <SynaProfileManager />;
       case "affiche": return <AfficheChabbatWidget />;
       case "annonces": return <AnnoncesWidget />;
       case "refoua": return <RefouaChelemaWidget />;
-      case "minyan": return <MinyanLiveWidget />;
       case "create-minyan":
       case "minyan": return <MinyanLiveWidget />;
       case "evenements": return <EvenementsWidget />;

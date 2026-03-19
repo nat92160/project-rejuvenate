@@ -1,0 +1,243 @@
+import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+
+interface SynaProfile {
+  id?: string;
+  name: string;
+  logo_url: string | null;
+  signature: string;
+  primary_color: string;
+  secondary_color: string;
+  font_family: string;
+  speakers: string[];
+}
+
+const FONT_OPTIONS = ["Lora", "Playfair Display", "Georgia", "Merriweather", "Noto Serif"];
+
+const DEFAULT_PROFILE: SynaProfile = {
+  name: "",
+  logo_url: null,
+  signature: "",
+  primary_color: "#1e3a5f",
+  secondary_color: "#c9a84c",
+  font_family: "Lora",
+  speakers: [],
+};
+
+const SynaProfileManager = () => {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<SynaProfile>(DEFAULT_PROFILE);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [newSpeaker, setNewSpeaker] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from("synagogue_profiles")
+        .select("*")
+        .eq("president_id", user.id)
+        .maybeSingle();
+      if (data) {
+        setProfile({
+          id: data.id,
+          name: data.name || "",
+          logo_url: data.logo_url,
+          signature: data.signature || "",
+          primary_color: data.primary_color || "#1e3a5f",
+          secondary_color: data.secondary_color || "#c9a84c",
+          font_family: data.font_family || "Lora",
+          speakers: Array.isArray(data.speakers) ? (data.speakers as string[]) : [],
+        });
+      }
+      setLoading(false);
+    };
+    void load();
+  }, [user]);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner une image");
+      return;
+    }
+    setUploading(true);
+    const path = `${user.id}/logo-${Date.now()}.${file.name.split(".").pop()}`;
+    const { error } = await supabase.storage.from("synagogue-logos").upload(path, file, { upsert: true });
+    if (error) {
+      toast.error("Erreur lors de l'upload du logo");
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("synagogue-logos").getPublicUrl(path);
+    setProfile((p) => ({ ...p, logo_url: urlData.publicUrl }));
+    setUploading(false);
+    toast.success("Logo uploadé !");
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+
+    const payload = {
+      president_id: user.id,
+      name: profile.name,
+      logo_url: profile.logo_url,
+      signature: profile.signature,
+      primary_color: profile.primary_color,
+      secondary_color: profile.secondary_color,
+      font_family: profile.font_family,
+      speakers: profile.speakers,
+    };
+
+    let error;
+    if (profile.id) {
+      ({ error } = await supabase.from("synagogue_profiles").update(payload).eq("id", profile.id));
+    } else {
+      const { data, error: insertError } = await supabase.from("synagogue_profiles").insert(payload).select().single();
+      error = insertError;
+      if (data) setProfile((p) => ({ ...p, id: data.id }));
+    }
+
+    setSaving(false);
+    if (error) {
+      toast.error("Erreur lors de la sauvegarde");
+      console.error(error);
+    } else {
+      toast.success("Profil de la synagogue enregistré !");
+    }
+  };
+
+  const addSpeaker = () => {
+    const trimmed = newSpeaker.trim();
+    if (!trimmed || profile.speakers.includes(trimmed)) return;
+    setProfile((p) => ({ ...p, speakers: [...p.speakers, trimmed] }));
+    setNewSpeaker("");
+  };
+
+  const removeSpeaker = (name: string) => {
+    setProfile((p) => ({ ...p, speakers: p.speakers.filter((s) => s !== name) }));
+  };
+
+  if (loading) {
+    return <div className="py-10 text-center text-sm text-muted-foreground">Chargement du profil…</div>;
+  }
+
+  const inputCls = "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30";
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+      <div className="rounded-2xl border border-primary/15 p-5" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))" }}>
+        <span className="text-3xl">🏛️</span>
+        <h3 className="mt-2 font-display text-lg font-bold text-foreground">Mon Espace Syna</h3>
+        <p className="mt-1 text-xs text-muted-foreground">Définissez l'identité visuelle de votre synagogue</p>
+      </div>
+
+      {/* Nom */}
+      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <label className="mb-2 block text-xs font-bold text-foreground">Nom de la synagogue</label>
+        <input className={inputCls} value={profile.name} onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))} placeholder="Beth Abraham" />
+      </div>
+
+      {/* Logo */}
+      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <label className="mb-2 block text-xs font-bold text-foreground">Logo de la synagogue</label>
+        <div className="flex items-center gap-4">
+          {profile.logo_url ? (
+            <img src={profile.logo_url} alt="Logo" className="h-16 w-16 rounded-xl border border-border object-contain bg-white" />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed border-border bg-muted text-2xl">🏛️</div>
+          )}
+          <div>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+            <button onClick={() => fileRef.current?.click()} disabled={uploading} className="rounded-xl border-none px-4 py-2 text-xs font-bold text-primary-foreground cursor-pointer disabled:opacity-50" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+              {uploading ? "Upload…" : "Choisir un logo"}
+            </button>
+            <p className="mt-1 text-[10px] text-muted-foreground">PNG transparent recommandé</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Couleurs */}
+      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <label className="mb-3 block text-xs font-bold text-foreground">Couleurs maîtresses</label>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <p className="mb-1 text-[10px] text-muted-foreground">Couleur principale</p>
+            <div className="flex items-center gap-2">
+              <input type="color" value={profile.primary_color} onChange={(e) => setProfile((p) => ({ ...p, primary_color: e.target.value }))} className="h-10 w-10 cursor-pointer rounded-lg border border-border" />
+              <span className="text-xs text-muted-foreground">{profile.primary_color}</span>
+            </div>
+          </div>
+          <div className="flex-1">
+            <p className="mb-1 text-[10px] text-muted-foreground">Couleur secondaire</p>
+            <div className="flex items-center gap-2">
+              <input type="color" value={profile.secondary_color} onChange={(e) => setProfile((p) => ({ ...p, secondary_color: e.target.value }))} className="h-10 w-10 cursor-pointer rounded-lg border border-border" />
+              <span className="text-xs text-muted-foreground">{profile.secondary_color}</span>
+            </div>
+          </div>
+        </div>
+        {/* Preview */}
+        <div className="mt-3 flex h-12 items-center justify-center gap-2 rounded-xl" style={{ background: `linear-gradient(135deg, ${profile.primary_color}, ${profile.primary_color}cc)` }}>
+          <span className="text-sm font-bold" style={{ color: profile.secondary_color, fontFamily: profile.font_family }}>{profile.name || "Aperçu"}</span>
+        </div>
+      </div>
+
+      {/* Police */}
+      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <label className="mb-2 block text-xs font-bold text-foreground">Typographie</label>
+        <div className="flex flex-wrap gap-2">
+          {FONT_OPTIONS.map((font) => (
+            <button key={font} onClick={() => setProfile((p) => ({ ...p, font_family: font }))} className="rounded-xl border px-3 py-2 text-xs font-bold cursor-pointer transition-all" style={{
+              fontFamily: font,
+              borderColor: profile.font_family === font ? "hsl(var(--gold-matte))" : "hsl(var(--border))",
+              background: profile.font_family === font ? "hsl(var(--gold) / 0.1)" : "transparent",
+              color: profile.font_family === font ? "hsl(var(--gold-matte))" : "hsl(var(--foreground))",
+            }}>
+              {font}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Signature */}
+      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <label className="mb-2 block text-xs font-bold text-foreground">Signature automatique</label>
+        <textarea className={`${inputCls} min-h-[60px] resize-y`} value={profile.signature} onChange={(e) => setProfile((p) => ({ ...p, signature: e.target.value }))} placeholder="Le comité Beth Abraham vous souhaite Chabbat Chalom" />
+      </div>
+
+      {/* Intervenants */}
+      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <label className="mb-2 block text-xs font-bold text-foreground">Intervenants / Rabbanim</label>
+        <div className="flex gap-2">
+          <input className={`${inputCls} flex-1`} value={newSpeaker} onChange={(e) => setNewSpeaker(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addSpeaker()} placeholder="Nom du Rav ou conférencier" />
+          <button onClick={addSpeaker} className="shrink-0 rounded-xl border-none px-4 py-2 text-xs font-bold text-primary-foreground cursor-pointer" style={{ background: "var(--gradient-gold)" }}>+</button>
+        </div>
+        {profile.speakers.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {profile.speakers.map((s) => (
+              <span key={s} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">
+                {s}
+                <button onClick={() => removeSpeaker(s)} className="ml-0.5 text-destructive/70 hover:text-destructive bg-transparent border-none cursor-pointer text-xs">✕</button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Save */}
+      <button onClick={handleSave} disabled={saving || !profile.name.trim()} className="w-full rounded-2xl border-none py-4 text-sm font-bold text-primary-foreground cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+        {saving ? "Enregistrement…" : "💾 Enregistrer le profil"}
+      </button>
+    </motion.div>
+  );
+};
+
+export default SynaProfileManager;
