@@ -130,20 +130,26 @@ const AfficheChabbatWidget = () => {
     const blob = await generatePosterBlob();
     const file = blob ? new File([blob], `affiche-chabbat-${city.name}.jpg`, { type: "image/jpeg" }) : null;
     const baseText = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
-    if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText }); } catch {}
-      return;
+
+    try {
+      if (file && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText });
+        return;
+      }
+      if (navigator.share) {
+        await navigator.share({ title: "Affiche de Chabbat", text: baseText });
+        return;
+      }
+    } catch (err: any) {
+      if (err?.name === "AbortError") return;
     }
-    if (navigator.share) {
-      try { await navigator.share({ title: "Affiche de Chabbat", text: baseText }); return; } catch {}
-    }
-    // Fallback: download JPG + copy text
+    // Fallback: download + copy
     if (blob) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a"); a.download = `affiche-chabbat-${city.name}.jpg`; a.href = url; a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
-    await navigator.clipboard?.writeText(baseText);
+    try { await navigator.clipboard.writeText(baseText); } catch {}
     toast.success("Image téléchargée et texte copié !");
   };
 
@@ -192,19 +198,19 @@ const AfficheChabbatWidget = () => {
 
   /** Poster section block */
   const PosterSection = ({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) => (
-    <div style={{ border: `1px solid ${t.blockBorder}`, borderRadius: "8px", marginBottom: "8px", overflow: "hidden" }}>
-      <div style={{ padding: "6px 12px", borderBottom: `1px solid ${t.blockBorder}` }}>
-        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.85rem", fontWeight: 700, color: t.h4Color }}>{icon} {title}</span>
+    <div style={{ border: `1px solid ${t.blockBorder}`, borderRadius: "6px", marginBottom: "6px", overflow: "hidden" }}>
+      <div style={{ padding: "4px 10px", borderBottom: `1px solid ${t.blockBorder}` }}>
+        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.72rem", fontWeight: 700, color: t.h4Color }}>{icon} {title}</span>
       </div>
-      <div style={{ padding: "8px 12px" }}>{children}</div>
+      <div style={{ padding: "5px 10px" }}>{children}</div>
     </div>
   );
 
   const TimeLine = ({ label, value, note, big }: { label: string; value: string; note?: string; big?: boolean }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "8px", padding: "4px 0", borderBottom: `1px solid ${t.blockBorder}22` }}>
-      <span style={{ color: t.labelColor, fontSize: big ? "0.85rem" : "0.8rem", fontWeight: 400 }}>{label}</span>
-      <span style={{ fontWeight: big ? 800 : 700, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "1.1rem" : "0.95rem", whiteSpace: "nowrap" }}>
-        {value}{note && <span style={{ fontWeight: 400, fontSize: "0.7rem", color: t.labelColor, fontStyle: "italic", marginLeft: "6px" }}>({note})</span>}
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "6px", padding: "3px 0", borderBottom: `1px solid ${t.blockBorder}22` }}>
+      <span style={{ color: t.labelColor, fontSize: "0.7rem", fontWeight: 400 }}>{label}</span>
+      <span style={{ fontWeight: big ? 700 : 600, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "0.8rem" : "0.75rem", whiteSpace: "nowrap" }}>
+        {value}{note && <span style={{ fontWeight: 400, fontSize: "0.6rem", color: t.labelColor, fontStyle: "italic", marginLeft: "4px" }}>({note})</span>}
       </span>
     </div>
   );
@@ -361,11 +367,11 @@ const AfficheChabbatWidget = () => {
                 outline: `0.5px solid ${t.border}`,
                 outlineOffset: "3px",
                 borderRadius: "6px",
-                padding: "24px 18px 16px",
+                padding: "18px 14px 12px",
                 position: "relative",
                 overflow: "hidden",
                 color: t.text,
-                boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
                 colorScheme: "light",
                 maxWidth: "100%",
                 width: "100%",
@@ -378,19 +384,19 @@ const AfficheChabbatWidget = () => {
               <div style={{ position: "absolute", inset: "8px", border: `0.5px solid ${t.border}33`, pointerEvents: "none", zIndex: 1 }} />
 
               {/* Header — Synagogue name */}
-              <div style={{ textAlign: "center", marginBottom: "10px" }}>
-                <div style={{ fontFamily: f.family, fontSize: "clamp(1.1rem, 5vw, 1.5rem)", fontWeight: 700, color: t.valueColor }}>{synaName || "Nom de votre synagogue"}</div>
-                {synaAddress && <div style={{ fontSize: "0.65rem", color: t.labelColor, marginTop: "3px" }}>{synaAddress}</div>}
-                {synaRav && <div style={{ fontSize: "0.65rem", color: t.labelColor, marginTop: "1px", fontStyle: "italic" }}>{synaRav}</div>}
+              <div style={{ textAlign: "center", marginBottom: "8px" }}>
+                <div style={{ fontFamily: f.family, fontSize: "clamp(0.95rem, 4vw, 1.2rem)", fontWeight: 700, color: t.valueColor }}>{synaName || "Nom de votre synagogue"}</div>
+                {synaAddress && <div style={{ fontSize: "0.6rem", color: t.labelColor, marginTop: "2px" }}>{synaAddress}</div>}
+                {synaRav && <div style={{ fontSize: "0.6rem", color: t.labelColor, marginTop: "1px", fontStyle: "italic" }}>{synaRav}</div>}
               </div>
 
-              <div style={{ width: "50px", height: "2px", background: `linear-gradient(90deg, transparent, ${t.accent}, transparent)`, margin: "0 auto 10px" }} />
+              <div style={{ width: "40px", height: "1.5px", background: `linear-gradient(90deg, transparent, ${t.accent}, transparent)`, margin: "0 auto 8px" }} />
 
               {/* Parasha & date */}
-              <div style={{ textAlign: "center", marginBottom: "14px" }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.8rem", color: t.accent, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "2px" }}>CHABBAT PARACHA</div>
-                <div style={{ fontFamily: f.family, fontSize: "clamp(1.3rem, 6vw, 1.8rem)", fontWeight: 800, color: t.valueColor }}>{data?.parasha?.replace("Parashat ", "") || "..."}</div>
-                <div style={{ fontSize: "0.75rem", color: t.labelColor, marginTop: "3px" }}>{data?.candleLightingDate || ""}</div>
+              <div style={{ textAlign: "center", marginBottom: "10px" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.65rem", color: t.accent, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "2px" }}>CHABBAT PARACHA</div>
+                <div style={{ fontFamily: f.family, fontSize: "clamp(1rem, 5vw, 1.3rem)", fontWeight: 800, color: t.valueColor }}>{data?.parasha?.replace("Parashat ", "") || "..."}</div>
+                <div style={{ fontSize: "0.65rem", color: t.labelColor, marginTop: "2px" }}>{data?.candleLightingDate || ""}</div>
               </div>
 
               {loading ? <div style={{ textAlign: "center", padding: "20px" }}>Chargement...</div> : (
@@ -426,14 +432,14 @@ const AfficheChabbatWidget = () => {
               )}
 
               {/* Announcements */}
-              {sponsor && <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "8px 12px", borderRadius: "0 6px 6px 0", marginBottom: "6px" }}><h4 style={{ color: t.h4Color, fontSize: "0.72rem", marginBottom: "3px" }}>🎉 Séouda / Kiddouch</h4><p style={{ fontSize: "0.68rem", color: t.labelColor }}>{sponsor}</p></div>}
-              {announce && <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "8px 12px", borderRadius: "0 6px 6px 0", marginBottom: "6px" }}><h4 style={{ color: t.h4Color, fontSize: "0.72rem", marginBottom: "3px" }}>📢 Annonce</h4><p style={{ fontSize: "0.68rem", color: t.labelColor, textTransform: "uppercase" }}>{announce}</p></div>}
-              {ravMessage && <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "8px 12px", borderRadius: "0 6px 6px 0", marginBottom: "6px" }}><h4 style={{ color: t.h4Color, fontSize: "0.72rem", marginBottom: "3px" }}>💬 Message du Rav</h4><p style={{ fontSize: "0.68rem", color: t.labelColor }}>{ravMessage}</p></div>}
+              {sponsor && <div style={{ background: t.blockBg, borderLeft: `2px solid ${t.accent}`, padding: "5px 10px", borderRadius: "0 4px 4px 0", marginBottom: "4px" }}><h4 style={{ color: t.h4Color, fontSize: "0.65rem", marginBottom: "2px" }}>🎉 Séouda / Kiddouch</h4><p style={{ fontSize: "0.6rem", color: t.labelColor }}>{sponsor}</p></div>}
+              {announce && <div style={{ background: t.blockBg, borderLeft: `2px solid ${t.accent}`, padding: "5px 10px", borderRadius: "0 4px 4px 0", marginBottom: "4px" }}><h4 style={{ color: t.h4Color, fontSize: "0.65rem", marginBottom: "2px" }}>📢 Annonce</h4><p style={{ fontSize: "0.6rem", color: t.labelColor, textTransform: "uppercase" }}>{announce}</p></div>}
+              {ravMessage && <div style={{ background: t.blockBg, borderLeft: `2px solid ${t.accent}`, padding: "5px 10px", borderRadius: "0 4px 4px 0", marginBottom: "4px" }}><h4 style={{ color: t.h4Color, fontSize: "0.65rem", marginBottom: "2px" }}>💬 Message du Rav</h4><p style={{ fontSize: "0.6rem", color: t.labelColor }}>{ravMessage}</p></div>}
 
               {/* Footer */}
-              <div style={{ textAlign: "center", marginTop: "12px", paddingTop: "8px", borderTop: `1px solid ${t.blockBorder}` }}>
-                <div style={{ fontFamily: f.family, fontSize: "0.85rem", fontWeight: 700, color: t.valueColor }}>{synaName} — <span style={{ color: t.accent }}>Chabbat Chalom !</span></div>
-                <div style={{ fontSize: "0.5rem", color: t.footerColor, marginTop: "4px", letterSpacing: "1px", textTransform: "uppercase" }}>Généré sur chabbat-chalom.com</div>
+              <div style={{ textAlign: "center", marginTop: "8px", paddingTop: "6px", borderTop: `1px solid ${t.blockBorder}` }}>
+                <div style={{ fontFamily: f.family, fontSize: "0.75rem", fontWeight: 700, color: t.valueColor }}>{synaName} — <span style={{ color: t.accent }}>Chabbat Chalom !</span></div>
+                <div style={{ fontSize: "0.45rem", color: t.footerColor, marginTop: "3px", letterSpacing: "1px", textTransform: "uppercase" }}>Généré sur chabbat-chalom.com</div>
               </div>
             </div>
           </div>
