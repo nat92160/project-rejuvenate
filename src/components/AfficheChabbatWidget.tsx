@@ -87,6 +87,7 @@ const AfficheChabbatWidget = () => {
   const [ravMessage, setRavMessage] = useState(saved.current.ravMessage || "");
   const [torahReader, setTorahReader] = useState(saved.current.torahReader || "");
   const [shiourSamedi, setShiourSamedi] = useState(saved.current.shiourSamedi || "");
+  const [freeNote, setFreeNote] = useState(saved.current.freeNote || "");
   const [step, setStep] = useState(1);
 
   const setNote = useCallback((key: string, val: string) => {
