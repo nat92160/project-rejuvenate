@@ -4,13 +4,15 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import AuthModal from "@/components/AuthModal";
+import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 
 const OFFICE_LABELS: Record<string, string> = {
   shacharit: "🌅 Cha'harit",
   minha: "☀️ Min'ha",
   arvit: "🌙 Arvit",
 };
+
+const GUEST_UUID = "00000000-0000-0000-0000-000000000000";
 
 interface MinyanSession {
   id: string;
@@ -37,8 +39,8 @@ const MinyanJoinContent = () => {
   const [regs, setRegs] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
   const [guestCount, setGuestCount] = useState(1);
+  const [guestPromptOpen, setGuestPromptOpen] = useState(false);
 
   const fetchRegs = async () => {
     if (!id) return;
@@ -69,7 +71,6 @@ const MinyanJoinContent = () => {
     fetch();
   }, [id]);
 
-  // Realtime
   useEffect(() => {
     if (!id) return;
     const channel = supabase
@@ -85,38 +86,46 @@ const MinyanJoinContent = () => {
   const target = session?.target_count || 10;
   const needed = Math.max(0, target - totalPeople);
   const isFull = totalPeople >= target;
-  const isRegistered = user && regs.some((r) => r.user_id === user.id);
-  const myReg = user ? regs.find((r) => r.user_id === user.id) : null;
 
-  const handleRegister = async () => {
-    if (!user) {
-      setAuthOpen(true);
-      return;
-    }
+  const isRegistered = user
+    ? regs.some((r) => r.user_id === user.id)
+    : regs.some((r) => (r.user_id === GUEST_UUID || !r.user_id) && r.display_name === getGuestName());
+
+  const doRegister = async (displayName: string) => {
     if (!id) return;
-    const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Anonyme";
     const { error } = await supabase.from("minyan_registrations").insert({
       session_id: id,
-      user_id: user.id,
+      user_id: user?.id || GUEST_UUID,
       display_name: displayName,
       guest_count: guestCount,
     });
-    if (error) {
-      toast.error("Erreur lors de l'inscription");
+    if (error) toast.error("Erreur lors de l'inscription");
+    else toast.success(`✅ ${guestCount > 1 ? `${guestCount} personnes inscrites` : "Vous êtes inscrit"} au Minyan !`);
+  };
+
+  const handleRegister = async () => {
+    if (user) {
+      const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Anonyme";
+      doRegister(displayName);
+    } else if (getGuestName()) {
+      doRegister(getGuestName()!);
     } else {
-      toast.success(`✅ ${guestCount > 1 ? `${guestCount} personnes inscrites` : "Vous êtes inscrit"} au Minyan !`);
+      setGuestPromptOpen(true);
     }
   };
 
   const handleUnregister = async () => {
-    if (!user || !id) return;
-    const { error } = await supabase
-      .from("minyan_registrations")
-      .delete()
-      .eq("session_id", id)
-      .eq("user_id", user.id);
-    if (error) toast.error("Erreur");
-    else toast.success("Inscription annulée");
+    if (!id) return;
+    if (user) {
+      await supabase.from("minyan_registrations").delete().eq("session_id", id).eq("user_id", user.id);
+    } else {
+      const guestName = getGuestName();
+      if (guestName) {
+        await supabase.from("minyan_registrations").delete().eq("session_id", id).eq("user_id", GUEST_UUID).eq("display_name", guestName);
+      }
+    }
+    toast.success("Inscription annulée");
+    fetchRegs();
   };
 
   if (loading) {
@@ -145,13 +154,11 @@ const MinyanJoinContent = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-[500px] mx-auto px-4 py-8">
-        {/* Header */}
         <div className="text-center mb-6">
           <h1 className="font-display text-2xl font-bold text-foreground">🕍 Minyan Live</h1>
           <p className="text-sm text-muted-foreground mt-1">Rejoignez ce Minyan</p>
         </div>
 
-        {/* Session info */}
         {session && (
           <div className="rounded-2xl p-6 mb-6 border text-center" style={{
             background: isFull
@@ -167,7 +174,6 @@ const MinyanJoinContent = () => {
               📅 {new Date(session.office_date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} à {session.office_time?.slice(0, 5)}
             </p>
 
-            {/* Counter */}
             <div className="relative w-36 h-36 mx-auto mb-6">
               <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
                 <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--border))" strokeWidth="8" />
@@ -194,7 +200,6 @@ const MinyanJoinContent = () => {
               </div>
             )}
 
-            {/* Person icons */}
             <div className="flex justify-center gap-1.5 mt-5 flex-wrap max-w-[200px] mx-auto">
               {Array.from({ length: target }).map((_, i) => (
                 <motion.div key={i} className="w-7 h-7 rounded-full flex items-center justify-center text-xs"
@@ -214,11 +219,10 @@ const MinyanJoinContent = () => {
           </div>
         )}
 
-        {/* Action */}
         {isRegistered ? (
           <div className="space-y-3">
             <div className="py-3.5 rounded-xl font-bold text-sm text-center bg-green-500/10 text-green-600 border border-green-500/20">
-              ✅ Vous êtes inscrit{myReg && (myReg.guest_count || 1) > 1 ? ` (${myReg.guest_count} personnes)` : ""}
+              ✅ Vous êtes inscrit
             </div>
             <button onClick={handleUnregister}
               className="w-full py-3.5 rounded-xl font-bold text-sm bg-destructive/10 text-destructive border border-destructive/20 cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]">
@@ -227,7 +231,6 @@ const MinyanJoinContent = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Guest count selector */}
             <div className="flex items-center justify-center gap-3 p-3 rounded-xl border border-border bg-card">
               <span className="text-sm text-muted-foreground">👥 Nombre de personnes :</span>
               <div className="flex items-center gap-2">
@@ -241,12 +244,11 @@ const MinyanJoinContent = () => {
             <button onClick={handleRegister}
               className="w-full py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]"
               style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
-              {user ? `➕ ${guestCount > 1 ? `Nous sommes ${guestCount}` : "Je suis là !"}` : "🔑 Se connecter pour participer"}
+              ➕ Je suis là !
             </button>
           </div>
         )}
 
-        {/* Back link */}
         <div className="text-center mt-8">
           <button onClick={() => navigate("/")} className="text-xs text-muted-foreground bg-transparent border-none cursor-pointer hover:underline">
             ← Retour à Chabbat Chalom
@@ -254,7 +256,7 @@ const MinyanJoinContent = () => {
         </div>
       </div>
 
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      <GuestNamePrompt open={guestPromptOpen} onSubmit={(name) => { setGuestPromptOpen(false); doRegister(name); }} onClose={() => setGuestPromptOpen(false)} />
     </div>
   );
 };
