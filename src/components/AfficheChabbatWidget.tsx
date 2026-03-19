@@ -224,50 +224,37 @@ const AfficheChabbatWidget = () => {
       </div>
 
       {step === 1 && (
-        <div className="space-y-5">
+        <div className="space-y-4">
           {/* Synagogue info */}
-          <div className="rounded-2xl bg-card p-5 border border-border space-y-4" style={{ boxShadow: "var(--shadow-card)" }}>
+          <div className="rounded-2xl bg-card p-4 border border-border space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
             <h4 className="font-display text-sm font-bold text-foreground flex items-center gap-2">🏛️ Votre synagogue</h4>
-            <div>
-              <label className="text-xs font-bold text-muted-foreground mb-1.5 block">Nom de la synagogue</label>
-              <input value={synaName} onChange={e => setSynaName(e.target.value)} placeholder="Ex : Beth Hamidrach, Ohel Yaakov…" className={inputClass} style={{ minHeight: "52px" }} />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-muted-foreground mb-1.5 block">📍 Adresse complète</label>
-              <input value={synaAddress} onChange={e => setSynaAddress(e.target.value)} placeholder="Ex : 12 rue de la Paix, Paris 75002" className={inputClass} style={{ minHeight: "52px" }} />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-muted-foreground mb-1.5 block">👤 Rav de la communauté</label>
-              <input value={synaRav} onChange={e => setSynaRav(e.target.value)} placeholder="Ex : Rav David Cohen" className={inputClass} style={{ minHeight: "52px" }} />
-            </div>
+            <input value={synaName} onChange={e => setSynaName(e.target.value)} placeholder="🏛️ Nom de la synagogue (ex: Beth Hamidrach)" className={inputClass} />
+            <input value={synaAddress} onChange={e => setSynaAddress(e.target.value)} placeholder="📍 Adresse (ex: 12 rue de la Paix, Paris)" className={inputClass} />
+            <input value={synaRav} onChange={e => setSynaRav(e.target.value)} placeholder="👤 Rav (ex: Rav David Cohen)" className={inputClass} />
           </div>
 
           {/* Horaires */}
-          <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-            <h4 className="font-display text-sm font-bold text-foreground mb-1 flex items-center gap-2">⏰ Horaires des offices</h4>
-            <p className="text-[11px] text-muted-foreground mb-5">Remplissez uniquement les horaires souhaités. Laissez vide pour masquer sur l'affiche.</p>
+          <div className="rounded-2xl bg-card p-4 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
+            <h4 className="font-display text-sm font-bold text-foreground mb-1">⏰ Horaires des offices</h4>
+            <p className="text-[10px] text-muted-foreground mb-3">Saisissez l'heure dans chaque case. Laissez vide = masqué.</p>
             
-            <div className="space-y-3">
-              <p className="text-[10px] font-bold text-primary uppercase tracking-wider px-1 pb-1 border-b border-primary/20">🕯️ Vendredi soir</p>
-              <TimeInputRow label="🕯️ Allumage des bougies (automatique)" value={data?.candleLighting || ""} noteKey="candleLighting" readOnly />
-              <TimeInputRow label="Minha — Vendredi" value={minhaFri} onChange={setMinhaFri} noteKey="minhaFri" />
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-primary uppercase tracking-wider px-1 py-1.5 border-b border-primary/20">🕯️ Vendredi soir</p>
+              <TimeInputRow label="🕯️ Allumage (auto)" value={data?.candleLighting || ""} noteKey="candleLighting" readOnly />
+              <TimeInputRow label="Minha vendredi" value={minhaFri} onChange={setMinhaFri} noteKey="minhaFri" />
               <TimeInputRow label="Kabbalat Chabbat" value={kabbalat} onChange={setKabbalat} noteKey="kabbalat" />
-              <TimeInputRow label="Arvit — Vendredi soir" value={arvitFri} onChange={setArvitFri} noteKey="arvitFri" />
+              <TimeInputRow label="Arvit vendredi" value={arvitFri} onChange={setArvitFri} noteKey="arvitFri" />
               
-              <div className="my-3" />
-              <p className="text-[10px] font-bold text-primary uppercase tracking-wider px-1 pb-1 border-b border-primary/20">☀️ Chabbat matin</p>
-              <TimeInputRow label="Shaharit — Samedi matin" value={shaharit} onChange={setShaharit} noteKey="shaharit" />
+              <p className="text-[10px] font-bold text-primary uppercase tracking-wider px-1 py-1.5 border-b border-primary/20 mt-2">☀️ Chabbat matin</p>
+              <TimeInputRow label="Shaharit samedi" value={shaharit} onChange={setShaharit} noteKey="shaharit" />
               
-              {/* Torah reading */}
-              <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-                <label className="text-xs font-bold text-foreground block">📖 Lecture de la Torah</label>
-                <div className="px-4 py-3.5 rounded-xl bg-muted border border-border text-foreground text-sm font-semibold text-center" style={{ minHeight: "48px", lineHeight: "48px" }}>
-                  Paracha {data?.parasha?.replace("Parashat ", "") || "…"}
+              {/* Torah reading — inline */}
+              <div className="flex items-center gap-2 py-1.5">
+                <span className="text-[11px] font-semibold text-foreground w-[45%] shrink-0 leading-tight">📖 Paracha</span>
+                <div className="flex-1 px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground text-center text-xs font-bold h-10 flex items-center justify-center">
+                  {data?.parasha?.replace("Parashat ", "") || "…"}
                 </div>
-                <input
-                  defaultValue={notes.torahReading || ""}
-                  onBlur={e => setNote("torahReading", e.target.value)}
-                  placeholder="✏️ Montée spéciale, Haftara, officiant…"
+              </div>
                   className="w-full px-4 py-3 rounded-xl bg-muted/40 border border-border/50 text-foreground text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   style={{ minHeight: "44px" }}
                 />
