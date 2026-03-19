@@ -103,7 +103,8 @@ const MinyanLiveWidget = () => {
   const target = currentSession?.target_count || 10;
   const needed = Math.max(0, target - count);
   const isFull = count >= target;
-  const isRegistered = user ? currentRegs.some(r => r.user_id === user.id) : currentRegs.some(r => !r.user_id && r.display_name === getGuestName());
+  const GUEST_UUID = "00000000-0000-0000-0000-000000000000";
+  const isRegistered = user ? currentRegs.some(r => r.user_id === user.id) : currentRegs.some(r => (r.user_id === GUEST_UUID || !r.user_id) && r.display_name === getGuestName());
 
   const doRegister = async (displayName: string) => {
     if (!selectedSession) return;
