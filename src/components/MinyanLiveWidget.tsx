@@ -129,6 +129,11 @@ const MinyanLiveWidget = () => {
     if (!selectedSession) return;
     if (user) {
       await supabase.from("minyan_registrations").delete().eq("session_id", selectedSession).eq("user_id", user.id);
+    } else {
+      const guestName = getGuestName();
+      if (guestName) {
+        await supabase.from("minyan_registrations").delete().eq("session_id", selectedSession).eq("user_id", GUEST_UUID).eq("display_name", guestName);
+      }
     }
     toast.success("Inscription annulée"); fetchSessions();
   };
