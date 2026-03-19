@@ -174,10 +174,10 @@ const AfficheChabbatWidget = () => {
   );
 
   const TimeLine = ({ label, value, note, big }: { label: string; value: string; note?: string; big?: boolean }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: big ? "6px 0" : "4px 0", fontSize: big ? "1.1rem" : "0.88rem" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", gap: "6px", padding: big ? "4px 0" : "3px 0", fontSize: big ? "0.9rem" : "0.78rem" }}>
       <span style={{ color: t.labelColor, flexShrink: 0, fontWeight: big ? 600 : 400 }}>{label}</span>
-      <span style={{ fontWeight: big ? 800 : 600, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "1.3rem" : undefined }}>
-        {value}{note && <span style={{ fontWeight: 400, fontSize: "0.78rem", color: t.labelColor, fontStyle: "italic", marginLeft: "5px" }}>({note})</span>}
+      <span style={{ fontWeight: big ? 800 : 600, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "1.05rem" : undefined }}>
+        {value}{note && <span style={{ fontWeight: 400, fontSize: "0.7rem", color: t.labelColor, fontStyle: "italic", marginLeft: "4px" }}>({note})</span>}
       </span>
     </div>
   );
