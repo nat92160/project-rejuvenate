@@ -37,7 +37,9 @@ const CoursForm = ({ userId, onCreated, onClose }: CoursFormProps) => {
       rav: teacher.trim(),
       day_of_week: day,
       course_time: time || "20:00",
+      course_type: courseType,
       zoom_link: courseType === "zoom" ? link.trim() : "",
+      address: courseType === "presentiel" ? address.trim() : "",
       description: desc.trim(),
     };
     const { data, error } = await supabase
