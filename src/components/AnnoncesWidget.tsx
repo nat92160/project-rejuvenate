@@ -69,12 +69,8 @@ const AnnoncesWidget = () => {
   const getShareUrl = (a: Annonce) =>
     `https://wa.me/?text=${encodeURIComponent(getShareText(a))}`;
 
-  // Remove unused state
-  void sharingId; void setSharingId;
 
   const isPresident = dbRole === "president";
-  const sharingAnnonce = annonces.find(a => a.id === sharingId);
-  const cs = cardStyles[selectedCardStyle];
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
