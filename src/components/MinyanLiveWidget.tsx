@@ -43,13 +43,19 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
     <motion.div className="rounded-2xl bg-card p-5 mb-4 border border-primary/20" style={{ boxShadow: "var(--shadow-card)" }}
       initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
       <h4 className="font-display text-sm font-bold text-foreground mb-3">➕ Nouvelle session</h4>
-      <div className="space-y-3">
+      <div className="space-y-4">
         <select value={form.office_type} onChange={e => setForm({...form, office_type: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm">
           <option value="shacharit">🌅 Cha'harit</option><option value="minha">☀️ Min'ha</option><option value="arvit">🌙 Arvit</option>
         </select>
-        <div className="grid grid-cols-2 gap-3">
-          <input type="date" value={form.office_date} onChange={e => setForm({...form, office_date: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm" />
-          <input type="time" value={form.office_time} onChange={e => setForm({...form, office_time: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm" />
+        <div className="grid grid-cols-2 gap-5">
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">📅 Date de la session</label>
+            <input type="date" value={form.office_date} onChange={e => setForm({...form, office_date: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">🕐 Heure de début</label>
+            <input type="time" value={form.office_time} onChange={e => setForm({...form, office_time: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm" />
+          </div>
         </div>
         <button onClick={handleCreate} disabled={submitting || !form.office_date || !form.office_time} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50" style={{ background: "var(--gradient-gold)" }}>
           {submitting ? "Création..." : "Créer la session"}

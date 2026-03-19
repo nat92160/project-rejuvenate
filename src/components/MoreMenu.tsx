@@ -35,8 +35,13 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
   const toggleZoom = (checked: boolean) => {
     setZoomOn(checked);
     try { localStorage.setItem("zoom_connected", checked ? "true" : "false"); } catch {}
-    if (!checked) toast.success("Zoom déconnecté localement");
-    else toast.success("Zoom activé");
+    if (!checked) {
+      // Clear tokens locally only — never redirect
+      try { localStorage.removeItem("zoom_access_token"); localStorage.removeItem("zoom_refresh_token"); } catch {}
+      toast.success("Zoom déconnecté (session locale)");
+    } else {
+      toast.success("Zoom activé");
+    }
   };
 
   return (

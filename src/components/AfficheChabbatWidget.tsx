@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
@@ -23,6 +23,25 @@ const fontConfig: Record<FontChoice, { name: string; sample: string; family: str
 };
 
 const cornerSvg = (color: string) => `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M2 2 L14 2 L14 5 L5 5 L5 14 L2 14 Z' fill='${color}'/%3E%3Cpath d='M8 8 L16 8 L16 10 L10 10 L10 16 L8 16 Z' fill='${color}' opacity='0.4'/%3E%3C/svg%3E")`;
+
+/** Isolated input that keeps its own local state — parent never re-renders it mid-typing */
+const IsolatedInput = memo(({ initialValue, onCommit, placeholder, className, readOnly }: {
+  initialValue: string; onCommit: (v: string) => void; placeholder?: string; className?: string; readOnly?: boolean;
+}) => {
+  const [val, setVal] = useState(initialValue);
+  const committed = useRef(initialValue);
+  useEffect(() => { if (initialValue !== committed.current) { setVal(initialValue); committed.current = initialValue; } }, [initialValue]);
+  return (
+    <input
+      value={val}
+      readOnly={readOnly}
+      onChange={e => setVal(e.target.value)}
+      onBlur={() => { if (val !== committed.current) { committed.current = val; onCommit(val); } }}
+      placeholder={placeholder}
+      className={className || "w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"}
+    />
+  );
+});
 
 const AfficheChabbatWidget = () => {
   const { city } = useCity();
