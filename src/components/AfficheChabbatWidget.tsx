@@ -113,7 +113,8 @@ const AfficheChabbatWidget = () => {
     const file = blob ? new File([blob], `affiche-chabbat-${city.name}.jpg`, { type: "image/jpeg" }) : null;
     const baseText = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
     if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText }); return;
+      try { await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText }); } catch {}
+      return;
     }
     let imageUrl = "";
     if (blob) {
@@ -122,7 +123,13 @@ const AfficheChabbatWidget = () => {
       if (!error) { const { data: urlData } = supabase.storage.from("affiches").getPublicUrl(filename); imageUrl = urlData?.publicUrl || ""; }
     }
     const text = imageUrl ? `${baseText}\n\n🖼️ ${imageUrl}` : baseText;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    // Use link click instead of window.open to avoid popup blockers on mobile
+    const a = document.createElement("a");
+    a.href = waUrl;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.click();
   };
 
   // Isolated time input — never re-renders parent during typing
@@ -167,10 +174,10 @@ const AfficheChabbatWidget = () => {
   );
 
   const TimeLine = ({ label, value, note, big }: { label: string; value: string; note?: string; big?: boolean }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: big ? "6px 0" : "4px 0", fontSize: big ? "1.1rem" : "0.88rem" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", gap: "6px", padding: big ? "4px 0" : "3px 0", fontSize: big ? "0.9rem" : "0.78rem" }}>
       <span style={{ color: t.labelColor, flexShrink: 0, fontWeight: big ? 600 : 400 }}>{label}</span>
-      <span style={{ fontWeight: big ? 800 : 600, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "1.3rem" : undefined }}>
-        {value}{note && <span style={{ fontWeight: 400, fontSize: "0.78rem", color: t.labelColor, fontStyle: "italic", marginLeft: "5px" }}>({note})</span>}
+      <span style={{ fontWeight: big ? 800 : 600, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "1.05rem" : undefined }}>
+        {value}{note && <span style={{ fontWeight: 400, fontSize: "0.7rem", color: t.labelColor, fontStyle: "italic", marginLeft: "4px" }}>({note})</span>}
       </span>
     </div>
   );
@@ -278,72 +285,72 @@ const AfficheChabbatWidget = () => {
         <div className="space-y-4">
           <button onClick={() => setStep(2)} className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline">← Modifier</button>
           <div className="rounded-2xl overflow-hidden" style={{ padding: "8px", background: "hsl(var(--muted))" }}>
-            <div id="affiche-export-canvas" ref={canvasRef} style={{ background: t.bg, border: `2.5px solid ${t.border}`, outline: `0.5px solid ${t.border}`, outlineOffset: "5px", borderRadius: "6px", padding: "40px 34px 28px", position: "relative", overflow: "hidden", color: t.text, boxShadow: "0 8px 40px rgba(0,0,0,0.12)", colorScheme: "light" }}>
+            <div id="affiche-export-canvas" ref={canvasRef} style={{ background: t.bg, border: `2px solid ${t.border}`, outline: `0.5px solid ${t.border}`, outlineOffset: "4px", borderRadius: "6px", padding: "24px 18px 18px", position: "relative", overflow: "hidden", color: t.text, boxShadow: "0 8px 40px rgba(0,0,0,0.12)", colorScheme: "light" }}>
               {["top:6px;left:6px", "top:6px;right:6px;transform:rotate(90deg)", "bottom:6px;left:6px;transform:rotate(270deg)", "bottom:6px;right:6px;transform:rotate(180deg)"].map((pos, i) => (
                 <div key={i} style={{ position: "absolute", width: "38px", height: "38px", pointerEvents: "none", zIndex: 2, backgroundImage: cornerBg, backgroundSize: "contain", backgroundRepeat: "no-repeat", ...(Object.fromEntries(pos.split(";").map(p => { const [k, v] = p.split(":"); return [k.trim(), v.trim()]; })) as Record<string, string>) }} />
               ))}
               <div style={{ position: "absolute", inset: "10px", border: `0.5px solid ${t.border}33`, pointerEvents: "none", zIndex: 1 }} />
 
-              <div style={{ textAlign: "center", paddingBottom: "14px", marginBottom: "10px" }}>
-                <div style={{ fontFamily: f.family, fontSize: theme === "prestige" ? "2rem" : "1.5rem", fontWeight: theme === "prestige" ? 400 : 700, color: t.valueColor, letterSpacing: "0.5px" }}>{synaName || "Nom de votre synagogue"}</div>
-                {synaAddress && <div style={{ fontSize: "0.82rem", color: t.labelColor, marginTop: "3px" }}>{synaAddress}</div>}
-                {synaRav && <div style={{ fontSize: "0.82rem", color: t.labelColor, marginTop: "3px", fontStyle: "italic" }}>{synaRav}</div>}
-                <div style={{ fontSize: "0.78rem", color: t.labelColor, marginTop: "3px", fontWeight: 500 }}>📍 {city.name}</div>
+              <div style={{ textAlign: "center", paddingBottom: "10px", marginBottom: "8px" }}>
+                <div style={{ fontFamily: f.family, fontSize: theme === "prestige" ? "1.4rem" : "1.15rem", fontWeight: theme === "prestige" ? 400 : 700, color: t.valueColor, letterSpacing: "0.5px" }}>{synaName || "Nom de votre synagogue"}</div>
+                {synaAddress && <div style={{ fontSize: "0.72rem", color: t.labelColor, marginTop: "2px" }}>{synaAddress}</div>}
+                {synaRav && <div style={{ fontSize: "0.72rem", color: t.labelColor, marginTop: "2px", fontStyle: "italic" }}>{synaRav}</div>}
+                <div style={{ fontSize: "0.68rem", color: t.labelColor, marginTop: "2px", fontWeight: 500 }}>📍 {city.name}</div>
               </div>
 
-              <div style={{ width: "80px", height: "1px", background: `linear-gradient(90deg, transparent, ${t.accent}, transparent)`, margin: "0 auto 12px" }} />
+              <div style={{ width: "60px", height: "1px", background: `linear-gradient(90deg, transparent, ${t.accent}, transparent)`, margin: "0 auto 8px" }} />
 
-              <div style={{ textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: "1.45rem", color: t.accent, marginBottom: "6px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>{data?.parasha || "CHABBAT CHALOM"}</div>
-              {data?.parashaHebrew && <div style={{ textAlign: "center", fontFamily: "'Frank Ruhl Libre', serif", fontSize: "1.1rem", color: `${t.text}88`, direction: "rtl", marginBottom: "6px" }}>{data.parashaHebrew}</div>}
-              <div style={{ textAlign: "center", fontSize: "0.85rem", fontWeight: 500, color: t.labelColor, marginBottom: "16px" }}>{data?.candleLightingDate}</div>
+              <div style={{ textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: "1.1rem", color: t.accent, marginBottom: "4px", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>{data?.parasha || "CHABBAT CHALOM"}</div>
+              {data?.parashaHebrew && <div style={{ textAlign: "center", fontFamily: "'Frank Ruhl Libre', serif", fontSize: "0.9rem", color: `${t.text}88`, direction: "rtl", marginBottom: "4px" }}>{data.parashaHebrew}</div>}
+              <div style={{ textAlign: "center", fontSize: "0.75rem", fontWeight: 500, color: t.labelColor, marginBottom: "12px" }}>{data?.candleLightingDate}</div>
 
               {loading ? <div style={{ textAlign: "center", padding: "30px" }}>Chargement...</div> : (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
-                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "16px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
-                      <div style={{ fontSize: "0.75rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>🕯️ Allumage</div>
-                      <div style={{ fontSize: "1.6rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.candleLighting || "--:--"}</div>
-                      {notes.candleLighting && <div style={{ fontSize: "0.75rem", color: t.labelColor, fontStyle: "italic", marginTop: "4px" }}>{notes.candleLighting}</div>}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "10px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
+                      <div style={{ fontSize: "0.65rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>🕯️ Allumage</div>
+                      <div style={{ fontSize: "1.2rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.candleLighting || "--:--"}</div>
+                      {notes.candleLighting && <div style={{ fontSize: "0.65rem", color: t.labelColor, fontStyle: "italic", marginTop: "3px" }}>{notes.candleLighting}</div>}
                     </div>
-                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "16px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
-                      <div style={{ fontSize: "0.75rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>✨ Sortie</div>
-                      <div style={{ fontSize: "1.6rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.havdalah || "--:--"}</div>
-                      {notes.havdalah && <div style={{ fontSize: "0.75rem", color: t.labelColor, fontStyle: "italic", marginTop: "4px" }}>{notes.havdalah}</div>}
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "10px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
+                      <div style={{ fontSize: "0.65rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>✨ Sortie</div>
+                      <div style={{ fontSize: "1.2rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.havdalah || "--:--"}</div>
+                      {notes.havdalah && <div style={{ fontSize: "0.65rem", color: t.labelColor, fontStyle: "italic", marginTop: "3px" }}>{notes.havdalah}</div>}
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
-                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
-                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>🕯️ Vendredi soir</h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "10px", border: `1px solid ${t.blockBorder}` }}>
+                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.8rem", color: t.h4Color, marginBottom: "6px", paddingBottom: "4px", borderBottom: `1px solid ${t.blockBorder}` }}>🕯️ Vendredi soir</h4>
                       {minhaFri && <TimeLine label="Minha" value={minhaFri} note={notes.minhaFri} />}
                       {kabbalat && <TimeLine label="Kabbalat" value={kabbalat} note={notes.kabbalat} />}
                       {arvitFri && <TimeLine label="Arvit" value={arvitFri} note={notes.arvitFri} />}
-                      {!minhaFri && !kabbalat && !arvitFri && <div style={{ fontSize: "0.8rem", color: t.labelColor, fontStyle: "italic" }}>—</div>}
+                      {!minhaFri && !kabbalat && !arvitFri && <div style={{ fontSize: "0.72rem", color: t.labelColor, fontStyle: "italic" }}>—</div>}
                     </div>
-                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
-                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>☀️ Chabbat matin</h4>
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "10px", border: `1px solid ${t.blockBorder}` }}>
+                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.8rem", color: t.h4Color, marginBottom: "6px", paddingBottom: "4px", borderBottom: `1px solid ${t.blockBorder}` }}>☀️ Chabbat matin</h4>
                       {shaharit && <TimeLine label="Shaharit" value={shaharit} note={notes.shaharit} />}
                       <TimeLine label="📖 Torah" value={data?.parasha || ""} note={notes.torahReading} />
                       {(moussaf || notes.moussaf) && <TimeLine label="Moussaf" value={moussaf || ""} note={notes.moussaf} />}
                     </div>
-                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
-                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>📚 Après-midi</h4>
-                      {minhaSat ? <TimeLine label="Minha" value={minhaSat} note={notes.minhaSat} /> : <div style={{ fontSize: "0.8rem", color: t.labelColor, fontStyle: "italic" }}>—</div>}
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "10px", border: `1px solid ${t.blockBorder}` }}>
+                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.8rem", color: t.h4Color, marginBottom: "6px", paddingBottom: "4px", borderBottom: `1px solid ${t.blockBorder}` }}>📚 Après-midi</h4>
+                      {minhaSat ? <TimeLine label="Minha" value={minhaSat} note={notes.minhaSat} /> : <div style={{ fontSize: "0.72rem", color: t.labelColor, fontStyle: "italic" }}>—</div>}
                     </div>
-                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
-                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>✨ Motsé Chabbat</h4>
-                      {arvitMotse ? <TimeLine label="Arvit" value={arvitMotse} note={notes.arvitMotse} /> : <div style={{ fontSize: "0.8rem", color: t.labelColor, fontStyle: "italic" }}>—</div>}
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "10px", border: `1px solid ${t.blockBorder}` }}>
+                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.8rem", color: t.h4Color, marginBottom: "6px", paddingBottom: "4px", borderBottom: `1px solid ${t.blockBorder}` }}>✨ Motsé Chabbat</h4>
+                      {arvitMotse ? <TimeLine label="Arvit" value={arvitMotse} note={notes.arvitMotse} /> : <div style={{ fontSize: "0.72rem", color: t.labelColor, fontStyle: "italic" }}>—</div>}
                     </div>
                   </div>
                 </>
               )}
 
-              {sponsor && <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "12px 16px", borderRadius: "0 8px 8px 0", marginBottom: "10px" }}><h4 style={{ color: t.h4Color, fontSize: "0.92rem", marginBottom: "5px" }}>🎉 Séouda / Kiddouch</h4><p style={{ fontSize: "0.85rem", color: t.labelColor }}>{sponsor}</p></div>}
-              {announce && <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "12px 16px", borderRadius: "0 8px 8px 0", marginBottom: "10px" }}><h4 style={{ color: t.h4Color, fontSize: "0.92rem", marginBottom: "5px" }}>📢 Annonce</h4><p style={{ fontSize: "0.85rem", color: t.labelColor }}>{announce}</p></div>}
-              {ravMessage && <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "12px 16px", borderRadius: "0 8px 8px 0", marginBottom: "10px" }}><h4 style={{ color: t.h4Color, fontSize: "0.92rem", marginBottom: "5px" }}>💬 Message du Rav</h4><p style={{ fontSize: "0.85rem", color: t.labelColor }}>{ravMessage}</p></div>}
+              {sponsor && <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "8px 12px", borderRadius: "0 6px 6px 0", marginBottom: "8px" }}><h4 style={{ color: t.h4Color, fontSize: "0.8rem", marginBottom: "3px" }}>🎉 Séouda / Kiddouch</h4><p style={{ fontSize: "0.75rem", color: t.labelColor }}>{sponsor}</p></div>}
+              {announce && <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "8px 12px", borderRadius: "0 6px 6px 0", marginBottom: "8px" }}><h4 style={{ color: t.h4Color, fontSize: "0.8rem", marginBottom: "3px" }}>📢 Annonce</h4><p style={{ fontSize: "0.75rem", color: t.labelColor }}>{announce}</p></div>}
+              {ravMessage && <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "8px 12px", borderRadius: "0 6px 6px 0", marginBottom: "8px" }}><h4 style={{ color: t.h4Color, fontSize: "0.8rem", marginBottom: "3px" }}>💬 Message du Rav</h4><p style={{ fontSize: "0.75rem", color: t.labelColor }}>{ravMessage}</p></div>}
 
-              <div style={{ textAlign: "center", fontSize: "0.75rem", color: t.footerColor, marginTop: "14px", paddingTop: "10px", borderTop: `1px solid ${t.blockBorder}` }}>{synaName} — Chabbat Chalom !</div>
-              <div style={{ textAlign: "center", fontSize: "0.65rem", color: t.footerColor, marginTop: "6px", letterSpacing: "0.8px", textTransform: "uppercase" }}>Généré sur chabbat-chalom.com</div>
+              <div style={{ textAlign: "center", fontSize: "0.65rem", color: t.footerColor, marginTop: "10px", paddingTop: "8px", borderTop: `1px solid ${t.blockBorder}` }}>{synaName} — Chabbat Chalom !</div>
+              <div style={{ textAlign: "center", fontSize: "0.58rem", color: t.footerColor, marginTop: "4px", letterSpacing: "0.8px", textTransform: "uppercase" }}>Généré sur chabbat-chalom.com</div>
             </div>
           </div>
 
