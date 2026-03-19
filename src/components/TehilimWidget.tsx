@@ -229,6 +229,8 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
 };
 
 // ─── Chain Detail View ─────────────────────────────────
+const TOTAL_PSALMS = 150;
+
 const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) => {
   const { user } = useAuth();
   const [claims, setClaims] = useState<Claim[]>([]);
@@ -246,90 +248,61 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
 
   useEffect(() => {
     fetchClaims();
-
-    // Realtime
     const channel = supabase
       .channel(`chain-${chain.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "tehilim_claims", filter: `chain_id=eq.${chain.id}` }, () => {
         fetchClaims();
       })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [chain.id, fetchClaims]);
 
-  const claimGroup = async (group: { start: number; end: number }) => {
+  const claimPsalm = async (num: number) => {
     if (!user) {
-      toast.error("Connectez-vous pour prendre un groupe de psaumes");
+      toast.error("Connectez-vous pour prendre un psaume");
       return;
     }
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("user_id", user.id)
-      .single();
-
+      .from("profiles").select("display_name").eq("user_id", user.id).single();
     const { error } = await supabase.from("tehilim_claims").insert({
       chain_id: chain.id,
       user_id: user.id,
       display_name: profile?.display_name || user.email || "Anonyme",
-      chapter_start: group.start,
-      chapter_end: group.end,
+      chapter_start: num,
+      chapter_end: num,
     });
     if (error) {
       toast.error("Erreur lors de la réservation");
-      console.error("Claim error:", error);
     } else {
-      toast.success(`✅ Chapitres ${group.start}-${group.end} réservés !`);
+      toast.success(`✅ Psaume ${num} réservé !`);
     }
   };
 
   const toggleComplete = async (claim: Claim) => {
     await supabase
       .from("tehilim_claims")
-      .update({
-        completed: !claim.completed,
-        completed_at: !claim.completed ? new Date().toISOString() : null,
-      })
+      .update({ completed: !claim.completed, completed_at: !claim.completed ? new Date().toISOString() : null })
       .eq("id", claim.id);
   };
 
   const totalClaimed = claims.length;
   const totalCompleted = claims.filter((c) => c.completed).length;
-  const progress = Math.round((totalCompleted / CHAIN_GROUPS.length) * 100);
+  const progress = Math.round((totalClaimed / TOTAL_PSALMS) * 100);
 
   const DEDICATION_LABELS: Record<string, string> = {
-    general: "",
-    refouah: "🙏 Refouah Chelema",
-    ilouye: "🕯️ Ilouye Nichmat",
-    hatslaha: "✨ Hatslaha",
-    zivougue: "💍 Zivougué",
+    general: "", refouah: "🙏 Refouah Chelema", ilouye: "🕯️ Ilouye Nichmat",
+    hatslaha: "✨ Hatslaha", zivougue: "💍 Zivougué",
   };
 
   const shareUrl = `${window.location.origin}/tehilim/${chain.id}`;
 
   const shareWhatsApp = () => {
-    const text = `📖 Chaîne de Tehilim : ${chain.title}${chain.dedication ? `\n🙏 ${chain.dedication}` : ""}\n\n${totalClaimed}/${CHAIN_GROUPS.length} réservés • ${totalCompleted} terminés\n\nChoisissez un groupe de psaumes :\n${shareUrl}`;
+    const text = `📖 Chaîne de Tehilim : ${chain.title}${chain.dedication ? `\n🙏 ${chain.dedication}` : ""}\n\n${totalClaimed}/150 réservés • ${totalCompleted} terminés\n\nChoisissez un psaume :\n${shareUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  const shareSMS = () => {
-    const text = `Chaîne de Tehilim : ${chain.title} - ${shareUrl}`;
-    window.open(`sms:?body=${encodeURIComponent(text)}`, "_blank");
-  };
-
-  const shareEmail = () => {
-    const subject = `Chaîne de Tehilim : ${chain.title}`;
-    const body = `Bonjour,\n\nUne chaîne de Tehilim a été lancée :\n${chain.title}${chain.dedication ? `\n${chain.dedication}` : ""}\n\nChoisissez un groupe de psaumes en cliquant ici :\n${shareUrl}\n\nMerci !`;
-    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_blank");
-  };
-
   const copyLink = () => {
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      toast.success("Lien copié !");
-    }).catch(() => {
-      toast.error("Impossible de copier le lien");
-    });
+    navigator.clipboard.writeText(shareUrl).then(() => toast.success("Lien copié !")).catch(() => toast.error("Impossible de copier"));
   };
 
   return (
@@ -346,20 +319,14 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
             {DEDICATION_LABELS[chain.dedication_type || "general"]} {chain.dedication}
           </p>
         )}
-        {/* Progress bar */}
         <div className="mt-3">
           <div className="flex justify-between text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            <span>{totalClaimed}/{CHAIN_GROUPS.length} réservés</span>
-            <span>{totalCompleted}/{CHAIN_GROUPS.length} terminés</span>
+            <span>{totalClaimed}/150 réservés</span>
+            <span>{totalCompleted}/150 terminés</span>
           </div>
           <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${progress}%`,
-                background: progress === 100 ? "#22c55e" : "var(--gradient-gold)",
-              }}
-            />
+            <div className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${progress}%`, background: progress === 100 ? "#22c55e" : "var(--gradient-gold)" }} />
           </div>
         </div>
 
@@ -374,91 +341,57 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
             className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border border-border bg-muted text-muted-foreground hover:border-primary/20">
             📋 Copier le lien
           </button>
-          <button onClick={shareSMS}
-            className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border border-border bg-muted text-muted-foreground hover:border-primary/20">
-            💬 SMS
-          </button>
-          <button onClick={shareEmail}
-            className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border border-border bg-muted text-muted-foreground hover:border-primary/20">
-            ✉️ Email
-          </button>
         </div>
       </div>
 
-      {/* Groups grid */}
+      {/* Psalms grid — 150 individual psalms */}
       {loading ? (
         <div className="text-center py-8">
           <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
         </div>
       ) : (
-        <div className="space-y-2">
-          {CHAIN_GROUPS.map((group) => {
-            const claim = claims.find((c) => c.chapter_start === group.start && c.chapter_end === group.end);
-            const isMine = claim?.user_id === user?.id;
+        <>
+          <div className="grid grid-cols-6 gap-1.5">
+            {Array.from({ length: TOTAL_PSALMS }, (_, i) => i + 1).map((num) => {
+              const claim = claims.find((c) => c.chapter_start === num && c.chapter_end === num);
+              const isMine = claim?.user_id === user?.id;
 
-            return (
-              <div
-                key={group.start}
-                className={`p-3.5 rounded-xl border transition-all ${
-                  claim?.completed
-                    ? "border-green-500/30 bg-green-500/5"
-                    : claim
-                    ? "border-primary/30 bg-primary/5"
-                    : "border-border"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="text-xs font-bold px-2.5 py-1 rounded-full"
-                      style={{
-                        background: claim?.completed ? "rgba(34,197,94,0.15)" : claim ? "hsl(var(--gold) / 0.1)" : "hsl(var(--muted))",
-                        color: claim?.completed ? "#22c55e" : claim ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))",
-                      }}
-                    >
-                      {group.start}-{group.end}
-                    </span>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        Chapitres {group.start} à {group.end}
-                      </p>
-                      {claim && (
-                        <p className="text-[11px] text-muted-foreground">
-                          {claim.completed ? "✅" : "📖"} {claim.display_name}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+              return (
+                <button
+                  key={num}
+                  onClick={() => {
+                    if (claim?.completed) return;
+                    if (isMine && claim) { toggleComplete(claim); return; }
+                    if (!claim) claimPsalm(num);
+                  }}
+                  disabled={!!claim && !isMine}
+                  className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-all cursor-pointer border ${
+                    claim?.completed
+                      ? "bg-green-500/15 border-green-500/30 text-green-600"
+                      : claim
+                      ? isMine
+                        ? "border-primary/40 text-primary"
+                        : "border-border text-muted-foreground opacity-60"
+                      : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-primary/5"
+                  }`}
+                  style={isMine && claim && !claim.completed ? { background: "hsl(var(--gold) / 0.1)" } : {}}
+                  title={claim ? `${claim.display_name}${claim.completed ? " ✅" : ""}` : `Psaume ${num}`}
+                >
+                  <span className="text-sm">{num}</span>
+                  {claim?.completed && <span className="text-[8px] absolute bottom-0.5">✅</span>}
+                  {isMine && claim && !claim.completed && <span className="text-[7px] absolute bottom-0.5">📖</span>}
+                </button>
+              );
+            })}
+          </div>
 
-                  {/* Actions */}
-                  {!claim && user && (
-                    <button
-                      onClick={() => claimGroup(group)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer border-none text-primary-foreground"
-                      style={{ background: "var(--gradient-gold)" }}
-                    >
-                      Prendre
-                    </button>
-                  )}
-                  {isMine && !claim?.completed && (
-                    <button
-                      onClick={() => toggleComplete(claim!)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer border border-green-500 text-green-500 bg-transparent hover:bg-green-500/10"
-                    >
-                      ✓ Terminé
-                    </button>
-                  )}
-                  {isMine && claim?.completed && (
-                    <span className="text-xs font-bold text-green-500">✅ Fait</span>
-                  )}
-                  {!user && !claim && (
-                    <span className="text-[10px] text-muted-foreground">🔒 Connectez-vous</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+          {/* Legend */}
+          <div className="flex gap-4 justify-center mt-3 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-card border border-border inline-block" /> Libre</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded inline-block" style={{ background: "hsl(var(--gold) / 0.1)" }} /> Réservé</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500/15 inline-block" /> Terminé</span>
+          </div>
+        </>
       )}
     </div>
   );
