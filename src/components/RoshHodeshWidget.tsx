@@ -17,20 +17,23 @@ const RoshHodeshWidget = () => {
     setLoading(true);
     const now = new Date();
     const year = now.getFullYear();
-    fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&year=${year}&month=x&maj=off&min=off&mod=off&nx=off&ss=off&mf=on&c=off&geo=geoname&geonameid=${city.geonameid}`)
-      .then((r) => r.json())
-      .then((data) => {
-        const items = data.items || [];
+    // Fetch both current year and next year to always find upcoming Rosh Chodesh
+    Promise.all([
+      fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&year=${year}&month=x&maj=off&min=off&mod=off&nx=off&ss=off&mf=off&c=off&geo=geoname&geonameid=${city.geonameid}&D=on`).then(r => r.json()),
+      fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&year=${year + 1}&month=x&maj=off&min=off&mod=off&nx=off&ss=off&mf=off&c=off&geo=geoname&geonameid=${city.geonameid}&D=on`).then(r => r.json()),
+    ])
+      .then(([data1, data2]) => {
+        const items = [...(data1.items || []), ...(data2.items || [])];
         const roshChodeshItems = items
-          .filter((i: any) => i.category === "roshchodesh" && new Date(i.date) >= now)
-          .slice(0, 2);
+          .filter((i: any) => i.category === "roshchodesh" && new Date(i.date + "T23:59:59") >= now);
 
         if (roshChodeshItems.length > 0) {
           const first = roshChodeshItems[0];
           const monthName = first.title.replace("Rosh Chodesh ", "");
+          // Get all dates for this same Rosh Chodesh (can be 1 or 2 days)
           const dates = roshChodeshItems
             .filter((i: any) => i.title === first.title)
-            .map((i: any) => new Date(i.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }));
+            .map((i: any) => new Date(i.date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }));
 
           setInfo({ month: monthName, dates });
         }

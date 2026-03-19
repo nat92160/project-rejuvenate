@@ -1,6 +1,10 @@
 import { CityConfig } from "./cities";
 
 function hebcalGeoParam(city: CityConfig): string {
+  // If city has custom GPS coords (from geolocation), use lat/lng for precision
+  if ((city as any)._gps) {
+    return `geo=pos&latitude=${city.lat}&longitude=${city.lng}&tzid=${city.tz}`;
+  }
   return `geo=geoname&geonameid=${city.geonameid}`;
 }
 

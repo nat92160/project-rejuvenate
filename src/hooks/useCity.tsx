@@ -56,7 +56,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const city = CITIES[cityKey] || CITIES[DEFAULT_CITY];
+  const city = cityKey === "__gps__" && gpsCity ? gpsCity : (CITIES[cityKey] || CITIES[DEFAULT_CITY]);
 
   return (
     <CityContext.Provider value={{ city, cityKey, setCityKey, isGeolocating, geolocate }}>

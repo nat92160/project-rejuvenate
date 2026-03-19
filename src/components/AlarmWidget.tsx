@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
-type AlarmSound = "shofar" | "kinnor" | "classic";
+type AlarmSound = "piano" | "harpe" | "cristal" | "shofar";
 
 const SOUNDS: { key: AlarmSound; label: string; emoji: string }[] = [
+  { key: "piano", label: "Piano", emoji: "🎹" },
+  { key: "harpe", label: "Harpe", emoji: "🎵" },
+  { key: "cristal", label: "Cristallin", emoji: "✨" },
   { key: "shofar", label: "Shofar", emoji: "📯" },
-  { key: "kinnor", label: "Kinnor (Harpe)", emoji: "🎵" },
-  { key: "classic", label: "Classique", emoji: "🔔" },
 ];
 
+const FADE_IN_DURATION = 3; // seconds
+
 function playSound(type: AlarmSound, count: number) {
-  // Resume AudioContext for mobile browsers that require user gesture
   const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
   const resume = ctx.state === "suspended" ? ctx.resume() : Promise.resolve();
   
@@ -18,24 +20,66 @@ function playSound(type: AlarmSound, count: number) {
     const playOne = (i: number) => {
       if (i >= count) return;
       const osc = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
       const gain = ctx.createGain();
-      if (type === "shofar") {
-        osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(220, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.8);
-      } else if (type === "kinnor") {
+      const t = ctx.currentTime;
+
+      // 3-second fade-in for progressive wake
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.exponentialRampToValueAtTime(0.25, t + FADE_IN_DURATION);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + FADE_IN_DURATION + 2);
+
+      if (type === "piano") {
+        // Warm piano-like tone (sine + soft harmonics)
         osc.type = "sine";
-        osc.frequency.value = 523;
+        osc.frequency.setValueAtTime(523.25, t); // C5
+        osc.frequency.setValueAtTime(659.25, t + 1.5); // E5
+        osc.frequency.setValueAtTime(783.99, t + 3); // G5
+        osc2.type = "sine";
+        osc2.frequency.setValueAtTime(261.63, t); // C4 (octave below)
+        const g2 = ctx.createGain();
+        g2.gain.setValueAtTime(0.001, t);
+        g2.gain.exponentialRampToValueAtTime(0.1, t + FADE_IN_DURATION);
+        g2.gain.exponentialRampToValueAtTime(0.001, t + FADE_IN_DURATION + 2);
+        osc2.connect(g2).connect(ctx.destination);
+        osc2.start(t);
+        osc2.stop(t + FADE_IN_DURATION + 2);
+      } else if (type === "harpe") {
+        // Harp-like arpeggio (sine with gentle sweep)
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(392, t);     // G4
+        osc.frequency.linearRampToValueAtTime(523, t + 1.5); // C5
+        osc.frequency.linearRampToValueAtTime(659, t + 3); // E5
+        osc.frequency.linearRampToValueAtTime(784, t + 4.5); // G5
+      } else if (type === "cristal") {
+        // Crystal bells (triangle wave, high register)
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(1047, t);  // C6
+        osc.frequency.setValueAtTime(1175, t + 1); // D6
+        osc.frequency.setValueAtTime(1319, t + 2); // E6
+        osc.frequency.setValueAtTime(1568, t + 3); // G6
       } else {
-        osc.type = "square";
-        osc.frequency.value = 880;
+        // Shofar — warm, not harsh (filtered sawtooth)
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(174, t); // F3
+        osc.frequency.exponentialRampToValueAtTime(349, t + 3); // F4
+        // Use a biquad filter to soften harshness
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 600;
+        filter.Q.value = 1;
+        osc.disconnect();
+        osc.connect(filter).connect(gain).connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + FADE_IN_DURATION + 2);
+        osc.onended = () => setTimeout(() => playOne(i + 1), 500);
+        return;
       }
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+
       osc.connect(gain).connect(ctx.destination);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 1.5);
-      osc.onended = () => playOne(i + 1);
+      osc.start(t);
+      osc.stop(t + FADE_IN_DURATION + 2);
+      osc.onended = () => setTimeout(() => playOne(i + 1), 500);
     };
     playOne(0);
   });
