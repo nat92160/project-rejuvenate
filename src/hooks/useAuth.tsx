@@ -2,54 +2,112 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
+type AppRole = "guest" | "fidele" | "president";
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  dbRole: string | null;
+  dbRole: AppRole | null;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const resolveRole = (roles: string[]): AppRole => {
+  if (roles.includes("president")) return "president";
+  if (roles.includes("fidele")) return "fidele";
+  return "guest";
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [dbRole, setDbRole] = useState<string | null>(null);
+  const [dbRole, setDbRole] = useState<AppRole | null>(null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          // Fetch role from DB
-          const { data } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", session.user.id)
-            .maybeSingle();
-          setDbRole(data?.role ?? "guest");
-        } else {
-          setDbRole(null);
-        }
-        setLoading(false);
-      }
-    );
+    const ensureUserBootstrap = async (authUser: User): Promise<AppRole> => {
+      const fallbackDisplayName =
+        authUser.user_metadata?.full_name ||
+        authUser.user_metadata?.name ||
+        authUser.email?.split("@")[0] ||
+        "";
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .maybeSingle()
-          .then(({ data }) => setDbRole(data?.role ?? "guest"));
+      const { data: profileRows, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", authUser.id)
+        .limit(1);
+
+      if (profileError) {
+        console.error("Profile fetch error:", profileError);
       }
+
+      if (!profileRows?.length) {
+        const { error: insertProfileError } = await supabase.from("profiles").insert({
+          user_id: authUser.id,
+          display_name: fallbackDisplayName || null,
+          city: "Paris",
+        });
+
+        if (insertProfileError) {
+          console.error("Profile bootstrap error:", insertProfileError);
+        }
+      }
+
+      const { data: rolesData, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", authUser.id)
+        .limit(10);
+
+      if (rolesError) {
+        console.error("Role fetch error:", rolesError);
+        return "guest";
+      }
+
+      if (!rolesData?.length) {
+        const { error: insertRoleError } = await supabase.from("user_roles").insert({
+          user_id: authUser.id,
+          role: "guest",
+        });
+
+        if (insertRoleError) {
+          console.error("Role bootstrap error:", insertRoleError);
+          return "guest";
+        }
+
+        return "guest";
+      }
+
+      return resolveRole(rolesData.map((entry) => entry.role));
+    };
+
+    const syncAuthState = async (nextSession: Session | null) => {
+      setSession(nextSession);
+      const authUser = nextSession?.user ?? null;
+      setUser(authUser);
+
+      if (!authUser) {
+        setDbRole(null);
+        setLoading(false);
+        return;
+      }
+
+      const nextRole = await ensureUserBootstrap(authUser);
+      setDbRole(nextRole);
       setLoading(false);
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      void syncAuthState(nextSession);
+    });
+
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      void syncAuthState(currentSession);
     });
 
     return () => subscription.unsubscribe();

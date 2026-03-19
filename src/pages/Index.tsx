@@ -38,13 +38,20 @@ const IndexContent = () => {
   const { role, setRole } = useRole();
   const { user, dbRole, signOut } = useAuth();
 
-  // Sync local role with DB role when user is logged in
-  const isPresident = dbRole === "president" || role === "president";
+  // President access must come from the backend role only
+  const isPresident = dbRole === "president";
 
   const handleContinue = (selectedRole?: string) => {
     if (selectedRole === "admin") {
-      setRole("president");
-    } else if (selectedRole === "fidele") {
+      setRole("guest");
+      setShowDashboard(true);
+      if (!isPresident) {
+        setAuthOpen(true);
+      }
+      return;
+    }
+
+    if (selectedRole === "fidele") {
       setRole("fidele");
     } else {
       setRole("guest");
@@ -165,7 +172,7 @@ const IndexContent = () => {
             <div className="flex justify-between items-center py-2.5">
               <DarkModeToggle />
               <div className="flex items-center gap-2">
-                {(isPresident || dbRole === "president") && (
+                {isPresident && (
                   <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full"
                     style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}>
                     🏛️ Président
