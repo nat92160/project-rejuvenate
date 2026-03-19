@@ -32,6 +32,18 @@ interface AnnonceItem {
   created_at: string;
 }
 
+interface SynagogueResult {
+  id: number;
+  name: string;
+  lat: number;
+  lon: number;
+  distance: number; // in meters
+  address?: string;
+  phone?: string;
+  website?: string;
+  denomination?: string;
+}
+
 const dayColors: Record<string, string> = {
   Lundi: "#3b82f6",
   Mardi: "#8b5cf6",
@@ -48,14 +60,65 @@ const typeEmoji: Record<string, string> = {
   autre: "📌",
 };
 
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function fetchNearbySynagogues(lat: number, lon: number, radiusKm: number = 15): Promise<SynagogueResult[]> {
+  const query = `
+    [out:json][timeout:25];
+    (
+      node["amenity"="place_of_worship"]["religion"="jewish"](around:${radiusKm * 1000},${lat},${lon});
+      way["amenity"="place_of_worship"]["religion"="jewish"](around:${radiusKm * 1000},${lat},${lon});
+    );
+    out center tags;
+  `;
+  const res = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    body: `data=${encodeURIComponent(query)}`,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  });
+  if (!res.ok) throw new Error("Overpass API error");
+  const data = await res.json();
+
+  return (data.elements || []).map((el: any) => {
+    const elLat = el.lat ?? el.center?.lat;
+    const elLon = el.lon ?? el.center?.lon;
+    const tags = el.tags || {};
+    return {
+      id: el.id,
+      name: tags.name || tags["name:fr"] || "Synagogue",
+      lat: elLat,
+      lon: elLon,
+      distance: haversineDistance(lat, lon, elLat, elLon),
+      address: [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]].filter(Boolean).join(", ") || undefined,
+      phone: tags.phone || tags["contact:phone"] || undefined,
+      website: tags.website || tags["contact:website"] || undefined,
+      denomination: tags.denomination || undefined,
+    } as SynagogueResult;
+  }).sort((a: SynagogueResult, b: SynagogueResult) => a.distance - b.distance);
+}
+
+function formatDistance(m: number): string {
+  return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
+}
+
 const FideleSynagogueView = () => {
   const { city } = useCity();
   const [cours, setCours] = useState<CoursItem[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [annonces, setAnnonces] = useState<AnnonceItem[]>([]);
+  const [synagogues, setSynagogues] = useState<SynagogueResult[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"cours" | "events" | "annonces">("cours");
+  const [synLoading, setSynLoading] = useState(false);
+  const [synError, setSynError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"synagogues" | "cours" | "events" | "annonces">("synagogues");
 
+  // Fetch DB data
   useEffect(() => {
     const fetchAll = async () => {
       const today = new Date().toISOString().slice(0, 10);
@@ -72,10 +135,22 @@ const FideleSynagogueView = () => {
     fetchAll();
   }, []);
 
+  // Fetch nearby synagogues based on city GPS
+  useEffect(() => {
+    if (!city.lat || !city.lng) return;
+    setSynLoading(true);
+    setSynError(null);
+    fetchNearbySynagogues(city.lat, city.lng)
+      .then(setSynagogues)
+      .catch(() => setSynError("Impossible de charger les synagogues à proximité."))
+      .finally(() => setSynLoading(false));
+  }, [city.lat, city.lng]);
+
   const formatDate = (d: string) =>
     new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 
   const tabs = [
+    { id: "synagogues" as const, icon: "🏛️", label: "Synagogues", count: synagogues.length },
     { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
     { id: "events" as const, icon: "📅", label: "Événements", count: events.length },
     { id: "annonces" as const, icon: "📢", label: "Annonces", count: annonces.length },
@@ -87,14 +162,14 @@ const FideleSynagogueView = () => {
       <div className="rounded-2xl p-5 mb-4 border border-primary/15 text-center" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))" }}>
         <span className="text-3xl">🏛️</span>
         <h3 className="font-display text-lg font-bold text-foreground mt-2">Ma Communauté</h3>
-        <p className="text-xs text-muted-foreground mt-1">📍 {city.name} — Cours, événements & annonces près de chez vous</p>
+        <p className="text-xs text-muted-foreground mt-1">📍 {city.name} — Synagogues, cours & événements près de chez vous</p>
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1.5 mb-4 p-1.5 rounded-2xl bg-muted/60 border border-border">
+      <div className="flex gap-1 mb-4 p-1.5 rounded-2xl bg-muted/60 border border-border overflow-x-auto">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer border-none active:scale-95"
+            className="flex-1 flex items-center justify-center gap-0.5 py-2 rounded-xl text-[10px] font-bold transition-all cursor-pointer border-none active:scale-95 whitespace-nowrap min-w-0"
             style={{
               background: tab === t.id ? "var(--gradient-gold)" : "transparent",
               color: tab === t.id ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
@@ -107,10 +182,69 @@ const FideleSynagogueView = () => {
         ))}
       </div>
 
-      {loading ? (
+      {loading && tab !== "synagogues" ? (
         <div className="text-center py-10 text-sm text-muted-foreground">Chargement...</div>
       ) : (
         <>
+          {/* SYNAGOGUES */}
+          {tab === "synagogues" && (
+            <div className="space-y-3">
+              {synLoading ? (
+                <div className="text-center py-10 text-sm text-muted-foreground">🔍 Recherche des synagogues…</div>
+              ) : synError ? (
+                <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
+                  <span className="text-4xl">😕</span>
+                  <p className="text-sm text-muted-foreground mt-3">{synError}</p>
+                </div>
+              ) : synagogues.length === 0 ? (
+                <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
+                  <span className="text-4xl">🏛️</span>
+                  <p className="text-sm text-muted-foreground mt-3">Aucune synagogue trouvée dans un rayon de 15 km.</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Localisez-vous pour améliorer les résultats.</p>
+                </div>
+              ) : synagogues.map((s, i) => (
+                <motion.div key={s.id} className="rounded-2xl bg-card p-4 border border-border" style={{ boxShadow: "var(--shadow-card)" }}
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.15), hsl(var(--gold) / 0.05))" }}>
+                      🕍
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-display text-sm font-bold text-foreground leading-tight">{s.name}</h4>
+                      {s.denomination && (
+                        <span className="inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full mt-1 bg-primary/10 text-primary">
+                          {s.denomination}
+                        </span>
+                      )}
+                      {s.address && <p className="text-[11px] text-muted-foreground mt-1">📍 {s.address}</p>}
+                      <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                        <span className="text-[11px] font-bold text-primary/80">📏 {formatDistance(s.distance)}</span>
+                        {s.phone && (
+                          <a href={`tel:${s.phone}`} className="text-[11px] text-muted-foreground hover:text-primary no-underline">📞 {s.phone}</a>
+                        )}
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold text-white no-underline transition-all hover:scale-105 active:scale-95"
+                          style={{ background: "linear-gradient(135deg, #34a853, #1e8e3e)" }}>
+                          🧭 Itinéraire
+                        </a>
+                        {s.website && (
+                          <a href={s.website.startsWith("http") ? s.website : `https://${s.website}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold no-underline transition-all hover:scale-105 active:scale-95 bg-muted text-foreground border border-border">
+                            🌐 Site
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
           {/* COURS */}
           {tab === "cours" && (
             <div className="space-y-3">
