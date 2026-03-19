@@ -8,7 +8,6 @@ import AnnoncesWidget from "./AnnoncesWidget";
 import RefouaChelemaWidget from "./RefouaChelemaWidget";
 import MinyanLiveWidget from "./MinyanLiveWidget";
 import EvenementsWidget from "./EvenementsWidget";
-import CoursZoomWidget from "./CoursZoomWidget";
 import CoursVirtuelWidget from "./CoursVirtuelWidget";
 
 const features = [
