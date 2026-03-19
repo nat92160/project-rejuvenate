@@ -10,7 +10,7 @@ import {
   addToGoogleCalendar,
 } from "@/lib/festivals";
 
-type FilterType = "all" | "yomtov" | "jeune" | "minor";
+type FilterType = "all" | "yomtov" | "jeune";
 
 const STATUS_BADGES: Record<string, { label: string; bg: string; text: string }> = {
   bientot: { label: "Bientôt", bg: "hsl(var(--gold) / 0.1)", text: "hsl(var(--gold-matte))" },
@@ -23,7 +23,6 @@ const FILTER_OPTIONS: { key: FilterType; label: string }[] = [
   { key: "all", label: "Tout" },
   { key: "yomtov", label: "Yom Tov" },
   { key: "jeune", label: "Jeûnes" },
-  { key: "minor", label: "Fêtes mineures" },
 ];
 
 const FestivalCalendar = () => {
@@ -55,12 +54,10 @@ const FestivalCalendar = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <h2 className="font-display text-lg font-bold text-foreground">📅 Calendrier des Fêtes</h2>
       </div>
 
-      {/* Filters */}
       <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
         {FILTER_OPTIONS.map((f) => (
           <button
@@ -77,7 +74,6 @@ const FestivalCalendar = () => {
         ))}
       </div>
 
-      {/* Loading */}
       {loading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -103,7 +99,6 @@ const FestivalCalendar = () => {
         </div>
       )}
 
-      {/* Calendar action bottom sheet */}
       <AnimatePresence>
         {calMenuDay && (
           <>
@@ -181,7 +176,6 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
       }}
       layout
     >
-      {/* Card header */}
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-4 p-5 bg-card text-left cursor-pointer border-none transition-colors hover:bg-muted/30"
@@ -225,14 +219,12 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
         </div>
       </button>
 
-      {/* Single day - always show times */}
       {!isMultiDay && card.days[0] && (
         <div className="px-5 pb-4 bg-card border-t border-border">
           <DayTimeline day={card.days[0]} festivalName={card.name} onCalendarClick={onCalendarClick} />
         </div>
       )}
 
-      {/* Multi-day accordion content */}
       <AnimatePresence initial={false}>
         {isExpanded && isMultiDay && (
           <motion.div
@@ -243,7 +235,6 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
             className="overflow-hidden"
           >
             <div className="border-t border-border">
-              {/* Timeline */}
               <div className="relative">
                 {card.days.map((day, idx) => (
                   <DayRow
@@ -263,7 +254,7 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
   );
 };
 
-// ─── Day Row (inside accordion) ───
+// ─── Day Row ───
 
 interface DayRowProps {
   day: FestivalDay;
@@ -293,7 +284,6 @@ const DayRow = ({ day, isLast, festivalName, onCalendarClick }: DayRowProps) => 
           : "3px solid transparent",
       }}
     >
-      {/* Timeline dot */}
       <div className="flex flex-col items-center flex-shrink-0 pt-1">
         <div
           className="w-3 h-3 rounded-full flex-shrink-0"
@@ -314,7 +304,6 @@ const DayRow = ({ day, isLast, festivalName, onCalendarClick }: DayRowProps) => 
         )}
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-bold uppercase tracking-wider"
@@ -350,19 +339,23 @@ interface DayTimelineProps {
 }
 
 const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelineProps) => {
-  const hasTime = day.candles || day.havdalah;
+  // Only show candle times for Shabbat or Yom Tov days
+  const isYomTovOrShabbat = day.type === "yomtov" || day.type === "erev" || day.isShabbat;
+  const showCandles = day.candles && isYomTovOrShabbat;
+  const showHavdalah = day.havdalah;
+  const hasTime = showCandles || showHavdalah;
   if (!hasTime && compact) return null;
 
   return (
     <div className={`flex items-center gap-3 flex-wrap ${compact ? "mt-2" : "mt-3"}`}>
-      {day.candles && (
+      {showCandles && (
         <div className="flex items-center gap-1.5">
           <span className="text-xs">🕯️</span>
           <span className="text-xs font-medium text-muted-foreground">Allumage</span>
           <span className="text-sm font-bold text-primary">{day.candles}</span>
         </div>
       )}
-      {day.havdalah && (
+      {showHavdalah && (
         <div className="flex items-center gap-1.5">
           <span className="text-xs">✨</span>
           <span className="text-xs font-medium text-muted-foreground">Sortie</span>

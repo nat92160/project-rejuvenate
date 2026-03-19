@@ -10,30 +10,35 @@ const SOUNDS: { key: AlarmSound; label: string; emoji: string }[] = [
 ];
 
 function playSound(type: AlarmSound, count: number) {
-  const ctx = new AudioContext();
-  const playOne = (i: number) => {
-    if (i >= count) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    if (type === "shofar") {
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(220, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.8);
-    } else if (type === "kinnor") {
-      osc.type = "sine";
-      osc.frequency.value = 523;
-    } else {
-      osc.type = "square";
-      osc.frequency.value = 880;
-    }
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 1.5);
-    osc.onended = () => playOne(i + 1);
-  };
-  playOne(0);
+  // Resume AudioContext for mobile browsers that require user gesture
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const resume = ctx.state === "suspended" ? ctx.resume() : Promise.resolve();
+  
+  resume.then(() => {
+    const playOne = (i: number) => {
+      if (i >= count) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      if (type === "shofar") {
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(220, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.8);
+      } else if (type === "kinnor") {
+        osc.type = "sine";
+        osc.frequency.value = 523;
+      } else {
+        osc.type = "square";
+        osc.frequency.value = 880;
+      }
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 1.5);
+      osc.onended = () => playOne(i + 1);
+    };
+    playOne(0);
+  });
 }
 
 const AlarmWidget = () => {

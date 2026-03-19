@@ -342,7 +342,7 @@ const CoursVirtuelWidget = () => {
 
   const shareCoursWhatsApp = async () => {
     const text = selectedCours
-      ? `📚 ${selectedCours.title}\n👨‍🏫 ${selectedCours.rav}\n📅 ${selectedCours.day_of_week} à ${selectedCours.course_time}\n🔗 ${selectedCours.zoom_link}\n\n✡️ chabbat-chalom.com`
+      ? `📚 *${selectedCours.title}*\n👨‍🏫 ${selectedCours.rav || "Cours Zoom"}\n📅 ${selectedCours.day_of_week} à ${selectedCours.course_time?.slice(0, 5)}\n\n🎥 *Rejoindre le cours :*\n${selectedCours.zoom_link}\n\n✡️ chabbat-chalom.com`
       : "";
 
     if (!posterRef.current) {

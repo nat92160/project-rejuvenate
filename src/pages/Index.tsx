@@ -39,6 +39,7 @@ const IndexContent = () => {
 
   // President access must come from the backend role only
   const isPresident = dbRole === "president";
+  const isFidele = dbRole === "fidele" || dbRole === "guest";
 
   const handleContinue = (selectedRole?: string) => {
     if (selectedRole === "admin") {
@@ -166,7 +167,7 @@ const IndexContent = () => {
       ) : (
         <div className="relative min-h-screen bg-background">
           <div className="max-w-[600px] mx-auto px-4 pb-24">
-            {/* Auth bar */}
+            {/* Top bar: dark mode + president badge */}
             <div className="flex justify-between items-center py-2.5">
               <DarkModeToggle />
               <div className="flex items-center gap-2">
@@ -176,7 +177,7 @@ const IndexContent = () => {
                     🏛️ Président
                   </span>
                 )}
-                {user ? (
+                {user && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground truncate max-w-[120px]">
                       {user.user_metadata?.full_name || user.email?.split("@")[0]}
@@ -188,17 +189,6 @@ const IndexContent = () => {
                       Déconnexion
                     </button>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => setAuthOpen(true)}
-                    className="px-5 py-2.5 rounded-full text-xs font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 text-primary-foreground border-none"
-                    style={{
-                      background: "var(--gradient-gold)",
-                      boxShadow: "var(--shadow-gold)",
-                    }}
-                  >
-                    🔑 Connexion
-                  </button>
                 )}
               </div>
             </div>
@@ -209,6 +199,22 @@ const IndexContent = () => {
             <CitySelector />
 
             {renderTabContent()}
+
+            {/* Connexion button — centered, accessible on mobile */}
+            {!user && (
+              <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-center pointer-events-none">
+                <button
+                  onClick={() => setAuthOpen(true)}
+                  className="pointer-events-auto px-8 py-3 rounded-full text-sm font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 text-primary-foreground border-none shadow-lg"
+                  style={{
+                    background: "var(--gradient-gold)",
+                    boxShadow: "0 6px 24px hsl(var(--gold) / 0.35)",
+                  }}
+                >
+                  🔑 Connexion
+                </button>
+              </div>
+            )}
 
             {/* Footer */}
             <div className="text-center py-6 mt-8 text-xs text-muted-foreground border-t border-border/50">
