@@ -125,16 +125,19 @@ const AfficheChabbatWidget = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  // Input row using defaultValue to prevent cursor jump
-  const NoteInput = ({ noteKey, placeholder }: { noteKey: string; placeholder?: string }) => (
-    <input
-      defaultValue={notes[noteKey] || ""}
-      onBlur={(e) => setNote(noteKey, e.target.value)}
-      onChange={(e) => { notesRef.current[noteKey] = e.target.value; }}
-      placeholder={placeholder || "Remarque libre"}
-      className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"
-    />
-  );
+  // Isolated note input — never re-renders parent during typing
+  const NoteInput = memo(({ noteKey, placeholder }: { noteKey: string; placeholder?: string }) => {
+    const [val, setVal] = useState(notes[noteKey] || "");
+    return (
+      <input
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={(e) => setNote(noteKey, e.target.value)}
+        placeholder={placeholder || "Remarque libre"}
+        className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"
+      />
+    );
+  });
 
   const TimeInputRow = ({ label, value, onChange, noteKey, readOnly = false }: { label: string; value: string; onChange?: (v: string) => void; noteKey: string; readOnly?: boolean }) => (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
