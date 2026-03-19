@@ -28,6 +28,8 @@ interface MoreMenuProps {
 }
 
 const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
+  const { user, signOut } = useAuth();
+
   return (
     <AnimatePresence>
       {isOpen && (
