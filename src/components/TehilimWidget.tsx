@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 
 // ─── Data ──────────────────────────────────────────────
