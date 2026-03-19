@@ -120,7 +120,6 @@ const IndexContent = () => {
       case "evenements":
         return <EvenementsWidget />;
       case "courszoom":
-        return <CoursZoomWidget />;
       case "coursvirtuel":
         return <CoursVirtuelWidget />;
       case "affiche":
