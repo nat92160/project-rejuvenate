@@ -33,6 +33,7 @@ const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: 
     setCreating(true);
     try {
       const payload: Record<string, unknown> = {
+        action: "create-meeting",
         title: title.trim() || "Cours en direct",
         duration: parseInt(duration),
       };
@@ -42,9 +43,13 @@ const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: 
       }
       if (passcode) payload.passcode = passcode;
 
+      console.log("Zoom create payload:", JSON.stringify(payload));
+
       const { data, error } = await supabase.functions.invoke("zoom-proxy", {
-        body: { ...payload, action: "create-meeting" },
+        body: payload,
       });
+
+      console.log("Zoom response:", JSON.stringify(data), error);
 
       if (error || !data?.success) {
         throw new Error(data?.error || error?.message || "Erreur Zoom");
@@ -73,18 +78,23 @@ const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: 
   return (
     <div className="rounded-2xl bg-card p-5 mb-4 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
       <div className="flex items-center gap-2 mb-4">
-        <span className="w-2 h-2 rounded-full bg-blue-500" />
-        <span className="text-xs font-bold text-blue-600">Créer via Zoom API</span>
+        <span className="w-2 h-2 rounded-full" style={{ background: "#2D8CFF" }} />
+        <span className="text-xs font-bold" style={{ color: "#2D8CFF" }}>Créer via Zoom API</span>
       </div>
 
       <div className="space-y-3">
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre du cours"
           className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-        <input type="datetime-local" value={datetime} onChange={(e) => setDatetime(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-        <p className="text-[10px] text-muted-foreground -mt-1">
-          Laissez vide pour lancer en direct immédiatement
-        </p>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
+            📅 Date et heure (obligatoire pour programmer)
+          </label>
+          <input type="datetime-local" value={datetime} onChange={(e) => setDatetime(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          <p className="text-[10px] text-muted-foreground mt-1">
+            ⚠️ Sans date, le cours sera lancé <strong>en direct immédiatement</strong>
+          </p>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <select value={duration} onChange={(e) => setDuration(e.target.value)}
             className="w-full px-3 py-3 rounded-xl bg-background border border-border text-foreground text-sm">
@@ -98,8 +108,8 @@ const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: 
         </div>
         <button onClick={createMeeting} disabled={creating}
           className="w-full py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer disabled:opacity-50 transition-all"
-          style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: "0 4px 12px rgba(45,140,255,0.3)" }}>
-          {creating ? "⏳ Création..." : datetime ? "📅 Programmer le cours" : "🎥 Lancer le cours en direct"}
+          style={{ background: datetime ? "linear-gradient(135deg, #22c55e, #16a34a)" : "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: datetime ? "0 4px 12px rgba(34,197,94,0.3)" : "0 4px 12px rgba(45,140,255,0.3)" }}>
+          {creating ? "⏳ Création..." : datetime ? "📅 Programmer le cours" : "🎥 Lancer en direct MAINTENANT"}
         </button>
       </div>
     </div>
@@ -128,6 +138,9 @@ const CoursVirtuelWidget = () => {
   const [newDesc, setNewDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Zoom connection status
+  const [zoomConnected, setZoomConnected] = useState<boolean | null>(null);
+
   useEffect(() => {
     const fetchCours = async () => {
       const { data } = await supabase
@@ -139,6 +152,16 @@ const CoursVirtuelWidget = () => {
     };
     fetchCours();
   }, []);
+
+  useEffect(() => {
+    if (isPresident) {
+      supabase.functions.invoke("zoom-proxy", {
+        body: { action: "check-status" },
+      }).then(({ data }) => {
+        setZoomConnected(data?.connected ?? false);
+      }).catch(() => setZoomConnected(false));
+    }
+  }, [isPresident]);
 
   const handleAdd = async () => {
     if (!newTitle.trim() || !newLink.trim()) {
@@ -162,7 +185,6 @@ const CoursVirtuelWidget = () => {
 
     if (error) {
       toast.error("Erreur: vérifiez que vous avez le rôle Président.");
-      console.error("Cours virtuel create error:", error);
     } else if (data) {
       setCours((prev) => [...prev, data as CoursVirtuel]);
       setShowForm(false);
@@ -245,6 +267,11 @@ const CoursVirtuelWidget = () => {
             <p className="text-xs text-muted-foreground mt-1">
               Cours via Zoom • Générez des affiches à partager
             </p>
+            {isPresident && zoomConnected !== null && (
+              <p className={`text-[10px] mt-1 font-bold ${zoomConnected ? "text-green-600" : "text-destructive"}`}>
+                {zoomConnected ? "✅ Zoom connecté" : "❌ Zoom non connecté"}
+              </p>
+            )}
           </div>
           {isPresident && (
             <div className="flex gap-2">
