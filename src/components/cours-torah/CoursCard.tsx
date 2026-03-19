@@ -41,10 +41,10 @@ const CoursCard = ({
     title: title,
     description: description || undefined,
     details: [
-      ...(rav ? [{ icon: "👨‍🏫", text: rav }] : []),
-      { icon: "📅", text: `${day_of_week} à ${course_time?.slice(0, 5)}` },
-      ...(isZoom && zoom_link ? [{ icon: "🎥", text: zoom_link }] : []),
-      ...(!isZoom && address ? [{ icon: "📍", text: address }] : []),
+      ...(rav ? [{ icon: "👨‍🏫", label: "Intervenant", value: rav }] : []),
+      { icon: "📅", label: day_of_week, value: course_time?.slice(0, 5) },
+      ...(isZoom && zoom_link ? [{ icon: "🎥", label: "Zoom", value: zoom_link }] : []),
+      ...(!isZoom && address ? [{ icon: "📍", label: "Lieu", value: address }] : []),
     ],
   };
 

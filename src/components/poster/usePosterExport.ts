@@ -2,8 +2,8 @@ import html2canvas from "html2canvas";
 import { toast } from "sonner";
 
 /**
- * Capture a ref element as a high-res PNG and trigger download.
- * Temporarily moves the element on-screen for html2canvas to capture it.
+ * Capture a ref element as a high-res PNG (x2 scale) and trigger download.
+ * Temporarily moves the hidden poster on-screen for html2canvas to capture.
  */
 export const exportPosterPng = async (
   element: HTMLElement | null,
@@ -11,9 +11,8 @@ export const exportPosterPng = async (
 ): Promise<void> => {
   if (!element) { toast.error("Affiche introuvable"); return; }
 
-  // Temporarily make the hidden poster visible for capture
   const wrapper = element.parentElement;
-  const prevWrapperStyle = wrapper?.getAttribute("style") || "";
+  const prevStyle = wrapper?.getAttribute("style") || "";
   if (wrapper) {
     wrapper.style.cssText = "position:fixed;left:0;top:0;z-index:-1;opacity:0;pointer-events:none;";
   }
@@ -28,8 +27,7 @@ export const exportPosterPng = async (
       height: element.scrollHeight,
     });
 
-    // Restore hidden state
-    if (wrapper) wrapper.style.cssText = prevWrapperStyle;
+    if (wrapper) wrapper.style.cssText = prevStyle;
 
     const url = canvas.toDataURL("image/png");
     const a = document.createElement("a");
@@ -38,8 +36,7 @@ export const exportPosterPng = async (
     a.click();
     toast.success("Affiche téléchargée !");
   } catch (err) {
-    // Restore hidden state on error
-    if (wrapper) wrapper.style.cssText = prevWrapperStyle;
+    if (wrapper) wrapper.style.cssText = prevStyle;
     console.error("PNG export error:", err);
     toast.error("Erreur lors du téléchargement");
   }

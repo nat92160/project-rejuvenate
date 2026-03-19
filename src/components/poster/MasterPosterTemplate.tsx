@@ -1,15 +1,13 @@
 import { forwardRef } from "react";
 
+/* ─── Public types ─── */
+
 export interface PosterContentBlock {
-  /** Bloc A – category label e.g. "COURS DE TORAH" */
   category: string;
-  /** Bloc B – main title / speaker e.g. "Rav David Cohen" */
   title: string;
-  /** Bloc C – detail lines */
-  details: { icon?: string; text: string }[];
-  /** Optional description paragraph */
+  /** Tabular rows: label left-aligned, value right-aligned */
+  details: { icon?: string; label: string; value: string; sub?: string }[];
   description?: string;
-  /** Optional date line */
   date?: string;
 }
 
@@ -27,138 +25,185 @@ interface Props {
   content: PosterContentBlock;
 }
 
-const FALLBACK_PRIMARY = "#1e3a5f";
-const FALLBACK_SECONDARY = "#C5A059";
-const POSTER_WIDTH = 640;
-const POSTER_HEIGHT = 860;
-const SCENE_PAD = 30;
-const CARD_PAD = 50;
+/* ─── Design tokens ─── */
+const W = 1080;
+const H = 1920;
+const SCENE_PAD = 48;
+const CARD_BORDER = 3;
+const INNER_BORDER = 1;
+const INNER_GAP = 8;
+const CARD_PAD = 80;
 
-/**
- * Universal branded poster with double-fond "prestige" effect:
- * – Outer scene: light grey (#F5F5F5)
- * – Inner card: pure white (#FFFFFF) with gold border + soft shadow
- * – Fixed header (logo + synagogue name) & footer (signature + line)
- * – Variable 3-block centre: A (category), B (title), C (details)
- */
+const GOLD_DARK = "#996515";
+const GOLD_ACCENT = "#B8860B";
+const NAVY = "#001F3F";
+const ANTHRACITE = "#2C3E50";
+const GREY_MED = "#6B7B8D";
+const SCENE_BG = "#F5F5F5";
+const CARD_BG = "#FFFFFF";
+
+const FONT_DISPLAY = "'Playfair Display', serif";
+const FONT_BODY = "'Lora', serif";
+
+/* ─── Tiny SVG corner ornament (inline, no external deps) ─── */
+const cornerSvg = (pos: "tl" | "tr" | "bl" | "br") => {
+  const rotations: Record<string, string> = {
+    tl: "rotate(0)",
+    tr: "rotate(90)",
+    br: "rotate(180)",
+    bl: "rotate(270)",
+  };
+  const positions: Record<string, React.CSSProperties> = {
+    tl: { top: 0, left: 0 },
+    tr: { top: 0, right: 0 },
+    bl: { bottom: 0, left: 0 },
+    br: { bottom: 0, right: 0 },
+  };
+  return (
+    <svg
+      width="36"
+      height="36"
+      viewBox="0 0 36 36"
+      style={{ position: "absolute", ...positions[pos] }}
+    >
+      <g transform={`${rotations[pos]} ${pos === "tr" ? "translate(36,0) scale(-1,1)" : pos === "br" ? "translate(36,36) scale(-1,-1)" : pos === "bl" ? "translate(0,36) scale(1,-1)" : ""}`}>
+        <path d="M2 2 L14 2 L14 4 L4 4 L4 14 L2 14 Z" fill={GOLD_ACCENT} />
+        <path d="M7 7 L15 7 L15 8.5 L8.5 8.5 L8.5 15 L7 15 Z" fill={GOLD_ACCENT} opacity="0.4" />
+      </g>
+    </svg>
+  );
+};
+
+/* ─── Component ─── */
+
 const MasterPosterTemplate = forwardRef<HTMLDivElement, Props>(
   ({ profile, content }, ref) => {
-    const primary = profile.primary_color || FALLBACK_PRIMARY;
-    const accent = profile.secondary_color || FALLBACK_SECONDARY;
-    const fontDisplay = `'Playfair Display', serif`;
-    const fontBody = `'Lora', serif`;
+    const synaName = profile.name || "MA SYNAGOGUE";
+    const signature = profile.signature || `${synaName} — Chabbat Chalom`;
 
     return (
-      /* ── SCENE (grey background) ── */
+      /* ── SCENE ── */
       <div
         ref={ref}
         style={{
-          width: POSTER_WIDTH,
-          height: POSTER_HEIGHT,
-          background: "#F5F5F5",
+          width: W,
+          height: H,
+          background: SCENE_BG,
           padding: SCENE_PAD,
           display: "flex",
-          fontFamily: fontBody,
+          fontFamily: FONT_BODY,
           position: "relative",
         }}
       >
-        {/* ── CARD (white, bordered, shadowed) ── */}
+        {/* ── CARD ── */}
         <div
           style={{
             flex: 1,
-            background: "#FFFFFF",
-            border: `2.5px solid ${accent}`,
-            borderRadius: 16,
-            boxShadow: "0 8px 30px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+            background: CARD_BG,
+            border: `${CARD_BORDER}px solid ${GOLD_ACCENT}`,
+            borderRadius: 12,
+            boxShadow: "0 12px 48px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)",
+            position: "relative",
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
           }}
         >
-          {/* ── HEADER ── */}
+          {/* Double border (inner) */}
           <div
             style={{
-              padding: `${CARD_PAD}px ${CARD_PAD}px 0`,
-              textAlign: "center",
-              flexShrink: 0,
+              position: "absolute",
+              inset: INNER_GAP,
+              border: `${INNER_BORDER}px solid ${GOLD_ACCENT}55`,
+              borderRadius: 6,
+              pointerEvents: "none",
             }}
-          >
+          />
+
+          {/* Corner ornaments */}
+          <div style={{ position: "absolute", inset: INNER_GAP + 4, pointerEvents: "none" }}>
+            {cornerSvg("tl")}
+            {cornerSvg("tr")}
+            {cornerSvg("bl")}
+            {cornerSvg("br")}
+          </div>
+
+          {/* ── HEADER ── */}
+          <div style={{ padding: `${CARD_PAD}px ${CARD_PAD}px 0`, textAlign: "center", flexShrink: 0 }}>
             {profile.logo_url && (
               <img
                 src={profile.logo_url}
                 alt=""
                 crossOrigin="anonymous"
                 style={{
-                  width: 64,
-                  height: 64,
+                  width: 96,
+                  height: 96,
                   objectFit: "contain",
-                  margin: "0 auto 14px",
+                  margin: "0 auto 20px",
                   display: "block",
-                  borderRadius: 8,
+                  borderRadius: 12,
                 }}
               />
             )}
             <h1
               style={{
-                fontFamily: fontDisplay,
-                fontSize: 18,
+                fontFamily: FONT_DISPLAY,
+                fontSize: 36,
                 fontWeight: 700,
-                letterSpacing: 4,
+                letterSpacing: 8,
                 textTransform: "uppercase",
-                color: primary,
+                color: NAVY,
                 margin: 0,
                 lineHeight: 1.3,
               }}
             >
-              {profile.name || "MA SYNAGOGUE"}
+              {synaName}
             </h1>
-            {/* thin gold rule */}
-            <div
-              style={{
-                width: 80,
-                height: 1,
-                background: accent,
-                margin: "16px auto 0",
-              }}
-            />
+            {/* Gold rule */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 24 }}>
+              <div style={{ flex: 1, maxWidth: 80, height: 1, background: `linear-gradient(90deg, transparent, ${GOLD_ACCENT})` }} />
+              <span style={{ fontSize: 14, color: GOLD_ACCENT, letterSpacing: 6 }}>✦</span>
+              <div style={{ flex: 1, maxWidth: 80, height: 1, background: `linear-gradient(90deg, ${GOLD_ACCENT}, transparent)` }} />
+            </div>
           </div>
 
-          {/* ── CONTENT AREA ── */}
+          {/* ── CONTENT ── */}
           <div
             style={{
               flex: 1,
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
-              alignItems: "center",
-              padding: `28px ${CARD_PAD}px`,
-              textAlign: "center",
-              gap: 18,
+              padding: `40px ${CARD_PAD}px`,
+              gap: 28,
             }}
           >
             {/* Bloc A – Category */}
-            <span
-              style={{
-                fontFamily: fontDisplay,
-                fontSize: 13,
-                fontWeight: 700,
-                letterSpacing: 3,
-                textTransform: "uppercase",
-                color: accent,
-              }}
-            >
-              {content.category}
-            </span>
+            <div style={{ textAlign: "center" }}>
+              <span
+                style={{
+                  fontFamily: FONT_DISPLAY,
+                  fontSize: 22,
+                  fontWeight: 700,
+                  letterSpacing: 5,
+                  textTransform: "uppercase",
+                  color: GOLD_DARK,
+                }}
+              >
+                {content.category}
+              </span>
+            </div>
 
             {/* Bloc B – Title */}
             <h2
               style={{
-                fontFamily: fontBody,
-                fontSize: 26,
-                fontWeight: 700,
-                color: primary,
+                fontFamily: FONT_DISPLAY,
+                fontSize: 44,
+                fontWeight: 900,
+                color: NAVY,
                 margin: 0,
-                lineHeight: 1.35,
+                lineHeight: 1.25,
+                textAlign: "center",
               }}
             >
               {content.title}
@@ -168,94 +213,96 @@ const MasterPosterTemplate = forwardRef<HTMLDivElement, Props>(
             {content.description && (
               <p
                 style={{
-                  fontFamily: fontBody,
-                  fontSize: 13,
-                  color: "#555",
+                  fontFamily: FONT_BODY,
+                  fontSize: 22,
+                  color: ANTHRACITE,
                   lineHeight: 1.7,
                   margin: 0,
-                  maxWidth: 400,
+                  textAlign: "center",
+                  maxWidth: W - SCENE_PAD * 2 - CARD_PAD * 2 - 40,
+                  alignSelf: "center",
                 }}
               >
                 {content.description}
               </p>
             )}
 
-            {/* thin divider */}
-            <div
-              style={{
-                width: 40,
-                height: 1,
-                background: accent,
-                opacity: 0.5,
-              }}
-            />
-
-            {/* Bloc C – Details */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {content.details.map((d, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                    fontFamily: fontBody,
-                    fontSize: 14,
-                    color: primary,
-                  }}
-                >
-                  {d.icon && <span style={{ fontSize: 16 }}>{d.icon}</span>}
-                  <span>{d.text}</span>
-                </div>
-              ))}
+            {/* Gold divider */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+              <div style={{ width: 60, height: 1, background: `linear-gradient(90deg, transparent, ${GOLD_ACCENT}88)` }} />
+              <div style={{ width: 60, height: 1, background: `linear-gradient(90deg, ${GOLD_ACCENT}88, transparent)` }} />
             </div>
+
+            {/* Bloc C – Tabular details */}
+            {content.details.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: `0 20px` }}>
+                {content.details.map((d, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      justifyContent: "space-between",
+                      gap: 16,
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10, flex: 1, minWidth: 0 }}>
+                      {d.icon && (
+                        <span style={{ fontSize: 18, color: GOLD_DARK, flexShrink: 0 }}>{d.icon}</span>
+                      )}
+                      <span style={{ fontFamily: FONT_BODY, fontSize: 22, color: ANTHRACITE }}>
+                        {d.label}
+                        {d.sub && (
+                          <span style={{ fontSize: 17, color: GREY_MED, fontStyle: "italic", marginLeft: 8 }}>
+                            {d.sub}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        fontFamily: FONT_BODY,
+                        fontSize: 26,
+                        fontWeight: 700,
+                        color: NAVY,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {d.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Date */}
             {content.date && (
-              <span
-                style={{
-                  fontFamily: fontBody,
-                  fontSize: 11,
-                  color: "#999",
-                  marginTop: 4,
-                }}
-              >
-                {content.date}
-              </span>
+              <div style={{ textAlign: "center", marginTop: 8 }}>
+                <span style={{ fontFamily: FONT_BODY, fontSize: 18, color: GREY_MED }}>
+                  {content.date}
+                </span>
+              </div>
             )}
           </div>
 
           {/* ── FOOTER ── */}
-          <div
-            style={{
-              padding: `0 ${CARD_PAD}px ${CARD_PAD}px`,
-              textAlign: "center",
-              flexShrink: 0,
-            }}
-          >
-            <div
+          <div style={{ padding: `0 ${CARD_PAD}px ${CARD_PAD}px`, textAlign: "center", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 16 }}>
+              <div style={{ flex: 1, maxWidth: 120, height: 1, background: `linear-gradient(90deg, transparent, ${GOLD_ACCENT}66)` }} />
+              <span style={{ fontSize: 12, color: GOLD_ACCENT, letterSpacing: 4 }}>✦</span>
+              <div style={{ flex: 1, maxWidth: 120, height: 1, background: `linear-gradient(90deg, ${GOLD_ACCENT}66, transparent)` }} />
+            </div>
+            <p
               style={{
-                width: "100%",
-                height: 1,
-                background: accent,
-                opacity: 0.35,
-                marginBottom: 14,
+                fontFamily: FONT_BODY,
+                fontSize: 18,
+                color: GREY_MED,
+                margin: 0,
+                letterSpacing: 1,
               }}
-            />
-            {profile.signature && (
-              <p
-                style={{
-                  fontFamily: fontBody,
-                  fontSize: 11,
-                  color: "#999",
-                  margin: 0,
-                  lineHeight: 1.5,
-                }}
-              >
-                {profile.signature}
-              </p>
-            )}
+            >
+              {signature}
+            </p>
           </div>
         </div>
       </div>
