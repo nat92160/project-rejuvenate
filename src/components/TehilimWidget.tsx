@@ -219,10 +219,14 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
   };
 
   const shareUrl = `${window.location.origin}/tehilim/${chain.id}`;
-  const whatsappShareUrl = (() => {
+  const shareChain = async () => {
     const text = `📖 Chaîne de Tehilim : ${chain.title}${chain.dedication ? `\n🙏 ${chain.dedication}` : ""}\n\n${totalClaimed}/150 réservés • ${totalCompleted} terminés\n\nChoisissez un psaume :\n${shareUrl}`;
-    return `https://wa.me/?text=${encodeURIComponent(text)}`;
-  })();
+    if (navigator.share) {
+      try { await navigator.share({ text }); return; } catch {}
+    }
+    await navigator.clipboard?.writeText(text);
+    toast.success("Lien copié dans le presse-papier !");
+  };
 
   return (
     <div>
