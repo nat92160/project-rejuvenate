@@ -139,7 +139,8 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
       case "annonces": return <AnnoncesWidget />;
       case "refoua": return <RefouaChelemaWidget />;
       case "minyan": return <MinyanLiveWidget />;
-      case "create-minyan": return <CreateMinyanForm onBack={() => setActiveFeature(null)} />;
+      case "create-minyan":
+      case "minyan": return <MinyanLiveWidget />;
       case "evenements": return <EvenementsWidget />;
       case "cours": return <CoursVirtuelWidget />;
       case "stats": return <StatsDashboard />;
