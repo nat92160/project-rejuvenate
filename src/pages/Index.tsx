@@ -172,7 +172,7 @@ const IndexContent = () => {
             <div className="flex justify-between items-center py-2.5">
               <DarkModeToggle />
               <div className="flex items-center gap-2">
-                {(isPresident || dbRole === "president") && (
+                {isPresident && (
                   <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full"
                     style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}>
                     🏛️ Président
