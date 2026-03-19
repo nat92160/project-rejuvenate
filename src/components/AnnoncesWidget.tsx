@@ -22,7 +22,7 @@ const AnnoncesWidget = () => {
   const [newContent, setNewContent] = useState("");
   const [newPriority, setNewPriority] = useState("normal");
   const [submitting, setSubmitting] = useState(false);
-  const [sharingId, setSharingId] = useState<string | null>(null);
+  
 
   useEffect(() => {
     const fetchAnnonces = async () => {
