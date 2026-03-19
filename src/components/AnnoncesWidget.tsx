@@ -74,57 +74,11 @@ const AnnoncesWidget = () => {
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
-  const handleShareJPG = async (a: Annonce) => {
-    setSharingId(a.id);
-    await new Promise(r => setTimeout(r, 200));
-    if (!posterRef.current) { setSharingId(null); return; }
+  const getShareText = (a: Annonce) =>
+    `📢 *${a.title}*${a.priority === "urgent" ? " 🔴 URGENT" : ""}\n\n${a.content}\n\n📅 ${formatDate(a.created_at)}\n— Chabbat Chalom\n📲 chabbat-chalom.com`;
 
-    try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(posterRef.current, {
-        scale: 2, useCORS: true, backgroundColor: "#ffffff",
-        onclone: (clonedDoc) => {
-          clonedDoc.documentElement.classList.remove("dark");
-        },
-      });
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/jpeg", 0.95));
-      const text = `📢 ${a.title}\n\n${a.content}\n\n— Chabbat Chalom\n📲 chabbat-chalom.com`;
-
-      if (blob && navigator.share && navigator.canShare?.({ files: [new File([blob], "a.jpg", { type: "image/jpeg" })] })) {
-        const file = new File([blob], `annonce-${a.title.slice(0, 20)}.jpg`, { type: "image/jpeg" });
-        await navigator.share({ files: [file], title: a.title, text });
-        setSharingId(null); return;
-      }
-
-      // Fallback: upload to storage + WhatsApp link
-      if (blob) {
-        const filename = `annonce-${Date.now()}.jpg`;
-        const { error } = await supabase.storage.from("affiches").upload(filename, blob, { contentType: "image/jpeg", upsert: true });
-        if (!error) {
-          const { data: urlData } = supabase.storage.from("affiches").getPublicUrl(filename);
-          const imageUrl = urlData?.publicUrl || "";
-          const fullText = imageUrl ? `${text}\n\n🖼️ ${imageUrl}` : text;
-          window.open(`https://wa.me/?text=${encodeURIComponent(fullText)}`, "_blank");
-        } else {
-          // Fallback: download locally
-          const link = document.createElement("a");
-          link.download = `annonce-${a.title.slice(0, 20)}.jpg`;
-          link.href = URL.createObjectURL(blob);
-          link.click();
-          toast.success("Image téléchargée ! Partagez-la manuellement.");
-          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-        }
-      }
-    } catch {
-      toast.error("Erreur lors de la génération de l'image");
-    }
-    setSharingId(null);
-  };
-
-  const handleShareText = (a: Annonce) => {
-    const text = `📢 *${a.title}*${a.priority === "urgent" ? " 🔴 URGENT" : ""}\n\n${a.content}\n\n📅 ${formatDate(a.created_at)}\n— Chabbat Chalom\n📲 chabbat-chalom.com`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-  };
+  const getShareUrl = (a: Annonce) =>
+    `https://wa.me/?text=${encodeURIComponent(getShareText(a))}`;
 
   const isPresident = dbRole === "president";
   const sharingAnnonce = annonces.find(a => a.id === sharingId);
