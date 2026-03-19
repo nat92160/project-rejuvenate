@@ -13,15 +13,6 @@ interface Annonce {
   creator_id: string;
 }
 
-type CardStyle = "elegant" | "urgence" | "communaute" | "custom";
-
-const cardStyles: Record<CardStyle, { name: string; headerBg: string; headerText: string; accentColor: string; icon: string }> = {
-  elegant: { name: "Élégant", headerBg: "linear-gradient(135deg, #1E293B, #334155)", headerText: "#fff", accentColor: "#d4af37", icon: "✨" },
-  urgence: { name: "Urgent", headerBg: "linear-gradient(135deg, #991B1B, #DC2626)", headerText: "#fff", accentColor: "#fca5a5", icon: "🚨" },
-  communaute: { name: "Communauté", headerBg: "linear-gradient(135deg, #1a3a6b, #2563eb)", headerText: "#fff", accentColor: "#93c5fd", icon: "🏛️" },
-  custom: { name: "Personnalisé", headerBg: "linear-gradient(135deg, #D4AF37, #b8860b)", headerText: "#fff", accentColor: "#D4AF37", icon: "🎨" },
-};
-
 const AnnoncesWidget = () => {
   const { user, dbRole } = useAuth();
   const [annonces, setAnnonces] = useState<Annonce[]>([]);
