@@ -137,10 +137,10 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
 
   const renderFeature = () => {
     switch (activeFeature) {
+      case "syna-profile": return <SynaProfileManager />;
       case "affiche": return <AfficheChabbatWidget />;
       case "annonces": return <AnnoncesWidget />;
       case "refoua": return <RefouaChelemaWidget />;
-      case "minyan": return <MinyanLiveWidget />;
       case "create-minyan":
       case "minyan": return <MinyanLiveWidget />;
       case "evenements": return <EvenementsWidget />;
