@@ -10,7 +10,7 @@ import {
   addToGoogleCalendar,
 } from "@/lib/festivals";
 
-type FilterType = "all" | "yomtov" | "jeune";
+type FilterType = "all" | "yomtov" | "jeune" | "roshchodesh";
 
 const STATUS_BADGES: Record<string, { label: string; bg: string; text: string }> = {
   bientot: { label: "Bientôt", bg: "hsl(var(--gold) / 0.1)", text: "hsl(var(--gold-matte))" },
@@ -23,6 +23,7 @@ const FILTER_OPTIONS: { key: FilterType; label: string }[] = [
   { key: "all", label: "Tout" },
   { key: "yomtov", label: "Yom Tov" },
   { key: "jeune", label: "Jeûnes" },
+  { key: "roshchodesh", label: "Roch 'Hodech" },
 ];
 
 const FestivalCalendar = () => {
