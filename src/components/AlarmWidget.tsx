@@ -90,7 +90,7 @@ const AlarmWidget = () => {
   const [offset, setOffset] = useState(30);
   const [fixedDate, setFixedDate] = useState("");
   const [fixedTime, setFixedTime] = useState("");
-  const [sound, setSound] = useState<AlarmSound>("shofar");
+  const [sound, setSound] = useState<AlarmSound>("piano");
   const [rings, setRings] = useState(3);
   const [alarmSet, setAlarmSet] = useState(false);
   const [alarmInfo, setAlarmInfo] = useState("");
