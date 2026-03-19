@@ -125,7 +125,7 @@ const AfficheChabbatWidget = () => {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
-  const shareWhatsApp = async () => {
+  const sharePoster = async () => {
     const blob = await generatePosterBlob();
     const file = blob ? new File([blob], `affiche-chabbat-${city.name}.jpg`, { type: "image/jpeg" }) : null;
     const baseText = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
@@ -133,18 +133,17 @@ const AfficheChabbatWidget = () => {
       try { await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText }); } catch {}
       return;
     }
-    let imageUrl = "";
-    if (blob) {
-      const filename = `affiche-${city.name}-${Date.now()}.jpg`;
-      const { error } = await supabase.storage.from("affiches").upload(filename, blob, { contentType: "image/jpeg", upsert: true });
-      if (!error) { const { data: urlData } = supabase.storage.from("affiches").getPublicUrl(filename); imageUrl = urlData?.publicUrl || ""; }
+    if (navigator.share) {
+      try { await navigator.share({ title: "Affiche de Chabbat", text: baseText }); return; } catch {}
     }
-    const text = imageUrl ? `${baseText}\n\n🖼️ ${imageUrl}` : baseText;
-    const a = document.createElement("a");
-    a.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    a.click();
+    // Fallback: download JPG + copy text
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.download = `affiche-chabbat-${city.name}.jpg`; a.href = url; a.click();
+      URL.revokeObjectURL(url);
+    }
+    await navigator.clipboard?.writeText(baseText);
+    toast.success("Image téléchargée et texte copié !");
   };
 
   /** Time input row with visible label, clear button, and note */
