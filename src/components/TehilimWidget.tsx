@@ -468,8 +468,8 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
 const TehilimWidget = () => {
   const [tab, setTab] = useState<"daily" | "popular" | "chain">("daily");
   const [readingChapter, setReadingChapter] = useState<number | null>(null);
-  const { user } = useAuth();
-  const { isPresident } = useRole();
+  const { user, dbRole } = useAuth();
+  const isPresident = dbRole === "president";
   const today = new Date().getDay();
 
   // Chains

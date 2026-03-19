@@ -38,13 +38,20 @@ const IndexContent = () => {
   const { role, setRole } = useRole();
   const { user, dbRole, signOut } = useAuth();
 
-  // Sync local role with DB role when user is logged in
-  const isPresident = dbRole === "president" || role === "president";
+  // President access must come from the backend role only
+  const isPresident = dbRole === "president";
 
   const handleContinue = (selectedRole?: string) => {
     if (selectedRole === "admin") {
-      setRole("president");
-    } else if (selectedRole === "fidele") {
+      setRole("guest");
+      setShowDashboard(true);
+      if (!isPresident) {
+        setAuthOpen(true);
+      }
+      return;
+    }
+
+    if (selectedRole === "fidele") {
       setRole("fidele");
     } else {
       setRole("guest");
