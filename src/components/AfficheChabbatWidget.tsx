@@ -201,10 +201,10 @@ const AfficheChabbatWidget = () => {
   );
 
   const TimeLine = ({ label, value, note, big }: { label: string; value: string; note?: string; big?: boolean }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "8px", padding: "4px 0", borderBottom: `1px solid ${t.blockBorder}22` }}>
-      <span style={{ color: t.labelColor, fontSize: big ? "0.85rem" : "0.8rem", fontWeight: 400 }}>{label}</span>
-      <span style={{ fontWeight: big ? 800 : 700, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "1.1rem" : "0.95rem", whiteSpace: "nowrap" }}>
-        {value}{note && <span style={{ fontWeight: 400, fontSize: "0.7rem", color: t.labelColor, fontStyle: "italic", marginLeft: "6px" }}>({note})</span>}
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "6px", padding: "3px 0", borderBottom: `1px solid ${t.blockBorder}22` }}>
+      <span style={{ color: t.labelColor, fontSize: "0.7rem", fontWeight: 400 }}>{label}</span>
+      <span style={{ fontWeight: big ? 700 : 600, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "0.8rem" : "0.75rem", whiteSpace: "nowrap" }}>
+        {value}{note && <span style={{ fontWeight: 400, fontSize: "0.6rem", color: t.labelColor, fontStyle: "italic", marginLeft: "4px" }}>({note})</span>}
       </span>
     </div>
   );
