@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, memo, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
-import { supabase } from "@/integrations/supabase/client";
+import { TimeInputRow } from "@/components/affiche-chabbat/TimeInputRow";
 
 type Theme = "tradition" | "moderne" | "chaud" | "prestige" | "blanc";
 type FontChoice = "greatvibes" | "playfairsc" | "playfair" | "lora";
@@ -50,7 +50,9 @@ const loadSaved = (): Partial<SavedFormData> => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
+  } catch {
+    return {};
+  }
 };
 
 const AfficheChabbatWidget = () => {
@@ -83,7 +85,7 @@ const AfficheChabbatWidget = () => {
   const [step, setStep] = useState(1);
 
   const setNote = useCallback((key: string, val: string) => {
-    setNotes(prev => ({ ...prev, [key]: val }));
+    setNotes((prev) => ({ ...prev, [key]: val }));
   }, []);
 
   useEffect(() => {
@@ -92,10 +94,18 @@ const AfficheChabbatWidget = () => {
       shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage,
       notes, theme, font,
     };
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave)); } catch {}
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    } catch {}
   }, [synaName, synaAddress, synaRav, minhaFri, kabbalat, arvitFri, shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage, notes, theme, font]);
 
-  useEffect(() => { setLoading(true); fetchShabbatTimes(city).then(d => { setData(d); setLoading(false); }); }, [city]);
+  useEffect(() => {
+    setLoading(true);
+    fetchShabbatTimes(city).then((result) => {
+      setData(result);
+      setLoading(false);
+    });
+  }, [city]);
 
   const t = themeConfig[theme];
   const f = fontConfig[font];
@@ -106,22 +116,35 @@ const AfficheChabbatWidget = () => {
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(canvasRef.current, {
-        scale: 2, useCORS: true, backgroundColor: "#ffffff",
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
           clonedDoc.documentElement.classList.remove("dark");
           const el = clonedDoc.getElementById("affiche-export-canvas") as HTMLDivElement | null;
-          if (el) { el.style.background = t.bg; el.style.colorScheme = "light"; }
+          if (el) {
+            el.style.background = t.bg;
+            el.style.colorScheme = "light";
+          }
         },
       });
-      return await new Promise<Blob | null>(resolve => canvas.toBlob(b => resolve(b), "image/jpeg", 0.95));
-    } catch { return null; }
+      return await new Promise<Blob | null>((resolve) => canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.95));
+    } catch {
+      return null;
+    }
   };
 
   const handleExport = async () => {
     const blob = await generatePosterBlob();
-    if (!blob) { alert("Export non disponible."); return; }
+    if (!blob) {
+      alert("Export non disponible.");
+      return;
+    }
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.download = `affiche-chabbat-${city.name}.jpg`; a.href = url; a.click();
+    const a = document.createElement("a");
+    a.download = `affiche-chabbat-${city.name}.jpg`;
+    a.href = url;
+    a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
@@ -143,62 +166,19 @@ const AfficheChabbatWidget = () => {
     }
     if (blob) {
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.download = `affiche-chabbat-${city.name}.jpg`; a.href = url; a.click();
+      const a = document.createElement("a");
+      a.download = `affiche-chabbat-${city.name}.jpg`;
+      a.href = url;
+      a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
-    try { await navigator.clipboard.writeText(baseText); } catch {}
+    try {
+      await navigator.clipboard.writeText(baseText);
+    } catch {}
     toast.success("Image téléchargée et texte copié !");
   };
 
   const inputClass = "w-full px-4 py-4 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50";
-
-  /** Time input row — compact and clearer on mobile */
-  const TimeInputRow = memo(({ label, value, onChange, noteKey, readOnly = false, placeholder = "Horaire" }: {
-    label: string; value: string; onChange?: (v: string) => void; noteKey: string; readOnly?: boolean; placeholder?: string;
-  }) => (
-    <div className="flex items-center gap-1.5 py-1">
-      <span className="w-[36%] min-w-0 text-[10px] font-semibold text-foreground leading-tight">{label}</span>
-
-      {readOnly ? (
-        <div className="w-[84px] shrink-0 px-2 py-1.5 rounded-lg bg-muted border border-border text-foreground text-center text-[11px] font-bold h-9 flex items-center justify-center">
-          {value || "—"}
-        </div>
-      ) : (
-        <div className="relative w-[84px] shrink-0">
-          <input
-            type="time"
-            value={value}
-            onChange={e => onChange?.(e.target.value)}
-            className="w-full px-2 py-1.5 rounded-lg bg-background border border-border text-foreground text-center text-[11px] font-bold h-9 focus:outline-none focus:ring-1 focus:ring-primary/30"
-          />
-          {!value && (
-            <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[9px] text-muted-foreground/50">
-              {placeholder}
-            </span>
-          )}
-        </div>
-      )}
-
-      <input
-        value={notes[noteKey] || ""}
-        onChange={e => setNote(noteKey, e.target.value)}
-        placeholder="Note..."
-        className="flex-1 min-w-0 px-2 py-1.5 rounded-lg bg-background border border-border text-foreground text-[10px] h-9 focus:outline-none focus:ring-1 focus:ring-primary/30 placeholder:text-muted-foreground/40"
-      />
-
-      {readOnly ? (
-        <div className="w-7 shrink-0" aria-hidden />
-      ) : (
-        <button
-          type="button"
-          onClick={() => onChange?.("")}
-          className={`shrink-0 w-7 h-7 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center text-[10px] border-none cursor-pointer transition-opacity active:scale-95 ${value ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        >
-          ✕
-        </button>
-      )}
-    </div>
-  ));
 
   const PosterSection = ({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) => (
     <div style={{ border: `1px solid ${t.blockBorder}`, borderRadius: "6px", marginBottom: "6px", overflow: "hidden" }}>
@@ -220,77 +200,75 @@ const AfficheChabbatWidget = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      {/* Step navigation — pill tabs */}
       <div className="flex gap-1.5 mb-5 p-1.5 rounded-2xl bg-muted/60 border border-border">
         {[
           { n: 1, icon: "⏰", label: "Horaires" },
           { n: 2, icon: "📢", label: "Annonces" },
           { n: 3, icon: "📤", label: "Aperçu" },
-        ].map(s => (
-          <button key={s.n} onClick={() => setStep(s.n)}
+        ].map((section) => (
+          <button
+            key={section.n}
+            onClick={() => setStep(section.n)}
             className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-none active:scale-95"
             style={{
-              background: step === s.n ? "var(--gradient-gold)" : "transparent",
-              color: step === s.n ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-              boxShadow: step === s.n ? "var(--shadow-gold)" : "none",
-            }}>
-            <span>{s.icon}</span>
-            <span>{s.label}</span>
+              background: step === section.n ? "var(--gradient-gold)" : "transparent",
+              color: step === section.n ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+              boxShadow: step === section.n ? "var(--shadow-gold)" : "none",
+            }}
+          >
+            <span>{section.icon}</span>
+            <span>{section.label}</span>
           </button>
         ))}
       </div>
 
       {step === 1 && (
         <div className="space-y-4">
-          {/* Synagogue info */}
           <div className="rounded-2xl bg-card p-4 border border-border space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
             <h4 className="font-display text-sm font-bold text-foreground flex items-center gap-2">🏛️ Votre synagogue</h4>
-            <input value={synaName} onChange={e => setSynaName(e.target.value)} placeholder="🏛️ Nom de la synagogue (ex: Beth Hamidrach)" className={inputClass} />
-            <input value={synaAddress} onChange={e => setSynaAddress(e.target.value)} placeholder="📍 Adresse (ex: 12 rue de la Paix, Paris)" className={inputClass} />
-            <input value={synaRav} onChange={e => setSynaRav(e.target.value)} placeholder="👤 Rav (ex: Rav David Cohen)" className={inputClass} />
+            <input value={synaName} onChange={(e) => setSynaName(e.target.value)} placeholder="🏛️ Nom de la synagogue (ex: Beth Hamidrach)" className={inputClass} />
+            <input value={synaAddress} onChange={(e) => setSynaAddress(e.target.value)} placeholder="📍 Adresse (ex: 12 rue de la Paix, Paris)" className={inputClass} />
+            <input value={synaRav} onChange={(e) => setSynaRav(e.target.value)} placeholder="👤 Rav (ex: Rav David Cohen)" className={inputClass} />
           </div>
 
-          {/* Horaires */}
           <div className="rounded-2xl bg-card p-4 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
             <h4 className="font-display text-sm font-bold text-foreground mb-1">⏰ Horaires des offices</h4>
-            <p className="text-[10px] text-muted-foreground mb-3">Saisissez l'heure dans chaque case. Laissez vide = masqué.</p>
-            
+            <p className="text-[10px] text-muted-foreground mb-3">Sur mobile, le libellé passe au-dessus pour garder des champs stables et sans chevauchement.</p>
+
             <div className="space-y-1">
               <p className="text-[10px] font-bold text-primary uppercase tracking-wider px-1 py-1.5 border-b border-primary/20">🕯️ Vendredi soir</p>
-              <TimeInputRow label="🕯️ Allumage (auto)" value={data?.candleLighting || ""} noteKey="candleLighting" readOnly />
-              <TimeInputRow label="Minha vendredi" value={minhaFri} onChange={setMinhaFri} noteKey="minhaFri" />
-              <TimeInputRow label="Kabbalat Chabbat" value={kabbalat} onChange={setKabbalat} noteKey="kabbalat" />
-              <TimeInputRow label="Arvit vendredi" value={arvitFri} onChange={setArvitFri} noteKey="arvitFri" />
-              
+              <TimeInputRow label="🕯️ Allumage (auto)" value={data?.candleLighting || ""} noteValue={notes.candleLighting || ""} onNoteChange={(value) => setNote("candleLighting", value)} readOnly />
+              <TimeInputRow label="Minha vendredi" value={minhaFri} noteValue={notes.minhaFri || ""} onChange={setMinhaFri} onNoteChange={(value) => setNote("minhaFri", value)} />
+              <TimeInputRow label="Kabbalat Chabbat" value={kabbalat} noteValue={notes.kabbalat || ""} onChange={setKabbalat} onNoteChange={(value) => setNote("kabbalat", value)} />
+              <TimeInputRow label="Arvit vendredi" value={arvitFri} noteValue={notes.arvitFri || ""} onChange={setArvitFri} onNoteChange={(value) => setNote("arvitFri", value)} />
+
               <p className="text-[10px] font-bold text-primary uppercase tracking-wider px-1 py-1.5 border-b border-primary/20 mt-2">☀️ Chabbat matin</p>
-              <TimeInputRow label="Shaharit samedi" value={shaharit} onChange={setShaharit} noteKey="shaharit" />
-              
-              {/* Torah reading — inline */}
-              <div className="flex items-center gap-2 py-1.5">
-                <span className="text-[11px] font-semibold text-foreground w-[45%] shrink-0 leading-tight">📖 Paracha</span>
-                <div className="flex-1 px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground text-center text-xs font-bold h-10 flex items-center justify-center">
+              <TimeInputRow label="Shaharit samedi" value={shaharit} noteValue={notes.shaharit || ""} onChange={setShaharit} onNoteChange={(value) => setNote("shaharit", value)} />
+
+              <div className="space-y-2 py-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_1fr] sm:items-center sm:gap-2 sm:space-y-0">
+                <span className="min-w-0 text-[11px] font-semibold leading-tight text-foreground">📖 Paracha</span>
+                <div className="flex h-10 items-center justify-center rounded-xl border border-border bg-muted px-3 text-center text-xs font-bold text-foreground">
                   {data?.parasha?.replace("Parashat ", "") || "…"}
                 </div>
               </div>
 
-              <TimeInputRow label="Moussaf" value={moussaf} onChange={setMoussaf} noteKey="moussaf" />
-              <TimeInputRow label="Minha samedi" value={minhaSat} onChange={setMinhaSat} noteKey="minhaSat" />
-              
+              <TimeInputRow label="Moussaf" value={moussaf} noteValue={notes.moussaf || ""} onChange={setMoussaf} onNoteChange={(value) => setNote("moussaf", value)} />
+              <TimeInputRow label="Minha samedi" value={minhaSat} noteValue={notes.minhaSat || ""} onChange={setMinhaSat} onNoteChange={(value) => setNote("minhaSat", value)} />
+
               <p className="text-[10px] font-bold text-primary uppercase tracking-wider px-1 py-1.5 border-b border-primary/20 mt-2">✨ Sortie de Chabbat</p>
-              <TimeInputRow label="✨ Havdala (auto)" value={data?.havdalah || ""} noteKey="havdalah" readOnly />
-              <TimeInputRow label="Arvit Motsé Chabbat" value={arvitMotse} onChange={setArvitMotse} noteKey="arvitMotse" />
+              <TimeInputRow label="✨ Havdala (auto)" value={data?.havdalah || ""} noteValue={notes.havdalah || ""} onNoteChange={(value) => setNote("havdalah", value)} readOnly />
+              <TimeInputRow label="Arvit Motsé Chabbat" value={arvitMotse} noteValue={notes.arvitMotse || ""} onChange={setArvitMotse} onNoteChange={(value) => setNote("arvitMotse", value)} />
             </div>
           </div>
 
-          {/* Theme */}
           <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
             <h4 className="font-display text-sm font-bold text-foreground mb-3 flex items-center gap-2">🎨 Thème de l'affiche</h4>
             <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5">
-              {(Object.keys(themeConfig) as Theme[]).map(key => {
+              {(Object.keys(themeConfig) as Theme[]).map((key) => {
                 const tc = themeConfig[key];
                 return (
                   <button key={key} onClick={() => setTheme(key)} className={`rounded-xl p-2.5 text-center cursor-pointer transition-all border-2 active:scale-95 ${theme === key ? "border-primary shadow-md" : "border-border"}`}>
-                    <div className="flex rounded-lg overflow-hidden h-6 mb-1.5">{tc.swatch.map((c, i) => <div key={i} style={{ background: c, flex: 1 }} />)}</div>
+                    <div className="flex rounded-lg overflow-hidden h-6 mb-1.5">{tc.swatch.map((color, index) => <div key={index} style={{ background: color, flex: 1 }} />)}</div>
                     <span className="text-[10px] font-bold text-foreground">{tc.name}</span>
                   </button>
                 );
@@ -298,11 +276,10 @@ const AfficheChabbatWidget = () => {
             </div>
           </div>
 
-          {/* Font */}
           <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
             <h4 className="font-display text-sm font-bold text-foreground mb-3 flex items-center gap-2">✒️ Calligraphie</h4>
             <div className="grid grid-cols-2 gap-2.5">
-              {(Object.keys(fontConfig) as FontChoice[]).map(key => {
+              {(Object.keys(fontConfig) as FontChoice[]).map((key) => {
                 const fc = fontConfig[key];
                 return (
                   <button key={key} onClick={() => setFont(key)} className={`rounded-xl p-3 text-center cursor-pointer transition-all border-2 active:scale-95 ${font === key ? "border-primary shadow-md" : "border-border"}`}>
@@ -329,15 +306,15 @@ const AfficheChabbatWidget = () => {
             </div>
             <div>
               <label className="text-xs font-bold text-muted-foreground mb-1.5 block">🎉 Séouda / Kiddouch offert par</label>
-              <input value={sponsor} onChange={e => setSponsor(e.target.value)} placeholder="Ex : Famille Cohen pour la naissance de…" className={inputClass} style={{ minHeight: "52px" }} />
+              <input value={sponsor} onChange={(e) => setSponsor(e.target.value)} placeholder="Ex : Famille Cohen pour la naissance de…" className={inputClass} style={{ minHeight: "52px" }} />
             </div>
             <div>
               <label className="text-xs font-bold text-muted-foreground mb-1.5 block">📢 Annonce communautaire</label>
-              <textarea value={announce} onChange={e => setAnnounce(e.target.value)} placeholder="Ex : Cours spécial dimanche à 20h, Bar Mitsva de…" rows={3} className={`${inputClass} resize-none`} style={{ minHeight: "88px" }} />
+              <textarea value={announce} onChange={(e) => setAnnounce(e.target.value)} placeholder="Ex : Cours spécial dimanche à 20h, Bar Mitsva de…" rows={3} className={`${inputClass} resize-none`} style={{ minHeight: "88px" }} />
             </div>
             <div>
               <label className="text-xs font-bold text-muted-foreground mb-1.5 block">💬 Message du Rav</label>
-              <textarea value={ravMessage} onChange={e => setRavMessage(e.target.value)} placeholder="Ex : Pensée de la semaine, message inspirant…" rows={3} className={`${inputClass} resize-none`} style={{ minHeight: "88px" }} />
+              <textarea value={ravMessage} onChange={(e) => setRavMessage(e.target.value)} placeholder="Ex : Pensée de la semaine, message inspirant…" rows={3} className={`${inputClass} resize-none`} style={{ minHeight: "88px" }} />
             </div>
           </div>
           <div className="flex gap-3">
@@ -350,8 +327,7 @@ const AfficheChabbatWidget = () => {
       {step === 3 && (
         <div className="space-y-4">
           <button onClick={() => setStep(2)} className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline">← Modifier</button>
-          
-          {/* Poster preview */}
+
           <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
             <div
               id="affiche-export-canvas"
@@ -372,13 +348,11 @@ const AfficheChabbatWidget = () => {
                 width: "100%",
               }}
             >
-              {/* Corner ornaments */}
-              {["top:5px;left:5px", "top:5px;right:5px;transform:rotate(90deg)", "bottom:5px;left:5px;transform:rotate(270deg)", "bottom:5px;right:5px;transform:rotate(180deg)"].map((pos, i) => (
-                <div key={i} style={{ position: "absolute", width: "32px", height: "32px", pointerEvents: "none", zIndex: 2, backgroundImage: cornerBg, backgroundSize: "contain", backgroundRepeat: "no-repeat", ...(Object.fromEntries(pos.split(";").map(p => { const [k, v] = p.split(":"); return [k.trim(), v.trim()]; })) as Record<string, string>) }} />
+              {["top:5px;left:5px", "top:5px;right:5px;transform:rotate(90deg)", "bottom:5px;left:5px;transform:rotate(270deg)", "bottom:5px;right:5px;transform:rotate(180deg)"].map((pos, index) => (
+                <div key={index} style={{ position: "absolute", width: "32px", height: "32px", pointerEvents: "none", zIndex: 2, backgroundImage: cornerBg, backgroundSize: "contain", backgroundRepeat: "no-repeat", ...(Object.fromEntries(pos.split(";").map((part) => { const [property, value] = part.split(":"); return [property.trim(), value.trim()]; })) as Record<string, string>) }} />
               ))}
               <div style={{ position: "absolute", inset: "8px", border: `0.5px solid ${t.border}33`, pointerEvents: "none", zIndex: 1 }} />
 
-              {/* Header */}
               <div style={{ textAlign: "center", marginBottom: "8px" }}>
                 <div style={{ fontFamily: f.family, fontSize: "clamp(0.95rem, 4vw, 1.2rem)", fontWeight: 700, color: t.valueColor }}>{synaName || "Nom de votre synagogue"}</div>
                 {synaAddress && <div style={{ fontSize: "0.6rem", color: t.labelColor, marginTop: "2px" }}>{synaAddress}</div>}
@@ -387,7 +361,6 @@ const AfficheChabbatWidget = () => {
 
               <div style={{ width: "40px", height: "1.5px", background: `linear-gradient(90deg, transparent, ${t.accent}, transparent)`, margin: "0 auto 8px" }} />
 
-              {/* Parasha & date */}
               <div style={{ textAlign: "center", marginBottom: "10px" }}>
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.65rem", color: t.accent, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "2px" }}>CHABBAT PARACHA</div>
                 <div style={{ fontFamily: f.family, fontSize: "clamp(1rem, 5vw, 1.3rem)", fontWeight: 800, color: t.valueColor }}>{data?.parasha?.replace("Parashat ", "") || "..."}</div>
@@ -426,7 +399,6 @@ const AfficheChabbatWidget = () => {
               {announce && <div style={{ background: t.blockBg, borderLeft: `2px solid ${t.accent}`, padding: "5px 10px", borderRadius: "0 4px 4px 0", marginBottom: "4px" }}><h4 style={{ color: t.h4Color, fontSize: "0.65rem", marginBottom: "2px" }}>📢 Annonce</h4><p style={{ fontSize: "0.6rem", color: t.labelColor, textTransform: "uppercase" }}>{announce}</p></div>}
               {ravMessage && <div style={{ background: t.blockBg, borderLeft: `2px solid ${t.accent}`, padding: "5px 10px", borderRadius: "0 4px 4px 0", marginBottom: "4px" }}><h4 style={{ color: t.h4Color, fontSize: "0.65rem", marginBottom: "2px" }}>💬 Message du Rav</h4><p style={{ fontSize: "0.6rem", color: t.labelColor }}>{ravMessage}</p></div>}
 
-              {/* Footer */}
               <div style={{ textAlign: "center", marginTop: "8px", paddingTop: "6px", borderTop: `1px solid ${t.blockBorder}` }}>
                 <div style={{ fontFamily: f.family, fontSize: "0.75rem", fontWeight: 700, color: t.valueColor }}>{synaName} — <span style={{ color: t.accent }}>Chabbat Chalom !</span></div>
                 <div style={{ fontSize: "0.45rem", color: t.footerColor, marginTop: "3px", letterSpacing: "1px", textTransform: "uppercase" }}>Généré sur chabbat-chalom.com</div>

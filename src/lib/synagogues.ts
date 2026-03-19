@@ -114,7 +114,7 @@ async function fetchSynagoguesForRadius(
   const seen = new Set<string>();
 
   return ((data.elements || []) as OverpassElement[])
-    .map((element) => {
+    .map<SynagogueResult | null>((element) => {
       const tags = element.tags || {};
       const elementLat = Number(element.lat ?? element.center?.lat);
       const elementLon = Number(element.lon ?? element.center?.lon);
@@ -142,9 +142,9 @@ async function fetchSynagoguesForRadius(
         phone: tags.phone || tags["contact:phone"] || undefined,
         website: tags.website || tags["contact:website"] || undefined,
         denomination: tags.denomination || tags.community || undefined,
-      } satisfies SynagogueResult;
+      };
     })
-    .filter((item): item is SynagogueResult => Boolean(item))
+    .filter((item): item is SynagogueResult => item !== null)
     .sort((a, b) => a.distance - b.distance)
     .slice(0, MAX_RESULTS);
 }
