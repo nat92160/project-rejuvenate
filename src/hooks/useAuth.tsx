@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [dbRole, setDbRole] = useState<AppRole | null>(null);
+  const lastSessionKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     const ensureUserBootstrap = async (authUser: User): Promise<AppRole> => {
@@ -85,7 +86,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const syncAuthState = async (nextSession: Session | null) => {
+      const sessionKey = nextSession?.access_token
+        ? `${nextSession.user.id}:${nextSession.access_token}`
+        : "signed-out";
+
+      if (lastSessionKeyRef.current === sessionKey) {
+        return;
+      }
+
+      lastSessionKeyRef.current = sessionKey;
       setSession(nextSession);
+
       const authUser = nextSession?.user ?? null;
       setUser(authUser);
 
@@ -95,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      setLoading(true);
       const nextRole = await ensureUserBootstrap(authUser);
       setDbRole(nextRole);
       setLoading(false);
@@ -114,10 +126,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    lastSessionKeyRef.current = null;
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setDbRole(null);
+    setLoading(false);
   };
 
   return (

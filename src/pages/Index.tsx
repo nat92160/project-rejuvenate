@@ -35,7 +35,7 @@ const IndexContent = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
   const { role, setRole } = useRole();
-  const { user, dbRole, signOut } = useAuth();
+  const { user, dbRole, signOut, loading: authLoading } = useAuth();
 
   // President access must come from the backend role only
   const isPresident = dbRole === "president";
@@ -44,7 +44,7 @@ const IndexContent = () => {
     if (selectedRole === "admin") {
       setRole("guest");
       setShowDashboard(true);
-      if (!isPresident) {
+      if (!user && !authLoading) {
         setAuthOpen(true);
       }
       return;
