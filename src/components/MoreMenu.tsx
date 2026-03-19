@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const menuItems = [
   { id: "chabbat", icon: "🕯️", label: "Horaires Chabbat" },
@@ -29,6 +32,21 @@ interface MoreMenuProps {
 
 const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
   const { user, signOut } = useAuth();
+  const [zoomStatus, setZoomStatus] = useState<"unknown" | "connected" | "disconnected">("unknown");
+  const [checkingZoom, setCheckingZoom] = useState(false);
+
+  const checkZoomStatus = async () => {
+    setCheckingZoom(true);
+    try {
+      const { data } = await supabase.functions.invoke("zoom-proxy", {
+        body: { action: "check-status" },
+      });
+      setZoomStatus(data?.connected ? "connected" : "disconnected");
+    } catch {
+      setZoomStatus("disconnected");
+    }
+    setCheckingZoom(false);
+  };
 
   return (
     <AnimatePresence>
@@ -87,9 +105,9 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
               ))}
             </div>
 
-            {/* Account section */}
+            {/* Account & Zoom section */}
             {user && (
-              <div className="mt-5 pt-4 border-t border-border">
+              <div className="mt-5 pt-4 border-t border-border space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-sm">👤</span>
@@ -102,6 +120,23 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
                     className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 bg-destructive/10 text-destructive border-none"
                   >
                     🔓 Déconnexion
+                  </button>
+                </div>
+
+                {/* Zoom status */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">🎥</span>
+                    <span className="text-xs text-muted-foreground">
+                      Zoom {zoomStatus === "connected" ? "✅ Connecté" : zoomStatus === "disconnected" ? "❌ Non connecté" : ""}
+                    </span>
+                  </div>
+                  <button
+                    onClick={checkZoomStatus}
+                    disabled={checkingZoom}
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border border-border bg-card text-muted-foreground hover:border-primary/20 disabled:opacity-50"
+                  >
+                    {checkingZoom ? "⏳" : "Vérifier"}
                   </button>
                 </div>
               </div>
