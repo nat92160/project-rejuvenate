@@ -18,24 +18,72 @@ interface Props {
 
 const W = 1080;
 const H = 640;
-const PAD = 48;
-const CARD_PAD = 50;
+const PAD = 36;
+const CARD_PAD = 48;
 
-const GOLD_ACCENT = "#B8860B";
+const GOLD = "#C5A059";
+const GOLD_DARK = "#996515";
 const NAVY = "#001F3F";
 const ANTHRACITE = "#2C3E50";
 const GREY_MED = "#6B7B8D";
 const FONT_DISPLAY = "'Playfair Display', serif";
 const FONT_BODY = "'Lora', serif";
 
-/**
- * Compact ticket/card format for Cours de Torah exports.
- * Landscape-ish 1080×640 — looks like a premium event ticket.
- */
+/* Inline SVG corner ornament */
+const cornerSvg = (pos: "tl" | "tr" | "bl" | "br") => {
+  const positions: Record<string, React.CSSProperties> = {
+    tl: { top: 0, left: 0 },
+    tr: { top: 0, right: 0, transform: "scaleX(-1)" },
+    bl: { bottom: 0, left: 0, transform: "scaleY(-1)" },
+    br: { bottom: 0, right: 0, transform: "scale(-1,-1)" },
+  };
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" style={{ position: "absolute", ...positions[pos] }}>
+      <path d="M2 2 L12 2 L12 3.5 L3.5 3.5 L3.5 12 L2 12 Z" fill={GOLD} />
+      <path d="M6 6 L13 6 L13 7 L7 7 L7 13 L6 13 Z" fill={GOLD} opacity="0.35" />
+    </svg>
+  );
+};
+
+/* Filaire icon components (no emojis) */
+const ClockIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={GOLD_DARK} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
+
+const VideoIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={GOLD_DARK} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="5" width="14" height="14" rx="2" />
+    <path d="M16 10l5-3v10l-5-3" />
+  </svg>
+);
+
+const MapPinIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={GOLD_DARK} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+
+const BookIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={GOLD_DARK} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15z" />
+  </svg>
+);
+
+const iconMap: Record<string, React.FC> = {
+  "📅": ClockIcon,
+  "🎥": VideoIcon,
+  "📍": MapPinIcon,
+  "📝": BookIcon,
+};
+
 const TicketPosterTemplate = forwardRef<HTMLDivElement, Props>(
   ({ profile, content }, ref) => {
     const synaName = profile.name || "MA SYNAGOGUE";
-    const accent = profile.secondary_color || GOLD_ACCENT;
 
     return (
       <div
@@ -54,23 +102,35 @@ const TicketPosterTemplate = forwardRef<HTMLDivElement, Props>(
           style={{
             flex: 1,
             background: "#FFFFFF",
-            border: `2.5px solid ${accent}`,
-            borderRadius: 16,
-            boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
+            border: `2.5px solid ${GOLD}`,
+            borderRadius: 10,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.07)",
+            position: "relative",
             display: "flex",
+            flexDirection: "column",
             overflow: "hidden",
           }}
         >
-          {/* Left accent strip */}
+          {/* Inner border */}
           <div
             style={{
-              width: 8,
-              background: content.actionColor,
-              flexShrink: 0,
+              position: "absolute",
+              inset: 6,
+              border: `1px solid ${GOLD}44`,
+              borderRadius: 5,
+              pointerEvents: "none",
             }}
           />
 
-          {/* Content */}
+          {/* Corner ornaments */}
+          <div style={{ position: "absolute", inset: 10, pointerEvents: "none" }}>
+            {cornerSvg("tl")}
+            {cornerSvg("tr")}
+            {cornerSvg("bl")}
+            {cornerSvg("br")}
+          </div>
+
+          {/* Content area */}
           <div
             style={{
               flex: 1,
@@ -85,14 +145,14 @@ const TicketPosterTemplate = forwardRef<HTMLDivElement, Props>(
               <span
                 style={{
                   fontFamily: FONT_BODY,
-                  fontSize: 16,
+                  fontSize: 13,
                   fontWeight: 700,
-                  letterSpacing: 2,
+                  letterSpacing: 3,
                   textTransform: "uppercase",
-                  color: "#fff",
-                  background: content.badgeColor,
-                  padding: "6px 18px",
-                  borderRadius: 20,
+                  color: "#FFFFFF",
+                  background: GOLD,
+                  padding: "5px 16px",
+                  borderRadius: 3,
                 }}
               >
                 {content.badge}
@@ -100,11 +160,11 @@ const TicketPosterTemplate = forwardRef<HTMLDivElement, Props>(
               <span
                 style={{
                   fontFamily: FONT_DISPLAY,
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: 700,
-                  letterSpacing: 3,
+                  letterSpacing: 4,
                   textTransform: "uppercase",
-                  color: accent,
+                  color: GOLD_DARK,
                 }}
               >
                 {synaName}
@@ -112,7 +172,7 @@ const TicketPosterTemplate = forwardRef<HTMLDivElement, Props>(
             </div>
 
             {/* Center: title + subtitle */}
-            <div style={{ textAlign: "center", padding: "16px 0" }}>
+            <div style={{ textAlign: "center", padding: "8px 0" }}>
               <h2
                 style={{
                   fontFamily: FONT_DISPLAY,
@@ -121,6 +181,8 @@ const TicketPosterTemplate = forwardRef<HTMLDivElement, Props>(
                   color: NAVY,
                   margin: 0,
                   lineHeight: 1.2,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
                 }}
               >
                 {content.title}
@@ -130,8 +192,8 @@ const TicketPosterTemplate = forwardRef<HTMLDivElement, Props>(
                   style={{
                     fontFamily: FONT_BODY,
                     fontSize: 22,
-                    color: accent,
-                    margin: "8px 0 0",
+                    color: NAVY,
+                    margin: "10px 0 0",
                     fontWeight: 600,
                   }}
                 >
@@ -140,35 +202,38 @@ const TicketPosterTemplate = forwardRef<HTMLDivElement, Props>(
               )}
             </div>
 
-            {/* Bottom: details row */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 40, flexWrap: "wrap" }}>
-              {content.details.map((d, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    fontFamily: FONT_BODY,
-                    fontSize: 20,
-                    color: ANTHRACITE,
-                  }}
-                >
-                  <span style={{ fontSize: 22, color: GREY_MED }}>{d.icon}</span>
-                  <span>{d.text}</span>
-                </div>
-              ))}
+            {/* Bottom: details row + gold line */}
+            <div>
+              {/* Gold divider */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
+                <div style={{ flex: 1, maxWidth: 80, height: 1, background: `linear-gradient(90deg, transparent, ${GOLD})` }} />
+                <span style={{ fontSize: 10, color: GOLD, letterSpacing: 4 }}>✦</span>
+                <div style={{ flex: 1, maxWidth: 80, height: 1, background: `linear-gradient(90deg, ${GOLD}, transparent)` }} />
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 36, flexWrap: "wrap" }}>
+                {content.details.map((d, i) => {
+                  const IconComp = iconMap[d.icon] || ClockIcon;
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        fontFamily: FONT_BODY,
+                        fontSize: 18,
+                        color: NAVY,
+                      }}
+                    >
+                      <IconComp />
+                      <span>{d.text}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
-
-          {/* Right accent strip */}
-          <div
-            style={{
-              width: 8,
-              background: content.actionColor,
-              flexShrink: 0,
-            }}
-          />
         </div>
       </div>
     );
