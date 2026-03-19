@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import MasterPosterTemplate, { type PosterContentBlock, type SynaProfile } from "@/components/poster/MasterPosterTemplate";
+import TicketPosterTemplate, { type TicketContent } from "@/components/poster/TicketPosterTemplate";
+import type { SynaProfile } from "@/components/poster/MasterPosterTemplate";
 import { exportPosterPng } from "@/components/poster/usePosterExport";
 
 interface CoursCardProps {
