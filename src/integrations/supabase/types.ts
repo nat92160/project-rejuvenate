@@ -46,7 +46,9 @@ export type Database = {
       }
       cours_zoom: {
         Row: {
+          address: string | null
           course_time: string
+          course_type: string
           created_at: string
           creator_id: string
           day_of_week: string
@@ -57,7 +59,9 @@ export type Database = {
           zoom_link: string
         }
         Insert: {
+          address?: string | null
           course_time: string
+          course_type?: string
           created_at?: string
           creator_id: string
           day_of_week: string
@@ -68,7 +72,9 @@ export type Database = {
           zoom_link?: string
         }
         Update: {
+          address?: string | null
           course_time?: string
+          course_type?: string
           created_at?: string
           creator_id?: string
           day_of_week?: string
