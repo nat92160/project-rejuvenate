@@ -82,7 +82,7 @@ const AfficheChabbatWidget = () => {
   const t = themeConfig[theme];
   const f = fontConfig[font];
   const cornerBg = cornerSvg(t.ornamentColor);
-  const notes = notesRef.current;
+  
 
   const generatePosterBlob = async () => {
     if (!canvasRef.current) return null;
