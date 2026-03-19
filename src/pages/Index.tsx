@@ -27,6 +27,7 @@ import RefouaChelemaWidget from "@/components/RefouaChelemaWidget";
 import MinyanLiveWidget from "@/components/MinyanLiveWidget";
 import EvenementsWidget from "@/components/EvenementsWidget";
 import CoursVirtuelWidget from "@/components/CoursVirtuelWidget";
+import FideleSynagogueView from "@/components/FideleSynagogueView";
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
 
