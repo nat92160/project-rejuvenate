@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
-
-interface RoshHodeshInfo {
-  month: string;
-  dates: string[];
-  molad?: string;
-}
+import { fetchNextRoshHodesh, RoshHodeshInfo } from "@/lib/hebcal";
 
 const RoshHodeshWidget = () => {
   const { city } = useCity();
@@ -14,32 +9,25 @@ const RoshHodeshWidget = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     setLoading(true);
-    const now = new Date();
-    const year = now.getFullYear();
-    // Fetch both current year and next year to always find upcoming Rosh Chodesh
-    Promise.all([
-      fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&year=${year}&month=x&maj=off&min=off&mod=off&nx=off&ss=off&mf=off&c=off&geo=geoname&geonameid=${city.geonameid}&D=on`).then(r => r.json()),
-      fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&year=${year + 1}&month=x&maj=off&min=off&mod=off&nx=off&ss=off&mf=off&c=off&geo=geoname&geonameid=${city.geonameid}&D=on`).then(r => r.json()),
-    ])
-      .then(([data1, data2]) => {
-        const items = [...(data1.items || []), ...(data2.items || [])];
-        const roshChodeshItems = items
-          .filter((i: any) => i.category === "roshchodesh" && new Date(i.date + "T23:59:59") >= now);
+    setInfo(null);
 
-        if (roshChodeshItems.length > 0) {
-          const first = roshChodeshItems[0];
-          const monthName = first.title.replace("Rosh Chodesh ", "");
-          // Get all dates for this same Rosh Chodesh (can be 1 or 2 days)
-          const dates = roshChodeshItems
-            .filter((i: any) => i.title === first.title)
-            .map((i: any) => new Date(i.date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }));
-
-          setInfo({ month: monthName, dates });
-        }
+    fetchNextRoshHodesh(city)
+      .then((data) => {
+        if (cancelled) return;
+        setInfo(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [city]);
 
   return (
@@ -60,10 +48,15 @@ const RoshHodeshWidget = () => {
           <p className="font-display text-lg font-bold text-foreground text-center">
             🌙 {info.month}
           </p>
+          {info.hebrew && (
+            <p className="mt-1 text-sm text-center text-primary/70 font-hebrew" style={{ direction: "rtl" }}>
+              {info.hebrew}
+            </p>
+          )}
           <div className="mt-3 space-y-1.5">
-            {info.dates.map((d, i) => (
-              <p key={i} className="text-sm text-center capitalize text-muted-foreground">
-                {d}
+            {info.dates.map((dateLabel) => (
+              <p key={dateLabel} className="text-sm text-center capitalize text-muted-foreground">
+                {dateLabel}
               </p>
             ))}
           </div>
