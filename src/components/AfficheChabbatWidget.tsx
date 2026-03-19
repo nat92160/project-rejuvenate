@@ -198,11 +198,11 @@ const AfficheChabbatWidget = () => {
 
   /** Poster section block */
   const PosterSection = ({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) => (
-    <div style={{ border: `1px solid ${t.blockBorder}`, borderRadius: "8px", marginBottom: "8px", overflow: "hidden" }}>
-      <div style={{ padding: "6px 12px", borderBottom: `1px solid ${t.blockBorder}` }}>
-        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.85rem", fontWeight: 700, color: t.h4Color }}>{icon} {title}</span>
+    <div style={{ border: `1px solid ${t.blockBorder}`, borderRadius: "6px", marginBottom: "6px", overflow: "hidden" }}>
+      <div style={{ padding: "4px 10px", borderBottom: `1px solid ${t.blockBorder}` }}>
+        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.72rem", fontWeight: 700, color: t.h4Color }}>{icon} {title}</span>
       </div>
-      <div style={{ padding: "8px 12px" }}>{children}</div>
+      <div style={{ padding: "5px 10px" }}>{children}</div>
     </div>
   );
 
