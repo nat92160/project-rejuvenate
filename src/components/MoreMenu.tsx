@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
   { id: "chabbat", icon: "🕯️", label: "Horaires Chabbat" },
