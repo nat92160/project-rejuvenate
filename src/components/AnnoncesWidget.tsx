@@ -155,8 +155,8 @@ const AnnoncesWidget = () => {
               style={{ boxShadow: "var(--shadow-elevated)" }}
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}>
 
-              {/* Inline preview (scaled down) */}
-              <div style={{ transform: "scale(0.55)", transformOrigin: "top center", marginBottom: -200 }}>
+              {/* Inline preview (scaled down from 1080px to fit modal) */}
+              <div style={{ transform: "scale(0.34)", transformOrigin: "top center", height: 660, overflow: "hidden" }}>
                 <MasterPosterTemplate profile={synaProfile} content={posterContent!} />
               </div>
 
