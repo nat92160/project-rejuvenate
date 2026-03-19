@@ -149,10 +149,10 @@ const TicketPosterTemplate = forwardRef<HTMLDivElement, Props>(
                   fontWeight: 900,
                   letterSpacing: 5,
                   textTransform: "uppercase",
-                  color: "#2D8CFF",
+                  color: content.badge === "ZOOM" ? "#2D8CFF" : "#16a34a",
                 }}
               >
-                {content.badge}
+                {content.badge === "ZOOM" ? "COURS ZOOM" : "COURS PRÉSENTIEL"}
               </span>
               <span
                 style={{
