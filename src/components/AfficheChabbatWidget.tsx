@@ -151,29 +151,20 @@ const AfficheChabbatWidget = () => {
   const TimeInputRow = ({ label, value, onChange, noteKey, readOnly = false }: {
     label: string; value: string; onChange?: (v: string) => void; noteKey: string; readOnly?: boolean;
   }) => (
-    <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-2">
-      <label className="text-xs font-bold text-foreground block">{label}</label>
+    <div className="rounded-xl border border-border bg-muted/30 p-3">
+      <label className="text-xs font-bold text-foreground block mb-2">{label}</label>
       <div className="flex items-center gap-2">
-        <div className="flex-1 relative">
-          <input
-            type="time"
-            value={value}
-            readOnly={readOnly}
-            onChange={e => onChange?.(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"
-            placeholder="--:--"
-          />
-          {!readOnly && (
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground pointer-events-none">Heure</span>
-          )}
-        </div>
+        <input
+          type="time"
+          value={value}
+          readOnly={readOnly}
+          onChange={e => onChange?.(e.target.value)}
+          className="flex-1 px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-center text-base font-semibold"
+          style={{ minHeight: "44px" }}
+        />
         {!readOnly && value && (
-          <button
-            type="button"
-            onClick={() => onChange?.("")}
-            className="shrink-0 w-8 h-8 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center text-sm border-none cursor-pointer hover:bg-destructive/20"
-            title="Effacer l'horaire"
-          >
+          <button type="button" onClick={() => onChange?.("")}
+            className="shrink-0 w-10 h-10 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center text-sm border-none cursor-pointer">
             ✕
           </button>
         )}
@@ -182,16 +173,27 @@ const AfficheChabbatWidget = () => {
         defaultValue={notes[noteKey] || ""}
         onBlur={e => setNote(noteKey, e.target.value)}
         placeholder="📝 Note libre (ex: nom de l'officiant)"
-        className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground text-xs"
+        className="w-full mt-2 px-3 py-2 rounded-lg bg-background border border-border text-foreground text-xs"
+        style={{ minHeight: "38px" }}
       />
     </div>
   );
 
+  /** Poster section block */
+  const PosterSection = ({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) => (
+    <div style={{ border: `1px solid ${t.blockBorder}`, borderRadius: "8px", marginBottom: "8px", overflow: "hidden" }}>
+      <div style={{ padding: "6px 12px", borderBottom: `1px solid ${t.blockBorder}` }}>
+        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.85rem", fontWeight: 700, color: t.h4Color }}>{icon} {title}</span>
+      </div>
+      <div style={{ padding: "8px 12px" }}>{children}</div>
+    </div>
+  );
+
   const TimeLine = ({ label, value, note, big }: { label: string; value: string; note?: string; big?: boolean }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: "6px", padding: big ? "4px 0" : "3px 0", fontSize: big ? "0.9rem" : "0.78rem" }}>
-      <span style={{ color: t.labelColor, flexShrink: 0, fontWeight: big ? 600 : 400 }}>{label}</span>
-      <span style={{ fontWeight: big ? 800 : 600, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "1.05rem" : undefined }}>
-        {value}{note && <span style={{ fontWeight: 400, fontSize: "0.7rem", color: t.labelColor, fontStyle: "italic", marginLeft: "4px" }}>({note})</span>}
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "8px", padding: "4px 0", borderBottom: `1px solid ${t.blockBorder}22` }}>
+      <span style={{ color: t.labelColor, fontSize: big ? "0.85rem" : "0.8rem", fontWeight: 400 }}>{label}</span>
+      <span style={{ fontWeight: big ? 800 : 700, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "1.1rem" : "0.95rem", whiteSpace: "nowrap" }}>
+        {value}{note && <span style={{ fontWeight: 400, fontSize: "0.7rem", color: t.labelColor, fontStyle: "italic", marginLeft: "6px" }}>({note})</span>}
       </span>
     </div>
   );
