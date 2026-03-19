@@ -97,32 +97,32 @@ const EvenementsWidget = () => {
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
             <div className="space-y-3">
               <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="✏️ Titre de l'événement"
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="📝 Description (optionnel)" rows={2}
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
+                className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
               <div className="grid grid-cols-2 gap-3">
-                <div className="relative">
-                  <label className="absolute -top-2 left-3 px-1 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10">📅 Date</label>
+                <div className="relative pt-1">
+                  <label className="absolute -top-2 left-3 px-1 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10 rounded">📅 Date</label>
                   <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                    className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
                 </div>
-                <div className="relative">
-                  <label className="absolute -top-2 left-3 px-1 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10">🕐 Heure</label>
+                <div className="relative pt-1">
+                  <label className="absolute -top-2 left-3 px-1 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10 rounded">🕐 Heure</label>
                   <input type="time" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                    className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
                 </div>
               </div>
               <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="📍 Lieu"
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
               <select value={form.event_type} onChange={(e) => setForm({ ...form, event_type: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }}>
                 <option value="kidouch">🍷 Kidouch</option>
                 <option value="cours">📖 Cours</option>
                 <option value="fete">🎉 Fête</option>
                 <option value="autre">📌 Autre</option>
               </select>
               <input value={form.zoom_link} onChange={(e) => setForm({ ...form, zoom_link: e.target.value })} placeholder="🎥 Lien Zoom (optionnel)"
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
               <button onClick={handleAdd} disabled={submitting || !form.title.trim() || !form.event_date}
                 className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
                 style={{ background: "var(--gradient-gold)" }}>
