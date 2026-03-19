@@ -19,6 +19,7 @@ import MizrahCompass from "@/components/MizrahCompass";
 import RoshHodeshWidget from "@/components/RoshHodeshWidget";
 import MariagesWidget from "@/components/MariagesWidget";
 import AlarmWidget from "@/components/AlarmWidget";
+import ShabbatSpeciauxWidget from "@/components/ShabbatSpeciauxWidget";
 import PresidentDashboard from "@/components/PresidentDashboard";
 import AfficheChabbatWidget from "@/components/AfficheChabbatWidget";
 import AnnoncesWidget from "@/components/AnnoncesWidget";
