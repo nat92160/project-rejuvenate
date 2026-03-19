@@ -165,7 +165,7 @@ const MinyanLiveWidget = () => {
 
   const currentSession = sessions.find((s) => s.id === selectedSession);
   const currentRegs = selectedSession ? registrations[selectedSession] || [] : [];
-  const count = currentRegs.length;
+  const count = currentRegs.reduce((sum, r) => sum + ((r as Registration & { guest_count?: number }).guest_count || 1), 0);
   const target = currentSession?.target_count || 10;
   const needed = Math.max(0, target - count);
   const isFull = count >= target;

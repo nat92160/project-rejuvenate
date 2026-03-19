@@ -278,6 +278,12 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
     }
   };
 
+  const unclaimPsalm = async (claim: Claim) => {
+    const { error } = await supabase.from("tehilim_claims").delete().eq("id", claim.id);
+    if (error) toast.error("Erreur lors de l'annulation");
+    else toast.success("Réservation annulée");
+  };
+
   const toggleComplete = async (claim: Claim) => {
     await supabase
       .from("tehilim_claims")

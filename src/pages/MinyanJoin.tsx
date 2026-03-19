@@ -26,6 +26,7 @@ interface Registration {
   session_id: string;
   user_id: string;
   display_name: string;
+  guest_count: number;
 }
 
 const MinyanJoinContent = () => {
@@ -37,6 +38,16 @@ const MinyanJoinContent = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [guestCount, setGuestCount] = useState(1);
+
+  const fetchRegs = async () => {
+    if (!id) return;
+    const { data } = await supabase
+      .from("minyan_registrations")
+      .select("*")
+      .eq("session_id", id);
+    setRegs((data as Registration[]) || []);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -52,11 +63,7 @@ const MinyanJoinContent = () => {
         return;
       }
       setSession(data);
-      const { data: r } = await supabase
-        .from("minyan_registrations")
-        .select("*")
-        .eq("session_id", id);
-      setRegs(r || []);
+      await fetchRegs();
       setLoading(false);
     };
     fetch();
@@ -67,23 +74,19 @@ const MinyanJoinContent = () => {
     if (!id) return;
     const channel = supabase
       .channel(`minyan-join-${id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "minyan_registrations", filter: `session_id=eq.${id}` }, (payload) => {
-        if (payload.eventType === "INSERT") {
-          setRegs((prev) => [...prev, payload.new as Registration]);
-        } else if (payload.eventType === "DELETE") {
-          const old = payload.old as { id: string };
-          setRegs((prev) => prev.filter((r) => r.id !== old.id));
-        }
+      .on("postgres_changes", { event: "*", schema: "public", table: "minyan_registrations", filter: `session_id=eq.${id}` }, () => {
+        fetchRegs();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [id]);
 
-  const count = regs.length;
+  const totalPeople = regs.reduce((sum, r) => sum + (r.guest_count || 1), 0);
   const target = session?.target_count || 10;
-  const needed = Math.max(0, target - count);
-  const isFull = count >= target;
+  const needed = Math.max(0, target - totalPeople);
+  const isFull = totalPeople >= target;
   const isRegistered = user && regs.some((r) => r.user_id === user.id);
+  const myReg = user ? regs.find((r) => r.user_id === user.id) : null;
 
   const handleRegister = async () => {
     if (!user) {
@@ -96,11 +99,12 @@ const MinyanJoinContent = () => {
       session_id: id,
       user_id: user.id,
       display_name: displayName,
+      guest_count: guestCount,
     });
     if (error) {
       toast.error("Erreur lors de l'inscription");
     } else {
-      toast.success("✅ Vous êtes inscrit au Minyan !");
+      toast.success(`✅ ${guestCount > 1 ? `${guestCount} personnes inscrites` : "Vous êtes inscrit"} au Minyan !`);
     }
   };
 
@@ -112,7 +116,7 @@ const MinyanJoinContent = () => {
       .eq("session_id", id)
       .eq("user_id", user.id);
     if (error) toast.error("Erreur");
-    else toast.success("Vous avez quitté le Minyan");
+    else toast.success("Inscription annulée");
   };
 
   if (loading) {
@@ -170,14 +174,14 @@ const MinyanJoinContent = () => {
                 <motion.circle cx="60" cy="60" r="52" fill="none"
                   stroke={isFull ? "hsl(142 76% 36%)" : "hsl(var(--gold-matte))"}
                   strokeWidth="8" strokeLinecap="round"
-                  strokeDasharray={`${Math.min(count / target, 1) * 327} 327`}
+                  strokeDasharray={`${Math.min(totalPeople / target, 1) * 327} 327`}
                   initial={{ strokeDasharray: "0 327" }}
-                  animate={{ strokeDasharray: `${Math.min(count / target, 1) * 327} 327` }}
+                  animate={{ strokeDasharray: `${Math.min(totalPeople / target, 1) * 327} 327` }}
                   transition={{ duration: 1, ease: "easeOut" }}
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-extrabold font-display text-foreground">{count}</span>
+                <span className="text-4xl font-extrabold font-display text-foreground">{totalPeople}</span>
                 <span className="text-xs text-muted-foreground">/ {target}</span>
               </div>
             </div>
@@ -194,9 +198,9 @@ const MinyanJoinContent = () => {
             <div className="flex justify-center gap-1.5 mt-5 flex-wrap max-w-[200px] mx-auto">
               {Array.from({ length: target }).map((_, i) => (
                 <motion.div key={i} className="w-7 h-7 rounded-full flex items-center justify-center text-xs"
-                  style={{ background: i < count ? (isFull ? "hsl(142 76% 36% / 0.15)" : "hsl(var(--gold) / 0.15)") : "hsl(var(--muted))" }}
+                  style={{ background: i < totalPeople ? (isFull ? "hsl(142 76% 36% / 0.15)" : "hsl(var(--gold) / 0.15)") : "hsl(var(--muted))" }}
                   initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: i * 0.03 }}>
-                  {i < count ? "🧑" : "⬜"}
+                  {i < totalPeople ? "🧑" : "⬜"}
                 </motion.div>
               ))}
             </div>
@@ -204,7 +208,7 @@ const MinyanJoinContent = () => {
             {regs.length > 0 && (
               <div className="mt-4 text-xs text-muted-foreground">
                 <p className="font-bold mb-1">Inscrits :</p>
-                <p>{regs.map((r) => r.display_name).join(", ")}</p>
+                <p>{regs.map((r) => `${r.display_name}${(r.guest_count || 1) > 1 ? ` (+${(r.guest_count || 1) - 1})` : ""}`).join(", ")}</p>
               </div>
             )}
           </div>
@@ -214,19 +218,32 @@ const MinyanJoinContent = () => {
         {isRegistered ? (
           <div className="space-y-3">
             <div className="py-3.5 rounded-xl font-bold text-sm text-center bg-green-500/10 text-green-600 border border-green-500/20">
-              ✅ Vous êtes inscrit
+              ✅ Vous êtes inscrit{myReg && (myReg.guest_count || 1) > 1 ? ` (${myReg.guest_count} personnes)` : ""}
             </div>
             <button onClick={handleUnregister}
-              className="w-full py-3.5 rounded-xl font-bold text-sm bg-muted text-muted-foreground border border-border cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]">
-              ➖ Je pars
+              className="w-full py-3.5 rounded-xl font-bold text-sm bg-destructive/10 text-destructive border border-destructive/20 cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]">
+              ❌ Annuler mon inscription
             </button>
           </div>
         ) : (
-          <button onClick={handleRegister}
-            className="w-full py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]"
-            style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
-            {user ? "➕ Je suis là !" : "🔑 Se connecter pour participer"}
-          </button>
+          <div className="space-y-3">
+            {/* Guest count selector */}
+            <div className="flex items-center justify-center gap-3 p-3 rounded-xl border border-border bg-card">
+              <span className="text-sm text-muted-foreground">👥 Nombre de personnes :</span>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setGuestCount(Math.max(1, guestCount - 1))}
+                  className="w-8 h-8 rounded-full bg-muted text-foreground font-bold border-none cursor-pointer hover:bg-border transition-colors">−</button>
+                <span className="text-lg font-bold text-foreground w-6 text-center">{guestCount}</span>
+                <button onClick={() => setGuestCount(Math.min(10, guestCount + 1))}
+                  className="w-8 h-8 rounded-full bg-muted text-foreground font-bold border-none cursor-pointer hover:bg-border transition-colors">+</button>
+              </div>
+            </div>
+            <button onClick={handleRegister}
+              className="w-full py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+              style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+              {user ? `➕ ${guestCount > 1 ? `Nous sommes ${guestCount}` : "Je suis là !"}` : "🔑 Se connecter pour participer"}
+            </button>
+          </div>
         )}
 
         {/* Back link */}
