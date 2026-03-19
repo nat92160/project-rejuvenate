@@ -623,7 +623,7 @@ const CoursVirtuelWidget = () => {
                     </div>
                     <div className="flex flex-col items-center gap-2 shrink-0">
                       {c.zoom_link && (
-                        <a href={c.zoom_link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95 no-underline" style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: "0 4px 12px rgba(45,140,255,0.3)" }}>
+                      <a href={c.zoom_link.startsWith("http") ? c.zoom_link : `https://${c.zoom_link}`} target="_blank" rel="noopener noreferrer" aria-label="Rejoindre la réunion Zoom en direct" onClick={(e) => e.stopPropagation()} className="w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95 no-underline" style={{ background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)", boxShadow: "0 4px 12px rgba(45,140,255,0.3)" }}>
                           🎥
                         </a>
                       )}
