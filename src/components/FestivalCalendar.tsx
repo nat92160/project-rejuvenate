@@ -42,7 +42,11 @@ const FestivalCalendar = () => {
     });
   }, [city]);
 
-  const filtered = filter === "all" ? cards : cards.filter((c) => c.category === filter);
+  const filtered = filter === "all"
+    ? cards
+    : filter === "roshchodesh"
+    ? cards.filter((c) => c.id.startsWith("roshchodesh-"))
+    : cards.filter((c) => c.category === filter);
 
   const toggleExpand = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
