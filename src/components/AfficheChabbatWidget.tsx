@@ -408,8 +408,14 @@ const AfficheChabbatWidget = () => {
 
                   <PosterSection icon="🌅" title="Chabbat matin">
                     {shaharit && <TimeLine label="Shaharit" value={shaharit} note={notes.shaharit} big />}
-                    {torahReader && <TimeLine label="Lecteur" value={torahReader} />}
-                    <TimeLine label="Lecture de la Torah" value={data?.parasha?.replace("Parashat ", "") || ""} note={notes.torahReading} />
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "6px", padding: "3px 0", borderBottom: `1px solid ${t.blockBorder}22` }}>
+                      <span style={{ color: t.labelColor, fontSize: "0.7rem", fontWeight: 400 }}>Lecture de la Torah</span>
+                      <span style={{ fontWeight: 600, color: t.accent, textAlign: "right", fontSize: "0.75rem", whiteSpace: "nowrap" }}>
+                        {data?.parasha?.replace("Parashat ", "") || ""}
+                        {torahReader && <span style={{ fontWeight: 400, fontSize: "0.58rem", color: t.labelColor, fontStyle: "italic", marginLeft: "4px" }}>({torahReader})</span>}
+                        {notes.torahReading && <span style={{ fontWeight: 400, fontSize: "0.58rem", color: t.labelColor, fontStyle: "italic", marginLeft: "4px" }}>({notes.torahReading})</span>}
+                      </span>
+                    </div>
                     {moussaf && <TimeLine label="Moussaf" value={moussaf} note={notes.moussaf} />}
                   </PosterSection>
 
