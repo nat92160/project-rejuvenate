@@ -17,8 +17,7 @@ const features = [
   { id: "minyan", icon: "👥", title: "Minyan Live" },
   { id: "create-minyan", icon: "➕", title: "Créer Minyan" },
   { id: "evenements", icon: "📅", title: "Événements" },
-  { id: "cours", icon: "📚", title: "Cours Zoom" },
-  { id: "coursvirtuel", icon: "🎥", title: "Cours Virtuel" },
+  { id: "cours", icon: "🎥", title: "Cours en ligne" },
   { id: "stats", icon: "📊", title: "Statistiques" },
 ];
 
