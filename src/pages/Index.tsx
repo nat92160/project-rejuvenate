@@ -93,6 +93,7 @@ const IndexContent = () => {
       case "courszoom":
       case "coursvirtuel": return <CoursVirtuelWidget />;
       case "affiche": return <AfficheChabbatWidget />;
+      case "masynagogue": return <SynaProfileManager />;
       case "shabbatspec": return <ShabbatSpeciauxWidget />;
       case "communaute":
         return (
