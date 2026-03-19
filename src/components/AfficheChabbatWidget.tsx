@@ -254,19 +254,13 @@ const AfficheChabbatWidget = () => {
                 <div className="flex-1 px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground text-center text-xs font-bold h-10 flex items-center justify-center">
                   {data?.parasha?.replace("Parashat ", "") || "…"}
                 </div>
-              </div>
-                  className="w-full px-4 py-3 rounded-xl bg-muted/40 border border-border/50 text-foreground text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  style={{ minHeight: "44px" }}
-                />
-              </div>
               
               <TimeInputRow label="Moussaf" value={moussaf} onChange={setMoussaf} noteKey="moussaf" />
-              <TimeInputRow label="Minha — Samedi après-midi" value={minhaSat} onChange={setMinhaSat} noteKey="minhaSat" />
+              <TimeInputRow label="Minha samedi" value={minhaSat} onChange={setMinhaSat} noteKey="minhaSat" />
               
-              <div className="my-3" />
-              <p className="text-[10px] font-bold text-primary uppercase tracking-wider px-1 pb-1 border-b border-primary/20">✨ Sortie de Chabbat</p>
-              <TimeInputRow label="✨ Havdala (automatique)" value={data?.havdalah || ""} noteKey="havdalah" readOnly />
-              <TimeInputRow label="Arvit — Motsé Chabbat" value={arvitMotse} onChange={setArvitMotse} noteKey="arvitMotse" />
+              <p className="text-[10px] font-bold text-primary uppercase tracking-wider px-1 py-1.5 border-b border-primary/20 mt-2">✨ Sortie de Chabbat</p>
+              <TimeInputRow label="✨ Havdala (auto)" value={data?.havdalah || ""} noteKey="havdalah" readOnly />
+              <TimeInputRow label="Arvit Motsé Chabbat" value={arvitMotse} onChange={setArvitMotse} noteKey="arvitMotse" />
             </div>
           </div>
 
