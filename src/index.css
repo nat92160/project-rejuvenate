@@ -179,7 +179,7 @@
   }
 
   .dark .glass {
-    background: hsl(220 40% 6% / 0.85);
+    background: hsl(0 0% 100% / 0.85);
   }
 
   .scrollbar-none::-webkit-scrollbar { display: none; }
