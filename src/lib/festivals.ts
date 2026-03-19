@@ -98,6 +98,9 @@ const DAY_TYPE_LABELS: Record<FestivalDay["type"], string> = {
 export { DAY_TYPE_LABELS };
 
 function hebcalGeoParam(city: CityConfig): string {
+  if ((city as any)._gps) {
+    return `geo=pos&latitude=${city.lat}&longitude=${city.lng}&tzid=${city.tz}`;
+  }
   return `geo=geoname&geonameid=${city.geonameid}`;
 }
 
@@ -136,7 +139,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
     const geoP = hebcalGeoParam(city);
 
     // Fetch holidays WITH candle lighting times
-    const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${year}&month=x&maj=on&min=on&mod=on&nx=off&ss=off&mf=off&c=on&${geoP}&i=off&b=18`;
+    const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${year}&month=x&maj=on&min=on&mod=on&nx=off&ss=off&mf=on&c=on&${geoP}&i=off&b=18`;
     const r = await fetch(url);
     const data = await r.json();
     const items: any[] = data.items || [];

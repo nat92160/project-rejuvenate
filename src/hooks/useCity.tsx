@@ -22,22 +22,33 @@ export function CityProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem("calj_city", key); } catch {}
   };
 
+  const [gpsCity, setGpsCity] = useState<CityConfig | null>(null);
+
   const geolocate = () => {
     if (!navigator.geolocation) return;
     setIsGeolocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
+        // Find nearest city for name/tz, but use exact GPS coords for calculations
         let nearestKey = DEFAULT_CITY;
         let nearestDist = Infinity;
         for (const [key, c] of Object.entries(CITIES)) {
-          // Haversine-like distance weighting lat more at higher latitudes
           const dLat = (c.lat - latitude) * Math.PI / 180;
           const dLng = (c.lng - longitude) * Math.PI / 180 * Math.cos(latitude * Math.PI / 180);
           const d = Math.sqrt(dLat * dLat + dLng * dLng);
           if (d < nearestDist) { nearestDist = d; nearestKey = key; }
         }
-        setCityKey(nearestKey);
+        const base = CITIES[nearestKey] || CITIES[DEFAULT_CITY];
+        // Create a GPS-precise city config using exact coordinates
+        setGpsCity({
+          ...base,
+          name: `📍 ${base.name}`,
+          lat: latitude,
+          lng: longitude,
+          _gps: true,
+        } as CityConfig & { _gps: boolean });
+        setCityKey("__gps__");
         setIsGeolocating(false);
       },
       () => setIsGeolocating(false),
@@ -45,7 +56,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const city = CITIES[cityKey] || CITIES[DEFAULT_CITY];
+  const city = cityKey === "__gps__" && gpsCity ? gpsCity : (CITIES[cityKey] || CITIES[DEFAULT_CITY]);
 
   return (
     <CityContext.Provider value={{ city, cityKey, setCityKey, isGeolocating, geolocate }}>
