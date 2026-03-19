@@ -107,7 +107,8 @@ async function enrichWithDirections(apiKey: string, originLat: number, originLon
     });
 
     if (!response.ok) {
-      console.warn("Routes API failed, keeping air distances:", response.status);
+      const errText = await response.text();
+      console.warn("Routes API failed, keeping air distances:", response.status, errText);
       return results;
     }
 
