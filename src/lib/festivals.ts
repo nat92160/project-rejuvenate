@@ -139,7 +139,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
     const year = now.getFullYear();
     const geoP = hebcalGeoParam(city);
 
-    // Fetch both years with nx=on (Rosh Chodesh) and mf=on (minor fasts)
+    // Fetch both years with nx=on (Rosh Chodesh) and mf=on (minor fasts) — v2
     const makeUrl = (y: number) =>
       `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${y}&month=x&maj=on&min=on&mod=on&nx=on&ss=off&mf=on&c=on&${geoP}&i=off&b=18`;
     
