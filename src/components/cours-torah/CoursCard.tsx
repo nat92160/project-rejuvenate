@@ -37,16 +37,19 @@ const CoursCard = ({
   const isZoom = course_type === "zoom";
   const dotColor = dayColors[day_of_week] || "#94a3b8";
 
-  const posterContent: PosterContentBlock = {
-    category: isZoom ? "COURS DE TORAH — ZOOM" : "COURS DE TORAH — PRÉSENTIEL",
+  const ticketContent: TicketContent = {
+    badge: isZoom ? "ZOOM" : "PRÉSENTIEL",
+    badgeColor: isZoom ? "#2D8CFF" : "#16a34a",
     title: title,
-    description: description || undefined,
+    subtitle: rav || undefined,
     details: [
-      ...(rav ? [{ icon: "👨‍🏫", label: "Intervenant", value: rav }] : []),
-      { icon: "📅", label: day_of_week, value: course_time?.slice(0, 5) },
-      ...(isZoom && zoom_link ? [{ icon: "🎥", label: "Zoom", value: zoom_link }] : []),
-      ...(!isZoom && address ? [{ icon: "📍", label: "Lieu", value: address }] : []),
+      { icon: "📅", text: `${day_of_week} à ${course_time?.slice(0, 5)}` },
+      ...(isZoom && zoom_link ? [{ icon: "🎥", text: zoom_link }] : []),
+      ...(!isZoom && address ? [{ icon: "📍", text: address }] : []),
+      ...(description ? [{ icon: "📝", text: description }] : []),
     ],
+    actionLabel: isZoom ? "REJOINDRE LE COURS" : "ITINÉRAIRE",
+    actionColor: isZoom ? "#2D8CFF" : "#16a34a",
   };
 
   const handleExportPng = async () => {
