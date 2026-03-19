@@ -46,10 +46,13 @@ serve(async (req) => {
       const accessToken = await getAccessToken();
       const { title, duration, start_time, timezone, passcode } = body;
 
+      const tz = timezone || "Europe/Paris";
+
       const meetingBody: Record<string, unknown> = {
         topic: title || "Cours en ligne",
         type: start_time ? 2 : 1, // 1=instant, 2=scheduled
         duration: duration || 60,
+        timezone: tz,
         settings: {
           join_before_host: true,
           waiting_room: false,
@@ -58,8 +61,13 @@ serve(async (req) => {
       };
 
       if (start_time) {
-        meetingBody.start_time = start_time;
-        meetingBody.timezone = timezone || "Europe/Paris";
+        // Zoom expects ISO 8601 format: "2026-03-20T15:00:00"
+        // The datetime-local input gives "2026-03-20T15:00" — ensure seconds are appended
+        let formattedTime = start_time;
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(formattedTime)) {
+          formattedTime += ":00";
+        }
+        meetingBody.start_time = formattedTime;
       }
       if (passcode) {
         (meetingBody.settings as Record<string, unknown>).passcode = passcode;
