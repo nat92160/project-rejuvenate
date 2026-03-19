@@ -175,13 +175,13 @@ const CoursVirtuelWidget = () => {
     return text;
   };
 
-  const shareCours = (c: CoursVirtuel) => {
+  const shareCours = async (c: CoursVirtuel) => {
     const text = getShareText(c);
     if (navigator.share) {
-      navigator.share({ text }).catch(() => {});
-    } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+      try { await navigator.share({ text }); return; } catch {}
     }
+    await navigator.clipboard?.writeText(text);
+    toast.success("Lien copié dans le presse-papier !");
   };
 
   const inputClass = "w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
