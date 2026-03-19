@@ -278,6 +278,12 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
     }
   };
 
+  const unclaimPsalm = async (claim: Claim) => {
+    const { error } = await supabase.from("tehilim_claims").delete().eq("id", claim.id);
+    if (error) toast.error("Erreur lors de l'annulation");
+    else toast.success("Réservation annulée");
+  };
+
   const toggleComplete = async (claim: Claim) => {
     await supabase
       .from("tehilim_claims")
@@ -357,12 +363,16 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
               const isMine = claim?.user_id === user?.id;
 
               return (
-                <button
+              <button
                   key={num}
                   onClick={() => {
                     if (claim?.completed) return;
                     if (isMine && claim) { toggleComplete(claim); return; }
                     if (!claim) claimPsalm(num);
+                  }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    if (isMine && claim && !claim.completed) unclaimPsalm(claim);
                   }}
                   disabled={!!claim && !isMine}
                   className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-all cursor-pointer border ${
@@ -375,7 +385,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
                       : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-primary/5"
                   }`}
                   style={isMine && claim && !claim.completed ? { background: "hsl(var(--gold) / 0.1)" } : {}}
-                  title={claim ? `${claim.display_name}${claim.completed ? " ✅" : ""}` : `Psaume ${num}`}
+                  title={claim ? `${claim.display_name}${claim.completed ? " ✅" : " — clic long pour annuler"}` : `Psaume ${num}`}
                 >
                   <span className="text-sm">{num}</span>
                   {claim?.completed && <span className="text-[8px] absolute bottom-0.5">✅</span>}
@@ -391,6 +401,21 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded inline-block" style={{ background: "hsl(var(--gold) / 0.1)" }} /> Réservé</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500/15 inline-block" /> Terminé</span>
           </div>
+
+          {/* My claims summary with cancel */}
+          {user && claims.filter(c => c.user_id === user.id && !c.completed).length > 0 && (
+            <div className="mt-3 p-3 rounded-xl border border-primary/20" style={{ background: "hsl(var(--gold) / 0.06)" }}>
+              <p className="text-[10px] font-bold text-foreground mb-1.5">Mes réservations :</p>
+              <div className="flex flex-wrap gap-1">
+                {claims.filter(c => c.user_id === user.id && !c.completed).map(c => (
+                  <div key={c.id} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border border-primary/20" style={{ background: "hsl(var(--gold) / 0.1)" }}>
+                    <span>Ps {c.chapter_start}</span>
+                    <button onClick={() => unclaimPsalm(c)} className="text-destructive bg-transparent border-none cursor-pointer text-[9px] p-0 hover:scale-110">✕</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -88,6 +88,12 @@ const TehilimJoinContent = () => {
     else toast.success(`✅ Psaume ${num} réservé !`);
   };
 
+  const unclaimPsalm = async (claim: Claim) => {
+    const { error } = await supabase.from("tehilim_claims").delete().eq("id", claim.id);
+    if (error) toast.error("Erreur lors de l'annulation");
+    else toast.success("Réservation annulée");
+  };
+
   const toggleComplete = async (claim: Claim) => {
     await supabase
       .from("tehilim_claims")
@@ -128,7 +134,7 @@ const TehilimJoinContent = () => {
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="font-display text-2xl font-bold text-foreground">📖 Chaîne de Tehilim</h1>
-          <p className="text-sm text-muted-foreground mt-1">Choisissez un psaume à lire</p>
+          <p className="text-sm text-muted-foreground mt-1">Choisissez un ou plusieurs psaumes à lire</p>
         </div>
 
         {/* Chain info */}
@@ -153,7 +159,28 @@ const TehilimJoinContent = () => {
           </div>
         )}
 
-        {/* Psalms grid — 150 individual psalms */}
+        {/* My claims summary */}
+        {user && claims.filter(c => c.user_id === user.id).length > 0 && (
+          <div className="p-4 rounded-xl border border-primary/20 mb-4" style={{ background: "hsl(var(--gold) / 0.06)" }}>
+            <p className="text-xs font-bold text-foreground mb-2">📖 Mes psaumes réservés :</p>
+            <div className="flex flex-wrap gap-1.5">
+              {claims.filter(c => c.user_id === user.id).map(c => (
+                <div key={c.id} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold border" style={{
+                  background: c.completed ? "hsl(142 76% 36% / 0.1)" : "hsl(var(--gold) / 0.1)",
+                  borderColor: c.completed ? "hsl(142 76% 36% / 0.3)" : "hsl(var(--gold) / 0.2)",
+                  color: c.completed ? "hsl(142 76% 36%)" : "hsl(var(--gold-matte))",
+                }}>
+                  <span>{c.chapter_start}</span>
+                  {c.completed ? <span>✅</span> : (
+                    <button onClick={() => unclaimPsalm(c)} className="ml-1 text-destructive bg-transparent border-none cursor-pointer text-[10px] hover:scale-110 transition-transform p-0">✕</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Psalms grid */}
         <div className="grid grid-cols-6 gap-1.5">
           {Array.from({ length: TOTAL_PSALMS }, (_, i) => i + 1).map((num) => {
             const claim = claims.find((c) => c.chapter_start === num && c.chapter_end === num);
@@ -194,6 +221,9 @@ const TehilimJoinContent = () => {
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded inline-block" style={{ background: "hsl(var(--gold) / 0.1)" }} /> Réservé</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500/15 inline-block" /> Terminé</span>
         </div>
+        <p className="text-center text-[10px] text-muted-foreground mt-2">
+          💡 Cliquez sur un psaume réservé par vous (📖) pour le marquer comme lu
+        </p>
 
         {!user && (
           <p className="text-center text-xs text-muted-foreground mt-4">

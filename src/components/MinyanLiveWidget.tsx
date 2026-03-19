@@ -165,7 +165,7 @@ const MinyanLiveWidget = () => {
 
   const currentSession = sessions.find((s) => s.id === selectedSession);
   const currentRegs = selectedSession ? registrations[selectedSession] || [] : [];
-  const count = currentRegs.length;
+  const count = currentRegs.reduce((sum, r) => sum + ((r as Registration & { guest_count?: number }).guest_count || 1), 0);
   const target = currentSession?.target_count || 10;
   const needed = Math.max(0, target - count);
   const isFull = count >= target;
@@ -340,7 +340,7 @@ const MinyanLiveWidget = () => {
             {currentRegs.length > 0 && (
               <div className="mt-4 text-xs text-muted-foreground">
                 <p className="font-bold mb-1">Inscrits :</p>
-                <p>{currentRegs.map((r) => r.display_name).join(", ")}</p>
+                <p>{currentRegs.map((r) => `${r.display_name}${((r as Registration & { guest_count?: number }).guest_count || 1) > 1 ? ` (+${((r as Registration & { guest_count?: number }).guest_count || 1) - 1})` : ""}`).join(", ")}</p>
               </div>
             )}
           </div>
