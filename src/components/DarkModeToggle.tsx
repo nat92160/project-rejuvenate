@@ -3,8 +3,7 @@ import { useState, useEffect } from "react";
 const DarkModeToggle = () => {
   const [isDark, setIsDark] = useState(() => {
     try {
-      return localStorage.getItem("calj_theme") === "dark" ||
-        (!localStorage.getItem("calj_theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      return localStorage.getItem("calj_theme") === "dark";
     } catch {
       return false;
     }
