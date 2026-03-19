@@ -153,33 +153,31 @@ const AfficheChabbatWidget = () => {
     toast.success("Image téléchargée et texte copié !");
   };
 
-  /** Time input row — floating label inside field for mobile clarity */
+  /** Time input row — large touch targets, clear labels for mobile */
   const TimeInputRow = memo(({ label, value, onChange, noteKey, readOnly = false }: {
     label: string; value: string; onChange?: (v: string) => void; noteKey: string; readOnly?: boolean;
   }) => (
-    <div className="rounded-xl border border-border bg-muted/30 p-3">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <label className="absolute -top-2 left-3 px-1 bg-muted/80 text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10 rounded">{label}</label>
-          {readOnly ? (
-            <div className="w-full px-3 pt-3.5 pb-2 rounded-lg bg-muted border border-border text-foreground text-center text-base font-semibold" style={{ minHeight: "48px" }}>
-              {value || "--:--"}
-            </div>
-          ) : (
-            <input
-              key={`time-${noteKey}`}
-              type="time"
-              defaultValue={value}
-              onBlur={e => onChange?.(e.target.value)}
-              placeholder="HH:MM"
-              className="w-full px-3 pt-3.5 pb-2 rounded-lg bg-background border border-border text-foreground text-center text-base font-semibold"
-              style={{ minHeight: "48px" }}
-            />
-          )}
-        </div>
+    <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+      <label className="text-xs font-bold text-foreground block">{label}</label>
+      <div className="flex items-center gap-3">
+        {readOnly ? (
+          <div className="flex-1 px-4 py-4 rounded-xl bg-muted border border-border text-foreground text-center text-lg font-bold tracking-wide" style={{ minHeight: "52px" }}>
+            {value || "—"}
+          </div>
+        ) : (
+          <input
+            key={`time-${noteKey}`}
+            type="time"
+            defaultValue={value}
+            onBlur={e => onChange?.(e.target.value)}
+            placeholder="HH:MM"
+            className="flex-1 px-4 py-4 rounded-xl bg-background border border-border text-foreground text-center text-lg font-bold tracking-wide focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
+            style={{ minHeight: "52px" }}
+          />
+        )}
         {!readOnly && value && (
           <button type="button" onClick={() => onChange?.("")}
-            className="shrink-0 w-11 h-11 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center text-sm border-none cursor-pointer">
+            className="shrink-0 w-12 h-12 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center text-base font-bold border-none cursor-pointer active:scale-95 transition-transform">
             ✕
           </button>
         )}
@@ -188,9 +186,9 @@ const AfficheChabbatWidget = () => {
         key={`note-${noteKey}`}
         defaultValue={notes[noteKey] || ""}
         onBlur={e => setNote(noteKey, e.target.value)}
-        placeholder="📝 Note libre (ex: nom de l'officiant)"
-        className="w-full mt-2 px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-xs"
-        style={{ minHeight: "40px" }}
+        placeholder="✏️ Note libre (officiant, info…)"
+        className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/60 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
+        style={{ minHeight: "44px" }}
       />
     </div>
   ));
