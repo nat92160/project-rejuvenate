@@ -125,6 +125,23 @@ const AfficheChabbatWidget = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
+  // Isolated time input — never re-renders parent during typing
+  const IsolatedTimeInput = memo(({ initialValue, onCommit, readOnly }: { initialValue: string; onCommit: (v: string) => void; readOnly?: boolean }) => {
+    const [val, setVal] = useState(initialValue);
+    const committed = useRef(initialValue);
+    useEffect(() => { if (initialValue !== committed.current) { setVal(initialValue); committed.current = initialValue; } }, [initialValue]);
+    return (
+      <input
+        type="time"
+        value={val}
+        readOnly={readOnly}
+        onChange={e => { setVal(e.target.value); }}
+        onBlur={() => { if (val !== committed.current) { committed.current = val; onCommit(val); } }}
+        className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"
+      />
+    );
+  });
+
   // Isolated note input — never re-renders parent during typing
   const NoteInput = memo(({ noteKey, placeholder }: { noteKey: string; placeholder?: string }) => {
     const [val, setVal] = useState(notes[noteKey] || "");
@@ -143,7 +160,7 @@ const AfficheChabbatWidget = () => {
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
       <label className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</label>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[120px_minmax(0,1fr)]">
-        <input type="time" value={value} readOnly={readOnly} onChange={e => onChange?.(e.target.value)} className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm" />
+        <IsolatedTimeInput initialValue={value} onCommit={v => onChange?.(v)} readOnly={readOnly} />
         <NoteInput noteKey={noteKey} />
       </div>
     </div>
