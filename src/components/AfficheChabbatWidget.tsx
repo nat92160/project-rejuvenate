@@ -153,45 +153,44 @@ const AfficheChabbatWidget = () => {
     toast.success("Image téléchargée et texte copié !");
   };
 
-  /** Time input row — uses defaultValue+onBlur to avoid cursor jumping on mobile */
+  /** Time input row — floating label inside field for mobile clarity */
   const TimeInputRow = memo(({ label, value, onChange, noteKey, readOnly = false }: {
     label: string; value: string; onChange?: (v: string) => void; noteKey: string; readOnly?: boolean;
   }) => (
     <div className="rounded-xl border border-border bg-muted/30 p-3">
-      <label className="text-xs font-bold text-foreground block mb-2">{label}</label>
       <div className="flex items-center gap-2">
-        {readOnly ? (
-          <div className="flex-1 px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground text-center text-base font-semibold" style={{ minHeight: "44px", lineHeight: "24px" }}>
-            {value || "--:--"}
-          </div>
-        ) : (
-          <input
-            key={`time-${noteKey}`}
-            type="time"
-            defaultValue={value}
-            onBlur={e => onChange?.(e.target.value)}
-            placeholder="HH:MM"
-            className="flex-1 px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-center text-base font-semibold"
-            style={{ minHeight: "44px" }}
-          />
-        )}
+        <div className="relative flex-1">
+          <label className="absolute -top-2 left-3 px-1 bg-muted/80 text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10 rounded">{label}</label>
+          {readOnly ? (
+            <div className="w-full px-3 pt-3.5 pb-2 rounded-lg bg-muted border border-border text-foreground text-center text-base font-semibold" style={{ minHeight: "48px" }}>
+              {value || "--:--"}
+            </div>
+          ) : (
+            <input
+              key={`time-${noteKey}`}
+              type="time"
+              defaultValue={value}
+              onBlur={e => onChange?.(e.target.value)}
+              placeholder="HH:MM"
+              className="w-full px-3 pt-3.5 pb-2 rounded-lg bg-background border border-border text-foreground text-center text-base font-semibold"
+              style={{ minHeight: "48px" }}
+            />
+          )}
+        </div>
         {!readOnly && value && (
           <button type="button" onClick={() => onChange?.("")}
-            className="shrink-0 w-10 h-10 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center text-sm border-none cursor-pointer">
+            className="shrink-0 w-11 h-11 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center text-sm border-none cursor-pointer">
             ✕
           </button>
         )}
       </div>
-      {!readOnly && !value && (
-        <p className="text-[10px] text-muted-foreground mt-1.5 italic">Saisissez un horaire (ex: 19:30)</p>
-      )}
       <input
         key={`note-${noteKey}`}
         defaultValue={notes[noteKey] || ""}
         onBlur={e => setNote(noteKey, e.target.value)}
         placeholder="📝 Note libre (ex: nom de l'officiant)"
-        className="w-full mt-2 px-3 py-2 rounded-lg bg-background border border-border text-foreground text-xs"
-        style={{ minHeight: "38px" }}
+        className="w-full mt-2 px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-xs"
+        style={{ minHeight: "40px" }}
       />
     </div>
   ));
