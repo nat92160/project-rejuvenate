@@ -291,18 +291,18 @@ const AfficheChabbatWidget = () => {
               ))}
               <div style={{ position: "absolute", inset: "10px", border: `0.5px solid ${t.border}33`, pointerEvents: "none", zIndex: 1 }} />
 
-              <div style={{ textAlign: "center", paddingBottom: "14px", marginBottom: "10px" }}>
-                <div style={{ fontFamily: f.family, fontSize: theme === "prestige" ? "2rem" : "1.5rem", fontWeight: theme === "prestige" ? 400 : 700, color: t.valueColor, letterSpacing: "0.5px" }}>{synaName || "Nom de votre synagogue"}</div>
-                {synaAddress && <div style={{ fontSize: "0.82rem", color: t.labelColor, marginTop: "3px" }}>{synaAddress}</div>}
-                {synaRav && <div style={{ fontSize: "0.82rem", color: t.labelColor, marginTop: "3px", fontStyle: "italic" }}>{synaRav}</div>}
-                <div style={{ fontSize: "0.78rem", color: t.labelColor, marginTop: "3px", fontWeight: 500 }}>📍 {city.name}</div>
+              <div style={{ textAlign: "center", paddingBottom: "10px", marginBottom: "8px" }}>
+                <div style={{ fontFamily: f.family, fontSize: theme === "prestige" ? "1.4rem" : "1.15rem", fontWeight: theme === "prestige" ? 400 : 700, color: t.valueColor, letterSpacing: "0.5px" }}>{synaName || "Nom de votre synagogue"}</div>
+                {synaAddress && <div style={{ fontSize: "0.72rem", color: t.labelColor, marginTop: "2px" }}>{synaAddress}</div>}
+                {synaRav && <div style={{ fontSize: "0.72rem", color: t.labelColor, marginTop: "2px", fontStyle: "italic" }}>{synaRav}</div>}
+                <div style={{ fontSize: "0.68rem", color: t.labelColor, marginTop: "2px", fontWeight: 500 }}>📍 {city.name}</div>
               </div>
 
-              <div style={{ width: "80px", height: "1px", background: `linear-gradient(90deg, transparent, ${t.accent}, transparent)`, margin: "0 auto 12px" }} />
+              <div style={{ width: "60px", height: "1px", background: `linear-gradient(90deg, transparent, ${t.accent}, transparent)`, margin: "0 auto 8px" }} />
 
-              <div style={{ textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: "1.45rem", color: t.accent, marginBottom: "6px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>{data?.parasha || "CHABBAT CHALOM"}</div>
-              {data?.parashaHebrew && <div style={{ textAlign: "center", fontFamily: "'Frank Ruhl Libre', serif", fontSize: "1.1rem", color: `${t.text}88`, direction: "rtl", marginBottom: "6px" }}>{data.parashaHebrew}</div>}
-              <div style={{ textAlign: "center", fontSize: "0.85rem", fontWeight: 500, color: t.labelColor, marginBottom: "16px" }}>{data?.candleLightingDate}</div>
+              <div style={{ textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: "1.1rem", color: t.accent, marginBottom: "4px", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>{data?.parasha || "CHABBAT CHALOM"}</div>
+              {data?.parashaHebrew && <div style={{ textAlign: "center", fontFamily: "'Frank Ruhl Libre', serif", fontSize: "0.9rem", color: `${t.text}88`, direction: "rtl", marginBottom: "4px" }}>{data.parashaHebrew}</div>}
+              <div style={{ textAlign: "center", fontSize: "0.75rem", fontWeight: 500, color: t.labelColor, marginBottom: "12px" }}>{data?.candleLightingDate}</div>
 
               {loading ? <div style={{ textAlign: "center", padding: "30px" }}>Chargement...</div> : (
                 <>
