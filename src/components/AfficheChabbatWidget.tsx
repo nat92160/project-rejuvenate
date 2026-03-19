@@ -113,7 +113,8 @@ const AfficheChabbatWidget = () => {
     const file = blob ? new File([blob], `affiche-chabbat-${city.name}.jpg`, { type: "image/jpeg" }) : null;
     const baseText = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
     if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText }); return;
+      try { await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText }); } catch {}
+      return;
     }
     let imageUrl = "";
     if (blob) {
@@ -122,7 +123,13 @@ const AfficheChabbatWidget = () => {
       if (!error) { const { data: urlData } = supabase.storage.from("affiches").getPublicUrl(filename); imageUrl = urlData?.publicUrl || ""; }
     }
     const text = imageUrl ? `${baseText}\n\n🖼️ ${imageUrl}` : baseText;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    // Use link click instead of window.open to avoid popup blockers on mobile
+    const a = document.createElement("a");
+    a.href = waUrl;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.click();
   };
 
   // Isolated time input — never re-renders parent during typing
