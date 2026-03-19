@@ -226,10 +226,24 @@ const AfficheChabbatWidget = () => {
       <span style={{ color: t.labelColor, flexShrink: 0, fontWeight: big ? 600 : 400 }}>{label}</span>
       <span style={{ fontWeight: big ? 800 : 600, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "1.3rem" : undefined }}>
         {value}
-        {note && <span style={{ fontWeight: 400, fontSize: "0.78rem", color: t.labelColor, fontStyle: "italic", marginLeft: "5px" }}>{note}</span>}
+        {note && <span style={{ fontWeight: 400, fontSize: "0.78rem", color: t.labelColor, fontStyle: "italic", marginLeft: "5px" }}>({note})</span>}
       </span>
     </div>
   );
+
+  /* TimeLine that shows even without a time value — for note-only rows like Moussaf */
+  const TimeLineOptional = ({ label, value, note }: TimeRow) => {
+    if (!value && !note) return null;
+    return (
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: "4px 0", fontSize: "0.88rem" }}>
+        <span style={{ color: t.labelColor, flexShrink: 0 }}>{label}</span>
+        <span style={{ fontWeight: 600, color: t.valueColor, textAlign: "right" }}>
+          {value || ""}
+          {note && <span style={{ fontWeight: 400, fontSize: "0.78rem", color: t.labelColor, fontStyle: "italic", marginLeft: value ? "5px" : "0" }}>({note})</span>}
+        </span>
+      </div>
+    );
+  };
 
   const TimeInputRow = ({ label, value, onChange, note, onNoteChange, readOnly = false }: TimeInputRowProps) => (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
@@ -300,12 +314,20 @@ const AfficheChabbatWidget = () => {
               <TimeInputRow label="Shaharit Sam." value={shaharit} onChange={setShaharit} note={timeNotes.shaharit} onNoteChange={(value) => updateNote("shaharit", value)} />
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
                 <label className="text-[10px] text-muted-foreground uppercase tracking-wider">📖 Lecture Torah</label>
-                <input
-                  value={timeNotes.torahReading}
-                  onChange={(e) => updateNote("torahReading", e.target.value)}
-                  placeholder="Remarque (affiché avec la Paracha)"
-                  className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"
-                />
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[120px_minmax(0,1fr)]">
+                  <input
+                    value={data?.parasha || ""}
+                    readOnly
+                    className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground text-sm opacity-60"
+                    title="Nom automatique de la Paracha"
+                  />
+                  <input
+                    value={timeNotes.torahReading}
+                    onChange={(e) => updateNote("torahReading", e.target.value)}
+                    placeholder="Remarque libre (ex: Montée, Haftara...)"
+                    className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"
+                  />
+                </div>
               </div>
               <TimeInputRow label="Moussaf" value={moussaf} onChange={setMoussaf} note={timeNotes.moussaf} onNoteChange={(value) => updateNote("moussaf", value)} />
               <TimeInputRow label="Minha Sam." value={minhaSat} onChange={setMinhaSat} note={timeNotes.minhaSat} onNoteChange={(value) => updateNote("minhaSat", value)} />
@@ -457,7 +479,7 @@ const AfficheChabbatWidget = () => {
                       </h4>
                       {shaharit && <TimeLine label="Shaharit" value={shaharit} note={timeNotes.shaharit} />}
                       <TimeLine label="📖 Lecture Torah" value={data?.parasha || ""} note={timeNotes.torahReading} />
-                      {moussaf && <TimeLine label="Moussaf" value={moussaf} note={timeNotes.moussaf} />}
+                      <TimeLineOptional label="Moussaf" value={moussaf} note={timeNotes.moussaf} />
                     </div>
 
                     <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
