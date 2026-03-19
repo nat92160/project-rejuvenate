@@ -175,8 +175,14 @@ const CoursVirtuelWidget = () => {
     return text;
   };
 
-  const getShareUrl = (c: CoursVirtuel) =>
-    `https://wa.me/?text=${encodeURIComponent(getShareText(c))}`;
+  const shareCours = (c: CoursVirtuel) => {
+    const text = getShareText(c);
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    }
+  };
 
   const inputClass = "w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
 
@@ -261,12 +267,15 @@ const CoursVirtuelWidget = () => {
                     📋
                   </button>
                 </div>
-                <a href={`https://wa.me/?text=${encodeURIComponent(`🎥 Rejoignez le cours en direct !\n${lastCreatedLink}\n\n✡️ Chabbat Chalom`)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="mt-3 w-full py-2.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer flex items-center justify-center gap-2 no-underline"
+                <button onClick={() => {
+                    const text = `🎥 Rejoignez le cours en direct !\n${lastCreatedLink}\n\n✡️ Chabbat Chalom`;
+                    if (navigator.share) { navigator.share({ text }).catch(() => {}); }
+                    else { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer"); }
+                  }}
+                  className="mt-3 w-full py-2.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer flex items-center justify-center gap-2"
                   style={{ background: "#25d366" }}>
                   💬 Partager sur WhatsApp
-                </a>
+                </button>
               </div>
             )}
           </motion.div>
@@ -338,11 +347,11 @@ const CoursVirtuelWidget = () => {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
-                  <a href={getShareUrl(c)} target="_blank" rel="noopener noreferrer"
-                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg no-underline cursor-pointer"
+                  <button onClick={() => shareCours(c)}
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer"
                     style={{ background: "#25d366", color: "#fff" }}>
-                    💬 WhatsApp
-                  </a>
+                    💬 Partager
+                  </button>
                   {isPresident && user?.id === c.creator_id && (
                     <button onClick={() => void handleDelete(c.id)}
                       className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border-none cursor-pointer hover:bg-destructive/20">
