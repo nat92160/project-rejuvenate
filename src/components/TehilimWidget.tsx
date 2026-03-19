@@ -264,30 +264,48 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
     }
     const { data: profile } = await supabase
       .from("profiles").select("display_name").eq("user_id", user.id).single();
+    const displayName = profile?.display_name || user.email || "Anonyme";
+    // Optimistic update
+    const optimisticClaim: Claim = {
+      id: `temp-${num}`, chain_id: chain.id, user_id: user.id,
+      display_name: displayName, chapter_start: num, chapter_end: num,
+      completed: false, claimed_at: new Date().toISOString(), completed_at: null,
+    };
+    setClaims(prev => [...prev, optimisticClaim]);
+    toast.success(`✅ Psaume ${num} réservé !`);
+
     const { error } = await supabase.from("tehilim_claims").insert({
-      chain_id: chain.id,
-      user_id: user.id,
-      display_name: profile?.display_name || user.email || "Anonyme",
-      chapter_start: num,
-      chapter_end: num,
+      chain_id: chain.id, user_id: user.id, display_name: displayName,
+      chapter_start: num, chapter_end: num,
     });
     if (error) {
+      setClaims(prev => prev.filter(c => c.id !== optimisticClaim.id));
       toast.error("Erreur lors de la réservation");
     } else {
-      toast.success(`✅ Psaume ${num} réservé !`);
+      fetchClaims(); // sync real data
     }
   };
 
   const unclaimPsalm = async (claim: Claim) => {
+    if (claim.user_id !== user?.id) return; // Only own claims
+    // Optimistic
+    setClaims(prev => prev.filter(c => c.id !== claim.id));
+    toast.success("Réservation annulée");
     const { error } = await supabase.from("tehilim_claims").delete().eq("id", claim.id);
-    if (error) toast.error("Erreur lors de l'annulation");
-    else toast.success("Réservation annulée");
+    if (error) {
+      toast.error("Erreur lors de l'annulation");
+      fetchClaims();
+    }
   };
 
   const toggleComplete = async (claim: Claim) => {
+    if (claim.user_id !== user?.id) return; // Only own claims
+    const newCompleted = !claim.completed;
+    // Optimistic
+    setClaims(prev => prev.map(c => c.id === claim.id ? { ...c, completed: newCompleted, completed_at: newCompleted ? new Date().toISOString() : null } : c));
     await supabase
       .from("tehilim_claims")
-      .update({ completed: !claim.completed, completed_at: !claim.completed ? new Date().toISOString() : null })
+      .update({ completed: newCompleted, completed_at: newCompleted ? new Date().toISOString() : null })
       .eq("id", claim.id);
   };
 
