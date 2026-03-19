@@ -346,6 +346,10 @@ const AfficheChabbatWidget = () => {
               <label className="text-xs font-bold text-muted-foreground mb-1.5 block">💬 Message du Rav</label>
               <textarea value={ravMessage} onChange={(e) => setRavMessage(e.target.value)} placeholder="Ex : Pensée de la semaine, message inspirant…" rows={3} className={`${inputClass} resize-none`} style={{ minHeight: "88px" }} />
             </div>
+            <div>
+              <label className="text-xs font-bold text-muted-foreground mb-1.5 block">✏️ Champ libre (bas de l'affiche)</label>
+              <textarea value={freeNote} onChange={(e) => setFreeNote(e.target.value)} placeholder="Ex : Mazal Tov à la famille…, Horaire spécial…" rows={3} className={`${inputClass} resize-none`} style={{ minHeight: "88px" }} />
+            </div>
           </div>
           <div className="flex gap-3">
             <button onClick={() => setStep(1)} className="flex-1 py-4 rounded-xl font-bold text-sm bg-muted text-muted-foreground border border-border cursor-pointer active:scale-95 transition-transform">← Retour</button>
