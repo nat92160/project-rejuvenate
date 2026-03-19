@@ -306,20 +306,20 @@ const AfficheChabbatWidget = () => {
 
               {loading ? <div style={{ textAlign: "center", padding: "30px" }}>Chargement...</div> : (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
-                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "16px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
-                      <div style={{ fontSize: "0.75rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>🕯️ Allumage</div>
-                      <div style={{ fontSize: "1.6rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.candleLighting || "--:--"}</div>
-                      {notes.candleLighting && <div style={{ fontSize: "0.75rem", color: t.labelColor, fontStyle: "italic", marginTop: "4px" }}>{notes.candleLighting}</div>}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "10px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
+                      <div style={{ fontSize: "0.65rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>🕯️ Allumage</div>
+                      <div style={{ fontSize: "1.2rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.candleLighting || "--:--"}</div>
+                      {notes.candleLighting && <div style={{ fontSize: "0.65rem", color: t.labelColor, fontStyle: "italic", marginTop: "3px" }}>{notes.candleLighting}</div>}
                     </div>
-                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "16px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
-                      <div style={{ fontSize: "0.75rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>✨ Sortie</div>
-                      <div style={{ fontSize: "1.6rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.havdalah || "--:--"}</div>
-                      {notes.havdalah && <div style={{ fontSize: "0.75rem", color: t.labelColor, fontStyle: "italic", marginTop: "4px" }}>{notes.havdalah}</div>}
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "10px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
+                      <div style={{ fontSize: "0.65rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>✨ Sortie</div>
+                      <div style={{ fontSize: "1.2rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.havdalah || "--:--"}</div>
+                      {notes.havdalah && <div style={{ fontSize: "0.65rem", color: t.labelColor, fontStyle: "italic", marginTop: "3px" }}>{notes.havdalah}</div>}
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
                     <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
                       <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>🕯️ Vendredi soir</h4>
                       {minhaFri && <TimeLine label="Minha" value={minhaFri} note={notes.minhaFri} />}
