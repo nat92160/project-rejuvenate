@@ -285,7 +285,7 @@ const AfficheChabbatWidget = () => {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
                     <div style={{ background: t.blockBg, borderRadius: "8px", padding: "16px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
                       <div style={{ fontSize: "0.75rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>🕯️ Allumage</div>
-                      <div style={{ fontSize: "2rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.candleLighting || "--:--"}</div>
+                      <div style={{ fontSize: "1.6rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.candleLighting || "--:--"}</div>
                       {notes.candleLighting && <div style={{ fontSize: "0.75rem", color: t.labelColor, fontStyle: "italic", marginTop: "4px" }}>{notes.candleLighting}</div>}
                     </div>
                     <div style={{ background: t.blockBg, borderRadius: "8px", padding: "16px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
