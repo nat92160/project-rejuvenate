@@ -121,71 +121,46 @@ const AfficheChabbatWidget = () => {
   const f = fontConfig[font];
   const cornerBg = cornerSvg(t.ornamentColor);
 
-  const generatePosterBlob = async () => {
-    if (!canvasRef.current) return null;
-    try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(canvasRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        onclone: (clonedDoc) => {
-          clonedDoc.documentElement.classList.remove("dark");
-          const el = clonedDoc.getElementById("affiche-export-canvas") as HTMLDivElement | null;
-          if (el) {
-            el.style.background = t.bg;
-            el.style.colorScheme = "light";
-          }
-        },
-      });
-      return await new Promise<Blob | null>((resolve) => canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.95));
-    } catch {
-      return null;
-    }
+  const posterContent: PosterContentBlock = {
+    category: "PARASHAT",
+    title: data?.parasha?.replace("Parashat ", "") || "Chabbat",
+    date: data?.candleLightingDate || "",
+    details: [
+      { section: "VENDREDI SOIR", label: "Allumage des bougies", value: data?.candleLighting || "--:--" },
+      ...(minhaFri ? [{ section: "VENDREDI SOIR", label: "Minha", value: minhaFri, sub: notes.minhaFri || undefined }] : []),
+      ...(kabbalat ? [{ section: "VENDREDI SOIR", label: "Kabbalat Chabbat", value: kabbalat, sub: notes.kabbalat || undefined }] : []),
+      ...(arvitFri ? [{ section: "VENDREDI SOIR", label: "Arvit", value: arvitFri, sub: notes.arvitFri || undefined }] : []),
+      ...(shaharit ? [{ section: "CHABBAT MATIN", label: "Shaharit", value: shaharit, sub: notes.shaharit || undefined }] : []),
+      {
+        section: "CHABBAT MATIN",
+        label: "Lecture de la Torah",
+        value: data?.parasha?.replace("Parashat ", "") || "",
+        sub: torahReader || notes.torahReading || undefined,
+      },
+      ...(moussaf ? [{ section: "CHABBAT MATIN", label: "Moussaf", value: moussaf, sub: notes.moussaf || undefined }] : []),
+      ...(minhaSat ? [{ section: "CHABBAT APRÈS-MIDI", label: "Minha", value: minhaSat, sub: notes.minhaSat || undefined }] : []),
+      ...(shiourSamedi ? [{ section: "CHABBAT APRÈS-MIDI", label: "Shiour", value: shiourSamedi }] : []),
+      { section: "MOTSÉ CHABBAT", label: "Havdala", value: data?.havdalah || "--:--", sub: notes.havdalah || undefined },
+      ...(arvitMotse ? [{ section: "MOTSÉ CHABBAT", label: "Arvit", value: arvitMotse, sub: notes.arvitMotse || undefined }] : []),
+      ...(sponsor ? [{ section: "ANNONCES", label: "Séouda / Kiddouch", value: sponsor }] : []),
+      ...(announce ? [{ section: "ANNONCES", label: "Annonce", value: announce }] : []),
+      ...(ravMessage ? [{ section: "ANNONCES", label: "Message du Rav", value: ravMessage }] : []),
+      ...(freeNote ? [{ section: "ANNONCES", label: "Note", value: freeNote }] : []),
+    ],
+    description: synaProfile.name || synaName ? `${synaProfile.name || synaName} — Chabbat Chalom` : undefined,
   };
 
   const handleExport = async () => {
-    const blob = await generatePosterBlob();
-    if (!blob) {
-      alert("Export non disponible.");
-      return;
-    }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.download = `affiche-chabbat-${city.name}.jpg`;
-    a.href = url;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    await exportPosterPng(canvasRef.current, `affiche-chabbat-${city.name}.png`);
   };
 
   const sharePoster = async () => {
-    const blob = await generatePosterBlob();
-    const file = blob ? new File([blob], `affiche-chabbat-${city.name}.jpg`, { type: "image/jpeg" }) : null;
-    const baseText = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
-    try {
-      if (file && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText });
-        return;
-      }
-      if (navigator.share) {
-        await navigator.share({ title: "Affiche de Chabbat", text: baseText });
-        return;
-      }
-    } catch (err: any) {
-      if (err?.name === "AbortError") return;
-    }
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.download = `affiche-chabbat-${city.name}.jpg`;
-      a.href = url;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+    await handleExport();
+    const baseText = `Chabbat Chalom — ${synaProfile.name || synaName}\nAllumage : ${data?.candleLighting || ""}\nHavdala : ${data?.havdalah || ""}\nParacha : ${data?.parasha || ""}`;
     try {
       await navigator.clipboard.writeText(baseText);
     } catch {}
-    toast.success("Image téléchargée et texte copié !");
+    toast.success("Affiche téléchargée et texte copié !");
   };
 
   const inputClass = "w-full px-4 py-4 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50";
