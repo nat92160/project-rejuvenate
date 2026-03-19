@@ -105,6 +105,7 @@ const CoursVirtuelWidget = () => {
         {showForm && user && (
           <CoursForm
             userId={user.id}
+            initialCourseType={filter === "presentiel" ? "presentiel" : "zoom"}
             onCreated={(data) => setCours((prev) => [data as unknown as CoursItem, ...prev])}
             onClose={() => setShowForm(false)}
           />
