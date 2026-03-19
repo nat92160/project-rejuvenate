@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCity } from "@/hooks/useCity";
+import { useSynaProfile } from "@/hooks/useSynaProfile";
 import { toast } from "sonner";
 import CoursCard from "./cours-torah/CoursCard";
 import CoursForm from "./cours-torah/CoursForm";
@@ -23,6 +24,7 @@ interface CoursItem {
 const CoursVirtuelWidget = () => {
   const { city } = useCity();
   const { user, dbRole } = useAuth();
+  const { profile: synaProfile } = useSynaProfile();
   const [cours, setCours] = useState<CoursItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -121,6 +123,7 @@ const CoursVirtuelWidget = () => {
               cityName={city.name}
               isOwner={isPresident && user?.id === c.creator_id}
               index={i}
+              synaProfile={synaProfile}
               onDelete={handleDelete}
             />
           ))}
