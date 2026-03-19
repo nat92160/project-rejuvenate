@@ -55,17 +55,15 @@ const AfficheChabbatWidget = () => {
   const [synaAddress, setSynaAddress] = useState("");
   const [synaRav, setSynaRav] = useState("");
 
-  // Use refs for free-text fields to prevent cursor jumping
-  const notesRef = useRef<Record<string, string>>({
+  // Notes stored in state object — IsolatedInput handles its own local state
+  const [notes, setNotes] = useState<Record<string, string>>({
     candleLighting: "", minhaFri: "", kabbalat: "", arvitFri: "",
     shaharit: "", torahReading: "", moussaf: "", minhaSat: "",
     havdalah: "", arvitMotse: "",
   });
-  const [, forceRender] = useState(0);
-  const setNote = useCallback((key: string, val: string) => {
-    notesRef.current[key] = val;
-    forceRender(n => n + 1);
-  }, []);
+  const setNote = (key: string, val: string) => {
+    setNotes(prev => ({ ...prev, [key]: val }));
+  };
 
   const [minhaFri, setMinhaFri] = useState("");
   const [kabbalat, setKabbalat] = useState("");
