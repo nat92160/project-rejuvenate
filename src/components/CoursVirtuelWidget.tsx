@@ -99,7 +99,7 @@ const CoursVirtuelWidget = () => {
         {showForm && user && (
           <CoursForm
             userId={user.id}
-            onCreated={(data) => setCours((prev) => [data as CoursItem, ...prev])}
+            onCreated={(data) => setCours((prev) => [data as unknown as CoursItem, ...prev])}
             onClose={() => setShowForm(false)}
           />
         )}

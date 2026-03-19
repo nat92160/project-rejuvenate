@@ -31,19 +31,18 @@ const CoursForm = ({ userId, onCreated, onClose }: CoursFormProps) => {
     if (courseType === "presentiel" && !address.trim()) { toast.error("Adresse requise"); return; }
 
     setSubmitting(true);
+    const insertPayload = {
+      creator_id: userId,
+      title: title.trim(),
+      rav: teacher.trim(),
+      day_of_week: day,
+      course_time: time || "20:00",
+      zoom_link: courseType === "zoom" ? link.trim() : "",
+      description: desc.trim(),
+    };
     const { data, error } = await supabase
       .from("cours_zoom")
-      .insert({
-        creator_id: userId,
-        title: title.trim(),
-        rav: teacher.trim(),
-        day_of_week: day,
-        course_time: time || "20:00",
-        zoom_link: courseType === "zoom" ? link.trim() : "",
-        description: desc.trim(),
-        course_type: courseType,
-        address: courseType === "presentiel" ? address.trim() : "",
-      } as Record<string, unknown>)
+      .insert(insertPayload)
       .select()
       .single();
 
