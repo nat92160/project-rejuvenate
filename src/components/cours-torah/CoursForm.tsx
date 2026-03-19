@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ interface CoursFormProps {
   userId: string;
   onCreated: (cours: Record<string, unknown>) => void;
   onClose: () => void;
+  initialCourseType?: "zoom" | "presentiel";
 }
 
 const inputClass =
@@ -14,8 +15,8 @@ const inputClass =
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Dimanche"];
 
-const CoursForm = ({ userId, onCreated, onClose }: CoursFormProps) => {
-  const [courseType, setCourseType] = useState<"zoom" | "presentiel">("zoom");
+const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: CoursFormProps) => {
+  const [courseType, setCourseType] = useState<"zoom" | "presentiel">(initialCourseType);
   const [title, setTitle] = useState("");
   const [teacher, setTeacher] = useState("");
   const [day, setDay] = useState("Lundi");
@@ -24,6 +25,10 @@ const CoursForm = ({ userId, onCreated, onClose }: CoursFormProps) => {
   const [address, setAddress] = useState("");
   const [desc, setDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setCourseType(initialCourseType);
+  }, [initialCourseType]);
 
   const handleSubmit = async () => {
     if (!title.trim()) { toast.error("Titre requis"); return; }
