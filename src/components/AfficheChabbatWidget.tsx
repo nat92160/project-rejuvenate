@@ -254,7 +254,8 @@ const AfficheChabbatWidget = () => {
                 <div className="flex-1 px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground text-center text-xs font-bold h-10 flex items-center justify-center">
                   {data?.parasha?.replace("Parashat ", "") || "…"}
                 </div>
-              
+              </div>
+
               <TimeInputRow label="Moussaf" value={moussaf} onChange={setMoussaf} noteKey="moussaf" />
               <TimeInputRow label="Minha samedi" value={minhaSat} onChange={setMinhaSat} noteKey="minhaSat" />
               
