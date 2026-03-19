@@ -285,7 +285,7 @@ const AfficheChabbatWidget = () => {
         <div className="space-y-4">
           <button onClick={() => setStep(2)} className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline">← Modifier</button>
           <div className="rounded-2xl overflow-hidden" style={{ padding: "8px", background: "hsl(var(--muted))" }}>
-            <div id="affiche-export-canvas" ref={canvasRef} style={{ background: t.bg, border: `2.5px solid ${t.border}`, outline: `0.5px solid ${t.border}`, outlineOffset: "5px", borderRadius: "6px", padding: "40px 34px 28px", position: "relative", overflow: "hidden", color: t.text, boxShadow: "0 8px 40px rgba(0,0,0,0.12)", colorScheme: "light" }}>
+            <div id="affiche-export-canvas" ref={canvasRef} style={{ background: t.bg, border: `2px solid ${t.border}`, outline: `0.5px solid ${t.border}`, outlineOffset: "4px", borderRadius: "6px", padding: "24px 18px 18px", position: "relative", overflow: "hidden", color: t.text, boxShadow: "0 8px 40px rgba(0,0,0,0.12)", colorScheme: "light" }}>
               {["top:6px;left:6px", "top:6px;right:6px;transform:rotate(90deg)", "bottom:6px;left:6px;transform:rotate(270deg)", "bottom:6px;right:6px;transform:rotate(180deg)"].map((pos, i) => (
                 <div key={i} style={{ position: "absolute", width: "38px", height: "38px", pointerEvents: "none", zIndex: 2, backgroundImage: cornerBg, backgroundSize: "contain", backgroundRepeat: "no-repeat", ...(Object.fromEntries(pos.split(";").map(p => { const [k, v] = p.split(":"); return [k.trim(), v.trim()]; })) as Record<string, string>) }} />
               ))}
