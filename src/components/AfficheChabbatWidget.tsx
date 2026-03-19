@@ -84,6 +84,8 @@ const AfficheChabbatWidget = () => {
   const [sponsor, setSponsor] = useState(saved.current.sponsor || "");
   const [announce, setAnnounce] = useState(saved.current.announce || "");
   const [ravMessage, setRavMessage] = useState(saved.current.ravMessage || "");
+  const [torahReader, setTorahReader] = useState(saved.current.torahReader || "");
+  const [shiourSamedi, setShiourSamedi] = useState(saved.current.shiourSamedi || "");
   const [step, setStep] = useState(1);
 
   const setNote = useCallback((key: string, val: string) => {
@@ -94,7 +96,7 @@ const AfficheChabbatWidget = () => {
     const toSave: SavedFormData = {
       synaName, synaAddress, synaRav, minhaFri, kabbalat, arvitFri,
       shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage,
-      notes, theme, font,
+      notes, theme, font, torahReader, shiourSamedi,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
