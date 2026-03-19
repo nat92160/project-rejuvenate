@@ -63,6 +63,7 @@ const loadSaved = (): Partial<SavedFormData> => {
 
 const AfficheChabbatWidget = () => {
   const { city } = useCity();
+  const { profile: synaProfile } = useSynaProfile();
   const [data, setData] = useState<ShabbatTimes | null>(null);
   const [loading, setLoading] = useState(true);
   const canvasRef = useRef<HTMLDivElement>(null);

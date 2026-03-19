@@ -6,7 +6,7 @@ export interface PosterContentBlock {
   category: string;
   title: string;
   /** Tabular rows: label left-aligned, value right-aligned */
-  details: { icon?: string; label: string; value: string; sub?: string }[];
+  details: { icon?: string; section?: string; label: string; value: string; sub?: string }[];
   description?: string;
   date?: string;
 }
