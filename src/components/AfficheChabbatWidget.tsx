@@ -98,7 +98,7 @@ const AfficheChabbatWidget = () => {
     const toSave: SavedFormData = {
       synaName, synaAddress, synaRav, minhaFri, kabbalat, arvitFri,
       shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage,
-      notes, theme, font, torahReader, shiourSamedi,
+      notes, theme, font, torahReader, shiourSamedi, freeNote,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
