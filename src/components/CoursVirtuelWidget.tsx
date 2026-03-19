@@ -7,6 +7,7 @@ import { useSynaProfile } from "@/hooks/useSynaProfile";
 import { toast } from "sonner";
 import CoursCard from "./cours-torah/CoursCard";
 import CoursForm from "./cours-torah/CoursForm";
+import { normalizeCourseType } from "@/lib/courseType";
 
 interface CoursItem {
   id: string;
@@ -53,7 +54,10 @@ const CoursVirtuelWidget = () => {
     }
   };
 
-  const filtered = filter === "all" ? cours : cours.filter((c) => c.course_type === filter);
+  const filtered =
+    filter === "all"
+      ? cours
+      : cours.filter((c) => normalizeCourseType(c.course_type, c.zoom_link, c.address) === filter);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

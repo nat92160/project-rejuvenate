@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import TicketPosterTemplate, { type TicketContent } from "@/components/poster/TicketPosterTemplate";
 import type { SynaProfile } from "@/components/poster/MasterPosterTemplate";
 import { exportPosterPng } from "@/components/poster/usePosterExport";
+import { normalizeCourseType } from "@/lib/courseType";
 
 interface CoursCardProps {
   id: string;
@@ -34,7 +35,7 @@ const CoursCard = ({
 }: CoursCardProps) => {
   const posterRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
-  const isZoom = course_type === "zoom";
+  const isZoom = normalizeCourseType(course_type, zoom_link, address) === "zoom";
   const dotColor = dayColors[day_of_week] || "#94a3b8";
 
   const ticketContent: TicketContent = {
