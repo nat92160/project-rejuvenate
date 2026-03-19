@@ -471,7 +471,7 @@ const AfficheChabbatWidget = () => {
                       </h4>
                       {shaharit && <TimeLine label="Shaharit" value={shaharit} note={timeNotes.shaharit} />}
                       <TimeLine label="📖 Lecture Torah" value={data?.parasha || ""} note={timeNotes.torahReading} />
-                      {moussaf && <TimeLine label="Moussaf" value={moussaf} note={timeNotes.moussaf} />}
+                      <TimeLineOptional label="Moussaf" value={moussaf} note={timeNotes.moussaf} />
                     </div>
 
                     <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
