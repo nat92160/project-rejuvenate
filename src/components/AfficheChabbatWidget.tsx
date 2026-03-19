@@ -384,19 +384,19 @@ const AfficheChabbatWidget = () => {
               <div style={{ position: "absolute", inset: "8px", border: `0.5px solid ${t.border}33`, pointerEvents: "none", zIndex: 1 }} />
 
               {/* Header — Synagogue name */}
-              <div style={{ textAlign: "center", marginBottom: "10px" }}>
-                <div style={{ fontFamily: f.family, fontSize: "clamp(1.1rem, 5vw, 1.5rem)", fontWeight: 700, color: t.valueColor }}>{synaName || "Nom de votre synagogue"}</div>
-                {synaAddress && <div style={{ fontSize: "0.65rem", color: t.labelColor, marginTop: "3px" }}>{synaAddress}</div>}
-                {synaRav && <div style={{ fontSize: "0.65rem", color: t.labelColor, marginTop: "1px", fontStyle: "italic" }}>{synaRav}</div>}
+              <div style={{ textAlign: "center", marginBottom: "8px" }}>
+                <div style={{ fontFamily: f.family, fontSize: "clamp(0.95rem, 4vw, 1.2rem)", fontWeight: 700, color: t.valueColor }}>{synaName || "Nom de votre synagogue"}</div>
+                {synaAddress && <div style={{ fontSize: "0.6rem", color: t.labelColor, marginTop: "2px" }}>{synaAddress}</div>}
+                {synaRav && <div style={{ fontSize: "0.6rem", color: t.labelColor, marginTop: "1px", fontStyle: "italic" }}>{synaRav}</div>}
               </div>
 
-              <div style={{ width: "50px", height: "2px", background: `linear-gradient(90deg, transparent, ${t.accent}, transparent)`, margin: "0 auto 10px" }} />
+              <div style={{ width: "40px", height: "1.5px", background: `linear-gradient(90deg, transparent, ${t.accent}, transparent)`, margin: "0 auto 8px" }} />
 
               {/* Parasha & date */}
-              <div style={{ textAlign: "center", marginBottom: "14px" }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.8rem", color: t.accent, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "2px" }}>CHABBAT PARACHA</div>
-                <div style={{ fontFamily: f.family, fontSize: "clamp(1.3rem, 6vw, 1.8rem)", fontWeight: 800, color: t.valueColor }}>{data?.parasha?.replace("Parashat ", "") || "..."}</div>
-                <div style={{ fontSize: "0.75rem", color: t.labelColor, marginTop: "3px" }}>{data?.candleLightingDate || ""}</div>
+              <div style={{ textAlign: "center", marginBottom: "10px" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.65rem", color: t.accent, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "2px" }}>CHABBAT PARACHA</div>
+                <div style={{ fontFamily: f.family, fontSize: "clamp(1rem, 5vw, 1.3rem)", fontWeight: 800, color: t.valueColor }}>{data?.parasha?.replace("Parashat ", "") || "..."}</div>
+                <div style={{ fontSize: "0.65rem", color: t.labelColor, marginTop: "2px" }}>{data?.candleLightingDate || ""}</div>
               </div>
 
               {loading ? <div style={{ textAlign: "center", padding: "20px" }}>Chargement...</div> : (
