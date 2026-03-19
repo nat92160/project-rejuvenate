@@ -226,10 +226,24 @@ const AfficheChabbatWidget = () => {
       <span style={{ color: t.labelColor, flexShrink: 0, fontWeight: big ? 600 : 400 }}>{label}</span>
       <span style={{ fontWeight: big ? 800 : 600, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "1.3rem" : undefined }}>
         {value}
-        {note && <span style={{ fontWeight: 400, fontSize: "0.78rem", color: t.labelColor, fontStyle: "italic", marginLeft: "5px" }}>{note}</span>}
+        {note && <span style={{ fontWeight: 400, fontSize: "0.78rem", color: t.labelColor, fontStyle: "italic", marginLeft: "5px" }}>({note})</span>}
       </span>
     </div>
   );
+
+  /* TimeLine that shows even without a time value — for note-only rows like Moussaf */
+  const TimeLineOptional = ({ label, value, note }: TimeRow) => {
+    if (!value && !note) return null;
+    return (
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: "4px 0", fontSize: "0.88rem" }}>
+        <span style={{ color: t.labelColor, flexShrink: 0 }}>{label}</span>
+        <span style={{ fontWeight: 600, color: t.valueColor, textAlign: "right" }}>
+          {value || ""}
+          {note && <span style={{ fontWeight: 400, fontSize: "0.78rem", color: t.labelColor, fontStyle: "italic", marginLeft: value ? "5px" : "0" }}>({note})</span>}
+        </span>
+      </div>
+    );
+  };
 
   const TimeInputRow = ({ label, value, onChange, note, onNoteChange, readOnly = false }: TimeInputRowProps) => (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
