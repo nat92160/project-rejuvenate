@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -23,10 +23,10 @@ serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const action = url.searchParams.get("action");
     const body = req.method === "POST" ? await req.json() : {};
+    // Support action from query param OR body
+    const action = url.searchParams.get("action") || body.action;
 
-    // Get Server-to-Server OAuth token
     const getAccessToken = async () => {
       const tokenUrl = `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${ZOOM_ACCOUNT_ID}`;
       const credentials = btoa(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`);
@@ -45,12 +45,11 @@ serve(async (req) => {
     if (action === "create-meeting") {
       const accessToken = await getAccessToken();
       const { title, duration, start_time, timezone, passcode } = body;
-
       const tz = timezone || "Europe/Paris";
 
       const meetingBody: Record<string, unknown> = {
         topic: title || "Cours en ligne",
-        type: start_time ? 2 : 1, // 1=instant, 2=scheduled
+        type: start_time ? 2 : 1,
         duration: duration || 60,
         timezone: tz,
         settings: {
@@ -61,8 +60,6 @@ serve(async (req) => {
       };
 
       if (start_time) {
-        // Zoom expects ISO 8601 format: "2026-03-20T15:00:00"
-        // The datetime-local input gives "2026-03-20T15:00" — ensure seconds are appended
         let formattedTime = start_time;
         if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(formattedTime)) {
           formattedTime += ":00";
@@ -131,7 +128,21 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: false, error: "Unknown action. Use ?action=create-meeting or ?action=check-live" }), {
+    if (action === "check-status") {
+      // Simple check: try to get token — if it works, Zoom is connected
+      try {
+        await getAccessToken();
+        return new Response(JSON.stringify({ success: true, connected: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch {
+        return new Response(JSON.stringify({ success: true, connected: false }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    return new Response(JSON.stringify({ success: false, error: "Unknown action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -37,15 +37,13 @@ const ZoomMeetingCreator = ({ onMeetingCreated }: { onMeetingCreated: (joinUrl: 
         duration: parseInt(duration),
       };
       if (datetime) {
-        // datetime-local gives "YYYY-MM-DDTHH:mm" in local time
-        // Pass it directly — the edge function adds :00 and sets timezone to Europe/Paris
         payload.start_time = datetime;
         payload.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris";
       }
       if (passcode) payload.passcode = passcode;
 
-      const { data, error } = await supabase.functions.invoke("zoom-proxy?action=create-meeting", {
-        body: payload,
+      const { data, error } = await supabase.functions.invoke("zoom-proxy", {
+        body: { ...payload, action: "create-meeting" },
       });
 
       if (error || !data?.success) {

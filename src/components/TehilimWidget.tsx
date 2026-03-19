@@ -311,6 +311,25 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
     navigator.clipboard.writeText(shareUrl).then(() => toast.success("Lien copié !")).catch(() => toast.error("Impossible de copier"));
   };
 
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(chain.title);
+  const isCreator = user?.id === chain.creator_id;
+
+  const handleRename = async () => {
+    if (!editTitle.trim()) return;
+    const { error } = await supabase.from("tehilim_chains").update({ title: editTitle.trim() }).eq("id", chain.id);
+    if (error) toast.error("Erreur lors du renommage");
+    else { chain.title = editTitle.trim(); toast.success("Nom modifié !"); setEditing(false); }
+  };
+
+  const handleDeleteChain = async () => {
+    if (!confirm("Supprimer cette chaîne et toutes ses réservations ?")) return;
+    await supabase.from("tehilim_claims").delete().eq("chain_id", chain.id);
+    const { error } = await supabase.from("tehilim_chains").delete().eq("id", chain.id);
+    if (error) toast.error("Erreur lors de la suppression");
+    else { toast.success("Chaîne supprimée"); onBack(); }
+  };
+
   return (
     <div>
       <button onClick={onBack} className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline mb-3">
@@ -319,7 +338,24 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
 
       {/* Chain header */}
       <div className="p-4 rounded-xl border border-border mb-4" style={{ background: "hsl(var(--gold) / 0.04)" }}>
-        <h4 className="font-display text-base font-bold text-foreground">{chain.title}</h4>
+        {editing ? (
+          <div className="flex gap-2 mb-2">
+            <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-lg bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            <button onClick={handleRename} className="px-3 py-2 rounded-lg text-xs font-bold text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)" }}>✓</button>
+            <button onClick={() => { setEditing(false); setEditTitle(chain.title); }} className="px-3 py-2 rounded-lg text-xs font-bold bg-muted text-muted-foreground border-none cursor-pointer">✕</button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <h4 className="font-display text-base font-bold text-foreground">{chain.title}</h4>
+            {isCreator && (
+              <div className="flex gap-1">
+                <button onClick={() => setEditing(true)} className="text-[10px] px-2 py-1 rounded-lg bg-muted text-muted-foreground border-none cursor-pointer hover:bg-border">✏️</button>
+                <button onClick={handleDeleteChain} className="text-[10px] px-2 py-1 rounded-lg bg-destructive/10 text-destructive border-none cursor-pointer hover:bg-destructive/20">🗑️</button>
+              </div>
+            )}
+          </div>
+        )}
         {chain.dedication && (
           <p className="text-sm text-muted-foreground mt-1">
             {DEDICATION_LABELS[chain.dedication_type || "general"]} {chain.dedication}
