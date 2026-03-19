@@ -152,43 +152,34 @@ const AfficheChabbatWidget = () => {
 
   const inputClass = "w-full px-4 py-4 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50";
 
-  /** Time input row — large touch targets, clear labels */
+  /** Time input row — compact, placeholder visible inside */
   const TimeInputRow = memo(({ label, value, onChange, noteKey, readOnly = false }: {
     label: string; value: string; onChange?: (v: string) => void; noteKey: string; readOnly?: boolean;
   }) => (
-    <div className="rounded-2xl border border-border bg-card p-4 space-y-2.5">
-      <label className="text-xs font-bold text-foreground block">{label}</label>
-      <div className="flex items-center gap-2.5">
-        {readOnly ? (
-          <div className="flex-1 px-4 py-3.5 rounded-xl bg-muted border border-border text-foreground text-center text-lg font-bold tracking-wide" style={{ minHeight: "52px", lineHeight: "52px" }}>
-            {value || "—"}
-          </div>
-        ) : (
+    <div className="flex items-center gap-2 py-1.5">
+      <span className="text-[11px] font-semibold text-foreground w-[45%] shrink-0 leading-tight">{label}</span>
+      {readOnly ? (
+        <div className="flex-1 px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground text-center text-sm font-bold h-10 flex items-center justify-center">
+          {value || "—"}
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center gap-1.5">
           <input
             key={`time-${noteKey}`}
             type="time"
             defaultValue={value}
             onBlur={e => onChange?.(e.target.value)}
-            placeholder="HH:MM"
-            className="flex-1 px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-center text-lg font-bold tracking-wide focus:outline-none focus:ring-2 focus:ring-primary/40"
-            style={{ minHeight: "52px" }}
+            placeholder="18:30"
+            className="flex-1 px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-center text-sm font-bold h-10 focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
-        )}
-        {!readOnly && value && (
-          <button type="button" onClick={() => onChange?.("")}
-            className="shrink-0 w-[52px] h-[52px] rounded-xl bg-destructive/10 text-destructive flex items-center justify-center text-base font-bold border-none cursor-pointer active:scale-95 transition-transform">
-            ✕
-          </button>
-        )}
-      </div>
-      <input
-        key={`note-${noteKey}`}
-        defaultValue={notes[noteKey] || ""}
-        onBlur={e => setNote(noteKey, e.target.value)}
-        placeholder="✏️ Note libre (officiant, info…)"
-        className="w-full px-4 py-3 rounded-xl bg-muted/40 border border-border/50 text-foreground text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
-        style={{ minHeight: "44px" }}
-      />
+          {value && (
+            <button type="button" onClick={() => onChange?.("")}
+              className="shrink-0 w-10 h-10 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center text-xs border-none cursor-pointer active:scale-95">
+              ✕
+            </button>
+          )}
+        </div>
+      )}
     </div>
   ));
 
