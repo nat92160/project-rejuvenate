@@ -101,7 +101,7 @@ const AfficheChabbatWidget = () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     } catch {}
-  }, [synaName, synaAddress, synaRav, minhaFri, kabbalat, arvitFri, shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage, notes, theme, font]);
+  }, [synaName, synaAddress, synaRav, minhaFri, kabbalat, arvitFri, shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage, notes, theme, font, torahReader, shiourSamedi]);
 
   useEffect(() => {
     setLoading(true);
