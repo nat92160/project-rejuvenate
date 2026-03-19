@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSynaProfile } from "@/hooks/useSynaProfile";
 import { toast } from "sonner";
-import html2canvas from "html2canvas";
+import MasterPosterTemplate, { type PosterContentBlock } from "@/components/poster/MasterPosterTemplate";
+import { exportPosterPng } from "@/components/poster/usePosterExport";
 
 interface Annonce {
   id: string;
