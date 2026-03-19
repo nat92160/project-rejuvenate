@@ -2,164 +2,141 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-interface SynagogueResult {
+interface PlaceResult {
   id: string;
   name: string;
   lat: number;
   lon: number;
   distance: number;
+  straightLineDistance: number;
+  distanceSource: "road" | "air";
+  travelDurationMinutes?: number;
   address?: string;
   phone?: string;
   website?: string;
   denomination?: string;
 }
 
-interface OverpassElement {
-  id: number;
-  lat?: number;
-  lon?: number;
-  center?: {
-    lat?: number;
-    lon?: number;
-  };
-  tags?: Record<string, string | undefined>;
-  type: "node" | "way" | "relation";
-}
-
-const SEARCH_RADII_KM = [15, 40, 80, 150, 300];
-const MIN_RESULTS = 6;
-const MAX_RESULTS = 20;
-const JEWISH_NAME_PATTERN = /synagogue|beth|beit|beith|oratoire isra(?:e|é)lite|isra(?:e|é)lite|juif|juive|heichal|heikhal|habad|chabad|בית|קהילה/i;
-
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const earthRadius = 6371000;
+  const R = 6371000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
+  const a = Math.sin(dLat / 2) ** 2 +
     Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
     Math.sin(dLon / 2) ** 2;
-
-  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function buildAddress(tags: Record<string, string | undefined>) {
-  return [
-    [tags["addr:housenumber"], tags["addr:street"]].filter(Boolean).join(" "),
-    tags["addr:postcode"],
-    tags["addr:city"] || tags["addr:town"] || tags["addr:village"],
-  ]
-    .filter(Boolean)
-    .join(", ");
-}
+async function searchNearbyPlaces(apiKey: string, lat: number, lon: number, radiusM: number): Promise<PlaceResult[]> {
+  // Use Google Places API (New) - Nearby Search
+  const url = "https://places.googleapis.com/v1/places:searchNearby";
+  
+  const body = {
+    includedTypes: ["synagogue"],
+    maxResultCount: 20,
+    locationRestriction: {
+      circle: {
+        center: { latitude: lat, longitude: lon },
+        radius: Math.min(radiusM, 50000), // max 50km per request
+      },
+    },
+  };
 
-function isLikelySynagogue(tags: Record<string, string | undefined>) {
-  const searchableText = [
-    tags.name,
-    tags["name:fr"],
-    tags["name:he"],
-    tags.operator,
-    tags.community,
-    tags.description,
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  return (
-    tags.religion === "jewish" ||
-    tags.building === "synagogue" ||
-    tags.amenity === "synagogue" ||
-    tags.denomination === "jewish" ||
-    JEWISH_NAME_PATTERN.test(searchableText)
-  );
-}
-
-function buildQuery(lat: number, lon: number, radiusKm: number) {
-  const radiusMeters = Math.round(radiusKm * 1000);
-  const around = `(around:${radiusMeters},${lat},${lon})`;
-
-  return `
-    [out:json][timeout:25];
-    (
-      node["amenity"="place_of_worship"]["religion"="jewish"]${around};
-      way["amenity"="place_of_worship"]["religion"="jewish"]${around};
-      relation["amenity"="place_of_worship"]["religion"="jewish"]${around};
-      node["building"="synagogue"]${around};
-      way["building"="synagogue"]${around};
-      relation["building"="synagogue"]${around};
-      node["name"~"Synagogue|Beth|Beit|Beith|Oratoire israélite|Oratoire israelite|בית", i]${around};
-      way["name"~"Synagogue|Beth|Beit|Beith|Oratoire israélite|Oratoire israelite|בית", i]${around};
-      relation["name"~"Synagogue|Beth|Beit|Beith|Oratoire israélite|Oratoire israelite|בית", i]${around};
-    );
-    out center tags;
-  `;
-}
-
-async function fetchSynagoguesForRadius(lat: number, lon: number, radiusKm: number): Promise<SynagogueResult[]> {
-  const radiusMeters = Math.round(radiusKm * 1000);
-  const response = await fetch("https://overpass-api.de/api/interpreter", {
+  const response = await fetch(url, {
     method: "POST",
-    body: `data=${encodeURIComponent(buildQuery(lat, lon, radiusKm))}`,
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.formattedAddress,places.internationalPhoneNumber,places.websiteUri,places.shortFormattedAddress",
+    },
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
-    throw new Error(`Overpass API error: ${response.status}`);
+    const errorText = await response.text();
+    throw new Error(`Google Places API error ${response.status}: ${errorText}`);
   }
 
-  const payload = await response.json();
-  const seen = new Set<string>();
+  const data = await response.json();
+  const places = data.places || [];
 
-  return ((payload.elements || []) as OverpassElement[])
-    .map<SynagogueResult | null>((element) => {
-      const tags = element.tags || {};
-      const elementLat = Number(element.lat ?? element.center?.lat);
-      const elementLon = Number(element.lon ?? element.center?.lon);
-
-      if (!Number.isFinite(elementLat) || !Number.isFinite(elementLon) || !isLikelySynagogue(tags)) {
-        return null;
-      }
-
-      const distance = haversineDistance(lat, lon, elementLat, elementLon);
-      const dedupeKey = `${tags.name || "Synagogue"}-${buildAddress(tags)}-${elementLat.toFixed(4)}-${elementLon.toFixed(4)}`;
-
-      if (seen.has(dedupeKey) || distance > radiusMeters + 250) {
-        return null;
-      }
-
-      seen.add(dedupeKey);
-
-      return {
-        id: `${element.type}-${element.id}`,
-        name: tags.name || tags["name:fr"] || "Synagogue",
-        lat: elementLat,
-        lon: elementLon,
-        distance,
-        address: buildAddress(tags) || undefined,
-        phone: tags.phone || tags["contact:phone"] || undefined,
-        website: tags.website || tags["contact:website"] || undefined,
-        denomination: tags.denomination || tags.community || undefined,
-      };
-    })
-    .filter((item): item is SynagogueResult => item !== null)
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, MAX_RESULTS);
+  return places.map((place: any) => {
+    const placeLat = place.location?.latitude;
+    const placeLon = place.location?.longitude;
+    const dist = haversineDistance(lat, lon, placeLat, placeLon);
+    
+    return {
+      id: place.id,
+      name: place.displayName?.text || "Synagogue",
+      lat: placeLat,
+      lon: placeLon,
+      distance: dist,
+      straightLineDistance: dist,
+      distanceSource: "air" as const,
+      address: place.shortFormattedAddress || place.formattedAddress || undefined,
+      phone: place.internationalPhoneNumber || undefined,
+      website: place.websiteUri || undefined,
+    };
+  }).sort((a: PlaceResult, b: PlaceResult) => a.distance - b.distance);
 }
 
-async function fetchNearbySynagogues(lat: number, lon: number) {
-  let lastResults: SynagogueResult[] = [];
+async function enrichWithDirections(apiKey: string, originLat: number, originLon: number, results: PlaceResult[]): Promise<PlaceResult[]> {
+  if (results.length === 0) return results;
 
-  for (const radiusKm of SEARCH_RADII_KM) {
-    lastResults = await fetchSynagoguesForRadius(lat, lon, radiusKm);
-    if (lastResults.length >= MIN_RESULTS) {
-      return lastResults;
+  // Use Routes API for distance matrix (batch)
+  const destinations = results.slice(0, 10).map(r => ({
+    waypoint: { location: { latLng: { latitude: r.lat, longitude: r.lon } } },
+  }));
+
+  try {
+    const response = await fetch("https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "originIndex,destinationIndex,distanceMeters,duration",
+      },
+      body: JSON.stringify({
+        origins: [{ waypoint: { location: { latLng: { latitude: originLat, longitude: originLon } } } }],
+        destinations,
+        travelMode: "DRIVE",
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn("Routes API failed, keeping air distances:", response.status);
+      return results;
     }
-  }
 
-  return lastResults;
+    const routes = await response.json();
+    
+    // routes is an array of route elements
+    const routeArray = Array.isArray(routes) ? routes : [];
+    
+    for (const route of routeArray) {
+      const destIdx = route.destinationIndex;
+      if (destIdx != null && destIdx < results.length) {
+        if (route.distanceMeters) {
+          results[destIdx] = {
+            ...results[destIdx],
+            distance: route.distanceMeters,
+            distanceSource: "road",
+            travelDurationMinutes: route.duration
+              ? Math.max(1, Math.round(parseInt(route.duration.replace("s", "")) / 60))
+              : undefined,
+          };
+        }
+      }
+    }
+
+    return results.sort((a, b) => a.distance - b.distance);
+  } catch (err) {
+    console.warn("Routes enrichment failed:", err);
+    return results;
+  }
 }
 
 serve(async (req) => {
@@ -168,6 +145,11 @@ serve(async (req) => {
   }
 
   try {
+    const apiKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
+    if (!apiKey) {
+      throw new Error("GOOGLE_MAPS_API_KEY is not configured");
+    }
+
     const { lat, lon } = await req.json();
 
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
@@ -177,7 +159,17 @@ serve(async (req) => {
       });
     }
 
-    const results = await fetchNearbySynagogues(lat, lon);
+    // Progressive search: 5km, 15km, 50km
+    const radii = [5000, 15000, 50000];
+    let results: PlaceResult[] = [];
+
+    for (const radius of radii) {
+      results = await searchNearbyPlaces(apiKey, lat, lon, radius);
+      if (results.length >= 3) break;
+    }
+
+    // Enrich top results with driving distances
+    results = await enrichWithDirections(apiKey, lat, lon, results);
 
     return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
