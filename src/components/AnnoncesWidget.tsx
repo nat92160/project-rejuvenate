@@ -353,10 +353,22 @@ const AnnoncesWidget = () => {
                   <p className="text-xs text-muted-foreground mt-3 leading-relaxed pl-[52px]">{a.content}</p>
                 )}
                 <div className="flex flex-wrap gap-2 mt-4 pl-[52px]">
-                  <button onClick={() => { setPosterAnnonce(a); setPosterStyle(a.priority === "urgent" ? "urgent" : "elegant"); }}
+                  <button onClick={async (e) => {
+                    e.stopPropagation();
+                    const text = `📢 ${a.title}${a.content ? `\n\n${a.content}` : ""}\n\n📅 ${formatDate(a.created_at)}\n\n✡️ Chabbat Chalom`;
+                    if (navigator.share) {
+                      try { await navigator.share({ text }); return; } catch {}
+                    }
+                    await navigator.clipboard?.writeText(text);
+                    toast.success("Texte copié dans le presse-papier !");
+                  }}
                     className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground"
                     style={{ background: "var(--gradient-gold)" }}>
                     📤 Partager
+                  </button>
+                  <button onClick={() => { setPosterAnnonce(a); setPosterStyle(a.priority === "urgent" ? "urgent" : "elegant"); }}
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border border-border bg-muted text-muted-foreground cursor-pointer">
+                    🖼️ Affiche
                   </button>
                   {isPresident && user?.id === a.creator_id && (
                     <button onClick={() => handleDelete(a.id)}

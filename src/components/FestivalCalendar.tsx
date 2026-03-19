@@ -339,10 +339,11 @@ interface DayTimelineProps {
 }
 
 const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelineProps) => {
-  // Only show candle times for Shabbat or Yom Tov days
-  const isYomTovOrShabbat = day.type === "yomtov" || day.type === "erev" || day.isShabbat;
-  const showCandles = day.candles && isYomTovOrShabbat;
-  const showHavdalah = day.havdalah;
+  // Only show candle lighting for erev (veille) days, and havdalah for yomtov/shabbat endings
+  const isErev = day.type === "erev";
+  const isYomTovOrShabbat = day.type === "yomtov" || day.isShabbat;
+  const showCandles = day.candles && (isErev || (isYomTovOrShabbat && day.isShabbat));
+  const showHavdalah = day.havdalah && (isYomTovOrShabbat || isErev);
   const hasTime = showCandles || showHavdalah;
   if (!hasTime && compact) return null;
 
