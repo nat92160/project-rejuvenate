@@ -234,46 +234,70 @@ const MasterPosterTemplate = forwardRef<HTMLDivElement, Props>(
             </div>
 
             {/* Bloc C – Tabular details */}
-            {content.details.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: `0 20px` }}>
-                {content.details.map((d, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex",
-                      alignItems: "baseline",
-                      justifyContent: "space-between",
-                      gap: 16,
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 10, flex: 1, minWidth: 0 }}>
-                      {d.icon && (
-                        <span style={{ fontSize: 18, color: GOLD_DARK, flexShrink: 0 }}>{d.icon}</span>
+            {content.details.length > 0 && (() => {
+              const grouped = content.details.reduce<Record<string, typeof content.details>>((acc, item) => {
+                const key = item.section || "";
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(item);
+                return acc;
+              }, {});
+
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 28, padding: `0 20px` }}>
+                  {Object.entries(grouped).map(([section, items]) => (
+                    <div key={section} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                      {section && (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 4 }}>
+                          <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${GOLD_ACCENT}55)` }} />
+                          <span style={{ fontFamily: FONT_DISPLAY, fontSize: 22, fontWeight: 700, letterSpacing: 4, color: GOLD_DARK }}>{section}</span>
+                          <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${GOLD_ACCENT}55, transparent)` }} />
+                        </div>
                       )}
-                      <span style={{ fontFamily: FONT_BODY, fontSize: 22, color: ANTHRACITE }}>
-                        {d.label}
-                        {d.sub && (
-                          <span style={{ fontSize: 17, color: GREY_MED, fontStyle: "italic", marginLeft: 8 }}>
-                            {d.sub}
+
+                      {items.map((d, i) => (
+                        <div
+                          key={`${section}-${i}`}
+                          style={{
+                            display: "flex",
+                            alignItems: "baseline",
+                            justifyContent: "space-between",
+                            gap: 16,
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 10, flex: 1, minWidth: 0 }}>
+                            {d.icon && (
+                              <span style={{ fontSize: 18, color: GOLD_DARK, flexShrink: 0 }}>{d.icon}</span>
+                            )}
+                            <span style={{ fontFamily: FONT_BODY, fontSize: 22, color: ANTHRACITE }}>
+                              {d.label}
+                              {d.sub && (
+                                <span style={{ fontSize: 17, color: GREY_MED, fontStyle: "italic", marginLeft: 8 }}>
+                                  {d.sub}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <span
+                            style={{
+                              fontFamily: FONT_BODY,
+                              fontSize: 26,
+                              fontWeight: 700,
+                              color: NAVY,
+                              flexShrink: 0,
+                              whiteSpace: "pre-wrap",
+                              textAlign: "right",
+                              maxWidth: 420,
+                            }}
+                          >
+                            {d.value}
                           </span>
-                        )}
-                      </span>
+                        </div>
+                      ))}
                     </div>
-                    <span
-                      style={{
-                        fontFamily: FONT_BODY,
-                        fontSize: 26,
-                        fontWeight: 700,
-                        color: NAVY,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {d.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* Date */}
             {content.date && (
