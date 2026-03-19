@@ -31,14 +31,17 @@ export function CityProvider({ children }: { children: ReactNode }) {
         let nearestKey = DEFAULT_CITY;
         let nearestDist = Infinity;
         for (const [key, c] of Object.entries(CITIES)) {
-          const d = Math.hypot(c.lat - latitude, c.lng - longitude);
+          // Haversine-like distance weighting lat more at higher latitudes
+          const dLat = (c.lat - latitude) * Math.PI / 180;
+          const dLng = (c.lng - longitude) * Math.PI / 180 * Math.cos(latitude * Math.PI / 180);
+          const d = Math.sqrt(dLat * dLat + dLng * dLng);
           if (d < nearestDist) { nearestDist = d; nearestKey = key; }
         }
         setCityKey(nearestKey);
         setIsGeolocating(false);
       },
       () => setIsGeolocating(false),
-      { enableHighAccuracy: true, timeout: 15000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 
