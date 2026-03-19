@@ -141,18 +141,15 @@ const TicketPosterTemplate = forwardRef<HTMLDivElement, Props>(
             }}
           >
             {/* Top row: badge + syna name */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
               <span
                 style={{
-                  fontFamily: FONT_BODY,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  letterSpacing: 3,
+                  fontFamily: FONT_DISPLAY,
+                  fontSize: 20,
+                  fontWeight: 900,
+                  letterSpacing: 5,
                   textTransform: "uppercase",
-                  color: "#FFFFFF",
-                  background: GOLD,
-                  padding: "5px 16px",
-                  borderRadius: 3,
+                  color: "#2D8CFF",
                 }}
               >
                 {content.badge}
