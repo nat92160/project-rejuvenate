@@ -175,13 +175,13 @@ const CoursVirtuelWidget = () => {
     return text;
   };
 
-  const shareCours = (c: CoursVirtuel) => {
+  const shareCours = async (c: CoursVirtuel) => {
     const text = getShareText(c);
     if (navigator.share) {
-      navigator.share({ text }).catch(() => {});
-    } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+      try { await navigator.share({ text }); return; } catch {}
     }
+    await navigator.clipboard?.writeText(text);
+    toast.success("Lien copié dans le presse-papier !");
   };
 
   const inputClass = "w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
@@ -267,14 +267,15 @@ const CoursVirtuelWidget = () => {
                     📋
                   </button>
                 </div>
-                <button onClick={() => {
+                <button onClick={async () => {
                     const text = `🎥 Rejoignez le cours en direct !\n${lastCreatedLink}\n\n✡️ Chabbat Chalom`;
-                    if (navigator.share) { navigator.share({ text }).catch(() => {}); }
-                    else { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer"); }
+                    if (navigator.share) { try { await navigator.share({ text }); return; } catch {} }
+                    await navigator.clipboard?.writeText(text);
+                    toast.success("Lien copié dans le presse-papier !");
                   }}
-                  className="mt-3 w-full py-2.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer flex items-center justify-center gap-2"
-                  style={{ background: "#25d366" }}>
-                  💬 Partager sur WhatsApp
+                  className="mt-3 w-full py-2.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer flex items-center justify-center gap-2"
+                  style={{ background: "var(--gradient-gold)" }}>
+                  📤 Partager
                 </button>
               </div>
             )}
@@ -348,9 +349,9 @@ const CoursVirtuelWidget = () => {
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
                   <button onClick={() => shareCours(c)}
-                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer"
-                    style={{ background: "#25d366", color: "#fff" }}>
-                    💬 Partager
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground"
+                    style={{ background: "var(--gradient-gold)" }}>
+                    📤 Partager
                   </button>
                   {isPresident && user?.id === c.creator_id && (
                     <button onClick={() => void handleDelete(c.id)}

@@ -164,12 +164,15 @@ const EvenementsWidget = () => {
                       </a>
                     )}
                     <div className="flex gap-2 mt-3">
-                      <button onClick={() => {
+                      <button onClick={async () => {
                         const text = `📅 ${ev.title}\n📆 ${formatDate(ev.event_date)} à ${ev.event_time}\n📍 ${ev.location}${ev.zoom_link ? `\n🎥 ${ev.zoom_link}` : ""}\n${ev.description}\n\n✡️ chabbat-chalom.com`;
-                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                        if (navigator.share) { try { await navigator.share({ text }); return; } catch {} }
+                        await navigator.clipboard?.writeText(text);
+                        toast.success("Lien copié dans le presse-papier !");
                       }}
-                        className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-green-500/10 text-green-600 border-none cursor-pointer hover:bg-green-500/20 transition-colors">
-                        📲 WhatsApp
+                        className="text-[10px] font-bold px-2.5 py-1 rounded-full border-none cursor-pointer text-primary-foreground"
+                        style={{ background: "var(--gradient-gold)" }}>
+                        📤 Partager
                       </button>
                       {isPresident && user?.id === ev.creator_id && (
                         <button onClick={async () => {

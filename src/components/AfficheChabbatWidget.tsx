@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, memo, useCallback } from "react";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
@@ -125,7 +126,7 @@ const AfficheChabbatWidget = () => {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
-  const shareWhatsApp = async () => {
+  const sharePoster = async () => {
     const blob = await generatePosterBlob();
     const file = blob ? new File([blob], `affiche-chabbat-${city.name}.jpg`, { type: "image/jpeg" }) : null;
     const baseText = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
@@ -133,35 +134,41 @@ const AfficheChabbatWidget = () => {
       try { await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText }); } catch {}
       return;
     }
-    let imageUrl = "";
-    if (blob) {
-      const filename = `affiche-${city.name}-${Date.now()}.jpg`;
-      const { error } = await supabase.storage.from("affiches").upload(filename, blob, { contentType: "image/jpeg", upsert: true });
-      if (!error) { const { data: urlData } = supabase.storage.from("affiches").getPublicUrl(filename); imageUrl = urlData?.publicUrl || ""; }
+    if (navigator.share) {
+      try { await navigator.share({ title: "Affiche de Chabbat", text: baseText }); return; } catch {}
     }
-    const text = imageUrl ? `${baseText}\n\n🖼️ ${imageUrl}` : baseText;
-    const a = document.createElement("a");
-    a.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    a.click();
+    // Fallback: download JPG + copy text
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.download = `affiche-chabbat-${city.name}.jpg`; a.href = url; a.click();
+      URL.revokeObjectURL(url);
+    }
+    await navigator.clipboard?.writeText(baseText);
+    toast.success("Image téléchargée et texte copié !");
   };
 
-  /** Time input row with visible label, clear button, and note */
-  const TimeInputRow = ({ label, value, onChange, noteKey, readOnly = false }: {
+  /** Time input row — uses defaultValue+onBlur to avoid cursor jumping on mobile */
+  const TimeInputRow = memo(({ label, value, onChange, noteKey, readOnly = false }: {
     label: string; value: string; onChange?: (v: string) => void; noteKey: string; readOnly?: boolean;
   }) => (
     <div className="rounded-xl border border-border bg-muted/30 p-3">
       <label className="text-xs font-bold text-foreground block mb-2">{label}</label>
       <div className="flex items-center gap-2">
-        <input
-          type="time"
-          value={value}
-          readOnly={readOnly}
-          onChange={e => onChange?.(e.target.value)}
-          className="flex-1 px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-center text-base font-semibold"
-          style={{ minHeight: "44px" }}
-        />
+        {readOnly ? (
+          <div className="flex-1 px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground text-center text-base font-semibold" style={{ minHeight: "44px", lineHeight: "24px" }}>
+            {value || "--:--"}
+          </div>
+        ) : (
+          <input
+            key={`time-${noteKey}`}
+            type="time"
+            defaultValue={value}
+            onBlur={e => onChange?.(e.target.value)}
+            placeholder="HH:MM"
+            className="flex-1 px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-center text-base font-semibold"
+            style={{ minHeight: "44px" }}
+          />
+        )}
         {!readOnly && value && (
           <button type="button" onClick={() => onChange?.("")}
             className="shrink-0 w-10 h-10 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center text-sm border-none cursor-pointer">
@@ -169,7 +176,11 @@ const AfficheChabbatWidget = () => {
           </button>
         )}
       </div>
+      {!readOnly && !value && (
+        <p className="text-[10px] text-muted-foreground mt-1.5 italic">Saisissez un horaire (ex: 19:30)</p>
+      )}
       <input
+        key={`note-${noteKey}`}
         defaultValue={notes[noteKey] || ""}
         onBlur={e => setNote(noteKey, e.target.value)}
         placeholder="📝 Note libre (ex: nom de l'officiant)"
@@ -177,7 +188,7 @@ const AfficheChabbatWidget = () => {
         style={{ minHeight: "38px" }}
       />
     </div>
-  );
+  ));
 
   /** Poster section block */
   const PosterSection = ({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) => (
@@ -429,7 +440,7 @@ const AfficheChabbatWidget = () => {
 
           <div className="flex gap-3">
             <button onClick={handleExport} className="flex-1 py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>💾 JPG</button>
-            <button onClick={shareWhatsApp} className="flex-1 py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer" style={{ background: "#25d366" }}>💬 WhatsApp</button>
+            <button onClick={sharePoster} className="flex-1 py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)" }}>📤 Partager</button>
           </div>
         </div>
       )}

@@ -305,9 +305,9 @@ const AnnoncesWidget = () => {
               {/* Actions */}
               <div className="mt-4 space-y-2">
                 <button onClick={exportAndShare} disabled={exporting}
-                  className="w-full py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer disabled:opacity-50"
-                  style={{ background: "#25d366" }}>
-                  {exporting ? "⏳ Génération..." : "💬 Partager sur WhatsApp"}
+                  className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
+                  style={{ background: "var(--gradient-gold)" }}>
+                  {exporting ? "⏳ Génération..." : "📤 Partager"}
                 </button>
                 <button onClick={() => setPosterAnnonce(null)}
                   className="w-full py-2.5 rounded-xl text-xs font-bold bg-muted text-muted-foreground border-none cursor-pointer">
@@ -354,9 +354,9 @@ const AnnoncesWidget = () => {
                 )}
                 <div className="flex flex-wrap gap-2 mt-4 pl-[52px]">
                   <button onClick={() => { setPosterAnnonce(a); setPosterStyle(a.priority === "urgent" ? "urgent" : "elegant"); }}
-                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer"
-                    style={{ background: "#25d366", color: "#fff" }}>
-                    💬 Partager
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground"
+                    style={{ background: "var(--gradient-gold)" }}>
+                    📤 Partager
                   </button>
                   {isPresident && user?.id === a.creator_id && (
                     <button onClick={() => handleDelete(a.id)}
