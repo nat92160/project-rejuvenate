@@ -27,6 +27,7 @@ import RefouaChelemaWidget from "@/components/RefouaChelemaWidget";
 import MinyanLiveWidget from "@/components/MinyanLiveWidget";
 import EvenementsWidget from "@/components/EvenementsWidget";
 import CoursVirtuelWidget from "@/components/CoursVirtuelWidget";
+import FideleSynagogueView from "@/components/FideleSynagogueView";
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
 
@@ -77,7 +78,7 @@ const IndexContent = () => {
           </div>
         );
       case "tehilim": return <TehilimWidget />;
-      case "synagogue": return <PresidentDashboard onLoginClick={() => setAuthOpen(true)} />;
+      case "synagogue": return isPresident ? <PresidentDashboard onLoginClick={() => setAuthOpen(true)} /> : <FideleSynagogueView />;
       case "fetes": return <FestivalCalendar />;
       case "convertisseur": return <DateConverterWidget />;
       case "mizrah": return <MizrahCompass />;
