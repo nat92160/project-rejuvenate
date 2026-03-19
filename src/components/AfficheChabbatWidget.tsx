@@ -7,6 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 type Theme = "tradition" | "moderne" | "chaud" | "prestige" | "blanc";
 type FontChoice = "greatvibes" | "playfairsc" | "playfair" | "lora";
 
+type TimeNoteKey = "candleLighting" | "minhaFri" | "kabbalat" | "shaharit" | "minhaSat" | "havdalah" | "arvitMotse";
+
+type TimeNotes = Record<TimeNoteKey, string>;
+
 const themeConfig: Record<Theme, { name: string; swatch: string[]; bg: string; accent: string; text: string; border: string; blockBg: string; blockBorder: string; h4Color: string; valueColor: string; labelColor: string; footerColor: string; ornamentColor: string }> = {
   tradition: {
     name: "Tradition", swatch: ["#D4AF37", "#1a3a6b", "#fdfaf3"],
@@ -66,51 +70,87 @@ interface TimeRow {
   note?: string;
 }
 
+interface TimeInputRowProps {
+  label: string;
+  value: string;
+  onChange?: (value: string) => void;
+  note: string;
+  onNoteChange: (value: string) => void;
+  readOnly?: boolean;
+}
+
 const AfficheChabbatWidget = () => {
   const { city } = useCity();
   const [data, setData] = useState<ShabbatTimes | null>(null);
-  const [theme, setTheme] = useState<Theme>("tradition");
+  const [theme, setTheme] = useState<Theme>("prestige");
   const [font, setFont] = useState<FontChoice>("greatvibes");
   const [loading, setLoading] = useState(true);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  // Synagogue info
   const [synaName, setSynaName] = useState("Ma Synagogue");
   const [synaAddress, setSynaAddress] = useState("");
   const [synaRav, setSynaRav] = useState("");
 
-  // Custom times
   const [minhaFri, setMinhaFri] = useState("");
   const [kabbalat, setKabbalat] = useState("");
   const [shaharit, setShaharit] = useState("08:30");
   const [minhaSat, setMinhaSat] = useState("");
   const [arvitMotse, setArvitMotse] = useState("");
+  const [timeNotes, setTimeNotes] = useState<TimeNotes>({
+    candleLighting: "",
+    minhaFri: "",
+    kabbalat: "",
+    shaharit: "",
+    minhaSat: "",
+    havdalah: "",
+    arvitMotse: "",
+  });
 
-  // Announcements
   const [sponsor, setSponsor] = useState("");
   const [announce, setAnnounce] = useState("");
   const [ravMessage, setRavMessage] = useState("");
-
-  // Step
   const [step, setStep] = useState(1);
 
   useEffect(() => {
     setLoading(true);
-    fetchShabbatTimes(city).then((d) => { setData(d); setLoading(false); });
+    fetchShabbatTimes(city).then((d) => {
+      setData(d);
+      setLoading(false);
+    });
   }, [city]);
 
   const t = themeConfig[theme];
   const f = fontConfig[font];
   const cornerBg = cornerSvg(t.ornamentColor);
 
-  const generatePosterBlob = async () => {
+  const updateNote = (key: TimeNoteKey, value: string) => {
+    setTimeNotes((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const generatePosterBlob = async (format: "image/jpeg" | "image/png" = "image/jpeg") => {
     if (!canvasRef.current) return null;
 
     try {
       const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: null });
+      const canvas = await html2canvas(canvasRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        onclone: (clonedDoc) => {
+          clonedDoc.documentElement.classList.remove("dark");
+          const clonedCanvas = clonedDoc.getElementById("affiche-export-canvas") as HTMLDivElement | null;
+          if (clonedCanvas) {
+            clonedCanvas.style.background = t.bg;
+            clonedCanvas.style.colorScheme = "light";
+          }
+        },
+      });
 
       return await new Promise<Blob | null>((resolve) => {
+        if (format === "image/jpeg") {
+          canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.95);
+          return;
+        }
         canvas.toBlob((blob) => resolve(blob), "image/png");
       });
     } catch {
@@ -128,26 +168,26 @@ const AfficheChabbatWidget = () => {
   };
 
   const handleExport = async () => {
-    const blob = await generatePosterBlob();
+    const blob = await generatePosterBlob("image/jpeg");
     if (!blob) {
       alert("Export non disponible. Faites une capture d'écran.");
       return;
     }
 
-    downloadPosterBlob(blob, `affiche-chabbat-${city.name}.png`);
+    downloadPosterBlob(blob, `affiche-chabbat-${city.name}.jpg`);
   };
 
   const openWhatsAppLink = (url: string) => {
     const popup = window.open(url, "_blank", "noopener,noreferrer");
     if (popup) return;
-
     window.location.href = url;
   };
 
   const uploadPosterAndGetUrl = async (blob: Blob): Promise<string | null> => {
-    const filename = `affiche-${city.name}-${Date.now()}.png`;
+    const extension = blob.type === "image/jpeg" ? "jpg" : "png";
+    const filename = `affiche-${city.name}-${Date.now()}.${extension}`;
     const { error } = await supabase.storage.from("affiches").upload(filename, blob, {
-      contentType: "image/png",
+      contentType: blob.type,
       upsert: true,
     });
     if (error) return null;
@@ -156,17 +196,15 @@ const AfficheChabbatWidget = () => {
   };
 
   const shareWhatsApp = async () => {
-    const blob = await generatePosterBlob();
-    const file = blob ? new File([blob], `affiche-chabbat-${city.name}.png`, { type: "image/png" }) : null;
+    const blob = await generatePosterBlob("image/jpeg");
+    const file = blob ? new File([blob], `affiche-chabbat-${city.name}.jpg`, { type: "image/jpeg" }) : null;
     const baseText = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
 
-    // Mobile: native share with file
     if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
       await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText });
       return;
     }
 
-    // Desktop: upload image, include URL in WhatsApp message
     let imageUrl = "";
     if (blob) {
       const url = await uploadPosterAndGetUrl(blob);
@@ -174,100 +212,97 @@ const AfficheChabbatWidget = () => {
     }
 
     const text = imageUrl ? `${baseText}\n\n🖼️ Voir l'affiche : ${imageUrl}` : baseText;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    openWhatsAppLink(whatsappUrl);
+    openWhatsAppLink(`https://wa.me/?text=${encodeURIComponent(text)}`);
   };
 
   const TimeLine = ({ label, value, note }: TimeRow) => (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: "0.88rem" }}>
-      <span style={{ color: t.labelColor }}>{label}</span>
-      <span style={{ fontWeight: 600, color: t.valueColor }}>
+    <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: "4px 0", fontSize: "0.88rem" }}>
+      <span style={{ color: t.labelColor, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontWeight: 600, color: t.valueColor, textAlign: "right" }}>
         {value}
-        {note && <span style={{ fontWeight: 400, fontSize: "0.78rem", color: "#999", fontStyle: "italic", marginLeft: "5px" }}>{note}</span>}
+        {note && <span style={{ fontWeight: 400, fontSize: "0.78rem", color: t.labelColor, fontStyle: "italic", marginLeft: "5px" }}>{note}</span>}
       </span>
+    </div>
+  );
+
+  const TimeInputRow = ({ label, value, onChange, note, onNoteChange, readOnly = false }: TimeInputRowProps) => (
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
+      <label className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</label>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[120px_minmax(0,1fr)]">
+        <input
+          type="time"
+          value={value}
+          readOnly={readOnly}
+          onChange={(e) => onChange?.(e.target.value)}
+          className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"
+        />
+        <input
+          value={note}
+          onChange={(e) => onNoteChange(e.target.value)}
+          placeholder="Champ libre / remarque"
+          className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"
+        />
+      </div>
     </div>
   );
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      {/* Stepper header */}
-      <div className="flex items-center justify-center gap-2 mb-5">
+      <div className="grid grid-cols-3 gap-2 mb-5">
         {[1, 2, 3].map((s) => (
           <button
             key={s}
             onClick={() => setStep(s)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border"
+            className="flex flex-col sm:flex-row items-center justify-center gap-2 px-2 py-2.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer border min-h-[64px]"
             style={{
               background: step === s ? "hsl(var(--gold) / 0.1)" : "transparent",
               borderColor: step === s ? "hsl(var(--gold-matte))" : "hsl(var(--border))",
               color: step === s ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))",
             }}
           >
-            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-              style={{ background: step >= s ? "hsl(var(--gold-matte))" : "hsl(var(--muted))", color: step >= s ? "#fff" : "hsl(var(--muted-foreground))" }}>
+            <span
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+              style={{ background: step >= s ? "hsl(var(--gold-matte))" : "hsl(var(--muted))", color: step >= s ? "#fff" : "hsl(var(--muted-foreground))" }}
+            >
               {s}
             </span>
-            {s === 1 ? "Horaires" : s === 2 ? "Annonces" : "Partager"}
+            <span className="leading-tight text-center">{s === 1 ? "Horaires" : s === 2 ? "Annonces" : "Partager"}</span>
           </button>
         ))}
       </div>
 
-      {/* Step 1: Times + Config */}
       {step === 1 && (
         <div className="space-y-4">
           <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
             <h4 className="font-display text-sm font-bold text-foreground mb-3">🏛️ Informations</h4>
             <div className="space-y-2.5">
-              <input value={synaName} onChange={(e) => setSynaName(e.target.value)} placeholder="Nom de la synagogue"
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-              <input value={synaAddress} onChange={(e) => setSynaAddress(e.target.value)} placeholder="Adresse"
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-              <input value={synaRav} onChange={(e) => setSynaRav(e.target.value)} placeholder="Rav de la communauté"
-                className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <input value={synaName} onChange={(e) => setSynaName(e.target.value)} placeholder="Nom de la synagogue" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <input value={synaAddress} onChange={(e) => setSynaAddress(e.target.value)} placeholder="Adresse" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <input value={synaRav} onChange={(e) => setSynaRav(e.target.value)} placeholder="Rav de la communauté" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
             </div>
           </div>
 
           <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
             <h4 className="font-display text-sm font-bold text-foreground mb-3">⏰ Horaires des offices</h4>
-            <p className="text-xs text-muted-foreground mb-3">Allumage et Havdala sont pré-remplis. Ajoutez vos horaires d'office.</p>
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Minha Ven.</label>
-                <input type="time" value={minhaFri} onChange={(e) => setMinhaFri(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm" />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Kabbalat</label>
-                <input type="time" value={kabbalat} onChange={(e) => setKabbalat(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm" />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Shaharit Sam.</label>
-                <input type="time" value={shaharit} onChange={(e) => setShaharit(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm" />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Minha Sam.</label>
-                <input type="time" value={minhaSat} onChange={(e) => setMinhaSat(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm" />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Arvit Motsé</label>
-                <input type="time" value={arvitMotse} onChange={(e) => setArvitMotse(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm" />
-              </div>
+            <p className="text-xs text-muted-foreground mb-4">Chaque horaire a maintenant son champ libre pour ajouter une remarque à côté dans l'affiche.</p>
+            <div className="space-y-3">
+              <TimeInputRow label="Allumage" value={data?.candleLighting || ""} note={timeNotes.candleLighting} onNoteChange={(value) => updateNote("candleLighting", value)} readOnly />
+              <TimeInputRow label="Minha Ven." value={minhaFri} onChange={setMinhaFri} note={timeNotes.minhaFri} onNoteChange={(value) => updateNote("minhaFri", value)} />
+              <TimeInputRow label="Kabbalat" value={kabbalat} onChange={setKabbalat} note={timeNotes.kabbalat} onNoteChange={(value) => updateNote("kabbalat", value)} />
+              <TimeInputRow label="Shaharit Sam." value={shaharit} onChange={setShaharit} note={timeNotes.shaharit} onNoteChange={(value) => updateNote("shaharit", value)} />
+              <TimeInputRow label="Minha Sam." value={minhaSat} onChange={setMinhaSat} note={timeNotes.minhaSat} onNoteChange={(value) => updateNote("minhaSat", value)} />
+              <TimeInputRow label="Havdala" value={data?.havdalah || ""} note={timeNotes.havdalah} onNoteChange={(value) => updateNote("havdalah", value)} readOnly />
+              <TimeInputRow label="Arvit Motsé" value={arvitMotse} onChange={setArvitMotse} note={timeNotes.arvitMotse} onNoteChange={(value) => updateNote("arvitMotse", value)} />
             </div>
           </div>
 
-          {/* Theme selector */}
           <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
             <h4 className="font-display text-sm font-bold text-foreground mb-3">🎨 Thème</h4>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
               {(Object.keys(themeConfig) as Theme[]).map((key) => {
                 const tc = themeConfig[key];
                 return (
-                  <button key={key} onClick={() => setTheme(key)}
-                    className={`rounded-xl p-2.5 text-center cursor-pointer transition-all border-2 ${theme === key ? "border-primary shadow-md" : "border-border"}`}>
+                  <button key={key} onClick={() => setTheme(key)} className={`rounded-xl p-2.5 text-center cursor-pointer transition-all border-2 ${theme === key ? "border-primary shadow-md" : "border-border"}`}>
                     <div className="flex rounded-lg overflow-hidden h-6 mb-1.5">
                       {tc.swatch.map((c, i) => <div key={i} style={{ background: c, flex: 1 }} />)}
                     </div>
@@ -278,15 +313,13 @@ const AfficheChabbatWidget = () => {
             </div>
           </div>
 
-          {/* Font selector */}
           <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
             <h4 className="font-display text-sm font-bold text-foreground mb-3">✒️ Calligraphie</h4>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {(Object.keys(fontConfig) as FontChoice[]).map((key) => {
                 const fc = fontConfig[key];
                 return (
-                  <button key={key} onClick={() => setFont(key)}
-                    className={`rounded-xl p-3 text-center cursor-pointer transition-all border-2 ${font === key ? "border-primary" : "border-border"}`}>
+                  <button key={key} onClick={() => setFont(key)} className={`rounded-xl p-3 text-center cursor-pointer transition-all border-2 ${font === key ? "border-primary" : "border-border"}`}>
                     <div style={{ fontFamily: fc.family, fontSize: key === "greatvibes" ? "1.3rem" : "1.1rem", fontWeight: 700 }} className="text-foreground mb-1">
                       {fc.sample}
                     </div>
@@ -297,15 +330,12 @@ const AfficheChabbatWidget = () => {
             </div>
           </div>
 
-          <button onClick={() => setStep(2)}
-            className="w-full py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer"
-            style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+          <button onClick={() => setStep(2)} className="w-full py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
             Suivant → Annonces
           </button>
         </div>
       )}
 
-      {/* Step 2: Announcements */}
       {step === 2 && (
         <div className="space-y-4">
           <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -313,86 +343,54 @@ const AfficheChabbatWidget = () => {
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">🎉 Séouda / Kiddouch offert par :</label>
-                <input value={sponsor} onChange={(e) => setSponsor(e.target.value)} placeholder="Famille Cohen pour le Bar Mitsva de..."
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                <input value={sponsor} onChange={(e) => setSponsor(e.target.value)} placeholder="Famille Cohen pour le Bar Mitsva de..." className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">📢 Annonce communautaire :</label>
-                <textarea value={announce} onChange={(e) => setAnnounce(e.target.value)} placeholder="Cours spécial ce Chabbat..." rows={2}
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
+                <textarea value={announce} onChange={(e) => setAnnounce(e.target.value)} placeholder="Cours spécial ce Chabbat..." rows={2} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">💬 Message du Rav :</label>
-                <textarea value={ravMessage} onChange={(e) => setRavMessage(e.target.value)} placeholder="Message inspirant..." rows={2}
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
+                <textarea value={ravMessage} onChange={(e) => setRavMessage(e.target.value)} placeholder="Message inspirant..." rows={2} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
               </div>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button onClick={() => setStep(1)} className="flex-1 py-3 rounded-xl font-bold text-sm bg-muted text-muted-foreground border border-border cursor-pointer">
               ← Retour
             </button>
-            <button onClick={() => setStep(3)} className="flex-1 py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer"
-              style={{ background: "var(--gradient-gold)" }}>
+            <button onClick={() => setStep(3)} className="flex-1 py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)" }}>
               Aperçu →
             </button>
           </div>
         </div>
       )}
 
-      {/* Step 3: Preview + Share */}
       {step === 3 && (
         <div className="space-y-4">
           <button onClick={() => setStep(2)} className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline">
             ← Modifier
           </button>
 
-          {/* Poster Preview */}
           <div className="rounded-2xl overflow-hidden" style={{ padding: "8px", background: "hsl(var(--muted))" }}>
-            <div
-              ref={canvasRef}
-              style={{
-                background: t.bg,
-                border: `2.5px solid ${t.border}`,
-                outline: `0.5px solid ${t.border}`,
-                outlineOffset: "5px",
-                borderRadius: "6px",
-                padding: "40px 34px 28px",
-                position: "relative",
-                overflow: "hidden",
-                color: t.text,
-                boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
-              }}
-            >
-              {/* Corner ornaments */}
+            <div id="affiche-export-canvas" ref={canvasRef} style={{ background: t.bg, border: `2.5px solid ${t.border}`, outline: `0.5px solid ${t.border}`, outlineOffset: "5px", borderRadius: "6px", padding: "40px 34px 28px", position: "relative", overflow: "hidden", color: t.text, boxShadow: "0 8px 40px rgba(0,0,0,0.12)", colorScheme: "light" as const }}>
               {["top:6px;left:6px", "top:6px;right:6px;transform:rotate(90deg)", "bottom:6px;left:6px;transform:rotate(270deg)", "bottom:6px;right:6px;transform:rotate(180deg)"].map((pos, i) => (
-                <div key={i} style={{
-                  position: "absolute", width: "38px", height: "38px", pointerEvents: "none", zIndex: 2,
-                  backgroundImage: cornerBg, backgroundSize: "contain", backgroundRepeat: "no-repeat",
-                  ...(Object.fromEntries(pos.split(";").map(p => { const [k, v] = p.split(":"); return [k.trim(), v.trim()]; })) as any),
-                }} />
+                <div key={i} style={{ position: "absolute", width: "38px", height: "38px", pointerEvents: "none", zIndex: 2, backgroundImage: cornerBg, backgroundSize: "contain", backgroundRepeat: "no-repeat", ...(Object.fromEntries(pos.split(";").map((p) => { const [k, v] = p.split(":"); return [k.trim(), v.trim()]; })) as Record<string, string>) }} />
               ))}
-              {/* Inner frame */}
               <div style={{ position: "absolute", inset: "10px", border: `0.5px solid ${t.border}33`, pointerEvents: "none", zIndex: 1 }} />
 
-              {/* Header */}
               <div style={{ textAlign: "center", paddingBottom: "14px", marginBottom: "10px" }}>
                 <div style={{ fontFamily: f.family, fontSize: theme === "prestige" ? "2rem" : "1.5rem", fontWeight: theme === "prestige" ? 400 : 700, color: t.valueColor, letterSpacing: "0.5px" }}>
                   {synaName || "Nom de votre synagogue"}
                 </div>
-                {synaAddress && <div style={{ fontSize: "0.82rem", color: "#777", marginTop: "3px" }}>{synaAddress}</div>}
-                {synaRav && <div style={{ fontSize: "0.82rem", color: "#999", marginTop: "3px", fontStyle: "italic" }}>{synaRav}</div>}
+                {synaAddress && <div style={{ fontSize: "0.82rem", color: t.labelColor, marginTop: "3px" }}>{synaAddress}</div>}
+                {synaRav && <div style={{ fontSize: "0.82rem", color: t.labelColor, marginTop: "3px", fontStyle: "italic" }}>{synaRav}</div>}
                 <div style={{ fontSize: "0.78rem", color: t.labelColor, marginTop: "3px", fontWeight: 500 }}>📍 {city.name}</div>
               </div>
 
-              {/* Divider */}
               <div style={{ width: "80px", height: "1px", background: `linear-gradient(90deg, transparent, ${t.accent}, transparent)`, margin: "0 auto 12px" }} />
 
-              {/* Parasha */}
-              <div style={{
-                textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: "1.45rem",
-                color: t.accent, marginBottom: "6px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" as const,
-              }}>
+              <div style={{ textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: "1.45rem", color: t.accent, marginBottom: "6px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" as const }}>
                 {data?.parasha || "CHABBAT CHALOM"}
               </div>
               {data?.parashaHebrew && (
@@ -401,78 +399,68 @@ const AfficheChabbatWidget = () => {
                 </div>
               )}
 
-              {/* Date */}
               <div style={{ textAlign: "center", fontSize: "0.85rem", fontWeight: 500, color: t.labelColor, marginBottom: "16px" }}>
                 {data?.candleLightingDate}
               </div>
 
-              {/* 4 Time blocks */}
               {loading ? (
                 <div style={{ textAlign: "center", padding: "30px", color: t.text }}>Chargement...</div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
-                  {/* Vendredi soir */}
                   <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
                     <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
                       🕯️ Vendredi soir
                     </h4>
-                    <TimeLine label="Allumage" value={data?.candleLighting || "--:--"} />
-                    {minhaFri && <TimeLine label="Minha" value={minhaFri} />}
-                    {kabbalat && <TimeLine label="Kabbalat Chabbat" value={kabbalat} />}
+                    <TimeLine label="Allumage" value={data?.candleLighting || "--:--"} note={timeNotes.candleLighting} />
+                    {minhaFri && <TimeLine label="Minha" value={minhaFri} note={timeNotes.minhaFri} />}
+                    {kabbalat && <TimeLine label="Kabbalat Chabbat" value={kabbalat} note={timeNotes.kabbalat} />}
                   </div>
 
-                  {/* Chabbat matin */}
                   <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
                     <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
                       ☀️ Chabbat matin
                     </h4>
-                    {shaharit && <TimeLine label="Shaharit" value={shaharit} />}
+                    {shaharit && <TimeLine label="Shaharit" value={shaharit} note={timeNotes.shaharit} />}
                   </div>
 
-                  {/* Après-midi */}
                   <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
                     <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
                       📚 Après-midi
                     </h4>
-                    {minhaSat && <TimeLine label="Minha" value={minhaSat} />}
+                    {minhaSat && <TimeLine label="Minha" value={minhaSat} note={timeNotes.minhaSat} />}
                   </div>
 
-                  {/* Motsé Chabbat */}
                   <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
                     <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
                       ✨ Motsé Chabbat
                     </h4>
-                    <TimeLine label="Havdala" value={data?.havdalah || "--:--"} />
-                    {arvitMotse && <TimeLine label="Arvit" value={arvitMotse} />}
+                    <TimeLine label="Havdala" value={data?.havdalah || "--:--"} note={timeNotes.havdalah} />
+                    {arvitMotse && <TimeLine label="Arvit" value={arvitMotse} note={timeNotes.arvitMotse} />}
                   </div>
                 </div>
               )}
 
-              {/* Sponsor */}
               {sponsor && (
-                <div style={{ background: `${t.blockBg}`, borderLeft: `3px solid ${t.accent}`, padding: "12px 16px", borderRadius: "0 8px 8px 0", marginBottom: "10px" }}>
+                <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "12px 16px", borderRadius: "0 8px 8px 0", marginBottom: "10px" }}>
                   <h4 style={{ color: t.h4Color, fontSize: "0.92rem", marginBottom: "5px" }}>🎉 Séouda / Kiddouch</h4>
                   <p style={{ fontSize: "0.85rem", color: t.labelColor }}>{sponsor}</p>
                 </div>
               )}
 
-              {/* Announce */}
               {announce && (
-                <div style={{ background: `${t.blockBg}`, borderLeft: `3px solid ${t.accent}`, padding: "12px 16px", borderRadius: "0 8px 8px 0", marginBottom: "10px" }}>
+                <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "12px 16px", borderRadius: "0 8px 8px 0", marginBottom: "10px" }}>
                   <h4 style={{ color: t.h4Color, fontSize: "0.92rem", marginBottom: "5px" }}>📢 Annonce</h4>
                   <p style={{ fontSize: "0.85rem", color: t.labelColor }}>{announce}</p>
                 </div>
               )}
 
-              {/* Rav message */}
               {ravMessage && (
-                <div style={{ background: "#f0f4fa", borderLeft: "3px solid #1a3a6b", padding: "12px 16px", borderRadius: "0 8px 8px 0", marginBottom: "10px" }}>
-                  <h4 style={{ color: "#1a3a6b", fontSize: "0.92rem", marginBottom: "5px" }}>💬 Message du Rav</h4>
-                  <p style={{ fontSize: "0.85rem", color: "#555" }}>{ravMessage}</p>
+                <div style={{ background: t.blockBg, borderLeft: `3px solid ${t.accent}`, padding: "12px 16px", borderRadius: "0 8px 8px 0", marginBottom: "10px" }}>
+                  <h4 style={{ color: t.h4Color, fontSize: "0.92rem", marginBottom: "5px" }}>💬 Message du Rav</h4>
+                  <p style={{ fontSize: "0.85rem", color: t.labelColor }}>{ravMessage}</p>
                 </div>
               )}
 
-              {/* Footer */}
               <div style={{ textAlign: "center", fontSize: "0.75rem", color: t.footerColor, marginTop: "14px", paddingTop: "10px", borderTop: `1px solid ${t.blockBorder}` }}>
                 {synaName} — Chabbat Chalom !
               </div>
@@ -482,16 +470,11 @@ const AfficheChabbatWidget = () => {
             </div>
           </div>
 
-          {/* Export buttons */}
-          <div className="flex gap-3">
-            <button onClick={handleExport}
-              className="flex-1 py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5"
-              style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
-              💾 Télécharger
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button onClick={handleExport} className="flex-1 py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+              💾 Télécharger JPG
             </button>
-            <button onClick={shareWhatsApp}
-              className="flex-1 py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer transition-all hover:-translate-y-0.5"
-              style={{ background: "#25d366", boxShadow: "0 4px 12px rgba(37,211,102,0.3)" }}>
+            <button onClick={shareWhatsApp} className="flex-1 py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer transition-all hover:-translate-y-0.5" style={{ background: "#25d366", boxShadow: "0 4px 12px rgba(37,211,102,0.3)" }}>
               💬 WhatsApp
             </button>
           </div>

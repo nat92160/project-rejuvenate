@@ -51,10 +51,10 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
   const toggleTab = (id: string) => {
     setSelectedTabs((prev) => {
       if (prev.includes(id)) {
-        if (prev.length <= 1) return prev; // keep at least 1
+        if (prev.length <= 1) return prev;
         return prev.filter((t) => t !== id);
       }
-      if (prev.length >= 4) return prev; // max 4 custom tabs
+      if (prev.length >= 4) return prev;
       return [...prev, id];
     });
   };
@@ -64,7 +64,7 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 flex justify-around items-stretch glass"
         style={{
-          height: "68px",
+          height: "72px",
           borderTop: "1px solid hsl(var(--border))",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
@@ -79,7 +79,7 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                 e.preventDefault();
                 if (tab.id !== "menu") setShowCustomize(true);
               }}
-              className="flex flex-col items-center justify-center gap-1 flex-1 border-none bg-transparent cursor-pointer transition-all duration-200 relative"
+              className="flex flex-col items-center justify-center gap-1 flex-1 border-none bg-transparent cursor-pointer transition-all duration-200 relative min-w-0"
               style={{
                 color: isActive ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))",
                 fontFamily: "'Montserrat', sans-serif",
@@ -106,10 +106,10 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                 {tab.icon}
               </motion.span>
               <span
-                className="text-[10px] tracking-wide uppercase"
+                className="text-[9px] tracking-wide uppercase truncate max-w-full px-1"
                 style={{
                   fontWeight: isActive ? 700 : 500,
-                  letterSpacing: "0.5px",
+                  letterSpacing: "0.4px",
                 }}
               >
                 {tab.label}
@@ -119,7 +119,6 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
         })}
       </nav>
 
-      {/* Customize bottom nav modal */}
       <AnimatePresence>
         {showCustomize && (
           <>
@@ -147,28 +146,30 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
               <div className="flex justify-center mb-4">
                 <div className="w-10 h-1 rounded-full bg-border" />
               </div>
-              <div className="flex justify-between items-center mb-4 pb-3 border-b border-border">
+              <div className="flex justify-between items-center mb-4 pb-3 border-b border-border gap-3">
                 <h2 className="font-display text-sm font-bold text-foreground">Personnaliser la barre (max 4)</h2>
-                <button onClick={() => setShowCustomize(false)}
-                  className="bg-muted border-none text-lg cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground">
+                <button
+                  onClick={() => setShowCustomize(false)}
+                  className="bg-muted border-none text-lg cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground shrink-0"
+                >
                   ✕
                 </button>
               </div>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {ALL_TABS.map((tab) => {
                   const isSelected = selectedTabs.includes(tab.id);
                   return (
                     <button
                       key={tab.id}
                       onClick={() => toggleTab(tab.id)}
-                      className={`flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl text-center border cursor-pointer transition-all ${
+                      className={`flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl text-center border cursor-pointer transition-all min-h-[82px] ${
                         isSelected
                           ? "border-primary/30 bg-primary/5 text-foreground"
                           : "border-border bg-card text-muted-foreground"
                       }`}
                     >
                       <span className="text-lg">{tab.icon}</span>
-                      <span className="text-[9px] font-bold">{tab.label}</span>
+                      <span className="text-[9px] font-bold leading-tight">{tab.label}</span>
                       {isSelected && <span className="text-[8px] text-primary">✓</span>}
                     </button>
                   );

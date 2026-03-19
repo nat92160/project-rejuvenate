@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +48,18 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
     setCheckingZoom(false);
   };
 
+  const disconnectZoom = () => {
+    window.open("https://zoom.us/signout", "_blank", "noopener,noreferrer");
+    setZoomStatus("unknown");
+    toast.success("Page de déconnexion Zoom ouverte");
+  };
+
+  useEffect(() => {
+    if (isOpen && user) {
+      void checkZoomStatus();
+    }
+  }, [isOpen, user]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -74,7 +86,6 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
             exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
           >
-            {/* Handle bar */}
             <div className="flex justify-center mb-4">
               <div className="w-10 h-1 rounded-full bg-border" />
             </div>
@@ -89,13 +100,13 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-3">
               {menuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => onNavigate(item.id)}
-                  className="flex flex-col items-center justify-center gap-2.5 py-5 px-3 rounded-2xl cursor-pointer transition-all duration-200 text-center border border-border bg-card hover:bg-muted hover:border-primary/20 hover:-translate-y-0.5 active:scale-95"
-                  style={{ minHeight: "100px" }}
+                  className="flex flex-col items-center justify-center gap-2.5 py-4 px-3 rounded-2xl cursor-pointer transition-all duration-200 text-center border border-border bg-card hover:bg-muted hover:border-primary/20 hover:-translate-y-0.5 active:scale-95"
+                  style={{ minHeight: "96px" }}
                 >
                   <span className="text-2xl">{item.icon}</span>
                   <span className="text-xs font-medium text-foreground leading-tight">
@@ -105,10 +116,9 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
               ))}
             </div>
 
-            {/* Account & Zoom section */}
             {user && (
               <div className="mt-5 pt-4 border-t border-border space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-sm">👤</span>
                     <span className="text-xs text-muted-foreground truncate">
@@ -116,27 +126,34 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
                     </span>
                   </div>
                   <button
-                    onClick={() => { signOut(); onClose(); }}
-                    className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 bg-destructive/10 text-destructive border-none"
+                    onClick={() => { void signOut(); onClose(); }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 bg-destructive/10 text-destructive border-none shrink-0"
                   >
                     🔓 Déconnexion
                   </button>
                 </div>
 
-                {/* Zoom status */}
-                <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">🎥</span>
-                    <span className="text-xs text-muted-foreground">
-                      Zoom {zoomStatus === "connected" ? "✅ Connecté" : zoomStatus === "disconnected" ? "❌ Non connecté" : ""}
-                    </span>
+                <div className="rounded-xl border border-border bg-muted/50 p-3 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm">🎥</span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        Zoom {zoomStatus === "connected" ? "✅ Connecté" : zoomStatus === "disconnected" ? "❌ Non connecté" : "—"}
+                      </span>
+                    </div>
+                    <button
+                      onClick={checkZoomStatus}
+                      disabled={checkingZoom}
+                      className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border border-border bg-card text-muted-foreground hover:border-primary/20 disabled:opacity-50 shrink-0"
+                    >
+                      {checkingZoom ? "⏳" : "Vérifier"}
+                    </button>
                   </div>
                   <button
-                    onClick={checkZoomStatus}
-                    disabled={checkingZoom}
-                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border border-border bg-card text-muted-foreground hover:border-primary/20 disabled:opacity-50"
+                    onClick={disconnectZoom}
+                    className="w-full px-3 py-2 rounded-lg text-[11px] font-bold cursor-pointer border border-border bg-card text-foreground hover:border-primary/20"
                   >
-                    {checkingZoom ? "⏳" : "Vérifier"}
+                    ↗ Se déconnecter de Zoom
                   </button>
                 </div>
               </div>
