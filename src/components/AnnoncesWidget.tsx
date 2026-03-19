@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,15 +13,6 @@ interface Annonce {
   creator_id: string;
 }
 
-type CardStyle = "elegant" | "urgence" | "communaute" | "custom";
-
-const cardStyles: Record<CardStyle, { name: string; headerBg: string; headerText: string; accentColor: string; icon: string }> = {
-  elegant: { name: "Élégant", headerBg: "linear-gradient(135deg, #1E293B, #334155)", headerText: "#fff", accentColor: "#d4af37", icon: "✨" },
-  urgence: { name: "Urgent", headerBg: "linear-gradient(135deg, #991B1B, #DC2626)", headerText: "#fff", accentColor: "#fca5a5", icon: "🚨" },
-  communaute: { name: "Communauté", headerBg: "linear-gradient(135deg, #1a3a6b, #2563eb)", headerText: "#fff", accentColor: "#93c5fd", icon: "🏛️" },
-  custom: { name: "Personnalisé", headerBg: "linear-gradient(135deg, #D4AF37, #b8860b)", headerText: "#fff", accentColor: "#D4AF37", icon: "🎨" },
-};
-
 const AnnoncesWidget = () => {
   const { user, dbRole } = useAuth();
   const [annonces, setAnnonces] = useState<Annonce[]>([]);
@@ -31,9 +22,7 @@ const AnnoncesWidget = () => {
   const [newContent, setNewContent] = useState("");
   const [newPriority, setNewPriority] = useState("normal");
   const [submitting, setSubmitting] = useState(false);
-  const [sharingId, setSharingId] = useState<string | null>(null);
-  const [selectedCardStyle, setSelectedCardStyle] = useState<CardStyle>("elegant");
-  const posterRef = useRef<HTMLDivElement>(null);
+  
 
   useEffect(() => {
     const fetchAnnonces = async () => {
@@ -74,61 +63,14 @@ const AnnoncesWidget = () => {
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
-  const handleShareJPG = async (a: Annonce) => {
-    setSharingId(a.id);
-    await new Promise(r => setTimeout(r, 200));
-    if (!posterRef.current) { setSharingId(null); return; }
+  const getShareText = (a: Annonce) =>
+    `📢 *${a.title}*${a.priority === "urgent" ? " 🔴 URGENT" : ""}\n\n${a.content}\n\n📅 ${formatDate(a.created_at)}\n— Chabbat Chalom\n📲 chabbat-chalom.com`;
 
-    try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(posterRef.current, {
-        scale: 2, useCORS: true, backgroundColor: "#ffffff",
-        onclone: (clonedDoc) => {
-          clonedDoc.documentElement.classList.remove("dark");
-        },
-      });
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/jpeg", 0.95));
-      const text = `📢 ${a.title}\n\n${a.content}\n\n— Chabbat Chalom\n📲 chabbat-chalom.com`;
+  const getShareUrl = (a: Annonce) =>
+    `https://wa.me/?text=${encodeURIComponent(getShareText(a))}`;
 
-      if (blob && navigator.share && navigator.canShare?.({ files: [new File([blob], "a.jpg", { type: "image/jpeg" })] })) {
-        const file = new File([blob], `annonce-${a.title.slice(0, 20)}.jpg`, { type: "image/jpeg" });
-        await navigator.share({ files: [file], title: a.title, text });
-        setSharingId(null); return;
-      }
-
-      // Fallback: upload to storage + WhatsApp link
-      if (blob) {
-        const filename = `annonce-${Date.now()}.jpg`;
-        const { error } = await supabase.storage.from("affiches").upload(filename, blob, { contentType: "image/jpeg", upsert: true });
-        if (!error) {
-          const { data: urlData } = supabase.storage.from("affiches").getPublicUrl(filename);
-          const imageUrl = urlData?.publicUrl || "";
-          const fullText = imageUrl ? `${text}\n\n🖼️ ${imageUrl}` : text;
-          window.open(`https://wa.me/?text=${encodeURIComponent(fullText)}`, "_blank");
-        } else {
-          // Fallback: download locally
-          const link = document.createElement("a");
-          link.download = `annonce-${a.title.slice(0, 20)}.jpg`;
-          link.href = URL.createObjectURL(blob);
-          link.click();
-          toast.success("Image téléchargée ! Partagez-la manuellement.");
-          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-        }
-      }
-    } catch {
-      toast.error("Erreur lors de la génération de l'image");
-    }
-    setSharingId(null);
-  };
-
-  const handleShareText = (a: Annonce) => {
-    const text = `📢 *${a.title}*${a.priority === "urgent" ? " 🔴 URGENT" : ""}\n\n${a.content}\n\n📅 ${formatDate(a.created_at)}\n— Chabbat Chalom\n📲 chabbat-chalom.com`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-  };
 
   const isPresident = dbRole === "president";
-  const sharingAnnonce = annonces.find(a => a.id === sharingId);
-  const cs = cardStyles[selectedCardStyle];
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -168,81 +110,6 @@ const AnnoncesWidget = () => {
         )}
       </AnimatePresence>
 
-      {/* Card style selector */}
-      {isPresident && annonces.length > 0 && (
-        <div className="mb-4">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Style de carte WhatsApp</p>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {(Object.keys(cardStyles) as CardStyle[]).map(key => (
-              <button key={key} onClick={() => setSelectedCardStyle(key)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap cursor-pointer border transition-all ${selectedCardStyle === key ? "border-primary/30 text-foreground" : "border-border text-muted-foreground bg-card"}`}
-                style={selectedCardStyle === key ? { background: "hsl(var(--gold) / 0.1)" } : {}}>
-                <span>{cardStyles[key].icon}</span>
-                <span>{cardStyles[key].name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Hidden poster for JPG generation */}
-      {sharingAnnonce && (
-        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-          <div ref={posterRef} style={{
-            width: "480px", background: "#ffffff", overflow: "hidden",
-            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-          }}>
-            {/* Header */}
-            <div style={{
-              background: cs.headerBg, padding: "32px 28px 24px", textAlign: "center",
-            }}>
-              <div style={{ fontSize: "0.75rem", color: cs.accentColor, letterSpacing: "3px", textTransform: "uppercase", marginBottom: "12px", fontWeight: 600 }}>
-                {cs.icon} ANNONCE COMMUNAUTAIRE
-              </div>
-              <div style={{
-                fontSize: "1.5rem", fontWeight: 800, color: cs.headerText, lineHeight: 1.3,
-                fontFamily: "'Frank Ruhl Libre', 'Georgia', serif",
-              }}>
-                {sharingAnnonce.title}
-              </div>
-              {sharingAnnonce.priority === "urgent" && (
-                <div style={{
-                  display: "inline-block", marginTop: "12px",
-                  background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)",
-                  color: "#fff", padding: "4px 14px", borderRadius: "20px",
-                  fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px",
-                }}>
-                  🔴 URGENT
-                </div>
-              )}
-            </div>
-            {/* Content */}
-            <div style={{ padding: "28px" }}>
-              <div style={{
-                fontSize: "0.95rem", color: "#334155", lineHeight: 1.7,
-                borderLeft: `3px solid ${cs.accentColor}`, paddingLeft: "16px",
-                whiteSpace: "pre-wrap",
-              }}>
-                {sharingAnnonce.content || "—"}
-              </div>
-              <div style={{
-                marginTop: "24px", paddingTop: "16px", borderTop: "1px solid #e2e8f0",
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-              }}>
-                <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
-                  {formatDate(sharingAnnonce.created_at)}
-                </div>
-                <div style={{ fontSize: "0.65rem", color: cs.accentColor, fontWeight: 700, letterSpacing: "1px" }}>
-                  CHABBAT-CHALOM.COM
-                </div>
-              </div>
-            </div>
-            {/* Footer bar */}
-            <div style={{ background: cs.headerBg, height: "6px" }} />
-          </div>
-        </div>
-      )}
-
       {loading ? (
         <div className="text-center py-8 text-sm text-muted-foreground">Chargement...</div>
       ) : annonces.length === 0 ? (
@@ -264,16 +131,11 @@ const AnnoncesWidget = () => {
               <div className="flex items-center justify-between mt-3">
                 <p className="text-[10px] text-muted-foreground/60">{formatDate(a.created_at)}</p>
                 <div className="flex gap-1.5">
-                  <button onClick={() => handleShareJPG(a)} disabled={sharingId === a.id}
-                    className="text-[10px] font-bold px-2.5 py-1.5 rounded-full border-none cursor-pointer transition-colors disabled:opacity-50"
+                  <a href={getShareUrl(a)} target="_blank" rel="noopener noreferrer"
+                    className="text-[10px] font-bold px-2.5 py-1.5 rounded-full no-underline cursor-pointer"
                     style={{ background: "#25d366", color: "#fff" }}>
-                    {sharingId === a.id ? "⏳" : "📲 JPG"}
-                  </button>
-                  <button onClick={() => handleShareText(a)}
-                    className="text-[10px] font-bold px-2.5 py-1.5 rounded-full border-none cursor-pointer transition-colors"
-                    style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}>
-                    💬 Texte
-                  </button>
+                    💬 WhatsApp
+                  </a>
                   {isPresident && user?.id === a.creator_id && (
                     <button onClick={() => handleDelete(a.id)}
                       className="text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-destructive/10 text-destructive border-none cursor-pointer">
