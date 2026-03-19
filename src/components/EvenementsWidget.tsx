@@ -163,6 +163,26 @@ const EvenementsWidget = () => {
                         🎥 Rejoindre le Zoom
                       </a>
                     )}
+                    <div className="flex gap-2 mt-3">
+                      <button onClick={() => {
+                        const text = `📅 ${ev.title}\n📆 ${formatDate(ev.event_date)} à ${ev.event_time}\n📍 ${ev.location}${ev.zoom_link ? `\n🎥 ${ev.zoom_link}` : ""}\n${ev.description}\n\n✡️ chabbat-chalom.com`;
+                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                      }}
+                        className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-green-500/10 text-green-600 border-none cursor-pointer hover:bg-green-500/20 transition-colors">
+                        📲 WhatsApp
+                      </button>
+                      {isPresident && user?.id === ev.creator_id && (
+                        <button onClick={async () => {
+                          if (!confirm("Supprimer cet événement ?")) return;
+                          const { error } = await supabase.from("evenements").delete().eq("id", ev.id);
+                          if (error) toast.error("Erreur lors de la suppression");
+                          else { setEvents(prev => prev.filter(e => e.id !== ev.id)); toast.success("Événement supprimé"); }
+                        }}
+                          className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-destructive/10 text-destructive border-none cursor-pointer hover:bg-destructive/20 transition-colors">
+                          🗑️ Supprimer
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               );
