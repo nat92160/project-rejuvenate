@@ -249,6 +249,18 @@ const AfficheChabbatWidget = () => {
               <p className="text-[10px] font-bold text-primary uppercase tracking-wider px-1 py-1.5 border-b border-primary/20 mt-2">☀️ Chabbat matin</p>
               <TimeInputRow label="Shaharit samedi" value={shaharit} noteValue={notes.shaharit || ""} onChange={setShaharit} onNoteChange={(value) => setNote("shaharit", value)} />
 
+              {/* Lecteur de Torah */}
+              <div className="space-y-2 py-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_1fr] sm:items-center sm:gap-2 sm:space-y-0">
+                <span className="min-w-0 text-[11px] font-semibold leading-tight text-foreground">📜 Lecteur</span>
+                <input
+                  type="text"
+                  value={torahReader}
+                  onChange={(e) => setTorahReader(e.target.value)}
+                  placeholder="Nom du lecteur de Torah"
+                  className="h-10 w-full rounded-xl border border-input bg-background px-3 text-[11px] text-foreground outline-none transition-colors focus:border-primary/40 focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/60"
+                />
+              </div>
+
               <div className="space-y-2 py-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_1fr] sm:items-center sm:gap-2 sm:space-y-0">
                 <span className="min-w-0 text-[11px] font-semibold leading-tight text-foreground">📖 Paracha</span>
                 <div className="flex h-10 items-center justify-center rounded-xl border border-border bg-muted px-3 text-center text-xs font-bold text-foreground">
@@ -258,6 +270,18 @@ const AfficheChabbatWidget = () => {
 
               <TimeInputRow label="Moussaf" value={moussaf} noteValue={notes.moussaf || ""} onChange={setMoussaf} onNoteChange={(value) => setNote("moussaf", value)} />
               <TimeInputRow label="Minha samedi" value={minhaSat} noteValue={notes.minhaSat || ""} onChange={setMinhaSat} onNoteChange={(value) => setNote("minhaSat", value)} />
+
+              {/* Shiour après Minha */}
+              <div className="space-y-2 py-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_1fr] sm:items-center sm:gap-2 sm:space-y-0">
+                <span className="min-w-0 text-[11px] font-semibold leading-tight text-foreground">📚 Shiour</span>
+                <input
+                  type="text"
+                  value={shiourSamedi}
+                  onChange={(e) => setShiourSamedi(e.target.value)}
+                  placeholder="Sujet ou Rav du shiour"
+                  className="h-10 w-full rounded-xl border border-input bg-background px-3 text-[11px] text-foreground outline-none transition-colors focus:border-primary/40 focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/60"
+                />
+              </div>
 
               <p className="text-[10px] font-bold text-primary uppercase tracking-wider px-1 py-1.5 border-b border-primary/20 mt-2">✨ Sortie de Chabbat</p>
               <TimeInputRow label="✨ Havdala (auto)" value={data?.havdalah || ""} noteValue={notes.havdalah || ""} onNoteChange={(value) => setNote("havdalah", value)} readOnly />
