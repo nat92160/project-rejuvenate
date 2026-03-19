@@ -122,6 +122,7 @@ export type Database = {
       minyan_registrations: {
         Row: {
           display_name: string
+          guest_count: number
           id: string
           registered_at: string
           session_id: string
@@ -129,6 +130,7 @@ export type Database = {
         }
         Insert: {
           display_name: string
+          guest_count?: number
           id?: string
           registered_at?: string
           session_id: string
@@ -136,6 +138,7 @@ export type Database = {
         }
         Update: {
           display_name?: string
+          guest_count?: number
           id?: string
           registered_at?: string
           session_id?: string

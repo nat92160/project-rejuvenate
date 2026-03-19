@@ -1,0 +1,1 @@
+ALTER TABLE public.minyan_registrations ADD COLUMN guest_count integer NOT NULL DEFAULT 1;
