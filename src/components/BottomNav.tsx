@@ -1,62 +1,92 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import MoreMenu from "./MoreMenu";
-
-const ALL_TABS = [
-  { id: "dashboard", icon: "🏠", label: "Accueil" },
-  { id: "zmanim", icon: "⏰", label: "Zmanim" },
-  { id: "tehilim", icon: "📖", label: "Tehilim" },
-  { id: "chabbat", icon: "🕯️", label: "Chabbat" },
-  { id: "fetes", icon: "📅", label: "Fêtes" },
-  { id: "annonces", icon: "📢", label: "Annonces" },
-  { id: "minyan", icon: "👥", label: "Minyan" },
-  { id: "refoua", icon: "🙏", label: "Refoua" },
-  { id: "coursvirtuel", icon: "🎥", label: "Cours" },
-  { id: "evenements", icon: "📅", label: "Events" },
-];
-
-const STORAGE_KEY = "calj_bottom_tabs";
-const DEFAULT_TABS = ["dashboard", "zmanim", "tehilim"];
+import { useAuth } from "@/hooks/useAuth";
+import {
+  DEFAULT_BOTTOM_TABS_BY_MODE,
+  getAvailableTabs,
+  getBottomNavStorageKey,
+  sanitizeBottomTabs,
+  type BottomNavMode,
+} from "@/lib/navigation";
 
 interface BottomNavProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
 
+const MAX_TABS = 4;
+
+const loadTabsForMode = (mode: BottomNavMode) => {
+  try {
+    const raw = localStorage.getItem(getBottomNavStorageKey(mode));
+    if (!raw) return DEFAULT_BOTTOM_TABS_BY_MODE[mode];
+    return sanitizeBottomTabs(JSON.parse(raw), mode);
+  } catch {
+    return DEFAULT_BOTTOM_TABS_BY_MODE[mode];
+  }
+};
+
 const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
+  const { dbRole } = useAuth();
+  const mode: BottomNavMode = dbRole === "president" ? "president" : "fidele";
   const [showMore, setShowMore] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
-  const [selectedTabs, setSelectedTabs] = useState<string[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : DEFAULT_TABS;
-  });
+  const [selectedTabs, setSelectedTabs] = useState<string[]>(() => loadTabsForMode(mode));
+
+  const availableTabs = useMemo(() => getAvailableTabs(mode), [mode]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedTabs));
-  }, [selectedTabs]);
+    setSelectedTabs(loadTabsForMode(mode));
+  }, [mode]);
+
+  useEffect(() => {
+    const sanitized = sanitizeBottomTabs(selectedTabs, mode);
+
+    if (JSON.stringify(sanitized) !== JSON.stringify(selectedTabs)) {
+      setSelectedTabs(sanitized);
+      return;
+    }
+
+    try {
+      localStorage.setItem(getBottomNavStorageKey(mode), JSON.stringify(sanitized));
+    } catch {
+      // ignore storage failures
+    }
+  }, [selectedTabs, mode]);
 
   const visibleTabs = [
-    ...selectedTabs.map((id) => ALL_TABS.find((t) => t.id === id)).filter(Boolean),
+    ...selectedTabs
+      .map((id) => availableTabs.find((tab) => tab.id === id))
+      .filter((tab): tab is (typeof availableTabs)[number] => Boolean(tab)),
     { id: "menu", icon: "☰", label: "Plus" },
-  ] as { id: string; icon: string; label: string }[];
+  ];
 
   const handleTabClick = (id: string) => {
     if (id === "menu") {
       setShowMore(true);
-    } else {
-      onTabChange(id);
+      return;
     }
+
+    onTabChange(id);
   };
 
   const toggleTab = (id: string) => {
     setSelectedTabs((prev) => {
-      if (prev.includes(id)) {
-        if (prev.length <= 1) return prev;
-        return prev.filter((t) => t !== id);
+      const current = sanitizeBottomTabs(prev, mode);
+
+      if (current.includes(id)) {
+        if (current.length <= 1) return current;
+        return current.filter((tabId) => tabId !== id);
       }
-      if (prev.length >= 4) return prev;
-      return [...prev, id];
+
+      if (current.length >= MAX_TABS) return current;
+      return [...current, id];
     });
+  };
+
+  const resetTabs = () => {
+    setSelectedTabs(DEFAULT_BOTTOM_TABS_BY_MODE[mode]);
   };
 
   return (
@@ -71,15 +101,16 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
       >
         {visibleTabs.map((tab) => {
           const isActive = activeTab === tab.id || (tab.id === "menu" && showMore);
+
           return (
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
-              onContextMenu={(e) => {
-                e.preventDefault();
+              onContextMenu={(event) => {
+                event.preventDefault();
                 if (tab.id !== "menu") setShowCustomize(true);
               }}
-              className="flex flex-col items-center justify-center gap-1 flex-1 border-none bg-transparent cursor-pointer transition-all duration-200 relative min-w-0"
+              className="relative flex flex-1 min-w-0 flex-col items-center justify-center gap-1 border-none bg-transparent px-0 transition-all duration-200 cursor-pointer"
               style={{
                 color: isActive ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))",
                 fontFamily: "'Montserrat', sans-serif",
@@ -89,7 +120,7 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
             >
               {isActive && (
                 <motion.div
-                  className="absolute top-0 left-1/2 -translate-x-1/2 h-[3px] rounded-b-full"
+                  className="absolute left-1/2 top-0 h-[3px] -translate-x-1/2 rounded-b-full"
                   layoutId="bottomNavIndicator"
                   style={{
                     width: "28px",
@@ -98,15 +129,17 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                   transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 />
               )}
+
               <motion.span
-                className="text-xl leading-none flex items-center justify-center h-7"
+                className="flex h-7 items-center justify-center text-xl leading-none"
                 animate={{ scale: isActive ? 1.15 : 1 }}
                 transition={{ type: "spring", damping: 15 }}
               >
                 {tab.icon}
               </motion.span>
+
               <span
-                className="text-[9px] tracking-wide uppercase truncate max-w-full px-1"
+                className="max-w-full truncate px-1 text-[9px] uppercase tracking-wide"
                 style={{
                   fontWeight: isActive ? 700 : 500,
                   letterSpacing: "0.4px",
@@ -130,6 +163,7 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
               exit={{ opacity: 0 }}
               onClick={() => setShowCustomize(false)}
             />
+
             <motion.div
               className="fixed bottom-0 left-0 right-0 z-[210] rounded-t-3xl"
               style={{
@@ -143,43 +177,62 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
               exit={{ y: "100%", opacity: 0 }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
             >
-              <div className="flex justify-center mb-4">
-                <div className="w-10 h-1 rounded-full bg-border" />
+              <div className="mb-4 flex justify-center">
+                <div className="h-1 w-10 rounded-full bg-border" />
               </div>
-              <div className="flex justify-between items-center mb-4 pb-3 border-b border-border gap-3">
-                <h2 className="font-display text-sm font-bold text-foreground">Personnaliser la barre (max 4)</h2>
+
+              <div className="mb-4 flex items-center justify-between gap-3 border-b border-border pb-3">
+                <div>
+                  <h2 className="font-display text-sm font-bold text-foreground">
+                    Mes widgets favoris ({selectedTabs.length}/{MAX_TABS})
+                  </h2>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {mode === "president"
+                      ? "Configuration du bandeau en mode Président"
+                      : "Configuration du bandeau en mode Fidèle"}
+                  </p>
+                </div>
+
                 <button
                   onClick={() => setShowCustomize(false)}
-                  className="bg-muted border-none text-lg cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground shrink-0"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border-none bg-muted text-lg text-muted-foreground cursor-pointer shrink-0"
                 >
                   ✕
                 </button>
               </div>
+
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {ALL_TABS.map((tab) => {
-                  const isSelected = selectedTabs.includes(tab.id);
+                {availableTabs.map((tab) => {
+                  const selectedIndex = selectedTabs.indexOf(tab.id);
+                  const isSelected = selectedIndex !== -1;
+
                   return (
                     <button
                       key={tab.id}
                       onClick={() => toggleTab(tab.id)}
-                      className={`flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl text-center border cursor-pointer transition-all min-h-[82px] ${
+                      className={`relative flex min-h-[82px] flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-center transition-all cursor-pointer ${
                         isSelected
                           ? "border-primary/30 bg-primary/5 text-foreground"
                           : "border-border bg-card text-muted-foreground"
                       }`}
                     >
+                      {isSelected && (
+                        <span className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                          {selectedIndex + 1}
+                        </span>
+                      )}
                       <span className="text-lg">{tab.icon}</span>
                       <span className="text-[9px] font-bold leading-tight">{tab.label}</span>
-                      {isSelected && <span className="text-[8px] text-primary">✓</span>}
                     </button>
                   );
                 })}
               </div>
+
               <button
-                onClick={() => { setSelectedTabs(DEFAULT_TABS); }}
-                className="w-full mt-3 py-2 rounded-xl text-xs font-bold text-muted-foreground bg-muted border-none cursor-pointer"
+                onClick={resetTabs}
+                className="mt-3 w-full rounded-xl border-none bg-muted py-2 text-xs font-bold text-muted-foreground cursor-pointer"
               >
-                Réinitialiser
+                Réinitialiser ce mode
               </button>
             </motion.div>
           </>
@@ -188,8 +241,16 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
 
       <MoreMenu
         isOpen={showMore}
+        mode={mode}
         onClose={() => setShowMore(false)}
-        onNavigate={(tab) => { onTabChange(tab); setShowMore(false); }}
+        onCustomize={() => {
+          setShowMore(false);
+          setShowCustomize(true);
+        }}
+        onNavigate={(tab) => {
+          onTabChange(tab);
+          setShowMore(false);
+        }}
       />
     </>
   );
