@@ -152,51 +152,50 @@ const AfficheChabbatWidget = () => {
 
   const inputClass = "w-full px-4 py-4 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50";
 
-  /** Time input row — compact: label | time input | note field */
+  /** Time input row — compact and clearer on mobile */
   const TimeInputRow = memo(({ label, value, onChange, noteKey, readOnly = false, placeholder = "Horaire" }: {
     label: string; value: string; onChange?: (v: string) => void; noteKey: string; readOnly?: boolean; placeholder?: string;
   }) => (
     <div className="flex items-center gap-1.5 py-1">
-      <span className="text-[10px] font-semibold text-foreground w-[38%] shrink-0 leading-tight truncate">{label}</span>
+      <span className="w-[36%] min-w-0 text-[10px] font-semibold text-foreground leading-tight">{label}</span>
+
       {readOnly ? (
-        <>
-          <div className="w-[72px] shrink-0 px-2 py-1.5 rounded-lg bg-muted border border-border text-foreground text-center text-[11px] font-bold h-8 flex items-center justify-center">
-            {value || "—"}
-          </div>
-          <input
-            value={notes[noteKey] || ""}
-            onChange={e => setNote(noteKey, e.target.value)}
-            placeholder="Note…"
-            className="flex-1 min-w-0 px-2 py-1.5 rounded-lg bg-background border border-border text-foreground text-[10px] h-8 focus:outline-none focus:ring-1 focus:ring-primary/30 placeholder:text-muted-foreground/40"
-          />
-        </>
+        <div className="w-[84px] shrink-0 px-2 py-1.5 rounded-lg bg-muted border border-border text-foreground text-center text-[11px] font-bold h-9 flex items-center justify-center">
+          {value || "—"}
+        </div>
       ) : (
-        <>
-          <div className="relative w-[72px] shrink-0">
-            <input
-              key={`time-${noteKey}`}
-              type="time"
-              defaultValue={value}
-              onBlur={e => onChange?.(e.target.value)}
-              className="w-full px-1.5 py-1.5 rounded-lg bg-background border border-border text-foreground text-center text-[11px] font-bold h-8 focus:outline-none focus:ring-1 focus:ring-primary/30"
-            />
-            {!value && (
-              <span className="absolute inset-0 flex items-center justify-center text-[9px] text-muted-foreground/50 pointer-events-none">{placeholder}</span>
-            )}
-          </div>
+        <div className="relative w-[84px] shrink-0">
           <input
-            value={notes[noteKey] || ""}
-            onChange={e => setNote(noteKey, e.target.value)}
-            placeholder="Note…"
-            className="flex-1 min-w-0 px-2 py-1.5 rounded-lg bg-background border border-border text-foreground text-[10px] h-8 focus:outline-none focus:ring-1 focus:ring-primary/30 placeholder:text-muted-foreground/40"
+            type="time"
+            value={value}
+            onChange={e => onChange?.(e.target.value)}
+            className="w-full px-2 py-1.5 rounded-lg bg-background border border-border text-foreground text-center text-[11px] font-bold h-9 focus:outline-none focus:ring-1 focus:ring-primary/30"
           />
-          {value && (
-            <button type="button" onClick={() => onChange?.("")}
-              className="shrink-0 w-8 h-8 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center text-[10px] border-none cursor-pointer active:scale-95">
-              ✕
-            </button>
+          {!value && (
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[9px] text-muted-foreground/50">
+              {placeholder}
+            </span>
           )}
-        </>
+        </div>
+      )}
+
+      <input
+        value={notes[noteKey] || ""}
+        onChange={e => setNote(noteKey, e.target.value)}
+        placeholder="Note..."
+        className="flex-1 min-w-0 px-2 py-1.5 rounded-lg bg-background border border-border text-foreground text-[10px] h-9 focus:outline-none focus:ring-1 focus:ring-primary/30 placeholder:text-muted-foreground/40"
+      />
+
+      {readOnly ? (
+        <div className="w-7 shrink-0" aria-hidden />
+      ) : (
+        <button
+          type="button"
+          onClick={() => onChange?.("")}
+          className={`shrink-0 w-7 h-7 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center text-[10px] border-none cursor-pointer transition-opacity active:scale-95 ${value ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        >
+          ✕
+        </button>
       )}
     </div>
   ));

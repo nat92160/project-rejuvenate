@@ -68,39 +68,67 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-async function fetchNearbySynagogues(lat: number, lon: number, radiusKm: number = 15): Promise<SynagogueResult[]> {
+function buildAddress(tags: Record<string, string | undefined>) {
+  return [
+    [tags["addr:housenumber"], tags["addr:street"]].filter(Boolean).join(" "),
+    tags["addr:postcode"],
+    tags["addr:city"] || tags["addr:town"] || tags["addr:village"],
+  ].filter(Boolean).join(", ");
+}
+
+async function fetchNearbySynagogues(lat: number, lon: number, radiusKm: number = 15, signal?: AbortSignal): Promise<SynagogueResult[]> {
+  const radiusMeters = Math.round(radiusKm * 1000);
   const query = `
     [out:json][timeout:25];
     (
-      node["amenity"="place_of_worship"]["religion"="jewish"](around:${radiusKm * 1000},${lat},${lon});
-      way["amenity"="place_of_worship"]["religion"="jewish"](around:${radiusKm * 1000},${lat},${lon});
+      node["amenity"="place_of_worship"]["religion"="jewish"](around:${radiusMeters},${lat},${lon});
+      way["amenity"="place_of_worship"]["religion"="jewish"](around:${radiusMeters},${lat},${lon});
+      relation["amenity"="place_of_worship"]["religion"="jewish"](around:${radiusMeters},${lat},${lon});
     );
     out center tags;
   `;
+
   const res = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
     body: `data=${encodeURIComponent(query)}`,
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    signal,
   });
-  if (!res.ok) throw new Error("Overpass API error");
-  const data = await res.json();
 
-  return (data.elements || []).map((el: any) => {
-    const elLat = el.lat ?? el.center?.lat;
-    const elLon = el.lon ?? el.center?.lon;
-    const tags = el.tags || {};
-    return {
-      id: el.id,
-      name: tags.name || tags["name:fr"] || "Synagogue",
-      lat: elLat,
-      lon: elLon,
-      distance: haversineDistance(lat, lon, elLat, elLon),
-      address: [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]].filter(Boolean).join(", ") || undefined,
-      phone: tags.phone || tags["contact:phone"] || undefined,
-      website: tags.website || tags["contact:website"] || undefined,
-      denomination: tags.denomination || undefined,
-    } as SynagogueResult;
-  }).sort((a: SynagogueResult, b: SynagogueResult) => a.distance - b.distance);
+  if (!res.ok) throw new Error(`Overpass API error: ${res.status}`);
+
+  const data = await res.json();
+  const seen = new Set<string>();
+
+  return (data.elements || [])
+    .map((el: any) => {
+      const elLat = Number(el.lat ?? el.center?.lat);
+      const elLon = Number(el.lon ?? el.center?.lon);
+      const tags = (el.tags || {}) as Record<string, string | undefined>;
+      const distance = haversineDistance(lat, lon, elLat, elLon);
+
+      return {
+        id: el.id,
+        name: tags.name || tags["name:fr"] || "Synagogue",
+        lat: elLat,
+        lon: elLon,
+        distance,
+        address: buildAddress(tags) || undefined,
+        phone: tags.phone || tags["contact:phone"] || undefined,
+        website: tags.website || tags["contact:website"] || undefined,
+        denomination: tags.denomination || undefined,
+      } as SynagogueResult;
+    })
+    .filter((item: SynagogueResult) => Number.isFinite(item.lat) && Number.isFinite(item.lon))
+    .filter((item: SynagogueResult) => item.distance <= radiusMeters + 100)
+    .filter((item: SynagogueResult) => {
+      const key = `${item.name}-${item.address || ""}-${item.lat.toFixed(4)}-${item.lon.toFixed(4)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a: SynagogueResult, b: SynagogueResult) => a.distance - b.distance)
+    .slice(0, 20);
 }
 
 function formatDistance(m: number): string {
@@ -138,12 +166,31 @@ const FideleSynagogueView = () => {
   // Fetch nearby synagogues based on city GPS
   useEffect(() => {
     if (!city.lat || !city.lng) return;
+
+    const controller = new AbortController();
     setSynLoading(true);
     setSynError(null);
-    fetchNearbySynagogues(city.lat, city.lng)
-      .then(setSynagogues)
-      .catch(() => setSynError("Impossible de charger les synagogues à proximité."))
-      .finally(() => setSynLoading(false));
+    setSynagogues([]);
+
+    fetchNearbySynagogues(city.lat, city.lng, 15, controller.signal)
+      .then((results) => {
+        if (!controller.signal.aborted) {
+          setSynagogues(results);
+        }
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("Erreur synagogues proches:", error);
+        setSynagogues([]);
+        setSynError("Impossible de charger les synagogues à proximité.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setSynLoading(false);
+        }
+      });
+
+    return () => controller.abort();
   }, [city.lat, city.lng]);
 
   const formatDate = (d: string) =>
