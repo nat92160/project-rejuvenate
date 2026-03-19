@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 type Theme = "tradition" | "moderne" | "chaud" | "prestige" | "blanc";
 type FontChoice = "greatvibes" | "playfairsc" | "playfair" | "lora";
 
-type TimeNoteKey = "candleLighting" | "minhaFri" | "kabbalat" | "shaharit" | "minhaSat" | "havdalah" | "arvitMotse";
+type TimeNoteKey = "candleLighting" | "minhaFri" | "kabbalat" | "arvitFri" | "shaharit" | "torahReading" | "moussaf" | "minhaSat" | "havdalah" | "arvitMotse";
 
 type TimeNotes = Record<TimeNoteKey, string>;
 
@@ -68,6 +68,7 @@ interface TimeRow {
   label: string;
   value: string;
   note?: string;
+  big?: boolean;
 }
 
 interface TimeInputRowProps {
@@ -93,14 +94,19 @@ const AfficheChabbatWidget = () => {
 
   const [minhaFri, setMinhaFri] = useState("");
   const [kabbalat, setKabbalat] = useState("");
+  const [arvitFri, setArvitFri] = useState("");
   const [shaharit, setShaharit] = useState("08:30");
+  const [moussaf, setMoussaf] = useState("");
   const [minhaSat, setMinhaSat] = useState("");
   const [arvitMotse, setArvitMotse] = useState("");
   const [timeNotes, setTimeNotes] = useState<TimeNotes>({
     candleLighting: "",
     minhaFri: "",
     kabbalat: "",
+    arvitFri: "",
     shaharit: "",
+    torahReading: "",
+    moussaf: "",
     minhaSat: "",
     havdalah: "",
     arvitMotse: "",
@@ -215,10 +221,10 @@ const AfficheChabbatWidget = () => {
     openWhatsAppLink(`https://wa.me/?text=${encodeURIComponent(text)}`);
   };
 
-  const TimeLine = ({ label, value, note }: TimeRow) => (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: "4px 0", fontSize: "0.88rem" }}>
-      <span style={{ color: t.labelColor, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontWeight: 600, color: t.valueColor, textAlign: "right" }}>
+  const TimeLine = ({ label, value, note, big }: TimeRow) => (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: big ? "6px 0" : "4px 0", fontSize: big ? "1.1rem" : "0.88rem" }}>
+      <span style={{ color: t.labelColor, flexShrink: 0, fontWeight: big ? 600 : 400 }}>{label}</span>
+      <span style={{ fontWeight: big ? 800 : 600, color: big ? t.accent : t.valueColor, textAlign: "right", fontSize: big ? "1.3rem" : undefined }}>
         {value}
         {note && <span style={{ fontWeight: 400, fontSize: "0.78rem", color: t.labelColor, fontStyle: "italic", marginLeft: "5px" }}>{note}</span>}
       </span>
@@ -284,14 +290,27 @@ const AfficheChabbatWidget = () => {
 
           <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
             <h4 className="font-display text-sm font-bold text-foreground mb-3">⏰ Horaires des offices</h4>
-            <p className="text-xs text-muted-foreground mb-4">Chaque horaire a maintenant son champ libre pour ajouter une remarque à côté dans l'affiche.</p>
+            <p className="text-xs text-muted-foreground mb-4">Chaque horaire a un champ libre pour ajouter une remarque sur l'affiche.</p>
             <div className="space-y-3">
-              <TimeInputRow label="Allumage" value={data?.candleLighting || ""} note={timeNotes.candleLighting} onNoteChange={(value) => updateNote("candleLighting", value)} readOnly />
+              <TimeInputRow label="🕯️ Allumage" value={data?.candleLighting || ""} note={timeNotes.candleLighting} onNoteChange={(value) => updateNote("candleLighting", value)} readOnly />
               <TimeInputRow label="Minha Ven." value={minhaFri} onChange={setMinhaFri} note={timeNotes.minhaFri} onNoteChange={(value) => updateNote("minhaFri", value)} />
               <TimeInputRow label="Kabbalat" value={kabbalat} onChange={setKabbalat} note={timeNotes.kabbalat} onNoteChange={(value) => updateNote("kabbalat", value)} />
+              <TimeInputRow label="Arvit Ven." value={arvitFri} onChange={setArvitFri} note={timeNotes.arvitFri} onNoteChange={(value) => updateNote("arvitFri", value)} />
+              <hr className="border-border" />
               <TimeInputRow label="Shaharit Sam." value={shaharit} onChange={setShaharit} note={timeNotes.shaharit} onNoteChange={(value) => updateNote("shaharit", value)} />
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">📖 Lecture Torah</label>
+                <input
+                  value={timeNotes.torahReading}
+                  onChange={(e) => updateNote("torahReading", e.target.value)}
+                  placeholder="Remarque (affiché avec la Paracha)"
+                  className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-foreground text-sm"
+                />
+              </div>
+              <TimeInputRow label="Moussaf" value={moussaf} onChange={setMoussaf} note={timeNotes.moussaf} onNoteChange={(value) => updateNote("moussaf", value)} />
               <TimeInputRow label="Minha Sam." value={minhaSat} onChange={setMinhaSat} note={timeNotes.minhaSat} onNoteChange={(value) => updateNote("minhaSat", value)} />
-              <TimeInputRow label="Havdala" value={data?.havdalah || ""} note={timeNotes.havdalah} onNoteChange={(value) => updateNote("havdalah", value)} readOnly />
+              <hr className="border-border" />
+              <TimeInputRow label="✨ Havdala" value={data?.havdalah || ""} note={timeNotes.havdalah} onNoteChange={(value) => updateNote("havdalah", value)} readOnly />
               <TimeInputRow label="Arvit Motsé" value={arvitMotse} onChange={setArvitMotse} note={timeNotes.arvitMotse} onNoteChange={(value) => updateNote("arvitMotse", value)} />
             </div>
           </div>
@@ -406,38 +425,58 @@ const AfficheChabbatWidget = () => {
               {loading ? (
                 <div style={{ textAlign: "center", padding: "30px", color: t.text }}>Chargement...</div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
-                  <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
-                    <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
-                      🕯️ Vendredi soir
-                    </h4>
-                    <TimeLine label="Allumage" value={data?.candleLighting || "--:--"} note={timeNotes.candleLighting} />
-                    {minhaFri && <TimeLine label="Minha" value={minhaFri} note={timeNotes.minhaFri} />}
-                    {kabbalat && <TimeLine label="Kabbalat Chabbat" value={kabbalat} note={timeNotes.kabbalat} />}
+                <>
+                  {/* BIG allumage/havdala */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "16px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
+                      <div style={{ fontSize: "0.75rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>🕯️ Allumage</div>
+                      <div style={{ fontSize: "2rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.candleLighting || "--:--"}</div>
+                      {timeNotes.candleLighting && <div style={{ fontSize: "0.75rem", color: t.labelColor, fontStyle: "italic", marginTop: "4px" }}>{timeNotes.candleLighting}</div>}
+                    </div>
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "16px", border: `1px solid ${t.blockBorder}`, textAlign: "center" }}>
+                      <div style={{ fontSize: "0.75rem", color: t.labelColor, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>✨ Sortie</div>
+                      <div style={{ fontSize: "2rem", fontWeight: 800, color: t.accent, lineHeight: 1.1 }}>{data?.havdalah || "--:--"}</div>
+                      {timeNotes.havdalah && <div style={{ fontSize: "0.75rem", color: t.labelColor, fontStyle: "italic", marginTop: "4px" }}>{timeNotes.havdalah}</div>}
+                    </div>
                   </div>
 
-                  <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
-                    <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
-                      ☀️ Chabbat matin
-                    </h4>
-                    {shaharit && <TimeLine label="Shaharit" value={shaharit} note={timeNotes.shaharit} />}
-                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
+                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
+                        🕯️ Vendredi soir
+                      </h4>
+                      {minhaFri && <TimeLine label="Minha" value={minhaFri} note={timeNotes.minhaFri} />}
+                      {kabbalat && <TimeLine label="Kabbalat Chabbat" value={kabbalat} note={timeNotes.kabbalat} />}
+                      {arvitFri && <TimeLine label="Arvit" value={arvitFri} note={timeNotes.arvitFri} />}
+                      {!minhaFri && !kabbalat && !arvitFri && <div style={{ fontSize: "0.8rem", color: t.labelColor, fontStyle: "italic" }}>—</div>}
+                    </div>
 
-                  <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
-                    <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
-                      📚 Après-midi
-                    </h4>
-                    {minhaSat && <TimeLine label="Minha" value={minhaSat} note={timeNotes.minhaSat} />}
-                  </div>
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
+                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
+                        ☀️ Chabbat matin
+                      </h4>
+                      {shaharit && <TimeLine label="Shaharit" value={shaharit} note={timeNotes.shaharit} />}
+                      <TimeLine label="📖 Lecture Torah" value={data?.parasha || ""} note={timeNotes.torahReading} />
+                      {moussaf && <TimeLine label="Moussaf" value={moussaf} note={timeNotes.moussaf} />}
+                    </div>
 
-                  <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
-                    <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
-                      ✨ Motsé Chabbat
-                    </h4>
-                    <TimeLine label="Havdala" value={data?.havdalah || "--:--"} note={timeNotes.havdalah} />
-                    {arvitMotse && <TimeLine label="Arvit" value={arvitMotse} note={timeNotes.arvitMotse} />}
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
+                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
+                        📚 Après-midi
+                      </h4>
+                      {minhaSat && <TimeLine label="Minha" value={minhaSat} note={timeNotes.minhaSat} />}
+                      {!minhaSat && <div style={{ fontSize: "0.8rem", color: t.labelColor, fontStyle: "italic" }}>—</div>}
+                    </div>
+
+                    <div style={{ background: t.blockBg, borderRadius: "8px", padding: "14px", border: `1px solid ${t.blockBorder}` }}>
+                      <h4 style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.92rem", color: t.h4Color, marginBottom: "8px", paddingBottom: "5px", borderBottom: `1px solid ${t.blockBorder}` }}>
+                        ✨ Motsé Chabbat
+                      </h4>
+                      {arvitMotse && <TimeLine label="Arvit" value={arvitMotse} note={timeNotes.arvitMotse} />}
+                      {!arvitMotse && <div style={{ fontSize: "0.8rem", color: t.labelColor, fontStyle: "italic" }}>—</div>}
+                    </div>
                   </div>
-                </div>
+                </>
               )}
 
               {sponsor && (
