@@ -15,7 +15,6 @@ const features = [
   { id: "annonces", icon: "📢", title: "Annonces" },
   { id: "refoua", icon: "🙏", title: "Refoua Chelema" },
   { id: "minyan", icon: "👥", title: "Minyan Live" },
-  { id: "create-minyan", icon: "➕", title: "Créer Minyan" },
   { id: "evenements", icon: "📅", title: "Événements" },
   { id: "cours", icon: "🎥", title: "Cours en ligne" },
   { id: "stats", icon: "📊", title: "Statistiques" },
