@@ -10,7 +10,7 @@ import {
   addToGoogleCalendar,
 } from "@/lib/festivals";
 
-type FilterType = "all" | "yomtov" | "jeune";
+type FilterType = "all" | "yomtov" | "jeune" | "roshchodesh";
 
 const STATUS_BADGES: Record<string, { label: string; bg: string; text: string }> = {
   bientot: { label: "Bientôt", bg: "hsl(var(--gold) / 0.1)", text: "hsl(var(--gold-matte))" },
@@ -23,6 +23,7 @@ const FILTER_OPTIONS: { key: FilterType; label: string }[] = [
   { key: "all", label: "Tout" },
   { key: "yomtov", label: "Yom Tov" },
   { key: "jeune", label: "Jeûnes" },
+  { key: "roshchodesh", label: "Roch 'Hodech" },
 ];
 
 const FestivalCalendar = () => {
@@ -41,7 +42,11 @@ const FestivalCalendar = () => {
     });
   }, [city]);
 
-  const filtered = filter === "all" ? cards : cards.filter((c) => c.category === filter);
+  const filtered = filter === "all"
+    ? cards
+    : filter === "roshchodesh"
+    ? cards.filter((c) => c.id.startsWith("roshchodesh-"))
+    : cards.filter((c) => c.category === filter);
 
   const toggleExpand = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -339,31 +344,45 @@ interface DayTimelineProps {
 }
 
 const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelineProps) => {
-  // Only show candle lighting for erev (veille) days, and havdalah for yomtov/shabbat endings
   const isErev = day.type === "erev";
+  const isFast = day.type === "fast";
   const isYomTovOrShabbat = day.type === "yomtov" || day.isShabbat;
-  const showCandles = day.candles && (isErev || (isYomTovOrShabbat && day.isShabbat));
-  const showHavdalah = day.havdalah && (isYomTovOrShabbat || isErev);
-  const hasTime = showCandles || showHavdalah;
+  const showCandles = day.candles && (isErev || (isYomTovOrShabbat && day.isShabbat) || isFast);
+  const showHavdalah = day.havdalah && (isYomTovOrShabbat || isErev || isFast);
+  const hasTime = showCandles || showHavdalah || day.memo;
   if (!hasTime && compact) return null;
 
   return (
     <div className={`flex items-center gap-3 flex-wrap ${compact ? "mt-2" : "mt-3"}`}>
-      {showCandles && (
+      {isFast && day.candles && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs">⏰</span>
+          <span className="text-xs font-medium text-muted-foreground">Début</span>
+          <span className="text-sm font-bold text-primary">{day.candles}</span>
+        </div>
+      )}
+      {isFast && day.havdalah && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs">✅</span>
+          <span className="text-xs font-medium text-muted-foreground">Fin</span>
+          <span className="text-sm font-bold text-primary">{day.havdalah}</span>
+        </div>
+      )}
+      {!isFast && showCandles && (
         <div className="flex items-center gap-1.5">
           <span className="text-xs">🕯️</span>
           <span className="text-xs font-medium text-muted-foreground">Allumage</span>
           <span className="text-sm font-bold text-primary">{day.candles}</span>
         </div>
       )}
-      {showHavdalah && (
+      {!isFast && showHavdalah && (
         <div className="flex items-center gap-1.5">
           <span className="text-xs">✨</span>
           <span className="text-xs font-medium text-muted-foreground">Sortie</span>
           <span className="text-sm font-bold text-primary">{day.havdalah}</span>
         </div>
       )}
-      {hasTime && (
+      {(showCandles || showHavdalah) && (
         <button
           onClick={(e) => { e.stopPropagation(); onCalendarClick(day); }}
           className="ml-auto text-[10px] font-bold text-primary/60 hover:text-primary cursor-pointer bg-transparent border-none transition-colors px-2 py-1 rounded-lg hover:bg-primary/5"
