@@ -186,20 +186,22 @@ const AfficheChabbatWidget = () => {
 
   const inputClass = "w-full px-4 py-4 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50";
 
-  const PosterSection = ({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) => (
-    <div style={{ border: `1px solid ${t.blockBorder}`, borderRadius: "6px", marginBottom: "6px", overflow: "hidden" }}>
-      <div style={{ padding: "4px 10px", borderBottom: `1px solid ${t.blockBorder}` }}>
-        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.72rem", fontWeight: 700, color: t.h4Color }}>{icon} {title}</span>
+  const PosterSection = ({ title, children }: { icon?: string; title: string; children: React.ReactNode }) => (
+    <div style={{ marginBottom: "10px", textAlign: "center" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "6px" }}>
+        <div style={{ flex: 1, maxWidth: "40px", height: "0.5px", background: `linear-gradient(90deg, transparent, #c8b47a)` }} />
+        <span style={{ fontFamily: "'Lora', serif", fontSize: "0.62rem", fontWeight: 400, color: "#c8b47a", letterSpacing: "1.5px", textTransform: "uppercase" }}>{title}</span>
+        <div style={{ flex: 1, maxWidth: "40px", height: "0.5px", background: `linear-gradient(90deg, #c8b47a, transparent)` }} />
       </div>
-      <div style={{ padding: "5px 10px" }}>{children}</div>
+      <div>{children}</div>
     </div>
   );
 
-  const TimeLine = ({ label, value, note, big }: { label: string; value: string; note?: string; big?: boolean }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "6px", padding: "3px 0", borderBottom: `1px solid ${t.blockBorder}22` }}>
-      <span style={{ color: t.labelColor, fontSize: "0.7rem", fontWeight: 400 }}>{label}</span>
-      <span style={{ fontWeight: big ? 600 : 500, color: t.accent, textAlign: "right", fontSize: big ? "0.8rem" : "0.75rem", whiteSpace: "nowrap" }}>
-        {value}{note && <span style={{ fontWeight: 400, fontSize: "0.6rem", color: t.labelColor, fontStyle: "italic", marginLeft: "4px" }}>({note})</span>}
+  const TimeLine = ({ label, value, note }: { label: string; value: string; note?: string; big?: boolean }) => (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "baseline", gap: "8px", padding: "2.5px 0" }}>
+      <span style={{ color: "#6b6b6b", fontSize: "0.65rem", fontFamily: "'Lora', serif", fontWeight: 400 }}>{label}</span>
+      <span style={{ fontFamily: "'Lora', serif", fontWeight: 400, color: "#2F2F2F", fontSize: "0.72rem" }}>
+        {value}{note && <span style={{ fontSize: "0.55rem", color: "#999", fontStyle: "italic", marginLeft: "4px" }}>({note})</span>}
       </span>
     </div>
   );
