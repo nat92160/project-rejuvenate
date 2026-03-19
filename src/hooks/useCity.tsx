@@ -11,26 +11,39 @@ interface CityContextType {
 
 const CityContext = createContext<CityContextType | null>(null);
 
+async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  try {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&accept-language=fr`,
+      { headers: { "User-Agent": "ChabbatChalom/1.0" } }
+    );
+    const d = await r.json();
+    return d.address?.city || d.address?.town || d.address?.village || d.address?.municipality || null;
+  } catch {
+    return null;
+  }
+}
+
 export function CityProvider({ children }: { children: ReactNode }) {
   const [cityKey, setCityKeyState] = useState(() => {
     try { return localStorage.getItem("calj_city") || DEFAULT_CITY; } catch { return DEFAULT_CITY; }
   });
   const [isGeolocating, setIsGeolocating] = useState(false);
+  const [gpsCity, setGpsCity] = useState<CityConfig | null>(null);
 
   const setCityKey = (key: string) => {
     setCityKeyState(key);
     try { localStorage.setItem("calj_city", key); } catch {}
   };
 
-  const [gpsCity, setGpsCity] = useState<CityConfig | null>(null);
-
   const geolocate = () => {
     if (!navigator.geolocation) return;
     setIsGeolocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const { latitude, longitude } = pos.coords;
-        // Find nearest city for name/tz, but use exact GPS coords for calculations
+
+        // Find nearest predefined city for fallback name & timezone
         let nearestKey = DEFAULT_CITY;
         let nearestDist = Infinity;
         for (const [key, c] of Object.entries(CITIES)) {
@@ -40,12 +53,19 @@ export function CityProvider({ children }: { children: ReactNode }) {
           if (d < nearestDist) { nearestDist = d; nearestKey = key; }
         }
         const base = CITIES[nearestKey] || CITIES[DEFAULT_CITY];
-        // Create a GPS-precise city config using exact coordinates
+
+        // Get real city name via reverse geocoding
+        const realCityName = await reverseGeocode(latitude, longitude);
+
+        // Use browser timezone (most accurate for user's actual location)
+        const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || base.tz;
+
         setGpsCity({
           ...base,
-          name: `📍 ${base.name}`,
+          name: `📍 ${realCityName || base.name}`,
           lat: latitude,
           lng: longitude,
+          tz: browserTz,
           _gps: true,
         } as CityConfig & { _gps: boolean });
         setCityKey("__gps__");
