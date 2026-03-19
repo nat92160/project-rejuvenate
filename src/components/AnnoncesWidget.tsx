@@ -354,9 +354,9 @@ const AnnoncesWidget = () => {
                 )}
                 <div className="flex flex-wrap gap-2 mt-4 pl-[52px]">
                   <button onClick={() => { setPosterAnnonce(a); setPosterStyle(a.priority === "urgent" ? "urgent" : "elegant"); }}
-                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer"
-                    style={{ background: "#25d366", color: "#fff" }}>
-                    💬 Partager
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground"
+                    style={{ background: "var(--gradient-gold)" }}>
+                    📤 Partager
                   </button>
                   {isPresident && user?.id === a.creator_id && (
                     <button onClick={() => handleDelete(a.id)}

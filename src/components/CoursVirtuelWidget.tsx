@@ -349,9 +349,9 @@ const CoursVirtuelWidget = () => {
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
                   <button onClick={() => shareCours(c)}
-                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer"
-                    style={{ background: "#25d366", color: "#fff" }}>
-                    💬 Partager
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground"
+                    style={{ background: "var(--gradient-gold)" }}>
+                    📤 Partager
                   </button>
                   {isPresident && user?.id === c.creator_id && (
                     <button onClick={() => void handleDelete(c.id)}

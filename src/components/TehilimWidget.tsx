@@ -271,7 +271,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
         </div>
 
         <div className="flex gap-2 mt-3 flex-wrap">
-          <a href={whatsappShareUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border-none text-white no-underline inline-block" style={{ background: "#25d366" }}>📲 WhatsApp</a>
+          <button onClick={shareChain} className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border-none text-primary-foreground" style={{ background: "var(--gradient-gold)" }}>📤 Partager</button>
           <button onClick={() => { navigator.clipboard.writeText(shareUrl); toast.success("Lien copié !"); }} className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border border-border bg-muted text-muted-foreground">📋 Copier</button>
         </div>
       </div>

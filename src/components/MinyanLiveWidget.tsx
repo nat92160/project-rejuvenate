@@ -249,7 +249,7 @@ const MinyanLiveWidget = () => {
           </div>
 
           {isRegistered && (
-            <button onClick={shareMinyan} className="w-full mt-3 py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer text-center" style={{ background: "#25d366" }}>📲 Partager via WhatsApp</button>
+            <button onClick={shareMinyan} className="w-full mt-3 py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer text-center" style={{ background: "var(--gradient-gold)" }}>📤 Partager</button>
           )}
 
           {/* Calendar .ics button */}

@@ -439,7 +439,7 @@ const AfficheChabbatWidget = () => {
 
           <div className="flex gap-3">
             <button onClick={handleExport} className="flex-1 py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>💾 JPG</button>
-            <button onClick={shareWhatsApp} className="flex-1 py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer" style={{ background: "#25d366" }}>💬 WhatsApp</button>
+            <button onClick={sharePoster} className="flex-1 py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)" }}>📤 Partager</button>
           </div>
         </div>
       )}
