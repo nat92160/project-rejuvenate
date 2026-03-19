@@ -139,35 +139,53 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
     const year = now.getFullYear();
     const geoP = hebcalGeoParam(city);
 
-    // Fetch holidays WITH candle lighting times
-    const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${year}&month=x&maj=on&min=on&mod=on&nx=off&ss=off&mf=on&c=on&${geoP}&i=off&b=18`;
-    const r = await fetch(url);
-    const data = await r.json();
-    const items: any[] = data.items || [];
+    // Fetch both years with nx=on (Rosh Chodesh) and mf=on (minor fasts)
+    const makeUrl = (y: number) =>
+      `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${y}&month=x&maj=on&min=on&mod=on&nx=on&ss=off&mf=on&c=on&${geoP}&i=off&b=18`;
+    
+    const [r1, r2] = await Promise.all([fetch(makeUrl(year)), fetch(makeUrl(year + 1))]);
+    const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
+    const items: any[] = [...(d1.items || []), ...(d2.items || [])];
 
-    // Build a map of candle/havdalah times by date
+    // Build maps of times by date
     const candlesByDate: Record<string, string> = {};
     const havdalahByDate: Record<string, string> = {};
+    const fastBeginByDate: Record<string, string> = {};
+    const fastEndByDate: Record<string, string> = {};
 
     for (const item of items) {
-      if (item.category === "candles" && item.date) {
-        const dateKey = item.date.substring(0, 10);
-        candlesByDate[dateKey] = fmtTime(item.date);
-      }
-      if (item.category === "havdalah" && item.date) {
-        const dateKey = item.date.substring(0, 10);
-        havdalahByDate[dateKey] = fmtTime(item.date);
+      const dateKey = item.date?.substring(0, 10);
+      if (!dateKey) continue;
+      if (item.category === "candles") candlesByDate[dateKey] = fmtTime(item.date);
+      if (item.category === "havdalah") havdalahByDate[dateKey] = fmtTime(item.date);
+      if (item.subcat === "fast" && item.category === "zmanim") {
+        if (item.title?.toLowerCase().includes("begins")) fastBeginByDate[dateKey] = fmtTime(item.date);
+        if (item.title?.toLowerCase().includes("ends")) fastEndByDate[dateKey] = fmtTime(item.date);
       }
     }
 
     // Group holidays
     const groups: Record<string, FestivalDay[]> = {};
     const singles: FestivalCard[] = [];
+    // Collect Rosh Chodesh by month name
+    const roshChodeshMap: Record<string, { dates: string[]; hebrew: string }> = {};
 
     for (const item of items) {
-      if (item.category !== "holiday" && item.category !== "roshchodesh") continue;
-      // Skip Rosh Chodesh for now
-      if (item.category === "roshchodesh") continue;
+      // Process Rosh Chodesh
+      if (item.category === "roshchodesh") {
+        const dateStr = item.date?.substring(0, 10);
+        if (!dateStr) continue;
+        const dt = new Date(dateStr + "T12:00:00");
+        if (dt < now && (now.getTime() - dt.getTime()) > 2 * 86400000) continue;
+        const monthName = item.title.replace("Rosh Chodesh ", "");
+        if (!roshChodeshMap[monthName]) roshChodeshMap[monthName] = { dates: [], hebrew: item.hebrew || "" };
+        if (!roshChodeshMap[monthName].dates.includes(dateStr)) {
+          roshChodeshMap[monthName].dates.push(dateStr);
+        }
+        continue;
+      }
+
+      if (item.category !== "holiday") continue;
 
       const key = item.title.toLowerCase().trim();
       const dateStr = item.date?.substring(0, 10);
@@ -207,10 +225,18 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       const singleInfo = SINGLE_HOLIDAYS[key];
       if (singleInfo) {
         const daysLeft = Math.ceil((dt.getTime() - now.getTime()) / 86400000);
-        if (daysLeft < -1) continue; // Skip past holidays
+        if (daysLeft < -1) continue;
+
+        // For fasts, include begin/end times in memo
+        const isFast = singleInfo.category === "jeune";
+        const fastBegin = fastBeginByDate[dateStr];
+        const fastEnd = fastEndByDate[dateStr];
+        const memo = isFast
+          ? [fastBegin ? `Début: ${fastBegin}` : "", fastEnd ? `Fin: ${fastEnd}` : ""].filter(Boolean).join(" — ")
+          : undefined;
 
         singles.push({
-          id: key,
+          id: `${key}-${dateStr}`,
           name: singleInfo.name,
           emoji: singleInfo.emoji,
           hebrew: item.hebrew || "",
@@ -224,10 +250,11 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
             dayOfWeek,
             title: singleInfo.name,
             hebrew: item.hebrew || "",
-            type: singleInfo.category === "jeune" ? "fast" : "single",
-            candles: candlesByDate[dateStr],
-            havdalah: havdalahByDate[dateStr],
+            type: isFast ? "fast" : "single",
+            candles: fastBegin || candlesByDate[dateStr],
+            havdalah: fastEnd || havdalahByDate[dateStr],
             isShabbat,
+            memo,
           }],
         });
       }
@@ -240,7 +267,6 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       const info = GROUP_NAMES[groupId];
       if (!info || days.length === 0) continue;
 
-      // Sort by date
       days.sort((a, b) => a.date.localeCompare(b.date));
 
       const firstDate = days[0].date;
@@ -248,7 +274,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       const firstDt = new Date(firstDate + "T12:00:00");
       const daysLeft = Math.ceil((firstDt.getTime() - now.getTime()) / 86400000);
 
-      if (daysLeft < -10) continue; // Skip long-past holidays
+      if (daysLeft < -10) continue;
 
       const dateRange = `${fmtDateShort(firstDate)} — ${fmtDateShort(lastDate)} ${firstDt.getFullYear()}`;
 
@@ -265,8 +291,45 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       });
     }
 
-    // Merge and sort all
-    const all = [...cards, ...singles]
+    // Build Rosh Chodesh cards — take only the next 3
+    const roshChodeshCards: FestivalCard[] = [];
+    for (const [monthName, rc] of Object.entries(roshChodeshMap)) {
+      rc.dates.sort();
+      const firstDate = rc.dates[0];
+      const firstDt = new Date(firstDate + "T12:00:00");
+      const daysLeft = Math.ceil((firstDt.getTime() - now.getTime()) / 86400000);
+      if (daysLeft < -2) continue;
+
+      const days: FestivalDay[] = rc.dates.map(dateStr => {
+        const dt = new Date(dateStr + "T12:00:00");
+        return {
+          date: dateStr,
+          dateFr: fmtDate(dateStr),
+          dayOfWeek: dt.getDay(),
+          title: `Roch 'Hodech ${monthName}`,
+          hebrew: rc.hebrew,
+          type: "single" as const,
+          isShabbat: dt.getDay() === 6,
+        };
+      });
+
+      roshChodeshCards.push({
+        id: `roshchodesh-${monthName}`,
+        name: `Roch 'Hodech ${monthName}`,
+        emoji: "🌙",
+        hebrew: rc.hebrew,
+        dateRange: rc.dates.length > 1
+          ? `${fmtDateShort(rc.dates[0])} — ${fmtDateShort(rc.dates[1])}`
+          : fmtDateShort(rc.dates[0]),
+        daysLeft: Math.max(0, daysLeft),
+        status: daysLeft < 0 ? "termine" : daysLeft === 0 ? "encours" : "bientot",
+        category: "minor",
+        days,
+      });
+    }
+
+    // Merge and sort all — take only upcoming
+    const all = [...cards, ...singles, ...roshChodeshCards.slice(0, 3)]
       .filter(c => c.status !== "termine")
       .sort((a, b) => {
         const dateA = a.days[0]?.date || "";
