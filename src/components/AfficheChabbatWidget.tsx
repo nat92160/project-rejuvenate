@@ -234,18 +234,18 @@ const AfficheChabbatWidget = () => {
           {/* Synagogue info */}
           <div className="rounded-2xl bg-card p-4 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
             <h4 className="font-display text-sm font-bold text-foreground mb-3">🏛️ Informations</h4>
-            <div className="space-y-2.5">
-              <div>
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Nom de la synagogue</label>
-                <input value={synaName} onChange={e => setSynaName(e.target.value)} placeholder="Ex: Beth Hamidrach..." className={inputClass} />
+            <div className="space-y-4">
+              <div className="relative">
+                <label className="absolute -top-2 left-3 px-1 bg-card text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10 rounded">🏛️ Nom de la synagogue</label>
+                <input value={synaName} onChange={e => setSynaName(e.target.value)} placeholder="Ex: Beth Hamidrach..." className={`${inputClass} pt-4`} />
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Adresse</label>
-                <input value={synaAddress} onChange={e => setSynaAddress(e.target.value)} placeholder="123 rue..." className={inputClass} />
+              <div className="relative">
+                <label className="absolute -top-2 left-3 px-1 bg-card text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10 rounded">📍 Adresse</label>
+                <input value={synaAddress} onChange={e => setSynaAddress(e.target.value)} placeholder="123 rue..." className={`${inputClass} pt-4`} />
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Rav de la communauté</label>
-                <input value={synaRav} onChange={e => setSynaRav(e.target.value)} placeholder="Rav..." className={inputClass} />
+              <div className="relative">
+                <label className="absolute -top-2 left-3 px-1 bg-card text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10 rounded">👤 Rav de la communauté</label>
+                <input value={synaRav} onChange={e => setSynaRav(e.target.value)} placeholder="Rav..." className={`${inputClass} pt-4`} />
               </div>
             </div>
           </div>
