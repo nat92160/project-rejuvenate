@@ -18,7 +18,9 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
       { headers: { "User-Agent": "ChabbatChalom/1.0" } }
     );
     const d = await r.json();
-    return d.address?.city || d.address?.town || d.address?.village || d.address?.municipality || null;
+    const a = d.address || {};
+    // Prefer larger administrative names for better UX
+    return a.city || a.municipality || a.town || a.village || a.county || null;
   } catch {
     return null;
   }
