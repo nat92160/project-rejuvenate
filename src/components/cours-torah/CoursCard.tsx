@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import html2canvas from "html2canvas";
 import { toast } from "sonner";
+import MasterPosterTemplate, { type PosterContentBlock, type SynaProfile } from "@/components/poster/MasterPosterTemplate";
+import { exportPosterPng } from "@/components/poster/usePosterExport";
 
 interface CoursCardProps {
   id: string;
@@ -17,27 +18,43 @@ interface CoursCardProps {
   cityName: string;
   isOwner: boolean;
   index: number;
+  synaProfile: SynaProfile;
   onDelete: (id: string) => void;
 }
 
 const dayColors: Record<string, string> = {
-  Lundi: "#3b82f6",
-  Mardi: "#8b5cf6",
-  Mercredi: "#22c55e",
-  Jeudi: "#f97316",
-  Vendredi: "#ef4444",
-  Dimanche: "#eab308",
+  Lundi: "#3b82f6", Mardi: "#8b5cf6", Mercredi: "#22c55e",
+  Jeudi: "#f97316", Vendredi: "#ef4444", Dimanche: "#eab308",
 };
 
 const CoursCard = ({
   id, title, rav, day_of_week, course_time, zoom_link, description,
-  course_type, address, cityName, isOwner, index, onDelete,
+  course_type, address, cityName, isOwner, index, synaProfile, onDelete,
 }: CoursCardProps) => {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const posterRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
   const isZoom = course_type === "zoom";
   const dotColor = dayColors[day_of_week] || "#94a3b8";
 
-  const getShareText = () => {
+  const posterContent: PosterContentBlock = {
+    category: isZoom ? "COURS DE TORAH — ZOOM" : "COURS DE TORAH — PRÉSENTIEL",
+    title: title,
+    description: description || undefined,
+    details: [
+      ...(rav ? [{ icon: "👨‍🏫", text: rav }] : []),
+      { icon: "📅", text: `${day_of_week} à ${course_time?.slice(0, 5)}` },
+      ...(isZoom && zoom_link ? [{ icon: "🎥", text: zoom_link }] : []),
+      ...(!isZoom && address ? [{ icon: "📍", text: address }] : []),
+    ],
+  };
+
+  const handleExportPng = async () => {
+    setExporting(true);
+    await exportPosterPng(posterRef.current, `cours-${title.replace(/\s+/g, "-").toLowerCase()}.png`);
+    setExporting(false);
+  };
+
+  const handleShare = async () => {
     let text = `📚 ${title}\n`;
     if (rav) text += `👨‍🏫 ${rav}\n`;
     text += `📅 ${day_of_week} à ${course_time?.slice(0, 5)}\n`;
@@ -45,34 +62,11 @@ const CoursCard = ({
     if (!isZoom && address) text += `\n📍 ${address}\n`;
     if (description) text += `\n${description}\n`;
     text += `\n✡️ Chabbat Chalom • ${cityName}`;
-    return text;
-  };
-
-  const handleShare = async () => {
-    const text = getShareText();
     if (navigator.share) {
       try { await navigator.share({ text }); return; } catch {}
     }
     await navigator.clipboard?.writeText(text);
     toast.success("Lien copié dans le presse-papier !");
-  };
-
-  const handleDownloadPng = async () => {
-    if (!cardRef.current) return;
-    try {
-      const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: "#ffffff",
-        scale: 2,
-        useCORS: true,
-      });
-      const link = document.createElement("a");
-      link.download = `cours-${title.replace(/\s+/g, "-").toLowerCase()}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-      toast.success("Affiche téléchargée !");
-    } catch {
-      toast.error("Erreur lors du téléchargement");
-    }
   };
 
   const handleAction = () => {
@@ -91,13 +85,13 @@ const CoursCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
     >
-      {/* Printable card area */}
-      <div
-        ref={cardRef}
-        className="rounded-2xl bg-card p-5 border border-border"
-        style={{ boxShadow: "var(--shadow-card)" }}
-      >
-        {/* Type badge + day */}
+      {/* Hidden poster for PNG export */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <MasterPosterTemplate ref={posterRef} profile={synaProfile} content={posterContent} />
+      </div>
+
+      {/* Visible card */}
+      <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <span
             className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full tracking-wider"
@@ -117,12 +111,9 @@ const CoursCard = ({
           <span className="text-xs font-bold text-foreground">{course_time?.slice(0, 5)}</span>
         </div>
 
-        {/* Title & info */}
         <h4 className="font-display text-base font-bold text-foreground leading-tight">{title}</h4>
         {rav && (
-          <p className="text-xs font-medium mt-1" style={{ color: "hsl(var(--gold-matte))" }}>
-            {rav}
-          </p>
+          <p className="text-xs font-medium mt-1" style={{ color: "hsl(var(--gold-matte))" }}>{rav}</p>
         )}
         {description && (
           <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">{description}</p>
@@ -133,7 +124,6 @@ const CoursCard = ({
           </p>
         )}
 
-        {/* Action button */}
         <button
           onClick={handleAction}
           className="mt-4 w-full py-3 rounded-xl font-bold text-sm border-none cursor-pointer text-white transition-transform hover:scale-[1.02] active:scale-[0.98]"
@@ -150,14 +140,15 @@ const CoursCard = ({
         </button>
       </div>
 
-      {/* Actions below the card (not captured in PNG) */}
+      {/* Actions */}
       <div className="flex flex-wrap gap-2 mt-2 px-1">
         <button
-          onClick={handleDownloadPng}
-          className="text-[11px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground"
+          onClick={handleExportPng}
+          disabled={exporting}
+          className="text-[11px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground disabled:opacity-50"
           style={{ background: "var(--gradient-gold)" }}
         >
-          📥 Télécharger PNG
+          {exporting ? "⏳ Génération..." : "📥 Générer l'Affiche Pro"}
         </button>
         <button
           onClick={handleShare}
