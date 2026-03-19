@@ -130,20 +130,26 @@ const AfficheChabbatWidget = () => {
     const blob = await generatePosterBlob();
     const file = blob ? new File([blob], `affiche-chabbat-${city.name}.jpg`, { type: "image/jpeg" }) : null;
     const baseText = `🕯️ Chabbat Chalom !\n\n🏛️ ${synaName}\n⏰ Allumage : ${data?.candleLighting || ""}\n🌙 Havdala : ${data?.havdalah || ""}\n📖 Paracha : ${data?.parasha || ""}`;
-    if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText }); } catch {}
-      return;
+
+    try {
+      if (file && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Affiche de Chabbat", text: baseText });
+        return;
+      }
+      if (navigator.share) {
+        await navigator.share({ title: "Affiche de Chabbat", text: baseText });
+        return;
+      }
+    } catch (err: any) {
+      if (err?.name === "AbortError") return;
     }
-    if (navigator.share) {
-      try { await navigator.share({ title: "Affiche de Chabbat", text: baseText }); return; } catch {}
-    }
-    // Fallback: download JPG + copy text
+    // Fallback: download + copy
     if (blob) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a"); a.download = `affiche-chabbat-${city.name}.jpg`; a.href = url; a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
-    await navigator.clipboard?.writeText(baseText);
+    try { await navigator.clipboard.writeText(baseText); } catch {}
     toast.success("Image téléchargée et texte copié !");
   };
 
