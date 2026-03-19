@@ -32,8 +32,6 @@ const AnnoncesWidget = () => {
   const [newPriority, setNewPriority] = useState("normal");
   const [submitting, setSubmitting] = useState(false);
   const [sharingId, setSharingId] = useState<string | null>(null);
-  const [selectedCardStyle, setSelectedCardStyle] = useState<CardStyle>("elegant");
-  const posterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchAnnonces = async () => {
