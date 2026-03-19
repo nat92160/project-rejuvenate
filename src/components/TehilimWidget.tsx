@@ -306,7 +306,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
     zivougue: "💍 Zivougué",
   };
 
-  const shareUrl = `${window.location.origin}/?tehilim=${chain.id}`;
+  const shareUrl = `${window.location.origin}/tehilim/${chain.id}`;
 
   const shareWhatsApp = () => {
     const text = `📖 Chaîne de Tehilim : ${chain.title}${chain.dedication ? `\n🙏 ${chain.dedication}` : ""}\n\n${totalClaimed}/${CHAIN_GROUPS.length} réservés • ${totalCompleted} terminés\n\nChoisissez un groupe de psaumes :\n${shareUrl}`;

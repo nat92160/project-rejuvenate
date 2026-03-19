@@ -15,7 +15,6 @@ const features = [
   { id: "annonces", icon: "📢", title: "Annonces" },
   { id: "refoua", icon: "🙏", title: "Refoua Chelema" },
   { id: "minyan", icon: "👥", title: "Minyan Live" },
-  { id: "create-minyan", icon: "➕", title: "Créer Minyan" },
   { id: "evenements", icon: "📅", title: "Événements" },
   { id: "cours", icon: "🎥", title: "Cours en ligne" },
   { id: "stats", icon: "📊", title: "Statistiques" },
@@ -25,106 +24,7 @@ interface PresidentDashboardProps {
   onLoginClick?: () => void;
 }
 
-const CreateMinyanForm = ({ onBack }: { onBack: () => void }) => {
-  const { user, dbRole } = useAuth();
-  const [form, setForm] = useState({ office_type: "shacharit", office_date: "", office_time: "", target_count: "10" });
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  const handleCreate = async () => {
-    if (!form.office_date || !form.office_time) {
-      toast.error("Veuillez remplir la date et l'heure");
-      return;
-    }
-    if (!user) {
-      toast.error("Vous devez être connecté");
-      return;
-    }
-    if (dbRole !== "president") {
-      toast.error("Votre compte n'a pas le rôle Président.");
-      return;
-    }
-
-    setSubmitting(true);
-    const { error } = await supabase.from("minyan_sessions").insert({
-      creator_id: user.id,
-      office_type: form.office_type,
-      office_date: form.office_date,
-      office_time: form.office_time,
-      target_count: parseInt(form.target_count) || 10,
-    });
-
-    if (error) {
-      toast.error("Erreur: vérifiez que vous avez le rôle Président.");
-      console.error("Minyan session create error:", error);
-    } else {
-      toast.success("✅ Session de Minyan créée !");
-      setSuccess(true);
-      setTimeout(() => onBack(), 1500);
-    }
-    setSubmitting(false);
-  };
-
-  if (success) {
-    return (
-      <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-        <span className="text-5xl">✅</span>
-        <p className="text-sm font-bold text-foreground mt-4">Session de Minyan créée !</p>
-      </div>
-    );
-  }
-
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2 mb-4">
-        ➕ Créer une session de Minyan
-      </h3>
-      <div className="rounded-2xl bg-card p-5 border border-border space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
-        <select
-          value={form.office_type}
-          onChange={(e) => setForm({ ...form, office_type: e.target.value })}
-          className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          <option value="shacharit">🌅 Cha'harit</option>
-          <option value="minha">☀️ Min'ha</option>
-          <option value="arvit">🌙 Arvit</option>
-        </select>
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            type="date"
-            value={form.office_date}
-            onChange={(e) => setForm({ ...form, office_date: e.target.value })}
-            className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-          <input
-            type="time"
-            value={form.office_time}
-            onChange={(e) => setForm({ ...form, office_time: e.target.value })}
-            className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-        </div>
-        <input
-          type="number"
-          value={form.target_count}
-          onChange={(e) => setForm({ ...form, target_count: e.target.value })}
-          placeholder="Objectif (par défaut 10)"
-          min="1"
-          max="100"
-          className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-        />
-        <button
-          onClick={handleCreate}
-          disabled={submitting || !form.office_date || !form.office_time}
-          className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
-          style={{ background: "var(--gradient-gold)" }}
-        >
-          {submitting ? "Création..." : "Créer la session"}
-        </button>
-      </div>
-    </motion.div>
-  );
-};
-
+// CreateMinyanForm removed — creation is now integrated into MinyanLiveWidget
 const StatsDashboard = () => {
   const [stats, setStats] = useState({ annonces: 0, sessions: 0, registrations: 0, evenements: 0, cours: 0 });
   const [recentRegs, setRecentRegs] = useState<{ display_name: string; office_type: string; office_date: string }[]>([]);
@@ -239,7 +139,8 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
       case "annonces": return <AnnoncesWidget />;
       case "refoua": return <RefouaChelemaWidget />;
       case "minyan": return <MinyanLiveWidget />;
-      case "create-minyan": return <CreateMinyanForm onBack={() => setActiveFeature(null)} />;
+      case "create-minyan":
+      case "minyan": return <MinyanLiveWidget />;
       case "evenements": return <EvenementsWidget />;
       case "cours": return <CoursVirtuelWidget />;
       case "stats": return <StatsDashboard />;
