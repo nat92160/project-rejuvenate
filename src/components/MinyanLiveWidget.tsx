@@ -239,7 +239,7 @@ const MinyanLiveWidget = () => {
             ) : (
               <>
                 <button onClick={handleRegister} className="py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>➕ Je suis là</button>
-                <button onClick={handleShareWhatsApp} className="py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer" style={{ background: "#25d366" }}>📲 WhatsApp</button>
+                <a href={whatsappShareUrl} target="_blank" rel="noopener noreferrer" className="py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer text-center no-underline inline-block" style={{ background: "#25d366" }}>📲 WhatsApp</a>
               </>
             )}
           </div>
