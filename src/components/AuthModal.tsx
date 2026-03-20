@@ -45,6 +45,8 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
       setSignupRole("fidele");
       setSynagogueName("");
       setPresidentMessage("");
+      setFirstName("");
+      setLastName("");
     }
   }, [open]);
 
