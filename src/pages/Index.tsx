@@ -120,7 +120,7 @@ const IndexContent = () => {
       {!showDashboard ? (
         <HeroSection onContinue={handleContinue} />
       ) : (
-        <div className="relative min-h-screen bg-background">
+        <div className="relative min-h-screen bg-background" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div className="max-w-[600px] mx-auto px-4 pb-24">
             {/* Top bar — no dark mode toggle */}
             <div className="flex justify-end items-center py-2.5">

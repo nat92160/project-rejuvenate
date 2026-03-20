@@ -48,14 +48,14 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
         <select value={form.office_type} onChange={e => setForm({...form, office_type: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm">
           <option value="shacharit">🌅 Cha'harit</option><option value="minha">☀️ Min'ha</option><option value="arvit">🌙 Arvit</option>
         </select>
-        <div className="grid grid-cols-2 gap-5">
+        <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2 sm:gap-5">
           <div>
             <label className="block text-xs font-semibold text-muted-foreground mb-1.5">📅 Date de la session</label>
-            <input type="date" value={form.office_date} onChange={e => setForm({...form, office_date: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm" />
+            <input type="date" value={form.office_date} onChange={e => setForm({...form, office_date: e.target.value})} className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm min-h-[52px]" />
           </div>
           <div>
             <label className="block text-xs font-semibold text-muted-foreground mb-1.5">🕐 Heure de début</label>
-            <input type="time" value={form.office_time} onChange={e => setForm({...form, office_time: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm" />
+            <input type="time" value={form.office_time} onChange={e => setForm({...form, office_time: e.target.value})} className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm min-h-[52px]" />
           </div>
         </div>
         <button onClick={handleCreate} disabled={submitting || !form.office_date || !form.office_time} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50" style={{ background: "var(--gradient-gold)" }}>
