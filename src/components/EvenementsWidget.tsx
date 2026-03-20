@@ -176,6 +176,19 @@ const EvenementsWidget = () => {
                     className="w-full min-w-0 rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
                 </div>
+                <div className="min-w-0 space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    <span aria-hidden="true">🕐</span>
+                    <span>Heure</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={form.event_time}
+                    onChange={(e) => setForm({ ...form, event_time: e.target.value })}
+                    className="w-full min-w-0 rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+              </div>
               <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="📍 Lieu"
                 className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
               <select value={form.event_type} onChange={(e) => setForm({ ...form, event_type: e.target.value })}
