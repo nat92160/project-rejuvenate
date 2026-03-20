@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { toast } from "sonner";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 
