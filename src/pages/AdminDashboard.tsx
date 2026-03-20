@@ -166,7 +166,8 @@ const AdminDashboard = () => {
       body: {
         action: "update_profile",
         user_id: editingUser.id,
-        display_name: profileForm.display_name.trim(),
+        first_name: profileForm.first_name.trim(),
+        last_name: profileForm.last_name.trim(),
         city: profileForm.city.trim(),
       },
     });
