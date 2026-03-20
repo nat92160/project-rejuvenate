@@ -167,7 +167,7 @@ const AnnoncesWidget = () => {
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}>
 
               {/* Inline preview (scaled down from 1080px to fit modal) */}
-              <div style={{ transform: "scale(0.34)", transformOrigin: "top center", height: 370, overflow: "hidden" }}>
+              <div style={{ transform: "scale(0.34)", transformOrigin: "top left", width: 1080, height: 1080, marginBottom: -1080 * (1 - 0.34), marginRight: -1080 * (1 - 0.34) }}>
                 <CardPosterTemplate
                   profile={{ name: synaProfile.name || "Chabbat Chalom", logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
                   content={posterContent!}
