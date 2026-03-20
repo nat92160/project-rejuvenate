@@ -119,7 +119,6 @@ const AnnoncesWidget = () => {
   } : null;
 
   const inputClass = "w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
-  const inputClass = "w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
