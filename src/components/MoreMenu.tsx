@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import ZoomAccountManager from "@/components/cours-torah/ZoomAccountManager";
 import { getAvailableTabs, type BottomNavMode } from "@/lib/navigation";
 import AuthModal from "@/components/AuthModal";
 
@@ -13,8 +14,9 @@ interface MoreMenuProps {
 }
 
 const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuProps) => {
-  const { user, signOut } = useAuth();
+  const { user, dbRole, signOut } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
+  const [showZoomManager, setShowZoomManager] = useState(false);
   const menuItems = useMemo(() => getAvailableTabs(mode), [mode]);
 
   const toggleAccount = (checked: boolean) => {
@@ -119,6 +121,27 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
                     </label>
                   </div>
                 </div>
+
+                {/* Zoom accounts management for presidents */}
+                {user && dbRole === "president" && (
+                  <div className="rounded-xl border border-border bg-muted/50 p-3">
+                    <button
+                      onClick={() => setShowZoomManager(!showZoomManager)}
+                      className="flex w-full items-center justify-between border-none bg-transparent cursor-pointer p-0"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🎥</span>
+                        <span className="text-xs font-bold text-foreground">Comptes Zoom</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{showZoomManager ? "▲" : "▼"}</span>
+                    </button>
+                    {showZoomManager && (
+                      <div className="mt-3">
+                        <ZoomAccountManager userId={user.id} />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
           </>

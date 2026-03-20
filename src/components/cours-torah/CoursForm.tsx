@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ZoomAccountManager from "./ZoomAccountManager";
 
 interface CoursFormProps {
   userId: string;
@@ -26,6 +27,7 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
   const [address, setAddress] = useState("");
   const [desc, setDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [zoomAccountId, setZoomAccountId] = useState<string | null>(null);
 
   useEffect(() => {
     setCourseType(initialCourseType);
@@ -38,6 +40,7 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
         title: meetingTitle,
         timezone: "Europe/Paris",
         duration: 60,
+        ...(zoomAccountId ? { zoom_account_db_id: zoomAccountId } : {}),
       };
 
       if (zoomMode === "scheduled") {
@@ -169,6 +172,14 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
 
         {courseType === "zoom" ? (
           <>
+            {/* Zoom account selector */}
+            <ZoomAccountManager
+              userId={userId}
+              onSelect={setZoomAccountId}
+              selectedAccountId={zoomAccountId}
+              compact
+            />
+
             {/* Zoom mode: instant vs scheduled */}
             <div className="flex rounded-lg overflow-hidden border border-[#2D8CFF]/30">
               <button
