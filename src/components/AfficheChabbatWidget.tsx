@@ -192,8 +192,11 @@ const AfficheChabbatWidget = () => {
     date: `🕯️ ${data?.candleLighting || "--:--"}  •  ✨ ${data?.havdalah || "--:--"}`,
     dateEmoji: "",
     details: [
-      ...(shaharit ? [{ icon: "☀️", text: `Shaharit ${shaharit}` }] : []),
-      ...(minhaFri ? [{ icon: "🌅", text: `Minha vendredi ${minhaFri}` }] : []),
+      ...(minhaFri || notes.minhaFri ? [{ icon: "🌅", text: `Minha vendredi ${minhaFri || notes.minhaFri}` }] : []),
+      ...(kabbalat || notes.kabbalat ? [{ icon: "🕯️", text: `Kabbalat Chabbat ${kabbalat || notes.kabbalat}` }] : []),
+      ...(shaharit || notes.shaharit ? [{ icon: "☀️", text: `Shaharit samedi ${shaharit || notes.shaharit}` }] : []),
+      ...(minhaSat || notes.minhaSat ? [{ icon: "🌇", text: `Minha samedi ${minhaSat || notes.minhaSat}` }] : []),
+      ...(sponsor ? [{ icon: "🎉", text: sponsor }] : []),
     ],
     accentColor: "#D4AF37",
     bgColor: "#FDFAF3",
