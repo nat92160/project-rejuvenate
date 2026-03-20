@@ -381,7 +381,7 @@ const AfficheChabbatWidget = () => {
 
           {posterFormat === "full" ? (
             <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
-              <div style={{ transform: "scale(0.3)", transformOrigin: "top left", width: 1080, height: 1920, marginBottom: -1920 * (1 - 0.3) }}>
+              <div style={{ transform: "scale(0.3)", transformOrigin: "top left", width: 1080, marginRight: -1080 * (1 - 0.3) }}>
                 <div ref={canvasRef}>
                   <MasterPosterTemplate
                     profile={{
