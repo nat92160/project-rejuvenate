@@ -221,9 +221,9 @@ const EvenementsWidget = () => {
                     </div>
                     <h4 className="font-display text-sm font-bold text-foreground">{ev.title}</h4>
                     <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">{ev.description}</p>
-                    <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground/80">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-[11px] text-muted-foreground/80">
                       <span>🕐 {ev.event_time}</span>
-                      {ev.location && <span>📍 {ev.location}</span>}
+                      {ev.location && <span className="break-all">📍 {ev.location}</span>}
                     </div>
                     {ev.zoom_link && (
                       <a href={ev.zoom_link} target="_blank" rel="noopener noreferrer"
