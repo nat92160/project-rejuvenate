@@ -89,7 +89,7 @@ const AfficheChabbatWidget = () => {
   useEffect(() => {
     setLoading(true);
     fetchShabbatTimes(city).then((result) => {
-      setData(result);
+      setShabbatData(result);
       setLoading(false);
     });
   }, [city]);
