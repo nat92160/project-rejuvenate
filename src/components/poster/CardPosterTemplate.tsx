@@ -58,11 +58,12 @@ const CardPosterTemplate = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         style={{
           width: W,
-          height: H,
+          minHeight: MIN_H,
           background: bg,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          padding: "50px 0",
           fontFamily: FONT_BODY,
           position: "relative",
         }}
