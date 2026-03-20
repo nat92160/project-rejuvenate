@@ -163,14 +163,14 @@ const EvenementsWidget = () => {
                 className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="📝 Description (optionnel)" rows={2}
                 className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="relative pt-1">
-                  <label className="absolute -top-2 left-3 px-1 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10 rounded">📅 Date</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">📅 Date</label>
                   <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })}
                     className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
                 </div>
-                <div className="relative pt-1">
-                  <label className="absolute -top-2 left-3 px-1 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10 rounded">🕐 Heure</label>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">🕐 Heure</label>
                   <input type="time" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })}
                     className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
                 </div>
