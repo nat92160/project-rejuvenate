@@ -62,6 +62,37 @@ const loadSaved = (): Partial<SavedFormData> => {
   }
 };
 
+/** Helper: renders a 1080px-wide poster scaled down to fit container, with correct height */
+const ScaledPreview = ({ scale, refCallback, children }: { scale: number; refCallback: (el: HTMLDivElement | null) => void; children: React.ReactNode }) => {
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [h, setH] = useState(0);
+
+  useLayoutEffect(() => {
+    if (!innerRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setH(entry.contentRect.height * scale);
+      }
+    });
+    ro.observe(innerRef.current);
+    setH(innerRef.current.scrollHeight * scale);
+    return () => ro.disconnect();
+  }, [scale]);
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
+      <div style={{ width: "100%", height: h || "auto", overflow: "hidden", position: "relative" }}>
+        <div
+          ref={(el) => { (innerRef as any).current = el; refCallback(el); }}
+          style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: 1080 }}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AfficheChabbatWidget = () => {
   const { city } = useCity();
   const { profile: synaProfile } = useSynaProfile();
