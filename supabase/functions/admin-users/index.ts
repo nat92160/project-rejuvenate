@@ -14,7 +14,6 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify the calling user is admin
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
@@ -22,7 +21,6 @@ serve(async (req) => {
     const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
     if (!caller) return new Response(JSON.stringify({ error: "Invalid token" }), { status: 401, headers: corsHeaders });
 
-    // Check admin role
     const { data: roleData } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -32,24 +30,23 @@ serve(async (req) => {
 
     if (!roleData) return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: corsHeaders });
 
-    const { action, user_id } = await req.json();
+    const { action, user_id, display_name, city } = await req.json();
 
     if (action === "list") {
-      // List all users from auth + profiles + roles
       const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 500 });
       if (listError) throw listError;
 
       const { data: profiles } = await supabaseAdmin.from("profiles").select("user_id, display_name, suspended, city");
       const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id, role");
 
-      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+      const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
       const roleMap = new Map<string, string[]>();
-      (roles || []).forEach(r => {
+      (roles || []).forEach((r) => {
         if (!roleMap.has(r.user_id)) roleMap.set(r.user_id, []);
         roleMap.get(r.user_id)!.push(r.role);
       });
 
-      const enriched = users.map(u => ({
+      const enriched = users.map((u) => ({
         id: u.id,
         email: u.email,
         created_at: u.created_at,
@@ -60,6 +57,28 @@ serve(async (req) => {
       }));
 
       return new Response(JSON.stringify({ users: enriched }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "update_profile" && user_id) {
+      const profilePayload: Record<string, string> = {};
+      if (typeof display_name === "string") profilePayload.display_name = display_name;
+      if (typeof city === "string") profilePayload.city = city;
+
+      const { data: existingProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user_id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        const { error } = await supabaseAdmin.from("profiles").update(profilePayload).eq("user_id", user_id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabaseAdmin.from("profiles").insert({ user_id, ...profilePayload });
+        if (error) throw error;
+      }
+
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "suspend" && user_id) {
@@ -73,7 +92,6 @@ serve(async (req) => {
     }
 
     if (action === "delete" && user_id) {
-      // Delete from auth (cascades to profiles, roles, etc.)
       const { error: delError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
       if (delError) throw delError;
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });

@@ -9,6 +9,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   dbRole: AppRole | null;
+  isAdmin: boolean;
   suspended: boolean;
   signOut: () => Promise<void>;
 }
@@ -16,8 +17,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const resolveRole = (roles: string[]): AppRole => {
-  if (roles.includes("admin")) return "admin";
   if (roles.includes("president")) return "president";
+  if (roles.includes("admin")) return "admin";
   if (roles.includes("fidele")) return "fidele";
   return "guest";
 };
@@ -27,11 +28,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [dbRole, setDbRole] = useState<AppRole | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [suspended, setSuspended] = useState(false);
   const lastSessionKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const ensureUserBootstrap = async (authUser: User): Promise<AppRole> => {
+    const ensureUserBootstrap = async (authUser: User): Promise<{ role: AppRole; isAdmin: boolean }> => {
       const fallbackDisplayName =
         authUser.user_metadata?.full_name ||
         authUser.user_metadata?.name ||
@@ -68,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (rolesError) {
         console.error("Role fetch error:", rolesError);
-        return "guest";
+        return { role: "guest", isAdmin: false };
       }
 
       if (!rolesData?.length) {
@@ -79,13 +81,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (insertRoleError) {
           console.error("Role bootstrap error:", insertRoleError);
-          return "guest";
+          return { role: "guest", isAdmin: false };
         }
 
-        return "guest";
+        return { role: "guest", isAdmin: false };
       }
 
-      return resolveRole(rolesData.map((entry) => entry.role));
+      const roles = rolesData.map((entry) => entry.role);
+      return {
+        role: resolveRole(roles),
+        isAdmin: roles.includes("admin"),
+      };
     };
 
     const syncAuthState = async (nextSession: Session | null) => {
@@ -105,24 +111,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!authUser) {
         setDbRole(null);
+        setIsAdmin(false);
+        setSuspended(false);
         setLoading(false);
         return;
       }
 
       setLoading(true);
-      const nextRole = await ensureUserBootstrap(authUser);
-      setDbRole(nextRole);
+      const nextAuth = await ensureUserBootstrap(authUser);
+      setDbRole(nextAuth.role);
+      setIsAdmin(nextAuth.isAdmin);
 
-      // Check if suspended
       const { data: profileData } = await supabase
         .from("profiles")
         .select("suspended")
         .eq("user_id", authUser.id)
         .single();
-      setSuspended(profileData?.suspended === true);
-      setDbRole(nextRole);
 
-      // Check for pending president request from signup
+      setSuspended(profileData?.suspended === true);
+
       try {
         const pendingStr = localStorage.getItem("pending_president_request");
         if (pendingStr) {
@@ -169,13 +176,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setDbRole(null);
+    setIsAdmin(false);
     setSuspended(false);
     setLoading(false);
     window.location.href = "/";
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, dbRole, suspended, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, dbRole, isAdmin, suspended, signOut }}>
       {children}
     </AuthContext.Provider>
   );

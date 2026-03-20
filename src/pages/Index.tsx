@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CityProvider } from "@/hooks/useCity";
 import { RoleProvider, useRole } from "@/hooks/useRole";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import HeroSection from "@/components/HeroSection";
 import AppHeader from "@/components/AppHeader";
 import DateHeader from "@/components/DateHeader";
@@ -38,7 +38,7 @@ const IndexContent = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
   const { role, setRole } = useRole();
-  const { user, dbRole, signOut, loading: authLoading, suspended } = useAuth();
+  const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
   const pendingCount = usePendingRequests();
 
   const isPresident = dbRole === "president";
@@ -125,7 +125,7 @@ const IndexContent = () => {
             {/* Top bar — no dark mode toggle */}
             <div className="flex justify-end items-center py-2.5">
               <div className="flex items-center gap-2">
-                {dbRole === "admin" && (
+                {isAdmin && (
                   <button
                     onClick={() => window.location.assign("/admin")}
                     className="relative h-9 w-9 rounded-xl bg-card border border-border flex items-center justify-center text-base cursor-pointer hover:bg-muted transition-all active:scale-95"
@@ -211,9 +211,7 @@ const IndexContent = () => {
 const Index = () => (
   <CityProvider>
     <RoleProvider>
-      <AuthProvider>
-        <IndexContent />
-      </AuthProvider>
+      <IndexContent />
     </RoleProvider>
   </CityProvider>
 );
