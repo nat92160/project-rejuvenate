@@ -153,8 +153,25 @@ const AfficheChabbatWidget = () => {
     description: undefined,
   };
 
+  const cardContent: CardPosterContent = {
+    topEmoji: "🕯️",
+    badge: "CHABBAT CHALOM",
+    badgeColor: "#D4AF37",
+    title: data?.parasha?.replace("Parashat ", "") || "Chabbat",
+    description: data?.candleLightingDate || undefined,
+    date: `🕯️ ${data?.candleLighting || "--:--"}  •  ✨ ${data?.havdalah || "--:--"}`,
+    dateEmoji: "",
+    details: [
+      ...(shaharit ? [{ icon: "☀️", text: `Shaharit ${shaharit}` }] : []),
+      ...(minhaFri ? [{ icon: "🌅", text: `Minha vendredi ${minhaFri}` }] : []),
+    ],
+    accentColor: "#D4AF37",
+    bgColor: "#FDFAF3",
+  };
+
   const handleExport = async () => {
-    await exportPosterPng(canvasRef.current, `affiche-chabbat-${city.name}.png`);
+    const ref = posterFormat === "card" ? cardRef.current : canvasRef.current;
+    await exportPosterPng(ref, `affiche-chabbat-${city.name}.png`);
   };
 
   const sharePoster = async () => {
