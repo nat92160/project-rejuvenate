@@ -120,6 +120,7 @@ const StatsDashboard = () => {
 
 const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
   const { user, dbRole } = useAuth();
+  const { synagogueId, profile: synaProfile } = useSynaProfile();
   const [activeFeature, setActiveFeature] = useState<string | null>(null);
   const canManage = !!user && dbRole === "president";
 
