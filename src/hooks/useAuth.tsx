@@ -15,6 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const resolveRole = (roles: string[]): AppRole => {
+  if (roles.includes("admin")) return "admin";
   if (roles.includes("president")) return "president";
   if (roles.includes("fidele")) return "fidele";
   return "guest";
