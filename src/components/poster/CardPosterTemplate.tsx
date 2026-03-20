@@ -75,11 +75,11 @@ const CardPosterTemplate = forwardRef<HTMLDivElement, Props>(
             background: "#FFFFFF",
             borderRadius: 40,
             boxShadow: "0 20px 80px rgba(0,0,0,0.08), 0 4px 20px rgba(0,0,0,0.04)",
-            padding: "64px 60px 52px",
+            padding: "44px 50px 40px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 8,
+            gap: 6,
           }}
         >
           {/* Top emoji */}
