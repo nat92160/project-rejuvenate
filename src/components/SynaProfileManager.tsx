@@ -148,6 +148,15 @@ const SynaProfileManager = () => {
         <p className="mt-1 text-xs text-muted-foreground">Définissez l'identité visuelle de votre synagogue</p>
       </div>
 
+      {/* Président */}
+      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <label className="mb-2 block text-xs font-bold text-foreground">Président de la synagogue</label>
+        <div className="flex gap-2">
+          <input className={`${inputCls} flex-1`} value={profile.president_first_name} onChange={(e) => setProfile((p) => ({ ...p, president_first_name: e.target.value }))} placeholder="Prénom" />
+          <input className={`${inputCls} flex-1`} value={profile.president_last_name} onChange={(e) => setProfile((p) => ({ ...p, president_last_name: e.target.value }))} placeholder="Nom" />
+        </div>
+      </div>
+
       {/* Nom */}
       <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
         <label className="mb-2 block text-xs font-bold text-foreground">Nom de la synagogue</label>
