@@ -354,17 +354,17 @@ const AdminDashboard = () => {
                     animate={{ opacity: u.suspended ? 0.6 : 1, y: 0 }}
                     transition={{ delay: i * 0.02 }}
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-bold text-foreground">
+                          <p className="text-sm font-bold text-foreground break-all">
                             {[u.first_name, u.last_name].filter(Boolean).join(" ") || u.display_name || "Sans nom"}
                           </p>
                           {u.suspended && (
                             <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">Suspendu</span>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{u.email}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 break-all">{u.email}</p>
                         <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                           {u.roles.map((r) => (
                             <span key={r} className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${roleColors[r] || roleColors.guest}`}>
@@ -378,7 +378,7 @@ const AdminDashboard = () => {
                         </p>
                       </div>
 
-                      <div className="flex flex-col gap-1.5 shrink-0">
+                      <div className="flex flex-wrap gap-1.5">
                         <button
                           onClick={() => openEditDialog(u)}
                           disabled={userProcessing === u.id}
