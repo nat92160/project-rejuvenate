@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CityProvider } from "@/hooks/useCity";
 import { RoleProvider, useRole } from "@/hooks/useRole";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import HeroSection from "@/components/HeroSection";
 import AppHeader from "@/components/AppHeader";
 import DateHeader from "@/components/DateHeader";
