@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 import { getAvailableTabs, type BottomNavMode } from "@/lib/navigation";
 import AuthModal from "@/components/AuthModal";
 
@@ -16,38 +15,7 @@ interface MoreMenuProps {
 const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuProps) => {
   const { user, signOut } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
-  const [zoomOn, setZoomOn] = useState(() => {
-    try {
-      return localStorage.getItem("zoom_connected") === "true";
-    } catch {
-      return false;
-    }
-  });
-
   const menuItems = useMemo(() => getAvailableTabs(mode), [mode]);
-
-  const toggleZoom = (checked: boolean) => {
-    setZoomOn(checked);
-
-    try {
-      localStorage.setItem("zoom_connected", checked ? "true" : "false");
-    } catch {
-      // ignore storage failures
-    }
-
-    if (!checked) {
-      try {
-        localStorage.removeItem("zoom_access_token");
-        localStorage.removeItem("zoom_refresh_token");
-      } catch {
-        // ignore storage failures
-      }
-      toast.success("Zoom déconnecté (session locale)");
-      return;
-    }
-
-    toast.success("Zoom activé");
-  };
 
   const toggleAccount = (checked: boolean) => {
     if (checked) {
@@ -125,9 +93,8 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
                 ))}
               </div>
 
-              {/* Account & Zoom switches */}
+              {/* Account switch */}
               <div className="mt-5 space-y-3 border-t border-border pt-4">
-                {/* Account switch */}
                 <div className="rounded-xl border border-border bg-muted/50 p-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0">
@@ -152,27 +119,6 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
                     </label>
                   </div>
                 </div>
-
-                {/* Zoom switch (only when logged in) */}
-                {user && (
-                  <div className="rounded-xl border border-border bg-muted/50 p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">🎥</span>
-                        <span className="text-xs font-bold text-foreground">Zoom</span>
-                      </div>
-                      <label className="relative inline-flex cursor-pointer items-center">
-                        <input
-                          type="checkbox"
-                          checked={zoomOn}
-                          onChange={(event) => toggleZoom(event.target.checked)}
-                          className="peer sr-only"
-                        />
-                        <div className="h-5 w-9 rounded-full bg-border transition-colors peer-checked:bg-primary after:absolute after:left-[2px] after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full" />
-                      </label>
-                    </div>
-                  </div>
-                )}
               </div>
             </motion.div>
           </>
