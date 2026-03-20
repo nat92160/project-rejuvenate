@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
@@ -62,6 +62,37 @@ const loadSaved = (): Partial<SavedFormData> => {
   }
 };
 
+/** Helper: renders a 1080px-wide poster scaled down to fit container, with correct height */
+const ScaledPreview = ({ scale, refCallback, children }: { scale: number; refCallback: (el: HTMLDivElement | null) => void; children: React.ReactNode }) => {
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [h, setH] = useState(0);
+
+  useLayoutEffect(() => {
+    if (!innerRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setH(entry.contentRect.height * scale);
+      }
+    });
+    ro.observe(innerRef.current);
+    setH(innerRef.current.scrollHeight * scale);
+    return () => ro.disconnect();
+  }, [scale]);
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
+      <div style={{ width: "100%", height: h || "auto", overflow: "hidden", position: "relative" }}>
+        <div
+          ref={(el) => { (innerRef as any).current = el; refCallback(el); }}
+          style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: 1080 }}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AfficheChabbatWidget = () => {
   const { city } = useCity();
   const { profile: synaProfile } = useSynaProfile();
@@ -95,7 +126,6 @@ const AfficheChabbatWidget = () => {
   const [freeNote, setFreeNote] = useState(saved.current.freeNote || "");
   const [step, setStep] = useState(1);
   const [posterFormat, setPosterFormat] = useState<"full" | "card">("full");
-  const cardRef = useRef<HTMLDivElement>(null);
 
   const setNote = useCallback((key: string, val: string) => {
     setNotes((prev) => ({ ...prev, [key]: val }));
@@ -170,8 +200,7 @@ const AfficheChabbatWidget = () => {
   };
 
   const handleExport = async () => {
-    const ref = posterFormat === "card" ? cardRef.current : canvasRef.current;
-    await exportPosterPng(ref, `affiche-chabbat-${city.name}.png`);
+    await exportPosterPng(canvasRef.current, `affiche-chabbat-${city.name}.png`);
   };
 
   const sharePoster = async () => {
@@ -379,39 +408,23 @@ const AfficheChabbatWidget = () => {
             </button>
           </div>
 
-          {posterFormat === "full" ? (
-            <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
-              <div style={{ position: "relative", width: "100%", overflow: "hidden" }}>
-                <div
-                  ref={canvasRef}
-                  style={{ transform: "scale(0.3)", transformOrigin: "top left", width: 1080 }}
-                >
-                  <MasterPosterTemplate
-                    profile={{
-                      ...synaProfile,
-                      name: synaProfile.name || synaName,
-                      signature: `${synaProfile.name || synaName} — Chabbat Chalom`,
-                    }}
-                    content={posterContent}
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
-              <div style={{ position: "relative", width: "100%", overflow: "hidden" }}>
-                <div
-                  ref={cardRef}
-                  style={{ transform: "scale(0.34)", transformOrigin: "top left", width: 1080 }}
-                >
-                  <CardPosterTemplate
-                    profile={{ name: synaProfile.name || synaName, logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
-                    content={cardContent}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          <ScaledPreview scale={0.3} refCallback={(el) => { (canvasRef as any).current = el; }}>
+            {posterFormat === "full" ? (
+              <MasterPosterTemplate
+                profile={{
+                  ...synaProfile,
+                  name: synaProfile.name || synaName,
+                  signature: `${synaProfile.name || synaName} — Chabbat Chalom`,
+                }}
+                content={posterContent}
+              />
+            ) : (
+              <CardPosterTemplate
+                profile={{ name: synaProfile.name || synaName, logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
+                content={cardContent}
+              />
+            )}
+          </ScaledPreview>
 
           <button onClick={handleExport} className="w-full py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>📥 Télécharger PNG</button>
         </div>
