@@ -20,6 +20,8 @@ interface Annonce {
 const AnnoncesWidget = () => {
   const { user, dbRole } = useAuth();
   const { profile: synaProfile, synagogueId } = useSynaProfile();
+  const { subIds, loading: subLoading } = useSubscribedSynaIds();
+  const isPresident = dbRole === "president";
   const [annonces, setAnnonces] = useState<Annonce[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
