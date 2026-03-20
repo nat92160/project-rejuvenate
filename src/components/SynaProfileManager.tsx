@@ -58,6 +58,8 @@ const SynaProfileManager = () => {
           secondary_color: data.secondary_color || "#c9a84c",
           font_family: data.font_family || "Lora",
           speakers: Array.isArray(data.speakers) ? (data.speakers as string[]) : [],
+          president_first_name: (data as any).president_first_name || "",
+          president_last_name: (data as any).president_last_name || "",
         });
       }
       setLoading(false);
