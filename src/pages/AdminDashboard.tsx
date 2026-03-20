@@ -432,13 +432,23 @@ const AdminDashboard = () => {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Nom affiché</label>
-              <Input
-                value={profileForm.display_name}
-                onChange={(e) => setProfileForm((prev) => ({ ...prev, display_name: e.target.value }))}
-                placeholder="Nom et prénom"
-              />
+            <div className="flex gap-3">
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium text-foreground">Prénom</label>
+                <Input
+                  value={profileForm.first_name}
+                  onChange={(e) => setProfileForm((prev) => ({ ...prev, first_name: e.target.value }))}
+                  placeholder="Prénom"
+                />
+              </div>
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium text-foreground">Nom</label>
+                <Input
+                  value={profileForm.last_name}
+                  onChange={(e) => setProfileForm((prev) => ({ ...prev, last_name: e.target.value }))}
+                  placeholder="Nom"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Ville</label>
@@ -448,6 +458,31 @@ const AdminDashboard = () => {
                 placeholder="Paris"
               />
             </div>
+            {editingUser && !editingUser.roles.includes("admin") && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Rôle</label>
+                <div className="flex gap-2">
+                  {(["guest", "fidele", "president"] as const).map((r) => {
+                    const currentRole = editingUser.roles.find((role) => role !== "admin") || "guest";
+                    const isActive = currentRole === r;
+                    return (
+                      <button
+                        key={r}
+                        onClick={() => void handleSetRole(editingUser.id, r)}
+                        disabled={isActive || userProcessing === editingUser.id}
+                        className="flex-1 rounded-xl border py-2 text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:cursor-default"
+                        style={isActive
+                          ? { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", border: "none" }
+                          : { background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
+                        }
+                      >
+                        {r === "guest" ? "👤 Guest" : r === "fidele" ? "🙏 Fidèle" : "🏛️ Président"}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
