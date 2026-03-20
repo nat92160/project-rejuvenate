@@ -40,6 +40,7 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
         title: meetingTitle,
         timezone: "Europe/Paris",
         duration: 60,
+        ...(zoomAccountId ? { zoom_account_db_id: zoomAccountId } : {}),
       };
 
       if (zoomMode === "scheduled") {
