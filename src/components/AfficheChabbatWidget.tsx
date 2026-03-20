@@ -30,38 +30,7 @@ const fontConfig: Record<FontChoice, { name: string; sample: string; family: str
 
 const cornerSvg = (color: string) => `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M2 2 L14 2 L14 5 L5 5 L5 14 L2 14 Z' fill='${color}'/%3E%3Cpath d='M8 8 L16 8 L16 10 L10 10 L10 16 L8 16 Z' fill='${color}' opacity='0.4'/%3E%3C/svg%3E")`;
 
-const STORAGE_KEY = "affiche_chabbat_data";
-
-interface SavedFormData {
-  synaName: string;
-  synaAddress: string;
-  synaRav: string;
-  minhaFri: string;
-  kabbalat: string;
-  arvitFri: string;
-  shaharit: string;
-  moussaf: string;
-  minhaSat: string;
-  arvitMotse: string;
-  sponsor: string;
-  announce: string;
-  ravMessage: string;
-  notes: Record<string, string>;
-  theme: Theme;
-  font: FontChoice;
-  torahReader: string;
-  shiourSamedi: string;
-  freeNote: string;
-}
-
-const loadSaved = (): Partial<SavedFormData> => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-};
+// Form data is now managed by useShabbatPosterData hook
 
 /** Helper: renders a 1080px-wide poster scaled down to fit container, with correct height */
 const ScaledPreview = ({ scale, refCallback, children }: { scale: number; refCallback: (el: HTMLDivElement | null) => void; children: React.ReactNode }) => {
