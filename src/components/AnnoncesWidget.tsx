@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,8 +26,8 @@ const AnnoncesWidget = () => {
   const [newContent, setNewContent] = useState("");
   const [newPriority, setNewPriority] = useState("normal");
   const [submitting, setSubmitting] = useState(false);
+  const [exportingId, setExportingId] = useState<string | null>(null);
   const [posterAnnonce, setPosterAnnonce] = useState<Annonce | null>(null);
-  const [exporting, setExporting] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -69,12 +69,23 @@ const AnnoncesWidget = () => {
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
-  const handleExportPng = async () => {
-    if (!posterAnnonce) return;
-    setExporting(true);
-    await exportPosterPng(posterRef.current, `annonce-${posterAnnonce.title.replace(/\s+/g, "-").toLowerCase()}.png`);
-    setExporting(false);
-  };
+  // Auto-export when posterAnnonce is set
+  const triggerExport = useCallback(async (annonce: Annonce) => {
+    setExportingId(annonce.id);
+    setPosterAnnonce(annonce);
+  }, []);
+
+  useEffect(() => {
+    if (!posterAnnonce || !exportingId) return;
+    const timer = requestAnimationFrame(() => {
+      setTimeout(async () => {
+        await exportPosterPng(posterRef.current, `annonce-${posterAnnonce.title.replace(/\s+/g, "-").toLowerCase()}.png`);
+        setExportingId(null);
+        setPosterAnnonce(null);
+      }, 100);
+    });
+    return () => cancelAnimationFrame(timer);
+  }, [posterAnnonce, exportingId]);
 
   const isUrgent = posterAnnonce?.priority === "urgent";
 
@@ -98,7 +109,7 @@ const AnnoncesWidget = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       {/* Hidden poster for export */}
       {posterContent && (
-        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <div style={{ position: "fixed", left: 0, top: 0, zIndex: -1, opacity: 0, pointerEvents: "none" }}>
           <CardPosterTemplate
             ref={posterRef}
             profile={{ name: synaProfile.name || "Chabbat Chalom", logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
@@ -156,40 +167,6 @@ const AnnoncesWidget = () => {
         )}
       </AnimatePresence>
 
-      {/* Poster Modal */}
-      <AnimatePresence>
-        {posterAnnonce && (
-          <motion.div className="fixed inset-0 z-[300] flex items-center justify-center p-4"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="absolute inset-0 bg-black/50" onClick={() => setPosterAnnonce(null)} />
-            <motion.div className="relative z-10 w-full max-w-[400px] max-h-[90vh] overflow-y-auto rounded-2xl bg-card p-4 border border-border"
-              style={{ boxShadow: "var(--shadow-elevated)" }}
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}>
-
-              {/* Inline preview (scaled down from 1080px to fit modal) */}
-              <div style={{ transform: "scale(0.34)", transformOrigin: "top left", width: 1080, marginRight: -1080 * (1 - 0.34) }}>
-                <CardPosterTemplate
-                  profile={{ name: synaProfile.name || "Chabbat Chalom", logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
-                  content={posterContent!}
-                />
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <button onClick={handleExportPng} disabled={exporting}
-                  className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
-                  style={{ background: "var(--gradient-gold)" }}>
-                  {exporting ? "⏳ Génération..." : "📥 Générer l'Affiche Pro"}
-                </button>
-                <button onClick={() => setPosterAnnonce(null)}
-                  className="w-full py-2.5 rounded-xl text-xs font-bold bg-muted text-muted-foreground border-none cursor-pointer">
-                  ✕ Fermer
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* List */}
       {loading ? (
         <div className="text-center py-8 text-sm text-muted-foreground">Chargement...</div>
@@ -224,22 +201,12 @@ const AnnoncesWidget = () => {
                   <p className="text-xs text-muted-foreground mt-3 leading-relaxed pl-[52px]">{a.content}</p>
                 )}
                 <div className="flex flex-wrap gap-2 mt-4 pl-[52px]">
-                  <button onClick={async (e) => {
-                    e.stopPropagation();
-                    const text = `📢 ${a.title}${a.content ? `\n\n${a.content}` : ""}\n\n📅 ${formatDate(a.created_at)}\n\n✡️ Chabbat Chalom`;
-                    if (navigator.share) {
-                      try { await navigator.share({ text }); return; } catch {}
-                    }
-                    await navigator.clipboard?.writeText(text);
-                    toast.success("Texte copié dans le presse-papier !");
-                  }}
-                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground"
+                  <button
+                    onClick={() => triggerExport(a)}
+                    disabled={exportingId === a.id}
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground disabled:opacity-50"
                     style={{ background: "var(--gradient-gold)" }}>
-                    📤 Partager
-                  </button>
-                  <button onClick={() => setPosterAnnonce(a)}
-                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border border-border bg-muted text-muted-foreground cursor-pointer">
-                    📥 Affiche Pro
+                    {exportingId === a.id ? "⏳ Export..." : "📥 Télécharger PNG"}
                   </button>
                   {isPresident && user?.id === a.creator_id && (
                     <button onClick={() => handleDelete(a.id)}

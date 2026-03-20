@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,8 +34,8 @@ const EvenementsWidget = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", event_date: "", event_time: "", location: "", event_type: "autre", zoom_link: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [exportingId, setExportingId] = useState<string | null>(null);
   const [posterEvent, setPosterEvent] = useState<Evenement | null>(null);
-  const [exporting, setExporting] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
   const isPresident = dbRole === "president";
 
@@ -83,12 +83,22 @@ const EvenementsWidget = () => {
 
   const formatDate = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
-  const handleExportPng = async () => {
-    if (!posterEvent) return;
-    setExporting(true);
-    await exportPosterPng(posterRef.current, `evenement-${posterEvent.title.replace(/\s+/g, "-").toLowerCase()}.png`);
-    setExporting(false);
-  };
+  const triggerExport = useCallback(async (ev: Evenement) => {
+    setExportingId(ev.id);
+    setPosterEvent(ev);
+  }, []);
+
+  useEffect(() => {
+    if (!posterEvent || !exportingId) return;
+    const timer = requestAnimationFrame(() => {
+      setTimeout(async () => {
+        await exportPosterPng(posterRef.current, `evenement-${posterEvent.title.replace(/\s+/g, "-").toLowerCase()}.png`);
+        setExportingId(null);
+        setPosterEvent(null);
+      }, 100);
+    });
+    return () => cancelAnimationFrame(timer);
+  }, [posterEvent, exportingId]);
 
   const tc = posterEvent ? (typeConfig[posterEvent.event_type] || typeConfig.autre) : typeConfig.autre;
 
@@ -112,7 +122,7 @@ const EvenementsWidget = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       {/* Hidden poster */}
       {posterContent && (
-        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <div style={{ position: "fixed", left: 0, top: 0, zIndex: -1, opacity: 0, pointerEvents: "none" }}>
           <CardPosterTemplate
             ref={posterRef}
             profile={{ name: synaProfile.name || "Chabbat Chalom", logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
@@ -172,37 +182,6 @@ const EvenementsWidget = () => {
         )}
       </AnimatePresence>
 
-      {/* Poster Modal */}
-      <AnimatePresence>
-        {posterEvent && (
-          <motion.div className="fixed inset-0 z-[300] flex items-center justify-center p-4"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="absolute inset-0 bg-black/50" onClick={() => setPosterEvent(null)} />
-            <motion.div className="relative z-10 w-full max-w-[400px] max-h-[90vh] overflow-y-auto rounded-2xl bg-card p-4 border border-border"
-              style={{ boxShadow: "var(--shadow-elevated)" }}
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}>
-              <div style={{ transform: "scale(0.34)", transformOrigin: "top left", width: 1080, marginRight: -1080 * (1 - 0.34) }}>
-                <CardPosterTemplate
-                  profile={{ name: synaProfile.name || "Chabbat Chalom", logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
-                  content={posterContent!}
-                />
-              </div>
-              <div className="mt-4 space-y-2">
-                <button onClick={handleExportPng} disabled={exporting}
-                  className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
-                  style={{ background: "var(--gradient-gold)" }}>
-                  {exporting ? "⏳ Génération..." : "📥 Générer l'Affiche Pro"}
-                </button>
-                <button onClick={() => setPosterEvent(null)}
-                  className="w-full py-2.5 rounded-xl text-xs font-bold bg-muted text-muted-foreground border-none cursor-pointer">
-                  ✕ Fermer
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {loading ? (
         <div className="text-center py-8 text-sm text-muted-foreground">Chargement...</div>
       ) : events.length === 0 ? (
@@ -240,19 +219,12 @@ const EvenementsWidget = () => {
                       </a>
                     )}
                     <div className="flex gap-2 mt-3">
-                      <button onClick={async () => {
-                        const text = `📅 ${ev.title}\n📆 ${formatDate(ev.event_date)} à ${ev.event_time}\n📍 ${ev.location}${ev.zoom_link ? `\n🎥 ${ev.zoom_link}` : ""}\n${ev.description}\n\n✡️ chabbat-chalom.com`;
-                        if (navigator.share) { try { await navigator.share({ text }); return; } catch {} }
-                        await navigator.clipboard?.writeText(text);
-                        toast.success("Lien copié dans le presse-papier !");
-                      }}
-                        className="text-[10px] font-bold px-2.5 py-1 rounded-full border-none cursor-pointer text-primary-foreground"
+                      <button
+                        onClick={() => triggerExport(ev)}
+                        disabled={exportingId === ev.id}
+                        className="text-[10px] font-bold px-2.5 py-1 rounded-full border-none cursor-pointer text-primary-foreground disabled:opacity-50"
                         style={{ background: "var(--gradient-gold)" }}>
-                        📤 Partager
-                      </button>
-                      <button onClick={() => setPosterEvent(ev)}
-                        className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-border bg-muted text-muted-foreground cursor-pointer">
-                        📥 Affiche Pro
+                        {exportingId === ev.id ? "⏳ Export..." : "📥 Télécharger PNG"}
                       </button>
                       {isPresident && user?.id === ev.creator_id && (
                         <button onClick={async () => {

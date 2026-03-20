@@ -407,10 +407,7 @@ const AfficheChabbatWidget = () => {
             </div>
           )}
 
-          <div className="flex gap-3">
-            <button onClick={handleExport} className="flex-1 py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>💾 Télécharger PNG</button>
-            <button onClick={sharePoster} className="flex-1 py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)" }}>📤 Partager</button>
-          </div>
+          <button onClick={handleExport} className="w-full py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>📥 Télécharger PNG</button>
         </div>
       )}
     </motion.div>
