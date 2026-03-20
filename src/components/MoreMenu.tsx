@@ -18,29 +18,6 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
   const [authOpen, setAuthOpen] = useState(false);
   const menuItems = useMemo(() => getAvailableTabs(mode), [mode]);
 
-  const toggleZoom = (checked: boolean) => {
-    setZoomOn(checked);
-
-    try {
-      localStorage.setItem("zoom_connected", checked ? "true" : "false");
-    } catch {
-      // ignore storage failures
-    }
-
-    if (!checked) {
-      try {
-        localStorage.removeItem("zoom_access_token");
-        localStorage.removeItem("zoom_refresh_token");
-      } catch {
-        // ignore storage failures
-      }
-      toast.success("Zoom déconnecté (session locale)");
-      return;
-    }
-
-    toast.success("Zoom activé");
-  };
-
   const toggleAccount = (checked: boolean) => {
     if (checked) {
       setAuthOpen(true);
