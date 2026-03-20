@@ -101,12 +101,24 @@ export const useShabbatPosterData = () => {
       return;
     }
     setSaving(true);
-    const { error } = await supabase
+    // Check if row exists
+    const { data: existing } = await supabase
       .from("shabbat_posters")
-      .upsert(
-        { user_id: user.id, form_data: data as unknown as Record<string, unknown> },
-        { onConflict: "user_id" }
-      );
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    let error;
+    if (existing) {
+      ({ error } = await supabase
+        .from("shabbat_posters")
+        .update({ form_data: data as unknown as Record<string, unknown> })
+        .eq("user_id", user.id));
+    } else {
+      ({ error } = await supabase
+        .from("shabbat_posters")
+        .insert({ user_id: user.id, form_data: data as unknown as Record<string, unknown> }));
+    }
     setSaving(false);
     if (error) {
       console.error("Save error:", error);
