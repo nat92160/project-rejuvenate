@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import ZoomAccountManager from "@/components/cours-torah/ZoomAccountManager";
 import { getAvailableTabs, type BottomNavMode } from "@/lib/navigation";
 import AuthModal from "@/components/AuthModal";
 
