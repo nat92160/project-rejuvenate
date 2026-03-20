@@ -162,6 +162,16 @@ const IndexContent = () => {
             </div>
 
             <AppHeader />
+
+            {suspended && (
+              <div className="rounded-2xl border border-red-500/30 bg-red-500/5 p-4 mb-4 text-center">
+                <span className="text-2xl">⏸️</span>
+                <p className="text-sm font-bold text-red-600 mt-2">Votre compte est suspendu</p>
+                <p className="text-xs text-muted-foreground mt-1">Contactez l'administrateur pour plus d'informations.</p>
+              </div>
+            )}
+
+
             <DateHeader />
             <InfoCarousel />
             <CitySelector />
