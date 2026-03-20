@@ -48,11 +48,12 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
 
   const canAccessMessages = viewerIsPresident || isApproved;
 
-  // Request notification permission on mount if enabled
+  // Auto-subscribe to push when notifications are enabled and user has access
   useEffect(() => {
-    if (notifEnabled && "Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+    if (notifEnabled && canAccessMessages && pushSupported && !isSubscribed) {
+      pushSubscribe();
     }
+  }, [notifEnabled, canAccessMessages, pushSupported, isSubscribed, pushSubscribe]);
   }, [notifEnabled]);
 
   const toggleNotif = async () => {
