@@ -201,8 +201,7 @@ const AfficheChabbatWidget = () => {
   };
 
   const handleExport = async () => {
-    const ref = posterFormat === "card" ? cardRef.current : canvasRef.current;
-    await exportPosterPng(ref, `affiche-chabbat-${city.name}.png`);
+    await exportPosterPng(canvasRef.current, `affiche-chabbat-${city.name}.png`);
   };
 
   const sharePoster = async () => {
