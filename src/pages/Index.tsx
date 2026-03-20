@@ -127,7 +127,7 @@ const IndexContent = () => {
               <div className="flex items-center gap-2">
                 {dbRole === "admin" && (
                   <button
-                    onClick={() => setActiveTab("dashboard") || window.location.assign("/admin")}
+                    onClick={() => window.location.assign("/admin")}
                     className="relative h-9 w-9 rounded-xl bg-card border border-border flex items-center justify-center text-base cursor-pointer hover:bg-muted transition-all active:scale-95"
                     title="Demandes en attente"
                   >
