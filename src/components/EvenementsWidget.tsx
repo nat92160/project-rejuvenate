@@ -164,16 +164,12 @@ const EvenementsWidget = () => {
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="📝 Description (optionnel)" rows={2}
                 className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">📅 Date</label>
-                  <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">🕐 Heure</label>
-                  <input type="time" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                </div>
+                <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })}
+                  placeholder="📅 Date"
+                  className="w-full px-3 py-2.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                <input type="time" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })}
+                  placeholder="🕐 Heure"
+                  className="w-full px-3 py-2.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
               <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="📍 Lieu"
                 className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
