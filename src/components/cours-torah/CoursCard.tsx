@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import TicketPosterTemplate, { type TicketContent } from "@/components/poster/TicketPosterTemplate";
+import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import type { SynaProfile } from "@/components/poster/MasterPosterTemplate";
 import { exportPosterPng } from "@/components/poster/usePosterExport";
 import { normalizeCourseType } from "@/lib/courseType";
@@ -38,19 +38,21 @@ const CoursCard = ({
   const isZoom = normalizeCourseType(course_type, zoom_link, address) === "zoom";
   const dotColor = dayColors[day_of_week] || "#94a3b8";
 
-  const ticketContent: TicketContent = {
-    badge: isZoom ? "ZOOM" : "PRÉSENTIEL",
+  const posterContent: CardPosterContent = {
+    topEmoji: isZoom ? "🎥" : "📍",
+    badge: isZoom ? "COURS ZOOM" : "COURS PRÉSENTIEL",
     badgeColor: isZoom ? "#2D8CFF" : "#16a34a",
     title: title,
-    subtitle: rav || undefined,
+    description: rav || undefined,
+    date: `${day_of_week} à ${course_time?.slice(0, 5)}`,
+    dateEmoji: "📅",
     details: [
-      { icon: "📅", text: `${day_of_week} à ${course_time?.slice(0, 5)}` },
-      ...(isZoom && zoom_link ? [{ icon: "🎥", text: zoom_link }] : []),
+      ...(isZoom && zoom_link ? [{ icon: "🎥", text: "Lien Zoom disponible" }] : []),
       ...(!isZoom && address ? [{ icon: "📍", text: address }] : []),
       ...(description ? [{ icon: "📝", text: description }] : []),
     ],
-    actionLabel: isZoom ? "REJOINDRE LE COURS" : "ITINÉRAIRE",
-    actionColor: isZoom ? "#2D8CFF" : "#16a34a",
+    accentColor: isZoom ? "#2D8CFF" : "#16a34a",
+    bgColor: isZoom ? "#EFF6FF" : "#F0FDF4",
   };
 
   const handleExportPng = async () => {
@@ -92,7 +94,11 @@ const CoursCard = ({
     >
       {/* Hidden poster for PNG export */}
       <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-        <TicketPosterTemplate ref={posterRef} profile={synaProfile} content={ticketContent} />
+        <CardPosterTemplate
+          ref={posterRef}
+          profile={{ name: synaProfile.name || "Chabbat Chalom", logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
+          content={posterContent}
+        />
       </div>
 
       {/* Visible card */}
