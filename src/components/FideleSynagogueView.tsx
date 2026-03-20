@@ -447,6 +447,11 @@ const FideleSynagogueView = () => {
               </div>
               <h4 className="font-display text-sm font-bold text-foreground">{a.title}</h4>
               <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{a.content}</p>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
       {/* Chat */}
       {tab === "chat" && (
         <div className="space-y-3">
@@ -486,10 +491,6 @@ const FideleSynagogueView = () => {
               <SynagogueChat synagogueId={chatSyna.id} synagogueName={chatSyna.name} />
             </div>
           )}
-        </div>
-      )}
-    </motion.div>
-          ))}
         </div>
       )}
     </motion.div>
