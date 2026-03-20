@@ -27,7 +27,7 @@ interface Props {
 
 /* ─── Design tokens ─── */
 const W = 1080;
-const H = 1920;
+const MIN_H = 800;
 const SCENE_PAD = 48;
 const CARD_BORDER = 3;
 const INNER_BORDER = 1;
