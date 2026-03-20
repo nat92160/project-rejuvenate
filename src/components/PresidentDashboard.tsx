@@ -11,7 +11,7 @@ import EvenementsWidget from "./EvenementsWidget";
 import CoursVirtuelWidget from "./CoursVirtuelWidget";
 import SynaProfileManager from "./SynaProfileManager";
 import ChatManagement from "./ChatManagement";
-import { useSynaProfile } from "@/hooks/useSynaProfile";
+
 
 const features = [
   { id: "syna-profile", icon: "🏛️", title: "Mon Espace Syna" },
