@@ -16,7 +16,7 @@ const inputClass =
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Dimanche"];
 
-const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: CoursFormProps) => {
+const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType = "zoom" }: CoursFormProps) => {
   const [courseType, setCourseType] = useState<"zoom" | "presentiel">(initialCourseType);
   const [zoomMode, setZoomMode] = useState<"instant" | "scheduled">("scheduled");
   const [zoomSource, setZoomSource] = useState<"auto" | "manual">("auto");
