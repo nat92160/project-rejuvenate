@@ -18,7 +18,7 @@ interface Annonce {
 
 const AnnoncesWidget = () => {
   const { user, dbRole } = useAuth();
-  const { profile: synaProfile } = useSynaProfile();
+  const { profile: synaProfile, synagogueId } = useSynaProfile();
   const [annonces, setAnnonces] = useState<Annonce[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
