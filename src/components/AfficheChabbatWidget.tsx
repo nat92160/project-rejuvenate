@@ -126,7 +126,6 @@ const AfficheChabbatWidget = () => {
   const [freeNote, setFreeNote] = useState(saved.current.freeNote || "");
   const [step, setStep] = useState(1);
   const [posterFormat, setPosterFormat] = useState<"full" | "card">("full");
-  const cardRef = useRef<HTMLDivElement>(null);
 
   const setNote = useCallback((key: string, val: string) => {
     setNotes((prev) => ({ ...prev, [key]: val }));
