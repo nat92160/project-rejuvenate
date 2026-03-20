@@ -101,6 +101,8 @@ const SynaProfileManager = () => {
       secondary_color: profile.secondary_color,
       font_family: profile.font_family,
       speakers: profile.speakers,
+      president_first_name: profile.president_first_name,
+      president_last_name: profile.president_last_name,
     };
 
     let error;
