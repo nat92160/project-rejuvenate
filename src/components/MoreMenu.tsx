@@ -122,32 +122,6 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
                   </div>
                 </div>
 
-                {/* Zoom switch (only when logged in) */}
-                {user && (
-                  <div className="rounded-xl border border-border bg-muted/50 p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">🎥</span>
-                        <span className="text-xs font-bold text-foreground">Zoom</span>
-                      </div>
-                      <label className="relative inline-flex cursor-pointer items-center">
-                        <input
-                          type="checkbox"
-                          checked={zoomOn}
-                          onChange={(event) => toggleZoom(event.target.checked)}
-                          className="peer sr-only"
-                        />
-                        <div className="h-5 w-9 rounded-full bg-border transition-colors peer-checked:bg-primary after:absolute after:left-[2px] after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full" />
-                      </label>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </>
   );
