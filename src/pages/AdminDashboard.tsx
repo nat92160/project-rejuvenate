@@ -378,16 +378,15 @@ const AdminDashboard = () => {
                         </p>
                       </div>
 
-                      {!u.roles.includes("admin") && (
-                        <div className="flex flex-col gap-1.5 shrink-0">
-                          <button
-                            onClick={() => openEditDialog(u)}
-                            disabled={userProcessing === u.id}
-                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
-                            style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
-                          >
-                            ✏️ Modifier
-                          </button>
+                      <div className="flex flex-col gap-1.5 shrink-0">
+                        <button
+                          onClick={() => openEditDialog(u)}
+                          disabled={userProcessing === u.id}
+                          className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                          style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
+                        >
+                          ✏️ Modifier
+                        </button>
                           <button
                             onClick={() => handleSuspend(u.id, !u.suspended)}
                             disabled={userProcessing === u.id}
