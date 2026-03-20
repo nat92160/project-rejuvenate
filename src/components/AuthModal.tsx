@@ -190,6 +190,26 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
             required
             className={inputClass}
           />
+          {mode === "signup" && (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Prénom *"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                className={inputClass}
+              />
+              <input
+                type="text"
+                placeholder="Nom *"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+                className={inputClass}
+              />
+            </div>
+          )}
           <input
             type="password"
             placeholder="Mot de passe"
