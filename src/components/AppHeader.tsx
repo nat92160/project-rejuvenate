@@ -5,7 +5,7 @@ const AppHeader = ({ onLogoClick }: { onLogoClick?: () => void }) => {
     <div className="text-center py-4 px-5">
       <button
         onClick={onLogoClick}
-        className="inline-flex items-center justify-center gap-2.5 bg-transparent border-none cursor-pointer p-0"
+        className="inline-flex items-center justify-center gap-2.5 bg-transparent border-none cursor-pointer p-2 -m-2 min-h-[44px] active:scale-95 transition-transform"
       >
         <StarOfDavid size={32} />
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">
