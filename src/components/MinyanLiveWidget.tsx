@@ -79,7 +79,16 @@ const MinyanLiveWidget = () => {
 
   const fetchSessions = async () => {
     const today = new Date().toISOString().split("T")[0];
-    const { data } = await supabase.from("minyan_sessions").select("*").gte("office_date", today).order("office_date").order("office_time");
+    let query = supabase.from("minyan_sessions").select("*").gte("office_date", today).order("office_date").order("office_time");
+
+    // Filter by subscription for non-presidents
+    if (!isPresident && user && subIds.length > 0) {
+      query = query.in("synagogue_id", subIds);
+    } else if (!isPresident && user && subIds.length === 0 && !subLoading) {
+      setSessions([]); setLoading(false); return;
+    }
+
+    const { data } = await query;
     if (data && data.length > 0) {
       setSessions(data);
       setSelectedSession(prev => prev && data.some(s => s.id === prev) ? prev : data[0].id);
