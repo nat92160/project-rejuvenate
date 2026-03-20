@@ -40,7 +40,7 @@ interface Props {
 }
 
 const W = 1080;
-const H = 1080;
+const MIN_H = 800;
 
 const FONT_DISPLAY = "'Playfair Display', serif";
 const FONT_BODY = "'Lora', serif";
