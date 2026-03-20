@@ -261,6 +261,16 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
       toast.error("Erreur d'envoi");
     } else {
       setNewMessage("");
+      // Trigger push notifications to other subscribers
+      const pushDisplayName = viewerIsPresident ? synagogueName : displayName;
+      supabase.functions.invoke("send-push", {
+        body: {
+          synagogue_id: synagogueId,
+          title: `💬 ${pushDisplayName}`,
+          body: content.slice(0, 100),
+          sender_id: user.id,
+        },
+      }).catch((e) => console.error("Push trigger error:", e));
     }
 
     setSending(false);
