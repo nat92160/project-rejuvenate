@@ -408,39 +408,6 @@ export type Database = {
         }
         Relationships: []
       }
-      zoom_accounts: {
-        Row: {
-          created_at: string
-          id: string
-          is_default: boolean
-          label: string
-          president_id: string
-          zoom_account_id: string
-          zoom_client_id: string
-          zoom_client_secret: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_default?: boolean
-          label?: string
-          president_id: string
-          zoom_account_id: string
-          zoom_client_id: string
-          zoom_client_secret: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_default?: boolean
-          label?: string
-          president_id?: string
-          zoom_account_id?: string
-          zoom_client_id?: string
-          zoom_client_secret?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
