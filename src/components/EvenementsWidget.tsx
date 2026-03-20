@@ -30,6 +30,7 @@ const typeConfig: Record<string, { emoji: string; color: string; badgeColor: str
 const EvenementsWidget = () => {
   const { user, dbRole } = useAuth();
   const { profile: synaProfile, synagogueId } = useSynaProfile();
+  const { subIds, loading: subLoading } = useSubscribedSynaIds();
   const [events, setEvents] = useState<Evenement[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
