@@ -108,16 +108,17 @@ export const useShabbatPosterData = () => {
       .eq("user_id", user.id)
       .maybeSingle();
 
+    const payload = JSON.parse(JSON.stringify(data));
     let error;
     if (existing) {
       ({ error } = await supabase
         .from("shabbat_posters")
-        .update({ form_data: data as unknown as Record<string, unknown> })
+        .update({ form_data: payload })
         .eq("user_id", user.id));
     } else {
       ({ error } = await supabase
         .from("shabbat_posters")
-        .insert({ user_id: user.id, form_data: data as unknown as Record<string, unknown> }));
+        .insert([{ user_id: user.id, form_data: payload }]));
     }
     setSaving(false);
     if (error) {
