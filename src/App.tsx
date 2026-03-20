@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound.tsx";
 import MinyanJoin from "./pages/MinyanJoin.tsx";
 import TehilimJoin from "./pages/TehilimJoin.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
+import Install from "./pages/Install.tsx";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/minyan/:id" element={<MinyanJoin />} />
             <Route path="/tehilim/:id" element={<TehilimJoin />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/install" element={<Install />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
