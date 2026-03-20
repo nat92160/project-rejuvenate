@@ -15,7 +15,7 @@ interface MoreMenuProps {
 }
 
 const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuProps) => {
-  const { user, dbRole, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const pendingCount = usePendingRequests();
   const [authOpen, setAuthOpen] = useState(false);
   const navigate = useNavigate();

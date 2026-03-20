@@ -3,11 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 export function usePendingRequests() {
-  const { user, dbRole } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (!user || dbRole !== "admin") {
+    if (!user || !isAdmin) {
       setCount(0);
       return;
     }
