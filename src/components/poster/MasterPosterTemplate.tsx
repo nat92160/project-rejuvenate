@@ -87,7 +87,7 @@ const MasterPosterTemplate = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         style={{
           width: W,
-          height: H,
+          minHeight: MIN_H,
           background: SCENE_BG,
           padding: SCENE_PAD,
           display: "flex",
