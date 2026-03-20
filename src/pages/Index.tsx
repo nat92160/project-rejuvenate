@@ -31,6 +31,7 @@ import FideleSynagogueView from "@/components/FideleSynagogueView";
 import SynaProfileManager from "@/components/SynaProfileManager";
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
+import { usePendingRequests } from "@/hooks/usePendingRequests";
 
 const IndexContent = () => {
   const [showDashboard, setShowDashboard] = useState(false);
