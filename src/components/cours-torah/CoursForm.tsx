@@ -115,6 +115,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
       zoom_link: zoomLink,
       address: courseType === "presentiel" ? address.trim() : "",
       description: desc.trim(),
+      ...(synagogueId ? { synagogue_id: synagogueId } : {}),
     };
     const { data, error } = await supabase
       .from("cours_zoom")
