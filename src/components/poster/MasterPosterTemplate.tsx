@@ -27,7 +27,7 @@ interface Props {
 
 /* ─── Design tokens ─── */
 const W = 1080;
-const H = 1920;
+const MIN_H = 800;
 const SCENE_PAD = 48;
 const CARD_BORDER = 3;
 const INNER_BORDER = 1;
@@ -87,7 +87,7 @@ const MasterPosterTemplate = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         style={{
           width: W,
-          height: H,
+          minHeight: MIN_H,
           background: SCENE_BG,
           padding: SCENE_PAD,
           display: "flex",
@@ -173,7 +173,7 @@ const MasterPosterTemplate = forwardRef<HTMLDivElement, Props>(
               flex: 1,
               display: "flex",
               flexDirection: "column",
-              justifyContent: "center",
+              justifyContent: "flex-start",
               padding: `40px ${CARD_PAD}px`,
               gap: 28,
             }}
