@@ -68,7 +68,8 @@ const EvenementsWidget = () => {
       location: form.location.trim(),
       event_type: form.event_type,
       zoom_link: form.zoom_link.trim() || null,
-    }).select().single();
+      synagogue_id: synaProfile?.id || null,
+    } as any).select().single();
 
     if (error) {
       toast.error("Erreur: vérifiez que vous avez le rôle Président.");
