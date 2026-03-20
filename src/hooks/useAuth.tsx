@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [dbRole, setDbRole] = useState<AppRole | null>(null);
+  const [suspended, setSuspended] = useState(false);
   const lastSessionKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
