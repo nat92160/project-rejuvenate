@@ -66,51 +66,25 @@ const ScaledPreview = ({ scale, refCallback, children }: { scale: number; refCal
 const AfficheChabbatWidget = () => {
   const { city } = useCity();
   const { profile: synaProfile } = useSynaProfile();
-  const [data, setData] = useState<ShabbatTimes | null>(null);
+  const { data: formData, setData: setFormData, saving, save } = useShabbatPosterData();
+  const [shabbatData, setShabbatData] = useState<ShabbatTimes | null>(null);
   const [loading, setLoading] = useState(true);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const saved = useRef(loadSaved());
 
-  const [theme, setTheme] = useState<Theme>(saved.current.theme || "prestige");
-  const [font, setFont] = useState<FontChoice>(saved.current.font || "greatvibes");
-  const [synaName, setSynaName] = useState(saved.current.synaName || "Ma Synagogue");
-  const [synaAddress, setSynaAddress] = useState(saved.current.synaAddress || "");
-  const [synaRav, setSynaRav] = useState(saved.current.synaRav || "");
-  const [notes, setNotes] = useState<Record<string, string>>(saved.current.notes || {
-    candleLighting: "", minhaFri: "", kabbalat: "", arvitFri: "",
-    shaharit: "", torahReading: "", moussaf: "", minhaSat: "",
-    havdalah: "", arvitMotse: "",
-  });
-  const [minhaFri, setMinhaFri] = useState(saved.current.minhaFri || "");
-  const [kabbalat, setKabbalat] = useState(saved.current.kabbalat || "");
-  const [arvitFri, setArvitFri] = useState(saved.current.arvitFri || "");
-  const [shaharit, setShaharit] = useState(saved.current.shaharit || "08:30");
-  const [moussaf, setMoussaf] = useState(saved.current.moussaf || "");
-  const [minhaSat, setMinhaSat] = useState(saved.current.minhaSat || "");
-  const [arvitMotse, setArvitMotse] = useState(saved.current.arvitMotse || "");
-  const [sponsor, setSponsor] = useState(saved.current.sponsor || "");
-  const [announce, setAnnounce] = useState(saved.current.announce || "");
-  const [ravMessage, setRavMessage] = useState(saved.current.ravMessage || "");
-  const [torahReader, setTorahReader] = useState(saved.current.torahReader || "");
-  const [shiourSamedi, setShiourSamedi] = useState(saved.current.shiourSamedi || "");
-  const [freeNote, setFreeNote] = useState(saved.current.freeNote || "");
-  const [step, setStep] = useState(1);
-  const [posterFormat, setPosterFormat] = useState<"full" | "card">("full");
+  const theme = (formData.theme || "prestige") as Theme;
+  const font = (formData.font || "greatvibes") as FontChoice;
+  const { synaName, synaAddress, synaRav, minhaFri, kabbalat, arvitFri, shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage, torahReader, shiourSamedi, freeNote, notes } = formData;
+
+  const setField = useCallback(<K extends keyof ShabbatFormData>(key: K, val: ShabbatFormData[K]) => {
+    setFormData((prev) => ({ ...prev, [key]: val }));
+  }, [setFormData]);
 
   const setNote = useCallback((key: string, val: string) => {
-    setNotes((prev) => ({ ...prev, [key]: val }));
-  }, []);
+    setFormData((prev) => ({ ...prev, notes: { ...prev.notes, [key]: val } }));
+  }, [setFormData]);
 
-  useEffect(() => {
-    const toSave: SavedFormData = {
-      synaName, synaAddress, synaRav, minhaFri, kabbalat, arvitFri,
-      shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage,
-      notes, theme, font, torahReader, shiourSamedi, freeNote,
-    };
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-    } catch {}
-  }, [synaName, synaAddress, synaRav, minhaFri, kabbalat, arvitFri, shaharit, moussaf, minhaSat, arvitMotse, sponsor, announce, ravMessage, notes, theme, font, torahReader, shiourSamedi, freeNote]);
+  const [step, setStep] = useState(1);
+  const [posterFormat, setPosterFormat] = useState<"full" | "card">("full");
 
   useEffect(() => {
     setLoading(true);
