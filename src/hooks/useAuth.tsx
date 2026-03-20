@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, ReactNode } fro
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
-type AppRole = "guest" | "fidele" | "president";
+type AppRole = "guest" | "fidele" | "president" | "admin";
 
 interface AuthContextType {
   user: User | null;
@@ -15,6 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const resolveRole = (roles: string[]): AppRole => {
+  if (roles.includes("admin")) return "admin";
   if (roles.includes("president")) return "president";
   if (roles.includes("fidele")) return "fidele";
   return "guest";
@@ -109,6 +110,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       const nextRole = await ensureUserBootstrap(authUser);
       setDbRole(nextRole);
+
+      // Check for pending president request from signup
+      try {
+        const pendingStr = localStorage.getItem("pending_president_request");
+        if (pendingStr) {
+          const pending = JSON.parse(pendingStr);
+          const { error: reqError } = await supabase
+            .from("president_requests")
+            .insert({
+              user_id: authUser.id,
+              synagogue_name: pending.synagogue_name,
+              city: pending.city || "Paris",
+              message: pending.message || "",
+            });
+          if (!reqError) {
+            localStorage.removeItem("pending_president_request");
+          }
+        }
+      } catch {
+        // Silent fail
+      }
+
       setLoading(false);
     };
 

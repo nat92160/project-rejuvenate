@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { getAvailableTabs, type BottomNavMode } from "@/lib/navigation";
 import AuthModal from "@/components/AuthModal";
@@ -13,8 +14,9 @@ interface MoreMenuProps {
 }
 
 const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuProps) => {
-  const { user, signOut } = useAuth();
+  const { user, dbRole, signOut } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
+  const navigate = useNavigate();
   const menuItems = useMemo(() => getAvailableTabs(mode), [mode]);
 
   const toggleAccount = (checked: boolean) => {
@@ -92,6 +94,20 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
                   </button>
                 ))}
               </div>
+
+              {/* Admin link */}
+              {user && dbRole === "admin" && (
+                <button
+                  onClick={() => { onClose(); navigate("/admin"); }}
+                  className="mt-5 w-full flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-left cursor-pointer transition-all hover:border-primary/30"
+                >
+                  <span className="text-xl">🛡️</span>
+                  <div>
+                    <div className="text-sm font-bold text-foreground">Administration</div>
+                    <div className="text-[11px] text-muted-foreground">Gérer les demandes de présidents</div>
+                  </div>
+                </button>
+              )}
 
               {/* Account switch */}
               <div className="mt-5 space-y-3 border-t border-border pt-4">

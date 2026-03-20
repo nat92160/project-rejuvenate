@@ -193,6 +193,42 @@ export type Database = {
         }
         Relationships: []
       }
+      president_requests: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          message: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          synagogue_name: string
+          user_id: string
+        }
+        Insert: {
+          city?: string
+          created_at?: string
+          id?: string
+          message?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          synagogue_name: string
+          user_id: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          message?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          synagogue_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           city: string | null
@@ -422,7 +458,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "fidele" | "president" | "guest"
+      app_role: "fidele" | "president" | "guest" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -550,7 +586,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["fidele", "president", "guest"],
+      app_role: ["fidele", "president", "guest", "admin"],
     },
   },
 } as const
