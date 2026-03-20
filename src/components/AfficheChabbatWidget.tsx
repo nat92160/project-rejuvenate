@@ -418,6 +418,8 @@ const AfficheChabbatWidget = () => {
                   ...synaProfile,
                   name: synaProfile.name || synaName,
                   signature: `${synaProfile.name || synaName} — Chabbat Chalom`,
+                  primary_color: t.text,
+                  secondary_color: t.accent,
                 }}
                 content={posterContent}
               />
