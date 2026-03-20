@@ -38,8 +38,30 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
   const [presidentId, setPresidentId] = useState<string | null>(null);
   const [viewerIsPresident, setViewerIsPresident] = useState(isPresident);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [notifEnabled, setNotifEnabled] = useState(() => {
+    const stored = localStorage.getItem(`chat-notif-${synagogueId}`);
+    return stored === null ? true : stored === "true";
+  });
+  const prevMsgCountRef = useRef(0);
 
   const canAccessMessages = viewerIsPresident || isApproved;
+
+  // Request notification permission on mount if enabled
+  useEffect(() => {
+    if (notifEnabled && "Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, [notifEnabled]);
+
+  const toggleNotif = () => {
+    const next = !notifEnabled;
+    setNotifEnabled(next);
+    localStorage.setItem(`chat-notif-${synagogueId}`, String(next));
+    if (next && "Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+    toast.success(next ? "🔔 Notifications activées" : "🔕 Notifications désactivées");
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -177,6 +199,31 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Send browser notification for new messages from others
+  useEffect(() => {
+    if (!notifEnabled || !canAccessMessages) return;
+    if (prevMsgCountRef.current === 0) {
+      prevMsgCountRef.current = messages.length;
+      return;
+    }
+    if (messages.length > prevMsgCountRef.current) {
+      const newest = messages[messages.length - 1];
+      if (newest && newest.user_id !== user?.id) {
+        if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
+          new Notification(`💬 ${newest.display_name}`, {
+            body: newest.content.slice(0, 100),
+            icon: "/placeholder.svg",
+            tag: `chat-${synagogueId}`,
+          });
+        }
+        if (!document.hidden) {
+          toast(`💬 ${newest.display_name}: ${newest.content.slice(0, 60)}`, { duration: 3000 });
+        }
+      }
+    }
+    prevMsgCountRef.current = messages.length;
+  }, [messages, notifEnabled, canAccessMessages, user, synagogueId]);
 
   const handleSend = async () => {
     if (!user) return;
@@ -327,9 +374,18 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card" style={{ boxShadow: "var(--shadow-card)", height: "min(520px, 62vh)" }}>
       <div className="shrink-0 border-b border-border px-4 py-3" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}>
-        <h4 className="flex items-center gap-2 font-display text-sm font-bold text-foreground">
-          💬 Chat — {synagogueName}
-        </h4>
+        <div className="flex items-center justify-between">
+          <h4 className="flex items-center gap-2 font-display text-sm font-bold text-foreground">
+            💬 Chat — {synagogueName}
+          </h4>
+          <button
+            onClick={toggleNotif}
+            className="flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-bold text-muted-foreground transition-all hover:border-primary/30 active:scale-95 cursor-pointer"
+            title={notifEnabled ? "Désactiver les notifications" : "Activer les notifications"}
+          >
+            {notifEnabled ? "🔔" : "🔕"}
+          </button>
+        </div>
         <p className="mt-0.5 text-[10px] text-muted-foreground">
           {viewerIsPresident ? "Vos messages portent automatiquement le badge président." : "Échangez avec votre communauté après approbation."}
         </p>
