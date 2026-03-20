@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
+import { useShabbatPosterData, type ShabbatFormData } from "@/hooks/useShabbatPosterData";
 import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
 import { TimeInputRow } from "@/components/affiche-chabbat/TimeInputRow";
 import MasterPosterTemplate, { type PosterContentBlock } from "@/components/poster/MasterPosterTemplate";
