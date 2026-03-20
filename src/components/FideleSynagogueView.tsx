@@ -171,12 +171,15 @@ const FideleSynagogueView = () => {
   const subscribedCount = directory.filter((d) => d.isSubscribed).length;
   const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 
+  const subscribedSynas = directory.filter(d => d.isSubscribed);
+
   const tabs = [
     { id: "annuaire" as const, icon: "📋", label: "Annuaire", count: directory.length },
     { id: "synagogues" as const, icon: "🕍", label: "Proches", count: synagogues.length },
     { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
     { id: "events" as const, icon: "📅", label: "Événements", count: events.length },
     { id: "annonces" as const, icon: "📢", label: "Annonces", count: annonces.length },
+    ...(subscribedSynas.length > 0 ? [{ id: "chat" as const, icon: "💬", label: "Chat", count: 0 }] : []),
   ];
 
   return (
