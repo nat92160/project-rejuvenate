@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
+import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { toast } from "sonner";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import { exportPosterPng } from "@/components/poster/usePosterExport";
