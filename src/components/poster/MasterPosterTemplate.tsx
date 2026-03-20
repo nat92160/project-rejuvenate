@@ -81,6 +81,11 @@ const MasterPosterTemplate = forwardRef<HTMLDivElement, Props>(
     const synaName = profile.name || "MA SYNAGOGUE";
     const signature = profile.signature || `${synaName} — Chabbat Chalom`;
 
+    // Resolve theme colors from profile, falling back to defaults
+    const ACCENT = profile.secondary_color || DEFAULT_ACCENT;
+    const ACCENT_DARK = profile.secondary_color ? darkenHex(profile.secondary_color, 0.25) : "#996515";
+    const TEXT_MAIN = profile.primary_color || DEFAULT_TEXT;
+
     return (
       /* ── SCENE ── */
       <div
