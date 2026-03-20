@@ -379,39 +379,23 @@ const AfficheChabbatWidget = () => {
             </button>
           </div>
 
-          {posterFormat === "full" ? (
-            <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
-              <div style={{ position: "relative", width: "100%", overflow: "hidden" }}>
-                <div
-                  ref={canvasRef}
-                  style={{ transform: "scale(0.3)", transformOrigin: "top left", width: 1080 }}
-                >
-                  <MasterPosterTemplate
-                    profile={{
-                      ...synaProfile,
-                      name: synaProfile.name || synaName,
-                      signature: `${synaProfile.name || synaName} — Chabbat Chalom`,
-                    }}
-                    content={posterContent}
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
-              <div style={{ position: "relative", width: "100%", overflow: "hidden" }}>
-                <div
-                  ref={cardRef}
-                  style={{ transform: "scale(0.34)", transformOrigin: "top left", width: 1080 }}
-                >
-                  <CardPosterTemplate
-                    profile={{ name: synaProfile.name || synaName, logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
-                    content={cardContent}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          <ScaledPreview scale={0.3} refCallback={(el) => { (canvasRef as any).current = el; }}>
+            {posterFormat === "full" ? (
+              <MasterPosterTemplate
+                profile={{
+                  ...synaProfile,
+                  name: synaProfile.name || synaName,
+                  signature: `${synaProfile.name || synaName} — Chabbat Chalom`,
+                }}
+                content={posterContent}
+              />
+            ) : (
+              <CardPosterTemplate
+                profile={{ name: synaProfile.name || synaName, logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
+                content={cardContent}
+              />
+            )}
+          </ScaledPreview>
 
           <button onClick={handleExport} className="w-full py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>📥 Télécharger PNG</button>
         </div>
