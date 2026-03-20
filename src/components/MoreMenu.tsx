@@ -16,14 +16,6 @@ interface MoreMenuProps {
 const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuProps) => {
   const { user, signOut } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
-  const [zoomOn, setZoomOn] = useState(() => {
-    try {
-      return localStorage.getItem("zoom_connected") === "true";
-    } catch {
-      return false;
-    }
-  });
-
   const menuItems = useMemo(() => getAvailableTabs(mode), [mode]);
 
   const toggleZoom = (checked: boolean) => {

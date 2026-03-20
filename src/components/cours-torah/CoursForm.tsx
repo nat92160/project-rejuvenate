@@ -21,7 +21,6 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
   const [teacher, setTeacher] = useState("");
   const [day, setDay] = useState("Lundi");
   const [time, setTime] = useState("");
-  const [link, setLink] = useState("");
   const [address, setAddress] = useState("");
   const [desc, setDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -30,12 +29,65 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
     setCourseType(initialCourseType);
   }, [initialCourseType]);
 
+  const createZoomMeeting = async (meetingTitle: string, courseTime: string): Promise<string | null> => {
+    try {
+      // Build a start_time from next occurrence of the selected day + time
+      const dayIndex = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"].indexOf(day);
+      const now = new Date();
+      let daysUntil = dayIndex - now.getDay();
+      if (daysUntil <= 0) daysUntil += 7;
+      const nextDate = new Date(now);
+      nextDate.setDate(now.getDate() + daysUntil);
+      const dateStr = nextDate.toISOString().split("T")[0];
+      const startTime = `${dateStr}T${courseTime || "20:00"}:00`;
+
+      const { data, error } = await supabase.functions.invoke("zoom-proxy", {
+        body: {
+          action: "create-meeting",
+          title: meetingTitle,
+          start_time: startTime,
+          timezone: "Europe/Paris",
+          duration: 60,
+        },
+      });
+
+      if (error) {
+        console.error("Zoom meeting creation error:", error);
+        toast.error("Erreur lors de la création de la réunion Zoom");
+        return null;
+      }
+
+      if (!data?.success) {
+        console.error("Zoom API error:", data?.error);
+        toast.error(data?.error || "Erreur Zoom API");
+        return null;
+      }
+
+      return data.joinUrl;
+    } catch (err) {
+      console.error("Zoom creation failed:", err);
+      toast.error("Impossible de créer la réunion Zoom");
+      return null;
+    }
+  };
+
   const handleSubmit = async () => {
     if (!title.trim()) { toast.error("Titre requis"); return; }
-    if (courseType === "zoom" && !link.trim()) { toast.error("Lien Zoom requis"); return; }
     if (courseType === "presentiel" && !address.trim()) { toast.error("Adresse requise"); return; }
 
     setSubmitting(true);
+
+    let zoomLink = "";
+    if (courseType === "zoom") {
+      toast.info("Création de la réunion Zoom en cours...");
+      const link = await createZoomMeeting(title.trim(), time || "20:00");
+      if (!link) {
+        setSubmitting(false);
+        return;
+      }
+      zoomLink = link;
+    }
+
     const insertPayload = {
       creator_id: userId,
       title: title.trim(),
@@ -43,7 +95,7 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
       day_of_week: day,
       course_time: time || "20:00",
       course_type: courseType,
-      zoom_link: courseType === "zoom" ? link.trim() : "",
+      zoom_link: zoomLink,
       address: courseType === "presentiel" ? address.trim() : "",
       description: desc.trim(),
     };
@@ -57,7 +109,9 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
     else if (data) {
       onCreated(data as Record<string, unknown>);
       onClose();
-      toast.success("Cours publié !");
+      toast.success(courseType === "zoom"
+        ? "✅ Cours publié avec réunion Zoom créée automatiquement !"
+        : "Cours publié !");
     }
     setSubmitting(false);
   };
@@ -107,7 +161,12 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
         </div>
 
         {courseType === "zoom" ? (
-          <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Lien Zoom (https://...)" className={inputClass} />
+          <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
+            <p className="text-xs text-muted-foreground flex items-center gap-2">
+              <span className="text-base">🎥</span>
+              <span>La réunion Zoom sera <strong className="text-foreground">créée automatiquement</strong> via l'API Zoom lors de la publication.</span>
+            </p>
+          </div>
         ) : (
           <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Adresse du cours" className={inputClass} />
         )}
@@ -120,7 +179,9 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
           className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
           style={{ background: "var(--gradient-gold)" }}
         >
-          {submitting ? "Publication..." : "Publier le cours"}
+          {submitting
+            ? courseType === "zoom" ? "⏳ Création Zoom + Publication..." : "Publication..."
+            : courseType === "zoom" ? "🎥 Créer la réunion & Publier" : "Publier le cours"}
         </button>
       </div>
     </motion.div>
