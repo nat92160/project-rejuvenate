@@ -357,7 +357,9 @@ const AdminDashboard = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-bold text-foreground">{u.display_name || "Sans nom"}</p>
+                          <p className="text-sm font-bold text-foreground">
+                            {[u.first_name, u.last_name].filter(Boolean).join(" ") || u.display_name || "Sans nom"}
+                          </p>
                           {u.suspended && (
                             <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">Suspendu</span>
                           )}
