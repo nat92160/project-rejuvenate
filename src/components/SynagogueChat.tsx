@@ -55,14 +55,24 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
     }
   }, [notifEnabled]);
 
-  const toggleNotif = () => {
+  const toggleNotif = async () => {
     const next = !notifEnabled;
     setNotifEnabled(next);
     localStorage.setItem(`chat-notif-${synagogueId}`, String(next));
-    if (next && "Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+    
+    if (next && pushSupported) {
+      const ok = await pushSubscribe();
+      if (ok) {
+        toast.success("🔔 Notifications push activées");
+      } else {
+        toast.success("🔔 Notifications activées (in-app uniquement)");
+      }
+    } else if (!next && pushSupported) {
+      await pushUnsubscribe();
+      toast.success("🔕 Notifications désactivées");
+    } else {
+      toast.success(next ? "🔔 Notifications activées" : "🔕 Notifications désactivées");
     }
-    toast.success(next ? "🔔 Notifications activées" : "🔕 Notifications désactivées");
   };
 
   useEffect(() => {
