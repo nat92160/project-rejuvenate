@@ -215,7 +215,7 @@ const EvenementsWidget = () => {
                     {evTc.emoji}
                   </div>
                   <div className="rounded-2xl bg-card p-5 border border-border hover:border-primary/20 transition-all" style={{ boxShadow: "var(--shadow-soft)" }}>
-                    <div className="flex items-center gap-2 mb-1.5">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
                       <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${evTc.color}`}>{ev.event_type}</span>
                       <span className="text-xs text-muted-foreground">{formatDate(ev.event_date)}</span>
                     </div>
