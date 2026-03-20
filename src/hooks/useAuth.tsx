@@ -169,12 +169,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setDbRole(null);
+    setSuspended(false);
     setLoading(false);
     window.location.href = "/";
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, dbRole, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, dbRole, suspended, signOut }}>
       {children}
     </AuthContext.Provider>
   );
