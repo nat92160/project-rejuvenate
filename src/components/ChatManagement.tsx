@@ -208,7 +208,7 @@ const ChatManagement = () => {
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-end gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {req.status === "pending" && (
                         <>
                           <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-bold text-muted-foreground">⏳ En attente</span>

@@ -210,6 +210,7 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
   const handleDelete = async (msgId: string) => {
     const { error } = await supabase.from("synagogue_messages").delete().eq("id", msgId);
     if (error) toast.error("Erreur de suppression");
+    else toast.success("Message supprimé");
   };
 
   const handleEdit = async (msgId: string) => {

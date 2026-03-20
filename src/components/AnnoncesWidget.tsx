@@ -215,7 +215,7 @@ const AnnoncesWidget = () => {
                 {a.content && (
                   <p className="text-xs text-muted-foreground mt-3 leading-relaxed pl-0 sm:pl-[52px] break-words">{a.content}</p>
                 )}
-                <div className="flex flex-wrap gap-2 mt-4 pl-[52px]">
+                <div className="flex flex-wrap gap-2 mt-4 pl-0 sm:pl-[52px]">
                   <button
                     onClick={() => triggerExport(a)}
                     disabled={exportingId === a.id}
