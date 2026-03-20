@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 /**
  * Capture a ref element as a high-res PNG (x2 scale) and trigger download.
- * Temporarily moves the hidden poster on-screen for html2canvas to capture.
+ * The element should be rendered in the DOM (can be hidden with opacity:0, z-index:-1).
  */
 export const exportPosterPng = async (
   element: HTMLElement | null,
@@ -11,13 +11,12 @@ export const exportPosterPng = async (
 ): Promise<void> => {
   if (!element) { toast.error("Affiche introuvable"); return; }
 
-  const wrapper = element.parentElement;
-  const prevStyle = wrapper?.getAttribute("style") || "";
-  if (wrapper) {
-    wrapper.style.cssText = "position:fixed;left:0;top:0;z-index:-1;opacity:0;pointer-events:none;";
-  }
+  // Temporarily make element visible for capture
+  const prevStyle = element.style.cssText;
+  element.style.cssText = "position:fixed;left:0;top:0;z-index:99999;opacity:1;pointer-events:none;";
 
   try {
+    await new Promise(r => setTimeout(r, 50));
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
@@ -27,7 +26,7 @@ export const exportPosterPng = async (
       height: element.scrollHeight,
     });
 
-    if (wrapper) wrapper.style.cssText = prevStyle;
+    element.style.cssText = prevStyle;
 
     const url = canvas.toDataURL("image/png");
     const a = document.createElement("a");
@@ -36,7 +35,7 @@ export const exportPosterPng = async (
     a.click();
     toast.success("Affiche téléchargée !");
   } catch (err) {
-    if (wrapper) wrapper.style.cssText = prevStyle;
+    element.style.cssText = prevStyle;
     console.error("PNG export error:", err);
     toast.error("Erreur lors du téléchargement");
   }
