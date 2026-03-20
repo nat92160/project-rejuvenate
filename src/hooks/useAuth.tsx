@@ -9,6 +9,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   dbRole: AppRole | null;
+  suspended: boolean;
   signOut: () => Promise<void>;
 }
 
