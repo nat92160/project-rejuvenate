@@ -10,7 +10,7 @@ import MinyanLiveWidget from "./MinyanLiveWidget";
 import EvenementsWidget from "./EvenementsWidget";
 import CoursVirtuelWidget from "./CoursVirtuelWidget";
 import SynaProfileManager from "./SynaProfileManager";
-import SynagogueChat from "./SynagogueChat";
+import ChatManagement from "./ChatManagement";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
 
 const features = [
