@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 interface CoursFormProps {
   userId: string;
+  synagogueId?: string | null;
   onCreated: (cours: Record<string, unknown>) => void;
   onClose: () => void;
   initialCourseType?: "zoom" | "presentiel";
