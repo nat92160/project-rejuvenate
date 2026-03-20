@@ -25,6 +25,7 @@ const App = () => (
             <Route path="/minyan/:id" element={<MinyanJoin />} />
             <Route path="/tehilim/:id" element={<TehilimJoin />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/install" element={<Install />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
