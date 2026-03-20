@@ -142,6 +142,7 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
   const renderFeature = () => {
     switch (activeFeature) {
       case "syna-profile": return <SynaProfileManager />;
+      case "chat": return synagogueId ? <SynagogueChat synagogueId={synagogueId} synagogueName={synaProfile.name || "Ma Synagogue"} isPresident /> : <p className="text-sm text-muted-foreground text-center py-8">Créez d'abord votre profil synagogue dans "Mon Espace Syna".</p>;
       case "affiche": return <AfficheChabbatWidget />;
       case "annonces": return <AnnoncesWidget />;
       case "refoua": return <RefouaChelemaWidget />;
