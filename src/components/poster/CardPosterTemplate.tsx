@@ -40,7 +40,7 @@ interface Props {
 }
 
 const W = 1080;
-const H = 1080;
+const MIN_H = 800;
 
 const FONT_DISPLAY = "'Playfair Display', serif";
 const FONT_BODY = "'Lora', serif";
@@ -58,11 +58,12 @@ const CardPosterTemplate = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         style={{
           width: W,
-          height: H,
+          minHeight: MIN_H,
           background: bg,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          padding: "50px 0",
           fontFamily: FONT_BODY,
           position: "relative",
         }}

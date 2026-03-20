@@ -152,7 +152,7 @@ const IndexContent = () => {
 
             {renderTabContent()}
 
-            {/* Connexion admin button — fixed at bottom for mobile thumb access */}
+            {/* Connexion button — only for non-logged users, not labeled "admin" */}
             {!user && (
               <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-center pointer-events-none">
                 <button
@@ -160,7 +160,7 @@ const IndexContent = () => {
                   className="pointer-events-auto px-8 py-3 rounded-full text-sm font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 text-primary-foreground border-none shadow-lg"
                   style={{ background: "var(--gradient-gold)", boxShadow: "0 6px 24px hsl(var(--gold) / 0.35)" }}
                 >
-                  🔑 Connexion Admin
+                  🔑 Se connecter
                 </button>
               </div>
             )}
