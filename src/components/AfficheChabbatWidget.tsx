@@ -186,7 +186,7 @@ const AfficheChabbatWidget = () => {
   const cardContent: CardPosterContent = {
     topEmoji: "🕯️",
     badge: "CHABBAT CHALOM",
-    badgeColor: "#D4AF37",
+    badgeColor: t.accent,
     title: data?.parasha?.replace("Parashat ", "") || "Chabbat",
     description: data?.candleLightingDate || undefined,
     date: `🕯️ ${data?.candleLighting || "--:--"}  •  ✨ ${data?.havdalah || "--:--"}`,
@@ -198,8 +198,8 @@ const AfficheChabbatWidget = () => {
       ...(minhaSat || notes.minhaSat ? [{ icon: "🌇", text: `Minha samedi ${minhaSat || notes.minhaSat}` }] : []),
       ...(sponsor ? [{ icon: "🎉", text: sponsor }] : []),
     ],
-    accentColor: "#D4AF37",
-    bgColor: "#FDFAF3",
+    accentColor: t.accent,
+    bgColor: t.swatch[2] || "#FDFAF3",
   };
 
   const handleExport = async () => {
