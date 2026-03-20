@@ -147,7 +147,7 @@ const AfficheChabbatWidget = () => {
       ...(ravMessage ? [{ section: "ANNONCES", label: "Message du Rav", value: ravMessage }] : []),
       ...(freeNote ? [{ section: "ANNONCES", label: "Note", value: freeNote }] : []),
     ],
-    description: synaProfile.name || synaName ? `${synaProfile.name || synaName} — Chabbat Chalom` : undefined,
+    description: undefined,
   };
 
   const handleExport = async () => {

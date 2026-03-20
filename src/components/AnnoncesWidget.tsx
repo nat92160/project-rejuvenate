@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
 import { toast } from "sonner";
-import MasterPosterTemplate, { type PosterContentBlock } from "@/components/poster/MasterPosterTemplate";
+import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import { exportPosterPng } from "@/components/poster/usePosterExport";
 
 interface Annonce {
@@ -76,12 +76,19 @@ const AnnoncesWidget = () => {
     setExporting(false);
   };
 
-  const posterContent: PosterContentBlock | null = posterAnnonce ? {
-    category: posterAnnonce.priority === "urgent" ? "ANNONCE URGENTE" : "ANNONCE COMMUNAUTAIRE",
+  const isUrgent = posterAnnonce?.priority === "urgent";
+
+  const posterContent: CardPosterContent | null = posterAnnonce ? {
+    topEmoji: isUrgent ? "🚨" : "📢",
+    badge: isUrgent ? "ANNONCE URGENTE" : "ANNONCE COMMUNAUTAIRE",
+    badgeColor: isUrgent ? "#DC2626" : "#D4AF37",
+    badgeEmoji: isUrgent ? "🔴" : undefined,
     title: posterAnnonce.title,
     description: posterAnnonce.content || undefined,
-    details: [],
     date: formatDate(posterAnnonce.created_at),
+    dateEmoji: "📅",
+    accentColor: isUrgent ? "#DC2626" : "#D4AF37",
+    bgColor: isUrgent ? "#FFF5F5" : "#FDFAF3",
   } : null;
 
   const isPresident = dbRole === "president";
@@ -92,7 +99,11 @@ const AnnoncesWidget = () => {
       {/* Hidden poster for export */}
       {posterContent && (
         <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-          <MasterPosterTemplate ref={posterRef} profile={synaProfile} content={posterContent} />
+          <CardPosterTemplate
+            ref={posterRef}
+            profile={{ name: synaProfile.name || "Chabbat Chalom", logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
+            content={posterContent}
+          />
         </div>
       )}
 
@@ -156,8 +167,11 @@ const AnnoncesWidget = () => {
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}>
 
               {/* Inline preview (scaled down from 1080px to fit modal) */}
-              <div style={{ transform: "scale(0.34)", transformOrigin: "top center", height: 660, overflow: "hidden" }}>
-                <MasterPosterTemplate profile={synaProfile} content={posterContent!} />
+              <div style={{ transform: "scale(0.34)", transformOrigin: "top center", height: 370, overflow: "hidden" }}>
+                <CardPosterTemplate
+                  profile={{ name: synaProfile.name || "Chabbat Chalom", logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
+                  content={posterContent!}
+                />
               </div>
 
               <div className="mt-4 space-y-2">
