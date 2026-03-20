@@ -113,6 +113,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const nextRole = await ensureUserBootstrap(authUser);
       setDbRole(nextRole);
 
+      // Check if suspended
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("suspended")
+        .eq("user_id", authUser.id)
+        .single();
+      setSuspended(profileData?.suspended === true);
+      setDbRole(nextRole);
+
       // Check for pending president request from signup
       try {
         const pendingStr = localStorage.getItem("pending_president_request");
