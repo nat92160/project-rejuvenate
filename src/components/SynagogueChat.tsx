@@ -14,6 +14,8 @@ interface Message {
   created_at: string;
 }
 
+type ChatRequestStatus = "pending" | "approved" | "rejected" | "blocked";
+
 interface SynagogueChatProps {
   synagogueId: string;
   synagogueName: string;
@@ -30,130 +32,223 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
   const [chatEnabled, setChatEnabled] = useState(false);
   const [chatEnabledLoading, setChatEnabledLoading] = useState(true);
   const [isApproved, setIsApproved] = useState(false);
-  const [requestStatus, setRequestStatus] = useState<string | null>(null);
+  const [requestStatus, setRequestStatus] = useState<ChatRequestStatus | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [presidentId, setPresidentId] = useState<string | null>(null);
+  const [viewerIsPresident, setViewerIsPresident] = useState(isPresident);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Fetch display name
+  const canAccessMessages = viewerIsPresident || isApproved;
+
   useEffect(() => {
     if (!user) return;
+
     (async () => {
-      const { data } = await supabase.from("profiles").select("display_name").eq("user_id", user.id).single();
-      setDisplayName(data?.display_name || user.email?.split("@")[0] || "Membre");
+      const { data } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const fullName = [data?.first_name, data?.last_name].filter(Boolean).join(" ").trim();
+      setDisplayName(fullName || data?.display_name || user.email?.split("@")[0] || "Membre");
     })();
   }, [user]);
 
-  // Check chat enabled + user approval
-  useEffect(() => {
+  const refreshAccess = useCallback(async () => {
     if (!user) return;
-    (async () => {
-      setChatEnabledLoading(true);
-      const { data: syna } = await supabase
-        .from("synagogue_profiles")
-        .select("chat_enabled, president_id")
-        .eq("id", synagogueId)
-        .single();
 
-      const enabled = syna?.chat_enabled ?? false;
-      setChatEnabled(enabled);
+    setChatEnabledLoading(true);
 
-      // Presidents are always approved
-      if (syna?.president_id === user.id) {
-        setIsApproved(true);
-        setRequestStatus("approved");
-      } else {
-        // Check user's request status
-        const { data: req } = await supabase
-          .from("synagogue_chat_requests")
-          .select("status")
-          .eq("synagogue_id", synagogueId)
-          .eq("user_id", user.id)
-          .single();
-        setRequestStatus(req?.status || null);
-        setIsApproved(req?.status === "approved");
-      }
+    const { data: syna } = await supabase
+      .from("synagogue_profiles")
+      .select("chat_enabled, president_id")
+      .eq("id", synagogueId)
+      .maybeSingle();
+
+    const enabled = syna?.chat_enabled ?? false;
+    const resolvedPresidentId = syna?.president_id ?? null;
+    const isOwner = resolvedPresidentId === user.id;
+
+    setChatEnabled(enabled);
+    setPresidentId(resolvedPresidentId);
+    setViewerIsPresident(isPresident || isOwner);
+
+    if (isPresident || isOwner) {
+      setIsApproved(true);
+      setRequestStatus("approved");
       setChatEnabledLoading(false);
-    })();
-  }, [user, synagogueId]);
+      return;
+    }
 
-  // Fetch messages
+    const { data: req } = await supabase
+      .from("synagogue_chat_requests")
+      .select("status")
+      .eq("synagogue_id", synagogueId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const nextStatus = (req?.status as ChatRequestStatus | null) ?? null;
+    setRequestStatus(nextStatus);
+    setIsApproved(nextStatus === "approved");
+    setChatEnabledLoading(false);
+  }, [isPresident, synagogueId, user]);
+
+  useEffect(() => {
+    void refreshAccess();
+  }, [refreshAccess]);
+
+  useEffect(() => {
+    if (!user || viewerIsPresident) return;
+
+    const channel = supabase
+      .channel(`chat-access-${synagogueId}-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "synagogue_chat_requests",
+          filter: `synagogue_id=eq.${synagogueId}`,
+        },
+        () => {
+          void refreshAccess();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [refreshAccess, synagogueId, user, viewerIsPresident]);
+
   const fetchMessages = useCallback(async () => {
+    if (!canAccessMessages) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
+
     const { data } = await supabase
       .from("synagogue_messages")
       .select("*")
       .eq("synagogue_id", synagogueId)
       .order("created_at", { ascending: true })
       .limit(100);
+
     setMessages((data as Message[]) || []);
     setLoading(false);
-  }, [synagogueId]);
+  }, [canAccessMessages, synagogueId]);
 
-  useEffect(() => { if (chatEnabled) fetchMessages(); }, [fetchMessages, chatEnabled]);
-
-  // Realtime subscription
   useEffect(() => {
-    if (!chatEnabled) return;
+    if (!chatEnabled || !canAccessMessages) {
+      setLoading(false);
+      return;
+    }
+
+    void fetchMessages();
+  }, [chatEnabled, canAccessMessages, fetchMessages]);
+
+  useEffect(() => {
+    if (!chatEnabled || !canAccessMessages) return;
+
     const channel = supabase
       .channel(`chat-${synagogueId}`)
-      .on("postgres_changes", {
-        event: "*",
-        schema: "public",
-        table: "synagogue_messages",
-        filter: `synagogue_id=eq.${synagogueId}`,
-      }, () => fetchMessages())
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "synagogue_messages",
+          filter: `synagogue_id=eq.${synagogueId}`,
+        },
+        () => {
+          void fetchMessages();
+        }
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [synagogueId, fetchMessages, chatEnabled]);
 
-  // Auto scroll
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [canAccessMessages, chatEnabled, fetchMessages, synagogueId]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSend = async () => {
-    if (!user || !newMessage.trim()) return;
+    if (!user) return;
+
+    const content = newMessage.trim().slice(0, 1000);
+    if (!content) return;
+    if (!viewerIsPresident && !isApproved) {
+      toast.error("Votre accès au chat doit être approuvé par le président.");
+      return;
+    }
+
     setSending(true);
+
     const { error } = await supabase.from("synagogue_messages").insert({
       synagogue_id: synagogueId,
       user_id: user.id,
-      display_name: isPresident ? `🏛️ ${synagogueName}` : displayName,
-      content: newMessage.trim(),
-      is_president: isPresident,
-    } as any);
-    if (error) toast.error("Erreur d'envoi");
-    else setNewMessage("");
+      display_name: viewerIsPresident ? synagogueName : displayName.slice(0, 100),
+      content,
+      is_president: viewerIsPresident,
+    } as never);
+
+    if (error) {
+      toast.error("Erreur d'envoi");
+    } else {
+      setNewMessage("");
+    }
+
     setSending(false);
   };
 
   const handleDelete = async (msgId: string) => {
-    await supabase.from("synagogue_messages").delete().eq("id", msgId);
+    const { error } = await supabase.from("synagogue_messages").delete().eq("id", msgId);
+    if (error) toast.error("Erreur de suppression");
   };
 
   const handleEdit = async (msgId: string) => {
-    if (!editContent.trim()) return;
+    const content = editContent.trim().slice(0, 1000);
+    if (!content) return;
+
     const { error } = await supabase
       .from("synagogue_messages")
-      .update({ content: editContent.trim() } as any)
+      .update({ content } as never)
       .eq("id", msgId);
-    if (error) toast.error("Erreur de modification");
-    else { setEditingId(null); setEditContent(""); }
+
+    if (error) {
+      toast.error("Erreur de modification");
+    } else {
+      setEditingId(null);
+      setEditContent("");
+    }
   };
 
   const handleRequestAccess = async () => {
     if (!user) return;
+
     const { error } = await supabase.from("synagogue_chat_requests").insert({
       synagogue_id: synagogueId,
       user_id: user.id,
-      display_name: displayName,
-    } as any);
+      display_name: displayName.slice(0, 100),
+    } as never);
+
     if (error) {
-      if (error.code === "23505") toast("Demande déjà envoyée");
-      else toast.error("Erreur");
-    } else {
-      setRequestStatus("pending");
-      toast.success("Demande envoyée au président !");
+      if (error.code === "23505") {
+        toast("Demande déjà envoyée");
+      } else {
+        toast.error("Erreur");
+      }
+      return;
     }
+
+    setRequestStatus("pending");
+    toast.success("Demande envoyée au président !");
   };
 
   const formatTime = (date: string) => {
@@ -178,7 +273,7 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
     return <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>;
   }
 
-  if (!chatEnabled && !isPresident) {
+  if (!chatEnabled && !viewerIsPresident) {
     return (
       <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
         <span className="text-4xl">🔒</span>
@@ -187,26 +282,37 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
     );
   }
 
-  // Fidèle not approved yet
-  if (!isPresident && !isApproved) {
+  if (!viewerIsPresident && !isApproved) {
     return (
       <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
         <span className="text-4xl">🙋</span>
         {requestStatus === "pending" ? (
           <>
             <p className="mt-3 text-sm text-muted-foreground">Votre demande est en attente d'approbation par le président.</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Vous serez notifié dès que votre accès sera validé.</p>
+            <p className="mt-1 text-xs text-muted-foreground/60">Vous pourrez écrire dès validation.</p>
+          </>
+        ) : requestStatus === "blocked" ? (
+          <>
+            <p className="mt-3 text-sm text-destructive">Votre accès au chat a été bloqué par le président.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Vous ne pouvez plus lire ni écrire tant qu'il ne vous débloque pas.</p>
           </>
         ) : requestStatus === "rejected" ? (
           <>
             <p className="mt-3 text-sm text-muted-foreground">Votre demande a été refusée.</p>
+            <button
+              onClick={handleRequestAccess}
+              className="mt-4 rounded-xl border-none px-6 py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-95"
+              style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+            >
+              🔁 Redemander l'accès
+            </button>
           </>
         ) : (
           <>
             <p className="mt-3 text-sm text-muted-foreground">Demandez l'accès au chat pour participer aux discussions.</p>
             <button
               onClick={handleRequestAccess}
-              className="mt-4 px-6 py-2.5 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all active:scale-95"
+              className="mt-4 rounded-xl border-none px-6 py-2.5 text-sm font-bold text-primary-foreground transition-all active:scale-95"
               style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
             >
               ✋ Demander l'accès
@@ -218,32 +324,32 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
   }
 
   return (
-    <div className="flex flex-col rounded-2xl border border-border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-card)", height: "min(520px, 62vh)" }}>
-      {/* Header */}
-      <div className="shrink-0 px-4 py-3 border-b border-border" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}>
-        <h4 className="font-display text-sm font-bold text-foreground flex items-center gap-2">
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card" style={{ boxShadow: "var(--shadow-card)", height: "min(520px, 62vh)" }}>
+      <div className="shrink-0 border-b border-border px-4 py-3" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}>
+        <h4 className="flex items-center gap-2 font-display text-sm font-bold text-foreground">
           💬 Chat — {synagogueName}
         </h4>
-        <p className="text-[10px] text-muted-foreground mt-0.5">
-          {isPresident ? "Vos messages sont identifiés comme la synagogue" : "Échangez avec votre communauté"}
+        <p className="mt-0.5 text-[10px] text-muted-foreground">
+          {viewerIsPresident ? "Vos messages portent automatiquement le badge président." : "Échangez avec votre communauté après approbation."}
         </p>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5">
+      <div className="flex-1 space-y-2.5 overflow-y-auto px-3 py-3">
         {loading ? (
-          <div className="text-center py-10 text-sm text-muted-foreground">Chargement…</div>
+          <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
         ) : messages.length === 0 ? (
-          <div className="text-center py-10">
+          <div className="py-10 text-center">
             <span className="text-4xl">🤝</span>
             <p className="mt-3 text-sm text-muted-foreground">Aucun message pour le moment.</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Soyez le premier à écrire !</p>
+            <p className="mt-1 text-xs text-muted-foreground/60">Soyez le premier à écrire !</p>
           </div>
         ) : (
           <AnimatePresence initial={false}>
             {messages.map((msg) => {
               const isMine = msg.user_id === user.id;
               const isEditing = editingId === msg.id;
+              const msgFromPresident = msg.is_president || (!!presidentId && msg.user_id === presidentId);
+
               return (
                 <motion.div
                   key={msg.id}
@@ -253,29 +359,28 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
                 >
                   <div
                     className={`relative max-w-[82%] rounded-2xl px-3.5 py-2.5 ${
-                      msg.is_president
+                      msgFromPresident
                         ? "border border-primary/20"
                         : isMine
-                        ? "text-primary-foreground"
-                        : "border border-border"
+                          ? "text-primary-foreground"
+                          : "border border-border"
                     }`}
                     style={
-                      msg.is_president
+                      msgFromPresident
                         ? { background: "linear-gradient(135deg, hsl(var(--gold) / 0.12), hsl(var(--gold) / 0.04))" }
                         : isMine
-                        ? { background: "var(--gradient-gold)" }
-                        : { background: "hsl(var(--muted))" }
+                          ? { background: "var(--gradient-gold)" }
+                          : { background: "hsl(var(--muted))" }
                     }
                   >
-                    {/* Sender name + badge */}
                     {!isMine && (
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <p className={`text-[11px] font-bold ${msg.is_president ? "text-primary" : "text-muted-foreground"}`}>
+                      <div className="mb-0.5 flex items-center gap-1.5">
+                        <p className={`text-[11px] font-bold ${msgFromPresident ? "text-primary" : "text-muted-foreground"}`}>
                           {msg.display_name}
                         </p>
-                        {msg.is_president && (
+                        {msgFromPresident && (
                           <span
-                            className="inline-flex items-center gap-0.5 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+                            className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider"
                             style={{ background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }}
                           >
                             🏛️ Président
@@ -283,10 +388,11 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
                         )}
                       </div>
                     )}
-                    {isMine && msg.is_president && (
-                      <div className="flex items-center gap-1.5 mb-0.5">
+
+                    {isMine && msgFromPresident && (
+                      <div className="mb-0.5 flex items-center gap-1.5">
                         <span
-                          className="inline-flex items-center gap-0.5 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+                          className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider"
                           style={{ background: "hsla(0,0%,100%,0.2)", color: "hsl(var(--primary-foreground))" }}
                         >
                           🏛️ Président
@@ -294,51 +400,56 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
                       </div>
                     )}
 
-                    {/* Message content or edit field */}
                     {isEditing ? (
-                      <div className="flex gap-1.5 mt-1">
+                      <div className="mt-1 flex gap-1.5">
                         <input
                           value={editContent}
                           onChange={(e) => setEditContent(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === "Enter") handleEdit(msg.id); if (e.key === "Escape") setEditingId(null); }}
-                          className="flex-1 px-2 py-1 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleEdit(msg.id);
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                          className="flex-1 rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none"
+                          maxLength={1000}
                           autoFocus
                         />
-                        <button onClick={() => handleEdit(msg.id)} className="text-[10px] font-bold text-primary bg-transparent border-none cursor-pointer">✓</button>
-                        <button onClick={() => setEditingId(null)} className="text-[10px] text-muted-foreground bg-transparent border-none cursor-pointer">✕</button>
+                        <button onClick={() => handleEdit(msg.id)} className="border-none bg-transparent text-[10px] font-bold text-primary cursor-pointer">✓</button>
+                        <button onClick={() => setEditingId(null)} className="border-none bg-transparent text-[10px] text-muted-foreground cursor-pointer">✕</button>
                       </div>
                     ) : (
-                      <p className={`text-sm leading-relaxed ${isMine && !msg.is_president ? "text-primary-foreground" : "text-foreground"}`}>
+                      <p className={`text-sm leading-relaxed ${isMine && !msgFromPresident ? "text-primary-foreground" : "text-foreground"}`}>
                         {msg.content}
                       </p>
                     )}
 
-                    {/* Time + actions */}
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-[9px] ${isMine && !msg.is_president ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className={`text-[9px] ${isMine && !msgFromPresident ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                         {formatTime(msg.created_at)}
                       </span>
                       {isMine && !isEditing && (
                         <>
                           <button
-                            onClick={() => { setEditingId(msg.id); setEditContent(msg.content); }}
-                            className="text-[9px] text-muted-foreground/60 hover:text-foreground bg-transparent border-none cursor-pointer p-0"
-                            style={isMine && !msg.is_president ? { color: "hsla(0,0%,100%,0.5)" } : {}}
+                            onClick={() => {
+                              setEditingId(msg.id);
+                              setEditContent(msg.content);
+                            }}
+                            className="border-none bg-transparent p-0 text-[9px] text-muted-foreground/60 hover:text-foreground cursor-pointer"
+                            style={isMine && !msgFromPresident ? { color: "hsla(0,0%,100%,0.5)" } : {}}
                           >
                             ✏️
                           </button>
                           <button
                             onClick={() => handleDelete(msg.id)}
-                            className="text-[9px] text-destructive/60 hover:text-destructive bg-transparent border-none cursor-pointer p-0"
+                            className="border-none bg-transparent p-0 text-[9px] text-destructive/60 hover:text-destructive cursor-pointer"
                           >
                             🗑️
                           </button>
                         </>
                       )}
-                      {isPresident && !isMine && (
+                      {viewerIsPresident && !isMine && (
                         <button
                           onClick={() => handleDelete(msg.id)}
-                          className="text-[9px] text-destructive/60 hover:text-destructive bg-transparent border-none cursor-pointer p-0"
+                          className="border-none bg-transparent p-0 text-[9px] text-destructive/60 hover:text-destructive cursor-pointer"
                         >
                           🗑️
                         </button>
@@ -353,20 +464,25 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="shrink-0 border-t border-border p-3 flex gap-2">
+      <div className="flex shrink-0 gap-2 border-t border-border p-3">
         <input
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          placeholder="Écrire un message…"
-          className="flex-1 px-4 py-2.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          disabled={sending}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void handleSend();
+            }
+          }}
+          placeholder={viewerIsPresident ? "Écrire en tant que synagogue…" : "Écrire un message…"}
+          className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+          disabled={sending || (!viewerIsPresident && !isApproved)}
+          maxLength={1000}
         />
         <button
-          onClick={handleSend}
-          disabled={sending || !newMessage.trim()}
-          className="shrink-0 px-4 py-2.5 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+          onClick={() => void handleSend()}
+          disabled={sending || !newMessage.trim() || (!viewerIsPresident && !isApproved)}
+          className="shrink-0 rounded-xl border-none px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50 transition-all active:scale-95 cursor-pointer"
           style={{ background: "var(--gradient-gold)" }}
         >
           {sending ? "…" : "📨"}
