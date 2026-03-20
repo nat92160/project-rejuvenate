@@ -113,17 +113,19 @@ const FideleSynagogueView = () => {
     // Fetch content — if subscribed, filter by synagogue; otherwise show all
     const filter = subIds.length > 0;
 
-    const [coursRes, eventsRes, annoncesRes] = await Promise.all([
-      filter
-        ? supabase.from("cours_zoom").select("*").in("synagogue_id" as any, subIds).order("created_at", { ascending: false }).limit(20)
-        : supabase.from("cours_zoom").select("*").order("created_at", { ascending: false }).limit(20),
-      filter
-        ? supabase.from("evenements").select("*").in("synagogue_id" as any, subIds).gte("event_date", today).order("event_date", { ascending: true }).limit(20)
-        : supabase.from("evenements").select("*").gte("event_date", today).order("event_date", { ascending: true }).limit(20),
-      filter
-        ? supabase.from("annonces").select("*").in("synagogue_id" as any, subIds).order("created_at", { ascending: false }).limit(10)
-        : supabase.from("annonces").select("*").order("created_at", { ascending: false }).limit(10),
-    ]);
+    const coursQuery = supabase.from("cours_zoom").select("*").order("created_at", { ascending: false }).limit(20);
+    const eventsQuery = supabase.from("evenements").select("*").gte("event_date", today).order("event_date", { ascending: true }).limit(20);
+    const annoncesQuery = supabase.from("annonces").select("*").order("created_at", { ascending: false }).limit(10);
+
+    // If subscribed, filter by synagogue_id using raw filter
+    if (filter) {
+      const idList = `(${subIds.join(",")})`;
+      coursQuery.filter("synagogue_id", "in", idList);
+      eventsQuery.filter("synagogue_id", "in", idList);
+      annoncesQuery.filter("synagogue_id", "in", idList);
+    }
+
+    const [coursRes, eventsRes, annoncesRes] = await Promise.all([coursQuery, eventsQuery, annoncesQuery]);
 
     setCours((coursRes.data || []) as CoursItem[]);
     setEvents((eventsRes.data || []) as EventItem[]);
