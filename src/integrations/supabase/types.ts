@@ -267,7 +267,9 @@ export type Database = {
           city: string | null
           created_at: string
           display_name: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
           suspended: boolean
           synagogue: string | null
           updated_at: string
@@ -277,7 +279,9 @@ export type Database = {
           city?: string | null
           created_at?: string
           display_name?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           suspended?: boolean
           synagogue?: string | null
           updated_at?: string
@@ -287,7 +291,9 @@ export type Database = {
           city?: string | null
           created_at?: string
           display_name?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           suspended?: boolean
           synagogue?: string | null
           updated_at?: string
@@ -427,7 +433,9 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          president_first_name: string | null
           president_id: string
+          president_last_name: string | null
           primary_color: string | null
           secondary_color: string | null
           signature: string | null
@@ -441,7 +449,9 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          president_first_name?: string | null
           president_id: string
+          president_last_name?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           signature?: string | null
@@ -455,7 +465,9 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          president_first_name?: string | null
           president_id?: string
+          president_last_name?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           signature?: string | null
