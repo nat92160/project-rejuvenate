@@ -153,7 +153,8 @@ const AdminDashboard = () => {
   const openEditDialog = (managedUser: ManagedUser) => {
     setEditingUser(managedUser);
     setProfileForm({
-      display_name: managedUser.display_name || "",
+      first_name: managedUser.first_name || "",
+      last_name: managedUser.last_name || "",
       city: managedUser.city || "",
     });
   };
