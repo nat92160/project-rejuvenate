@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { toast } from "sonner";
 
 interface Message {
@@ -38,6 +39,7 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
   const [presidentId, setPresidentId] = useState<string | null>(null);
   const [viewerIsPresident, setViewerIsPresident] = useState(isPresident);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { isSubscribed, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe, supported: pushSupported } = usePushSubscription(synagogueId);
   const [notifEnabled, setNotifEnabled] = useState(() => {
     const stored = localStorage.getItem(`chat-notif-${synagogueId}`);
     return stored === null ? true : stored === "true";
@@ -46,21 +48,31 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
 
   const canAccessMessages = viewerIsPresident || isApproved;
 
-  // Request notification permission on mount if enabled
+  // Auto-subscribe to push when notifications are enabled and user has access
   useEffect(() => {
-    if (notifEnabled && "Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+    if (notifEnabled && canAccessMessages && pushSupported && !isSubscribed) {
+      pushSubscribe();
     }
-  }, [notifEnabled]);
+  }, [notifEnabled, canAccessMessages, pushSupported, isSubscribed, pushSubscribe]);
 
-  const toggleNotif = () => {
+  const toggleNotif = async () => {
     const next = !notifEnabled;
     setNotifEnabled(next);
     localStorage.setItem(`chat-notif-${synagogueId}`, String(next));
-    if (next && "Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+    
+    if (next && pushSupported) {
+      const ok = await pushSubscribe();
+      if (ok) {
+        toast.success("🔔 Notifications push activées");
+      } else {
+        toast.success("🔔 Notifications activées (in-app uniquement)");
+      }
+    } else if (!next && pushSupported) {
+      await pushUnsubscribe();
+      toast.success("🔕 Notifications désactivées");
+    } else {
+      toast.success(next ? "🔔 Notifications activées" : "🔕 Notifications désactivées");
     }
-    toast.success(next ? "🔔 Notifications activées" : "🔕 Notifications désactivées");
   };
 
   useEffect(() => {
@@ -249,6 +261,16 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
       toast.error("Erreur d'envoi");
     } else {
       setNewMessage("");
+      // Trigger push notifications to other subscribers
+      const pushDisplayName = viewerIsPresident ? synagogueName : displayName;
+      supabase.functions.invoke("send-push", {
+        body: {
+          synagogue_id: synagogueId,
+          title: `💬 ${pushDisplayName}`,
+          body: content.slice(0, 100),
+          sender_id: user.id,
+        },
+      }).catch((e) => console.error("Push trigger error:", e));
     }
 
     setSending(false);
