@@ -396,7 +396,7 @@ const AfficheChabbatWidget = () => {
             </div>
           ) : (
             <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
-              <div style={{ transform: "scale(0.34)", transformOrigin: "top left", width: 1080, height: 1080, marginBottom: -1080 * (1 - 0.34), marginRight: -1080 * (1 - 0.34) }}>
+              <div style={{ transform: "scale(0.34)", transformOrigin: "top left", width: 1080, marginRight: -1080 * (1 - 0.34) }}>
                 <div ref={cardRef}>
                   <CardPosterTemplate
                     profile={{ name: synaProfile.name || synaName, logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
