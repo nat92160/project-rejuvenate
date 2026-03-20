@@ -29,6 +29,8 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
   const [success, setSuccess] = useState<string | null>(null);
 
   // Signup extra fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [signupRole, setSignupRole] = useState<SignupRole>("fidele");
   const [synagogueName, setSynagogueName] = useState("");
   const [city, setCity] = useState("Paris");
