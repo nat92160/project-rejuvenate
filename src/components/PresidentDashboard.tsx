@@ -10,8 +10,8 @@ import MinyanLiveWidget from "./MinyanLiveWidget";
 import EvenementsWidget from "./EvenementsWidget";
 import CoursVirtuelWidget from "./CoursVirtuelWidget";
 import SynaProfileManager from "./SynaProfileManager";
-import SynagogueChat from "./SynagogueChat";
-import { useSynaProfile } from "@/hooks/useSynaProfile";
+import ChatManagement from "./ChatManagement";
+
 
 const features = [
   { id: "syna-profile", icon: "🏛️", title: "Mon Espace Syna" },
@@ -120,7 +120,6 @@ const StatsDashboard = () => {
 
 const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
   const { user, dbRole } = useAuth();
-  const { synagogueId, profile: synaProfile } = useSynaProfile();
   const [activeFeature, setActiveFeature] = useState<string | null>(null);
   const canManage = !!user && dbRole === "president";
 
@@ -142,7 +141,7 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
   const renderFeature = () => {
     switch (activeFeature) {
       case "syna-profile": return <SynaProfileManager />;
-      case "chat": return synagogueId ? <SynagogueChat synagogueId={synagogueId} synagogueName={synaProfile.name || "Ma Synagogue"} isPresident /> : <p className="text-sm text-muted-foreground text-center py-8">Créez d'abord votre profil synagogue dans "Mon Espace Syna".</p>;
+      case "chat": return <ChatManagement />;
       case "affiche": return <AfficheChabbatWidget />;
       case "annonces": return <AnnoncesWidget />;
       case "refoua": return <RefouaChelemaWidget />;
