@@ -173,7 +173,7 @@ const MasterPosterTemplate = forwardRef<HTMLDivElement, Props>(
               flex: 1,
               display: "flex",
               flexDirection: "column",
-              justifyContent: "center",
+              justifyContent: "flex-start",
               padding: `40px ${CARD_PAD}px`,
               gap: 28,
             }}
