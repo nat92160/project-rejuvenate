@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { toast } from "sonner";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 
@@ -67,6 +68,7 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
 
 const MinyanLiveWidget = () => {
   const { user, dbRole } = useAuth();
+  const { subIds, loading: subLoading } = useSubscribedSynaIds();
   const isPresident = dbRole === "president";
   const [sessions, setSessions] = useState<MinyanSession[]>([]);
   const [registrations, setRegistrations] = useState<Record<string, Registration[]>>({});
@@ -77,7 +79,16 @@ const MinyanLiveWidget = () => {
 
   const fetchSessions = async () => {
     const today = new Date().toISOString().split("T")[0];
-    const { data } = await supabase.from("minyan_sessions").select("*").gte("office_date", today).order("office_date").order("office_time");
+    let query = supabase.from("minyan_sessions").select("*").gte("office_date", today).order("office_date").order("office_time");
+
+    // Filter by subscription for non-presidents
+    if (!isPresident && user && subIds.length > 0) {
+      query = query.in("synagogue_id", subIds);
+    } else if (!isPresident && user && subIds.length === 0 && !subLoading) {
+      setSessions([]); setLoading(false); return;
+    }
+
+    const { data } = await query;
     if (data && data.length > 0) {
       setSessions(data);
       setSelectedSession(prev => prev && data.some(s => s.id === prev) ? prev : data[0].id);
@@ -89,7 +100,7 @@ const MinyanLiveWidget = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchSessions(); }, []);
+  useEffect(() => { if (!subLoading) fetchSessions(); }, [subLoading, subIds]);
   useEffect(() => {
     const channel = supabase.channel("minyan-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "minyan_registrations" }, () => fetchSessions())

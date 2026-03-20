@@ -9,6 +9,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   dbRole: AppRole | null;
+  suspended: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [dbRole, setDbRole] = useState<AppRole | null>(null);
+  const [suspended, setSuspended] = useState(false);
   const lastSessionKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -111,6 +113,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const nextRole = await ensureUserBootstrap(authUser);
       setDbRole(nextRole);
 
+      // Check if suspended
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("suspended")
+        .eq("user_id", authUser.id)
+        .single();
+      setSuspended(profileData?.suspended === true);
+      setDbRole(nextRole);
+
       // Check for pending president request from signup
       try {
         const pendingStr = localStorage.getItem("pending_president_request");
@@ -158,12 +169,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setDbRole(null);
+    setSuspended(false);
     setLoading(false);
     window.location.href = "/";
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, dbRole, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, dbRole, suspended, signOut }}>
       {children}
     </AuthContext.Provider>
   );

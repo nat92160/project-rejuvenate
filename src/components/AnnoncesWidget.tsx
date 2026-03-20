@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
+import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { toast } from "sonner";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import { exportPosterPng } from "@/components/poster/usePosterExport";
@@ -19,6 +20,8 @@ interface Annonce {
 const AnnoncesWidget = () => {
   const { user, dbRole } = useAuth();
   const { profile: synaProfile, synagogueId } = useSynaProfile();
+  const { subIds, loading: subLoading } = useSubscribedSynaIds();
+  const isPresident = dbRole === "president";
   const [annonces, setAnnonces] = useState<Annonce[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -31,18 +34,31 @@ const AnnoncesWidget = () => {
   const posterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (subLoading) return;
     const fetchAnnonces = async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("annonces")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(20);
+
+      // Fidèles: filter by subscribed synagogues; Presidents see their own
+      if (isPresident && synagogueId) {
+        query = query.eq("synagogue_id", synagogueId);
+      } else if (user && subIds.length > 0) {
+        query = query.in("synagogue_id", subIds);
+      } else if (user && subIds.length === 0) {
+        // No subscription = no content
+        setAnnonces([]); setLoading(false); return;
+      }
+
+      const { data, error } = await query;
       if (error) toast.error("Erreur lors du chargement des annonces");
       setAnnonces(data || []);
       setLoading(false);
     };
     fetchAnnonces();
-  }, []);
+  }, [subLoading, subIds, user, isPresident, synagogueId]);
 
   const handleAdd = async () => {
     if (!newTitle.trim()) { toast.error("Veuillez entrer un titre"); return; }
@@ -102,7 +118,6 @@ const AnnoncesWidget = () => {
     bgColor: isUrgent ? "#FFF5F5" : "#FDFAF3",
   } : null;
 
-  const isPresident = dbRole === "president";
   const inputClass = "w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
 
   return (
