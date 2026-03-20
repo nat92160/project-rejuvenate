@@ -182,6 +182,19 @@ const AdminDashboard = () => {
     setUserProcessing(null);
   };
 
+  const handleSetRole = async (userId: string, role: string) => {
+    setUserProcessing(userId);
+    const { error } = await supabase.functions.invoke("admin-users", {
+      body: { action: "set_role", user_id: userId, role },
+    });
+    if (error) toast.error("Erreur de changement de rôle");
+    else {
+      toast.success(`Rôle mis à jour : ${role}`);
+      await fetchUsers();
+    }
+    setUserProcessing(null);
+  };
+
   const pending = useMemo(() => requests.filter((r) => r.status === "pending"), [requests]);
   const processed = useMemo(() => requests.filter((r) => r.status !== "pending"), [requests]);
   const filteredUsers = useMemo(
