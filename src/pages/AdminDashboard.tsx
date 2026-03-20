@@ -1,9 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface PresidentRequest {
   id: string;
@@ -27,26 +36,24 @@ interface ManagedUser {
 }
 
 const AdminDashboard = () => {
-  const { user, dbRole, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"requests" | "users">("requests");
-
-  // Requests state
   const [requests, setRequests] = useState<PresidentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
-
-  // Users state
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [userProcessing, setUserProcessing] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
+  const [profileForm, setProfileForm] = useState({ display_name: "", city: "" });
 
   useEffect(() => {
-    if (!authLoading && (!user || dbRole !== "admin")) {
+    if (!authLoading && (!user || !isAdmin)) {
       navigate("/");
     }
-  }, [user, dbRole, authLoading, navigate]);
+  }, [user, isAdmin, authLoading, navigate]);
 
   const fetchRequests = async () => {
     const { data, error } = await supabase
@@ -75,14 +82,18 @@ const AdminDashboard = () => {
     const { data, error } = await supabase.functions.invoke("admin-users", {
       body: { action: "list" },
     });
-    if (error) { toast.error("Erreur de chargement des utilisateurs"); }
-    else { setUsers(data.users || []); }
+
+    if (error) {
+      toast.error("Erreur de chargement des utilisateurs");
+    } else {
+      setUsers(data.users || []);
+    }
     setUsersLoading(false);
   };
 
   useEffect(() => {
-    if (user && dbRole === "admin") fetchRequests();
-  }, [user, dbRole]);
+    if (user && isAdmin) fetchRequests();
+  }, [user, isAdmin]);
 
   useEffect(() => {
     if (tab === "users" && users.length === 0) fetchUsers();
@@ -95,7 +106,11 @@ const AdminDashboard = () => {
       .update({ status: decision, reviewed_by: user!.id, reviewed_at: new Date().toISOString() })
       .eq("id", requestId);
 
-    if (updateError) { toast.error("Erreur"); setProcessing(null); return; }
+    if (updateError) {
+      toast.error("Erreur");
+      setProcessing(null);
+      return;
+    }
 
     if (decision === "approved") {
       await supabase.from("user_roles").insert({ user_id: userId, role: "president" as any });
@@ -112,7 +127,10 @@ const AdminDashboard = () => {
       body: { action: suspend ? "suspend" : "unsuspend", user_id: userId },
     });
     if (error) toast.error("Erreur");
-    else { toast.success(suspend ? "⏸️ Compte suspendu" : "▶️ Compte réactivé"); await fetchUsers(); }
+    else {
+      toast.success(suspend ? "⏸️ Compte suspendu" : "▶️ Compte réactivé");
+      await fetchUsers();
+    }
     setUserProcessing(null);
   };
 
@@ -123,8 +141,58 @@ const AdminDashboard = () => {
       body: { action: "delete", user_id: userId },
     });
     if (error) toast.error("Erreur de suppression");
-    else { toast.success("🗑️ Compte supprimé"); await fetchUsers(); }
+    else {
+      toast.success("🗑️ Compte supprimé");
+      await fetchUsers();
+    }
     setUserProcessing(null);
+  };
+
+  const openEditDialog = (managedUser: ManagedUser) => {
+    setEditingUser(managedUser);
+    setProfileForm({
+      display_name: managedUser.display_name || "",
+      city: managedUser.city || "",
+    });
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editingUser) return;
+    setUserProcessing(editingUser.id);
+    const { error } = await supabase.functions.invoke("admin-users", {
+      body: {
+        action: "update_profile",
+        user_id: editingUser.id,
+        display_name: profileForm.display_name.trim(),
+        city: profileForm.city.trim(),
+      },
+    });
+
+    if (error) {
+      toast.error("Erreur de mise à jour du profil");
+    } else {
+      toast.success("✅ Profil mis à jour");
+      await fetchUsers();
+      setEditingUser(null);
+    }
+    setUserProcessing(null);
+  };
+
+  const pending = useMemo(() => requests.filter((r) => r.status === "pending"), [requests]);
+  const processed = useMemo(() => requests.filter((r) => r.status !== "pending"), [requests]);
+  const filteredUsers = useMemo(
+    () => users.filter((u) =>
+      u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.display_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+    [users, searchTerm]
+  );
+
+  const roleColors: Record<string, string> = {
+    admin: "bg-destructive/10 text-destructive",
+    president: "bg-primary/10 text-primary",
+    fidele: "bg-primary/10 text-primary",
+    guest: "bg-muted text-muted-foreground",
   };
 
   if (authLoading || loading) {
@@ -135,25 +203,11 @@ const AdminDashboard = () => {
     );
   }
 
-  if (!user || dbRole !== "admin") return null;
-
-  const pending = requests.filter((r) => r.status === "pending");
-  const processed = requests.filter((r) => r.status !== "pending");
-  const filteredUsers = users.filter(u =>
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.display_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const roleColors: Record<string, string> = {
-    admin: "bg-red-500/10 text-red-600",
-    president: "bg-amber-500/10 text-amber-600",
-    fidele: "bg-blue-500/10 text-blue-600",
-    guest: "bg-muted text-muted-foreground",
-  };
+  if (!user || !isAdmin) return null;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => navigate("/")}
@@ -167,12 +221,11 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-2 mb-6">
-          {([
+          {[
             { id: "requests" as const, icon: "📋", label: "Demandes", count: pending.length },
             { id: "users" as const, icon: "👥", label: "Utilisateurs", count: users.length },
-          ]).map(t => (
+          ].map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
@@ -187,12 +240,11 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Requests tab */}
         {tab === "requests" && (
           <>
             <div className="mb-8">
               <h2 className="font-bold text-lg text-foreground mb-4 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                 En attente ({pending.length})
               </h2>
 
@@ -204,7 +256,7 @@ const AdminDashboard = () => {
               ) : (
                 <div className="space-y-3">
                   {pending.map((req) => (
-                    <div key={req.id} className="rounded-2xl border border-amber-500/20 bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+                    <div key={req.id} className="rounded-2xl border border-primary/20 bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <p className="font-bold text-foreground">{req.synagogue_name}</p>
@@ -217,11 +269,12 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex gap-2 mt-3">
                         <button onClick={() => handleDecision(req.id, req.user_id, "approved")} disabled={processing === req.id}
-                          className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white bg-emerald-600 border-none cursor-pointer disabled:opacity-50 hover:bg-emerald-700 transition-all active:scale-[0.98]">
+                          className="flex-1 py-2.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50 transition-all active:scale-[0.98]"
+                          style={{ background: "var(--gradient-gold)" }}>
                           {processing === req.id ? "⏳" : "✅ Approuver"}
                         </button>
                         <button onClick={() => handleDecision(req.id, req.user_id, "rejected")} disabled={processing === req.id}
-                          className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white bg-red-600 border-none cursor-pointer disabled:opacity-50 hover:bg-red-700 transition-all active:scale-[0.98]">
+                          className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-destructive/10 text-destructive border-none cursor-pointer disabled:opacity-50 transition-all active:scale-[0.98]">
                           {processing === req.id ? "⏳" : "❌ Refuser"}
                         </button>
                       </div>
@@ -241,7 +294,7 @@ const AdminDashboard = () => {
                         <p className="text-sm font-bold text-foreground">{req.synagogue_name}</p>
                         <p className="text-[10px] text-muted-foreground">{req.user_email} • {req.city}</p>
                       </div>
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${req.status === "approved" ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"}`}>
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${req.status === "approved" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
                         {req.status === "approved" ? "Approuvé" : "Refusé"}
                       </span>
                     </div>
@@ -252,7 +305,6 @@ const AdminDashboard = () => {
           </>
         )}
 
-        {/* Users tab */}
         {tab === "users" && (
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -279,7 +331,7 @@ const AdminDashboard = () => {
                 {filteredUsers.map((u, i) => (
                   <motion.div
                     key={u.id}
-                    className={`rounded-2xl border bg-card p-4 ${u.suspended ? "border-red-500/20 opacity-60" : "border-border"}`}
+                    className={`rounded-2xl border bg-card p-4 ${u.suspended ? "border-destructive/20 opacity-60" : "border-border"}`}
                     style={{ boxShadow: "var(--shadow-card)" }}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: u.suspended ? 0.6 : 1, y: 0 }}
@@ -290,12 +342,12 @@ const AdminDashboard = () => {
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-bold text-foreground">{u.display_name || "Sans nom"}</p>
                           {u.suspended && (
-                            <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-500/10 text-red-600">Suspendu</span>
+                            <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">Suspendu</span>
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">{u.email}</p>
                         <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                          {u.roles.map(r => (
+                          {u.roles.map((r) => (
                             <span key={r} className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${roleColors[r] || roleColors.guest}`}>
                               {r}
                             </span>
@@ -307,9 +359,16 @@ const AdminDashboard = () => {
                         </p>
                       </div>
 
-                      {/* Don't show actions for admin users */}
                       {!u.roles.includes("admin") && (
                         <div className="flex flex-col gap-1.5 shrink-0">
+                          <button
+                            onClick={() => openEditDialog(u)}
+                            disabled={userProcessing === u.id}
+                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                            style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
+                          >
+                            ✏️ Modifier
+                          </button>
                           <button
                             onClick={() => handleSuspend(u.id, !u.suspended)}
                             disabled={userProcessing === u.id}
@@ -345,6 +404,53 @@ const AdminDashboard = () => {
           </div>
         )}
       </div>
+
+      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier le profil utilisateur</DialogTitle>
+            <DialogDescription>
+              Mettez à jour les informations visibles de ce compte.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Nom affiché</label>
+              <Input
+                value={profileForm.display_name}
+                onChange={(e) => setProfileForm((prev) => ({ ...prev, display_name: e.target.value }))}
+                placeholder="Nom et prénom"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Ville</label>
+              <Input
+                value={profileForm.city}
+                onChange={(e) => setProfileForm((prev) => ({ ...prev, city: e.target.value }))}
+                placeholder="Paris"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <button
+              onClick={() => setEditingUser(null)}
+              className="px-4 py-2 rounded-lg border border-border bg-card text-foreground cursor-pointer"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleSaveProfile}
+              disabled={!editingUser || userProcessing === editingUser.id}
+              className="px-4 py-2 rounded-lg border-none text-primary-foreground font-bold cursor-pointer disabled:opacity-50"
+              style={{ background: "var(--gradient-gold)" }}
+            >
+              {editingUser && userProcessing === editingUser.id ? "Enregistrement..." : "Enregistrer"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

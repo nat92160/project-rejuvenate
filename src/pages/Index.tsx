@@ -211,9 +211,7 @@ const IndexContent = () => {
 const Index = () => (
   <CityProvider>
     <RoleProvider>
-      <AuthProvider>
-        <IndexContent />
-      </AuthProvider>
+      <IndexContent />
     </RoleProvider>
   </CityProvider>
 );
