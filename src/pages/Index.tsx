@@ -161,7 +161,7 @@ const IndexContent = () => {
               </div>
             </div>
 
-            <AppHeader />
+            <AppHeader onLogoClick={() => { setActiveTab("dashboard"); }} />
 
             {suspended && (
               <div className="rounded-2xl border border-red-500/30 bg-red-500/5 p-4 mb-4 text-center">
