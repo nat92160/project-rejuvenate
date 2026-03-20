@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,53 +11,24 @@ serve(async (req) => {
   }
 
   try {
+    const ZOOM_ACCOUNT_ID = Deno.env.get("ZOOM_ACCOUNT_ID");
+    const ZOOM_CLIENT_ID = Deno.env.get("ZOOM_CLIENT_ID");
+    const ZOOM_CLIENT_SECRET = Deno.env.get("ZOOM_CLIENT_SECRET");
+
+    if (!ZOOM_ACCOUNT_ID || !ZOOM_CLIENT_ID || !ZOOM_CLIENT_SECRET) {
+      return new Response(JSON.stringify({ success: false, error: "Zoom credentials not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const url = new URL(req.url);
     const body = req.method === "POST" ? await req.json() : {};
     const action = url.searchParams.get("action") || body.action;
 
-    // Resolve Zoom credentials: from zoom_account_id (DB) or fallback to env vars
-    const resolveCredentials = async (): Promise<{
-      accountId: string; clientId: string; clientSecret: string;
-    }> => {
-      const zoomAccountDbId = body.zoom_account_db_id;
-
-      if (zoomAccountDbId) {
-        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-        const supabase = createClient(supabaseUrl, supabaseKey);
-
-        const { data, error } = await supabase
-          .from("zoom_accounts")
-          .select("zoom_account_id, zoom_client_id, zoom_client_secret")
-          .eq("id", zoomAccountDbId)
-          .single();
-
-        if (error || !data) {
-          throw new Error("Compte Zoom introuvable");
-        }
-
-        return {
-          accountId: data.zoom_account_id,
-          clientId: data.zoom_client_id,
-          clientSecret: data.zoom_client_secret,
-        };
-      }
-
-      // Fallback to env vars
-      const accountId = Deno.env.get("ZOOM_ACCOUNT_ID");
-      const clientId = Deno.env.get("ZOOM_CLIENT_ID");
-      const clientSecret = Deno.env.get("ZOOM_CLIENT_SECRET");
-
-      if (!accountId || !clientId || !clientSecret) {
-        throw new Error("Zoom credentials not configured");
-      }
-
-      return { accountId, clientId, clientSecret };
-    };
-
-    const getAccessToken = async (creds: { accountId: string; clientId: string; clientSecret: string }) => {
-      const tokenUrl = `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${creds.accountId}`;
-      const credentials = btoa(`${creds.clientId}:${creds.clientSecret}`);
+    const getAccessToken = async () => {
+      const tokenUrl = `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${ZOOM_ACCOUNT_ID}`;
+      const credentials = btoa(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`);
       const resp = await fetch(tokenUrl, {
         method: "POST",
         headers: { Authorization: `Basic ${credentials}` },
@@ -72,8 +42,7 @@ serve(async (req) => {
     };
 
     if (action === "create-meeting") {
-      const creds = await resolveCredentials();
-      const accessToken = await getAccessToken(creds);
+      const accessToken = await getAccessToken();
       const { title, duration, start_time, timezone, passcode } = body;
       const tz = timezone || "Europe/Paris";
 
@@ -131,8 +100,7 @@ serve(async (req) => {
     }
 
     if (action === "check-live") {
-      const creds = await resolveCredentials();
-      const accessToken = await getAccessToken(creds);
+      const accessToken = await getAccessToken();
       const resp = await fetch("https://api.zoom.us/v2/users/me/meetings?type=live", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -161,8 +129,7 @@ serve(async (req) => {
 
     if (action === "check-status") {
       try {
-        const creds = await resolveCredentials();
-        await getAccessToken(creds);
+        await getAccessToken();
         return new Response(JSON.stringify({ success: true, connected: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

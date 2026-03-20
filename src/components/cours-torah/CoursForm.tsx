@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import ZoomAccountManager from "./ZoomAccountManager";
 
 interface CoursFormProps {
   userId: string;
@@ -19,15 +18,16 @@ const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Dimanche"];
 const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: CoursFormProps) => {
   const [courseType, setCourseType] = useState<"zoom" | "presentiel">(initialCourseType);
   const [zoomMode, setZoomMode] = useState<"instant" | "scheduled">("scheduled");
+  const [zoomSource, setZoomSource] = useState<"auto" | "manual">("auto");
   const [title, setTitle] = useState("");
   const [teacher, setTeacher] = useState("");
   const [day, setDay] = useState("Lundi");
   const [time, setTime] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [address, setAddress] = useState("");
+  const [manualZoomLink, setManualZoomLink] = useState("");
   const [desc, setDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [zoomAccountId, setZoomAccountId] = useState<string | null>(null);
 
   useEffect(() => {
     setCourseType(initialCourseType);
@@ -40,11 +40,9 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
         title: meetingTitle,
         timezone: "Europe/Paris",
         duration: 60,
-        ...(zoomAccountId ? { zoom_account_db_id: zoomAccountId } : {}),
       };
 
       if (zoomMode === "scheduled") {
-        // Use the selected date, or compute next occurrence of the day
         let dateStr = scheduledDate;
         if (!dateStr) {
           const dayIndex = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"].indexOf(day);
@@ -57,7 +55,6 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
         }
         body.start_time = `${dateStr}T${courseTime || "20:00"}:00`;
       }
-      // If instant mode, no start_time → Zoom creates type=1 (instant)
 
       const { data, error } = await supabase.functions.invoke("zoom-proxy", { body });
 
@@ -84,20 +81,27 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
   const handleSubmit = async () => {
     if (!title.trim()) { toast.error("Titre requis"); return; }
     if (courseType === "presentiel" && !address.trim()) { toast.error("Adresse requise"); return; }
+    if (courseType === "zoom" && zoomSource === "manual" && !manualZoomLink.trim()) {
+      toast.error("Lien Zoom requis"); return;
+    }
 
     setSubmitting(true);
 
     let zoomLink = "";
     if (courseType === "zoom") {
-      toast.info(zoomMode === "instant"
-        ? "Création de la réunion Zoom instantanée..."
-        : "Programmation de la réunion Zoom...");
-      const link = await createZoomMeeting(title.trim(), time || "20:00");
-      if (!link) {
-        setSubmitting(false);
-        return;
+      if (zoomSource === "manual") {
+        zoomLink = manualZoomLink.trim();
+      } else {
+        toast.info(zoomMode === "instant"
+          ? "Création de la réunion Zoom instantanée..."
+          : "Programmation de la réunion Zoom...");
+        const link = await createZoomMeeting(title.trim(), time || "20:00");
+        if (!link) {
+          setSubmitting(false);
+          return;
+        }
+        zoomLink = link;
       }
-      zoomLink = link;
     }
 
     const insertPayload = {
@@ -122,9 +126,11 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
       onCreated(data as Record<string, unknown>);
       onClose();
       toast.success(courseType === "zoom"
-        ? zoomMode === "instant"
-          ? "✅ Réunion Zoom instantanée créée !"
-          : "✅ Réunion Zoom programmée avec succès !"
+        ? zoomSource === "manual"
+          ? "✅ Cours Zoom publié avec votre lien !"
+          : zoomMode === "instant"
+            ? "✅ Réunion Zoom instantanée créée !"
+            : "✅ Réunion Zoom programmée avec succès !"
         : "Cours publié !");
     }
     setSubmitting(false);
@@ -172,55 +178,88 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
 
         {courseType === "zoom" ? (
           <>
-            {/* Zoom account selector */}
-            <ZoomAccountManager
-              userId={userId}
-              onSelect={setZoomAccountId}
-              selectedAccountId={zoomAccountId}
-              compact
-            />
-
-            {/* Zoom mode: instant vs scheduled */}
-            <div className="flex rounded-lg overflow-hidden border border-[#2D8CFF]/30">
+            {/* Zoom source: auto vs manual link */}
+            <div className="flex rounded-xl overflow-hidden border border-[#2D8CFF]/30">
               <button
-                onClick={() => setZoomMode("instant")}
-                className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
-                  zoomMode === "instant" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
+                onClick={() => setZoomSource("auto")}
+                className={`flex-1 py-2.5 text-[11px] font-bold border-none cursor-pointer transition-all ${
+                  zoomSource === "auto" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
                 }`}
               >
-                ⚡ En direct
+                🤖 Créer automatiquement
               </button>
               <button
-                onClick={() => setZoomMode("scheduled")}
-                className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
-                  zoomMode === "scheduled" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
+                onClick={() => setZoomSource("manual")}
+                className={`flex-1 py-2.5 text-[11px] font-bold border-none cursor-pointer transition-all ${
+                  zoomSource === "manual" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
                 }`}
               >
-                📅 Programmée
+                🔗 Coller un lien
               </button>
             </div>
 
-            {zoomMode === "scheduled" && (
-              <input
-                type="date"
-                value={scheduledDate}
-                onChange={(e) => setScheduledDate(e.target.value)}
-                className={inputClass}
-                min={new Date().toISOString().split("T")[0]}
-              />
+            {zoomSource === "auto" ? (
+              <>
+                {/* Zoom mode: instant vs scheduled */}
+                <div className="flex rounded-lg overflow-hidden border border-[#2D8CFF]/20">
+                  <button
+                    onClick={() => setZoomMode("instant")}
+                    className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
+                      zoomMode === "instant" ? "bg-[#2D8CFF]/80 text-white" : "bg-card text-muted-foreground"
+                    }`}
+                  >
+                    ⚡ En direct
+                  </button>
+                  <button
+                    onClick={() => setZoomMode("scheduled")}
+                    className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
+                      zoomMode === "scheduled" ? "bg-[#2D8CFF]/80 text-white" : "bg-card text-muted-foreground"
+                    }`}
+                  >
+                    📅 Programmée
+                  </button>
+                </div>
+
+                {zoomMode === "scheduled" && (
+                  <input
+                    type="date"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    className={inputClass}
+                    min={new Date().toISOString().split("T")[0]}
+                  />
+                )}
+
+                <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
+                  <p className="text-xs text-muted-foreground flex items-center gap-2">
+                    <span className="text-base">{zoomMode === "instant" ? "⚡" : "📅"}</span>
+                    <span>
+                      {zoomMode === "instant"
+                        ? <>La réunion sera <strong className="text-foreground">lancée immédiatement</strong> depuis le compte principal.</>
+                        : <>La réunion sera <strong className="text-foreground">programmée</strong> depuis le compte principal.</>
+                      }
+                    </span>
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <input
+                  value={manualZoomLink}
+                  onChange={(e) => setManualZoomLink(e.target.value)}
+                  placeholder="https://zoom.us/j/123456789"
+                  className={inputClass}
+                />
+                <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
+                  <p className="text-xs text-muted-foreground flex items-center gap-2">
+                    <span className="text-base">💡</span>
+                    <span>
+                      Collez le lien depuis <strong className="text-foreground">n'importe quel compte Zoom</strong>. Idéal si vous avez plusieurs comptes.
+                    </span>
+                  </p>
+                </div>
+              </>
             )}
-
-            <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
-              <p className="text-xs text-muted-foreground flex items-center gap-2">
-                <span className="text-base">{zoomMode === "instant" ? "⚡" : "📅"}</span>
-                <span>
-                  {zoomMode === "instant"
-                    ? <>La réunion Zoom sera <strong className="text-foreground">lancée immédiatement</strong> à la publication.</>
-                    : <>La réunion Zoom sera <strong className="text-foreground">programmée</strong> à la date et heure choisies.</>
-                  }
-                </span>
-              </p>
-            </div>
           </>
         ) : (
           <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Adresse du cours" className={inputClass} />
@@ -235,11 +274,11 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
           style={{ background: "var(--gradient-gold)" }}
         >
           {submitting
-            ? courseType === "zoom"
-              ? zoomMode === "instant" ? "⏳ Lancement Zoom..." : "⏳ Programmation Zoom..."
-              : "Publication..."
+            ? "⏳ Publication..."
             : courseType === "zoom"
-              ? zoomMode === "instant" ? "⚡ Lancer en direct & Publier" : "📅 Programmer & Publier"
+              ? zoomSource === "manual"
+                ? "🔗 Publier avec le lien Zoom"
+                : zoomMode === "instant" ? "⚡ Lancer en direct & Publier" : "📅 Programmer & Publier"
               : "Publier le cours"}
         </button>
       </div>
