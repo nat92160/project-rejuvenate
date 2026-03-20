@@ -447,7 +447,48 @@ const FideleSynagogueView = () => {
               </div>
               <h4 className="font-display text-sm font-bold text-foreground">{a.title}</h4>
               <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{a.content}</p>
-            </motion.div>
+      {/* Chat */}
+      {tab === "chat" && (
+        <div className="space-y-3">
+          {!chatSyna ? (
+            <>
+              <p className="text-sm text-muted-foreground text-center mb-3">Choisissez une synagogue pour discuter :</p>
+              {subscribedSynas.map((syna) => (
+                <button
+                  key={syna.id}
+                  onClick={() => setChatSyna({ id: syna.id, name: syna.name })}
+                  className="w-full flex items-center gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/20 transition-all cursor-pointer text-left"
+                  style={{ boxShadow: "var(--shadow-card)" }}
+                >
+                  {syna.logo_url ? (
+                    <img src={syna.logo_url} alt="" className="h-10 w-10 rounded-xl border border-border object-contain bg-white" />
+                  ) : (
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold text-white" style={{ background: syna.primary_color }}>
+                      {syna.name.charAt(0)}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
+                    <p className="text-[10px] text-muted-foreground">💬 Ouvrir le chat</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">→</span>
+                </button>
+              ))}
+            </>
+          ) : (
+            <div>
+              <button
+                onClick={() => setChatSyna(null)}
+                className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline mb-3"
+              >
+                ← Retour aux synagogues
+              </button>
+              <SynagogueChat synagogueId={chatSyna.id} synagogueName={chatSyna.name} />
+            </div>
+          )}
+        </div>
+      )}
+    </motion.div>
           ))}
         </div>
       )}
