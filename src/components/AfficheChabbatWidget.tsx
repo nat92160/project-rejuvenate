@@ -363,20 +363,49 @@ const AfficheChabbatWidget = () => {
         <div className="space-y-4">
           <button onClick={() => setStep(2)} className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline">← Modifier</button>
 
-          <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
-            <div style={{ transform: "scale(0.3)", transformOrigin: "top left", width: 1080, height: 1920, marginBottom: -1920 * (1 - 0.3) }}>
-              <div ref={canvasRef}>
-                <MasterPosterTemplate
-                  profile={{
-                    ...synaProfile,
-                    name: synaProfile.name || synaName,
-                    signature: `${synaProfile.name || synaName} — Chabbat Chalom`,
-                  }}
-                  content={posterContent}
-                />
+          {/* Format toggle */}
+          <div className="flex rounded-xl overflow-hidden border border-border">
+            <button
+              onClick={() => setPosterFormat("full")}
+              className={`flex-1 py-2.5 text-xs font-bold border-none cursor-pointer transition-all ${posterFormat === "full" ? "bg-foreground text-background" : "bg-card text-muted-foreground"}`}
+            >
+              📋 Affiche complète
+            </button>
+            <button
+              onClick={() => setPosterFormat("card")}
+              className={`flex-1 py-2.5 text-xs font-bold border-none cursor-pointer transition-all ${posterFormat === "card" ? "bg-foreground text-background" : "bg-card text-muted-foreground"}`}
+            >
+              🎴 Carte résumé
+            </button>
+          </div>
+
+          {posterFormat === "full" ? (
+            <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
+              <div style={{ transform: "scale(0.3)", transformOrigin: "top left", width: 1080, height: 1920, marginBottom: -1920 * (1 - 0.3) }}>
+                <div ref={canvasRef}>
+                  <MasterPosterTemplate
+                    profile={{
+                      ...synaProfile,
+                      name: synaProfile.name || synaName,
+                      signature: `${synaProfile.name || synaName} — Chabbat Chalom`,
+                    }}
+                    content={posterContent}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
+              <div style={{ transform: "scale(0.34)", transformOrigin: "top left", width: 1080, height: 1080, marginBottom: -1080 * (1 - 0.34), marginRight: -1080 * (1 - 0.34) }}>
+                <div ref={cardRef}>
+                  <CardPosterTemplate
+                    profile={{ name: synaProfile.name || synaName, logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
+                    content={cardContent}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button onClick={handleExport} className="flex-1 py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>💾 Télécharger PNG</button>
