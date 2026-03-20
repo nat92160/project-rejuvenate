@@ -25,7 +25,7 @@ interface CoursItem {
 const CoursVirtuelWidget = () => {
   const { city } = useCity();
   const { user, dbRole } = useAuth();
-  const { profile: synaProfile } = useSynaProfile();
+  const { profile: synaProfile, synagogueId } = useSynaProfile();
   const [cours, setCours] = useState<CoursItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
