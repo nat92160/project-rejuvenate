@@ -27,6 +27,8 @@ const DEFAULT_PROFILE: SynaProfile = {
   secondary_color: "#c9a84c",
   font_family: "Lora",
   speakers: [],
+  president_first_name: "",
+  president_last_name: "",
 };
 
 const SynaProfileManager = () => {
