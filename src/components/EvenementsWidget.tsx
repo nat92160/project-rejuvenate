@@ -196,7 +196,8 @@ const EvenementsWidget = () => {
                         type={field.type}
                         value={field.value}
                         onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                        className="block h-14 w-full min-w-0 max-w-full border-0 bg-transparent px-3 text-base font-medium text-foreground [color-scheme:light] [appearance:none] [-webkit-appearance:none] focus:outline-none focus:ring-0"
+                        className="block w-full min-w-0 max-w-full border-0 bg-background px-4 py-4 text-sm font-semibold leading-tight text-foreground [color-scheme:light] focus:outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-date-and-time-value]:min-h-[1.2em] [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:p-0 [&::-webkit-datetime-edit-fields-wrapper]:p-0"
+                        style={{ minHeight: "56px" }}
                       />
                     </div>
                   ))}
