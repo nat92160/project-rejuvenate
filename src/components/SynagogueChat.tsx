@@ -39,6 +39,7 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
   const [presidentId, setPresidentId] = useState<string | null>(null);
   const [viewerIsPresident, setViewerIsPresident] = useState(isPresident);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { isSubscribed, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe, supported: pushSupported } = usePushSubscription(synagogueId);
   const [notifEnabled, setNotifEnabled] = useState(() => {
     const stored = localStorage.getItem(`chat-notif-${synagogueId}`);
     return stored === null ? true : stored === "true";
