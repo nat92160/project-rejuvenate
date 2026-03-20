@@ -120,26 +120,6 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
                   </div>
                 </div>
 
-                {/* Zoom accounts management for presidents */}
-                {user && dbRole === "president" && (
-                  <div className="rounded-xl border border-border bg-muted/50 p-3">
-                    <button
-                      onClick={() => setShowZoomManager(!showZoomManager)}
-                      className="flex w-full items-center justify-between border-none bg-transparent cursor-pointer p-0"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">🎥</span>
-                        <span className="text-xs font-bold text-foreground">Comptes Zoom</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{showZoomManager ? "▲" : "▼"}</span>
-                    </button>
-                    {showZoomManager && (
-                      <div className="mt-3">
-                        <ZoomAccountManager userId={user.id} />
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </motion.div>
           </>
