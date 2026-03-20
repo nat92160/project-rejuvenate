@@ -344,7 +344,7 @@ const AfficheChabbatWidget = () => {
           <button onClick={() => setStep(2)} className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline">← Modifier</button>
 
           <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
-            <div style={{ transform: "scale(0.28)", transformOrigin: "top center", height: 620, overflow: "hidden" }}>
+            <div style={{ transform: "scale(0.3)", transformOrigin: "top left", width: 1080, height: 1920, marginBottom: -1920 * (1 - 0.3) }}>
               <div ref={canvasRef}>
                 <MasterPosterTemplate
                   profile={{
