@@ -14,8 +14,9 @@ interface MoreMenuProps {
 }
 
 const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuProps) => {
-  const { user, signOut } = useAuth();
+  const { user, dbRole, signOut } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
+  const navigate = useNavigate();
   const menuItems = useMemo(() => getAvailableTabs(mode), [mode]);
 
   const toggleAccount = (checked: boolean) => {
