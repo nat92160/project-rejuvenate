@@ -17,10 +17,12 @@ const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Dimanche"];
 
 const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: CoursFormProps) => {
   const [courseType, setCourseType] = useState<"zoom" | "presentiel">(initialCourseType);
+  const [zoomMode, setZoomMode] = useState<"instant" | "scheduled">("scheduled");
   const [title, setTitle] = useState("");
   const [teacher, setTeacher] = useState("");
   const [day, setDay] = useState("Lundi");
   const [time, setTime] = useState("");
+  const [scheduledDate, setScheduledDate] = useState("");
   const [address, setAddress] = useState("");
   const [desc, setDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -31,25 +33,30 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
 
   const createZoomMeeting = async (meetingTitle: string, courseTime: string): Promise<string | null> => {
     try {
-      // Build a start_time from next occurrence of the selected day + time
-      const dayIndex = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"].indexOf(day);
-      const now = new Date();
-      let daysUntil = dayIndex - now.getDay();
-      if (daysUntil <= 0) daysUntil += 7;
-      const nextDate = new Date(now);
-      nextDate.setDate(now.getDate() + daysUntil);
-      const dateStr = nextDate.toISOString().split("T")[0];
-      const startTime = `${dateStr}T${courseTime || "20:00"}:00`;
+      const body: Record<string, unknown> = {
+        action: "create-meeting",
+        title: meetingTitle,
+        timezone: "Europe/Paris",
+        duration: 60,
+      };
 
-      const { data, error } = await supabase.functions.invoke("zoom-proxy", {
-        body: {
-          action: "create-meeting",
-          title: meetingTitle,
-          start_time: startTime,
-          timezone: "Europe/Paris",
-          duration: 60,
-        },
-      });
+      if (zoomMode === "scheduled") {
+        // Use the selected date, or compute next occurrence of the day
+        let dateStr = scheduledDate;
+        if (!dateStr) {
+          const dayIndex = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"].indexOf(day);
+          const now = new Date();
+          let daysUntil = dayIndex - now.getDay();
+          if (daysUntil <= 0) daysUntil += 7;
+          const nextDate = new Date(now);
+          nextDate.setDate(now.getDate() + daysUntil);
+          dateStr = nextDate.toISOString().split("T")[0];
+        }
+        body.start_time = `${dateStr}T${courseTime || "20:00"}:00`;
+      }
+      // If instant mode, no start_time → Zoom creates type=1 (instant)
+
+      const { data, error } = await supabase.functions.invoke("zoom-proxy", { body });
 
       if (error) {
         console.error("Zoom meeting creation error:", error);
@@ -79,7 +86,9 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
 
     let zoomLink = "";
     if (courseType === "zoom") {
-      toast.info("Création de la réunion Zoom en cours...");
+      toast.info(zoomMode === "instant"
+        ? "Création de la réunion Zoom instantanée..."
+        : "Programmation de la réunion Zoom...");
       const link = await createZoomMeeting(title.trim(), time || "20:00");
       if (!link) {
         setSubmitting(false);
@@ -110,7 +119,9 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
       onCreated(data as Record<string, unknown>);
       onClose();
       toast.success(courseType === "zoom"
-        ? "✅ Cours publié avec réunion Zoom créée automatiquement !"
+        ? zoomMode === "instant"
+          ? "✅ Réunion Zoom instantanée créée !"
+          : "✅ Réunion Zoom programmée avec succès !"
         : "Cours publié !");
     }
     setSubmitting(false);
@@ -129,9 +140,7 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
         <button
           onClick={() => setCourseType("zoom")}
           className={`flex-1 py-2.5 text-xs font-bold border-none cursor-pointer transition-all ${
-            courseType === "zoom"
-              ? "text-white"
-              : "bg-card text-muted-foreground"
+            courseType === "zoom" ? "text-white" : "bg-card text-muted-foreground"
           }`}
           style={courseType === "zoom" ? { background: "linear-gradient(135deg, #2D8CFF, #1a6fdd)" } : {}}
         >
@@ -140,9 +149,7 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
         <button
           onClick={() => setCourseType("presentiel")}
           className={`flex-1 py-2.5 text-xs font-bold border-none cursor-pointer transition-all ${
-            courseType === "presentiel"
-              ? "text-white"
-              : "bg-card text-muted-foreground"
+            courseType === "presentiel" ? "text-white" : "bg-card text-muted-foreground"
           }`}
           style={courseType === "presentiel" ? { background: "linear-gradient(135deg, #22c55e, #16a34a)" } : {}}
         >
@@ -161,12 +168,49 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
         </div>
 
         {courseType === "zoom" ? (
-          <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
-            <p className="text-xs text-muted-foreground flex items-center gap-2">
-              <span className="text-base">🎥</span>
-              <span>La réunion Zoom sera <strong className="text-foreground">créée automatiquement</strong> via l'API Zoom lors de la publication.</span>
-            </p>
-          </div>
+          <>
+            {/* Zoom mode: instant vs scheduled */}
+            <div className="flex rounded-lg overflow-hidden border border-[#2D8CFF]/30">
+              <button
+                onClick={() => setZoomMode("instant")}
+                className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
+                  zoomMode === "instant" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
+                }`}
+              >
+                ⚡ En direct
+              </button>
+              <button
+                onClick={() => setZoomMode("scheduled")}
+                className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
+                  zoomMode === "scheduled" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
+                }`}
+              >
+                📅 Programmée
+              </button>
+            </div>
+
+            {zoomMode === "scheduled" && (
+              <input
+                type="date"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+                className={inputClass}
+                min={new Date().toISOString().split("T")[0]}
+              />
+            )}
+
+            <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
+              <p className="text-xs text-muted-foreground flex items-center gap-2">
+                <span className="text-base">{zoomMode === "instant" ? "⚡" : "📅"}</span>
+                <span>
+                  {zoomMode === "instant"
+                    ? <>La réunion Zoom sera <strong className="text-foreground">lancée immédiatement</strong> à la publication.</>
+                    : <>La réunion Zoom sera <strong className="text-foreground">programmée</strong> à la date et heure choisies.</>
+                  }
+                </span>
+              </p>
+            </div>
+          </>
         ) : (
           <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Adresse du cours" className={inputClass} />
         )}
@@ -180,8 +224,12 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
           style={{ background: "var(--gradient-gold)" }}
         >
           {submitting
-            ? courseType === "zoom" ? "⏳ Création Zoom + Publication..." : "Publication..."
-            : courseType === "zoom" ? "🎥 Créer la réunion & Publier" : "Publier le cours"}
+            ? courseType === "zoom"
+              ? zoomMode === "instant" ? "⏳ Lancement Zoom..." : "⏳ Programmation Zoom..."
+              : "Publication..."
+            : courseType === "zoom"
+              ? zoomMode === "instant" ? "⚡ Lancer en direct & Publier" : "📅 Programmer & Publier"
+              : "Publier le cours"}
         </button>
       </div>
     </motion.div>
