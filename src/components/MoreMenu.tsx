@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 import { getAvailableTabs, type BottomNavMode } from "@/lib/navigation";
 import AuthModal from "@/components/AuthModal";
 
@@ -94,9 +93,8 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
                 ))}
               </div>
 
-              {/* Account & Zoom switches */}
+              {/* Account switch */}
               <div className="mt-5 space-y-3 border-t border-border pt-4">
-                {/* Account switch */}
                 <div className="rounded-xl border border-border bg-muted/50 p-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0">
@@ -121,6 +119,11 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
                     </label>
                   </div>
                 </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </>
