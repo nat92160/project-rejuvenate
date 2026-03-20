@@ -30,6 +30,8 @@ interface ManagedUser {
   email: string;
   created_at: string;
   display_name: string;
+  first_name: string;
+  last_name: string;
   suspended: boolean;
   city: string;
   roles: string[];

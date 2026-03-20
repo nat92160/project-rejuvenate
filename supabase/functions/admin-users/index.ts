@@ -30,39 +30,52 @@ serve(async (req) => {
 
     if (!roleData) return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: corsHeaders });
 
-    const { action, user_id, display_name, city } = await req.json();
+    const body = await req.json();
+    const { action, user_id } = body;
 
     if (action === "list") {
       const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 500 });
       if (listError) throw listError;
 
-      const { data: profiles } = await supabaseAdmin.from("profiles").select("user_id, display_name, suspended, city");
+      const { data: profiles } = await supabaseAdmin.from("profiles").select("user_id, display_name, first_name, last_name, suspended, city");
       const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id, role");
 
-      const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
       const roleMap = new Map<string, string[]>();
-      (roles || []).forEach((r) => {
+      (roles || []).forEach((r: any) => {
         if (!roleMap.has(r.user_id)) roleMap.set(r.user_id, []);
         roleMap.get(r.user_id)!.push(r.role);
       });
 
-      const enriched = users.map((u) => ({
-        id: u.id,
-        email: u.email,
-        created_at: u.created_at,
-        display_name: profileMap.get(u.id)?.display_name || "",
-        suspended: profileMap.get(u.id)?.suspended || false,
-        city: profileMap.get(u.id)?.city || "",
-        roles: roleMap.get(u.id) || ["guest"],
-      }));
+      const enriched = users.map((u: any) => {
+        const p = profileMap.get(u.id);
+        return {
+          id: u.id,
+          email: u.email,
+          created_at: u.created_at,
+          display_name: p?.display_name || "",
+          first_name: p?.first_name || "",
+          last_name: p?.last_name || "",
+          suspended: p?.suspended || false,
+          city: p?.city || "",
+          roles: roleMap.get(u.id) || ["guest"],
+        };
+      });
 
       return new Response(JSON.stringify({ users: enriched }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "update_profile" && user_id) {
+      const { first_name, last_name, city } = body;
       const profilePayload: Record<string, string> = {};
-      if (typeof display_name === "string") profilePayload.display_name = display_name;
+      if (typeof first_name === "string") profilePayload.first_name = first_name;
+      if (typeof last_name === "string") profilePayload.last_name = last_name;
       if (typeof city === "string") profilePayload.city = city;
+
+      // Build display_name from first/last
+      if (first_name !== undefined || last_name !== undefined) {
+        profilePayload.display_name = [first_name || "", last_name || ""].map(s => s.trim()).filter(Boolean).join(" ");
+      }
 
       const { data: existingProfile } = await supabaseAdmin
         .from("profiles")
@@ -77,6 +90,31 @@ serve(async (req) => {
         const { error } = await supabaseAdmin.from("profiles").insert({ user_id, ...profilePayload });
         if (error) throw error;
       }
+
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "set_role" && user_id) {
+      const { role } = body;
+      const validRoles = ["fidele", "president", "guest"];
+      if (!validRoles.includes(role)) {
+        return new Response(JSON.stringify({ error: "Invalid role" }), { status: 400, headers: corsHeaders });
+      }
+
+      // Remove existing non-admin roles
+      const { data: existingRoles } = await supabaseAdmin
+        .from("user_roles")
+        .select("id, role")
+        .eq("user_id", user_id);
+
+      const toDelete = (existingRoles || []).filter((r: any) => r.role !== "admin");
+      for (const r of toDelete) {
+        await supabaseAdmin.from("user_roles").delete().eq("id", r.id);
+      }
+
+      // Insert new role
+      const { error } = await supabaseAdmin.from("user_roles").insert({ user_id, role });
+      if (error) throw error;
 
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
