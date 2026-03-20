@@ -101,13 +101,18 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
               {user && dbRole === "admin" && (
                 <button
                   onClick={() => { onClose(); navigate("/admin"); }}
-                  className="mt-5 w-full flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-left cursor-pointer transition-all hover:border-primary/30"
+                  className="mt-5 w-full flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-left cursor-pointer transition-all hover:border-primary/30 relative"
                 >
                   <span className="text-xl">🛡️</span>
-                  <div>
+                  <div className="flex-1">
                     <div className="text-sm font-bold text-foreground">Administration</div>
                     <div className="text-[11px] text-muted-foreground">Gérer les demandes de présidents</div>
                   </div>
+                  {pendingCount > 0 && (
+                    <span className="h-6 min-w-[24px] flex items-center justify-center rounded-full bg-destructive text-[11px] font-bold text-destructive-foreground px-1.5 animate-pulse">
+                      {pendingCount}
+                    </span>
+                  )}
                 </button>
               )}
 
