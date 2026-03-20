@@ -403,10 +403,10 @@ const AdminDashboard = () => {
                             disabled={userProcessing === u.id}
                             className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-destructive/10 text-destructive border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
                           >
-                            {userProcessing === u.id ? "⏳" : "🗑️ Supprimer"}
-                          </button>
-                        </div>
+                          {userProcessing === u.id ? "⏳" : "🗑️ Supprimer"}
+                        </button>
                       )}
+                      </div>
                     </div>
                   </motion.div>
                 ))}
