@@ -387,25 +387,28 @@ const AdminDashboard = () => {
                         >
                           ✏️ Modifier
                         </button>
-                          <button
-                            onClick={() => handleSuspend(u.id, !u.suspended)}
-                            disabled={userProcessing === u.id}
-                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
-                            style={u.suspended
-                              ? { background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }
-                              : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
-                            }
-                          >
-                            {userProcessing === u.id ? "⏳" : u.suspended ? "▶️ Réactiver" : "⏸️ Suspendre"}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(u.id, u.email || "")}
-                            disabled={userProcessing === u.id}
-                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-destructive/10 text-destructive border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
-                          >
-                          {userProcessing === u.id ? "⏳" : "🗑️ Supprimer"}
-                        </button>
-                      )}
+                        {!u.roles.includes("admin") && (
+                          <>
+                            <button
+                              onClick={() => handleSuspend(u.id, !u.suspended)}
+                              disabled={userProcessing === u.id}
+                              className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                              style={u.suspended
+                                ? { background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }
+                                : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                              }
+                            >
+                              {userProcessing === u.id ? "⏳" : u.suspended ? "▶️ Réactiver" : "⏸️ Suspendre"}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(u.id, u.email || "")}
+                              disabled={userProcessing === u.id}
+                              className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-destructive/10 text-destructive border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                            >
+                              {userProcessing === u.id ? "⏳" : "🗑️ Supprimer"}
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </motion.div>
