@@ -118,7 +118,7 @@ const AnnoncesWidget = () => {
     bgColor: isUrgent ? "#FFF5F5" : "#FDFAF3",
   } : null;
 
-  const isPresident = dbRole === "president";
+  const inputClass = "w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
   const inputClass = "w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
 
   return (
