@@ -35,7 +35,8 @@ const formatTravelTime = (minutes?: number) => {
 const FideleSynagogueView = () => {
   const { user } = useAuth();
   const { city, geolocate, isGeolocating, locationError } = useCity();
-  const [tab, setTab] = useState<"annuaire" | "synagogues" | "cours" | "events" | "annonces">("annuaire");
+  const [tab, setTab] = useState<"annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat">("annuaire");
+  const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
 
   // Directory state
   const [directory, setDirectory] = useState<SynaDirectoryItem[]>([]);
