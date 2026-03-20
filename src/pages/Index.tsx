@@ -38,7 +38,7 @@ const IndexContent = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
   const { role, setRole } = useRole();
-  const { user, dbRole, signOut, loading: authLoading, suspended } = useAuth();
+  const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
   const pendingCount = usePendingRequests();
 
   const isPresident = dbRole === "president";
