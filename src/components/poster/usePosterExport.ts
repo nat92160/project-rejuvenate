@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 /**
  * Capture a ref element as a high-res PNG (x2 scale) and trigger download.
- * The element should be rendered in the DOM (can be hidden with opacity:0, z-index:-1).
+ * Temporarily resets any transform on the element so html2canvas captures at full size.
  */
 export const exportPosterPng = async (
   element: HTMLElement | null,
@@ -11,12 +11,26 @@ export const exportPosterPng = async (
 ): Promise<void> => {
   if (!element) { toast.error("Affiche introuvable"); return; }
 
-  // Temporarily make element visible for capture
-  const prevStyle = element.style.cssText;
-  element.style.cssText = "position:fixed;left:0;top:0;z-index:99999;opacity:1;pointer-events:none;";
+  // Save and reset transform so html2canvas captures at native 1080px size
+  const prevTransform = element.style.transform;
+  const prevTransformOrigin = element.style.transformOrigin;
+  element.style.transform = "none";
+  element.style.transformOrigin = "";
+
+  // Ensure element is visible for capture
+  const prevPosition = element.style.position;
+  const prevLeft = element.style.left;
+  const prevTop = element.style.top;
+  const prevZIndex = element.style.zIndex;
+  const prevOpacity = element.style.opacity;
+  element.style.position = "fixed";
+  element.style.left = "0";
+  element.style.top = "0";
+  element.style.zIndex = "99999";
+  element.style.opacity = "1";
 
   try {
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise(r => setTimeout(r, 80));
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
@@ -26,7 +40,14 @@ export const exportPosterPng = async (
       height: element.scrollHeight,
     });
 
-    element.style.cssText = prevStyle;
+    // Restore styles
+    element.style.transform = prevTransform;
+    element.style.transformOrigin = prevTransformOrigin;
+    element.style.position = prevPosition;
+    element.style.left = prevLeft;
+    element.style.top = prevTop;
+    element.style.zIndex = prevZIndex;
+    element.style.opacity = prevOpacity;
 
     const url = canvas.toDataURL("image/png");
     const a = document.createElement("a");
@@ -35,7 +56,13 @@ export const exportPosterPng = async (
     a.click();
     toast.success("Affiche téléchargée !");
   } catch (err) {
-    element.style.cssText = prevStyle;
+    element.style.transform = prevTransform;
+    element.style.transformOrigin = prevTransformOrigin;
+    element.style.position = prevPosition;
+    element.style.left = prevLeft;
+    element.style.top = prevTop;
+    element.style.zIndex = prevZIndex;
+    element.style.opacity = prevOpacity;
     console.error("PNG export error:", err);
     toast.error("Erreur lors du téléchargement");
   }
