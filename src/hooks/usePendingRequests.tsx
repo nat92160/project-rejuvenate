@@ -25,7 +25,7 @@ export function usePendingRequests() {
     // Poll every 30s
     const interval = setInterval(fetch, 30_000);
     return () => clearInterval(interval);
-  }, [user, dbRole]);
+  }, [user, isAdmin]);
 
   return count;
 }

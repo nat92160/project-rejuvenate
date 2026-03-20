@@ -98,7 +98,7 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
               </div>
 
               {/* Admin link */}
-              {user && dbRole === "admin" && (
+              {user && isAdmin && (
                 <button
                   onClick={() => { onClose(); navigate("/admin"); }}
                   className="mt-5 w-full flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-left cursor-pointer transition-all hover:border-primary/30 relative"
