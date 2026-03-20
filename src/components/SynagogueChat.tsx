@@ -54,7 +54,6 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
       pushSubscribe();
     }
   }, [notifEnabled, canAccessMessages, pushSupported, isSubscribed, pushSubscribe]);
-  }, [notifEnabled]);
 
   const toggleNotif = async () => {
     const next = !notifEnabled;
