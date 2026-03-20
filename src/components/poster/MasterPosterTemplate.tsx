@@ -34,9 +34,9 @@ const INNER_BORDER = 1;
 const INNER_GAP = 8;
 const CARD_PAD = 80;
 
-const GOLD_DARK = "#996515";
-const GOLD_ACCENT = "#B8860B";
-const NAVY = "#001F3F";
+/* Default colors – overridden by profile.primary_color / secondary_color */
+const DEFAULT_ACCENT = "#B8860B";
+const DEFAULT_TEXT = "#001F3F";
 const ANTHRACITE = "#2C3E50";
 const GREY_MED = "#6B7B8D";
 const SCENE_BG = "#F5F5F5";
