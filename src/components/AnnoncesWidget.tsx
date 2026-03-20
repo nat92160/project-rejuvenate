@@ -49,7 +49,7 @@ const AnnoncesWidget = () => {
     if (!user || dbRole !== "president") { toast.error("Seul le président peut publier des annonces"); return; }
     setSubmitting(true);
     const { data, error } = await supabase.from("annonces").insert({
-      creator_id: user.id, title: newTitle.trim(), content: newContent.trim(), priority: newPriority, synagogue_id: synaProfile?.id || null,
+      creator_id: user.id, title: newTitle.trim(), content: newContent.trim(), priority: newPriority, synagogue_id: synagogueId || null,
     } as any).select().single();
     if (error) toast.error("Erreur lors de la publication.");
     else if (data) {
