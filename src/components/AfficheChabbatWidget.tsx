@@ -381,8 +381,11 @@ const AfficheChabbatWidget = () => {
 
           {posterFormat === "full" ? (
             <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
-              <div style={{ transform: "scale(0.3)", transformOrigin: "top left", width: 1080, marginRight: -1080 * (1 - 0.3) }}>
-                <div ref={canvasRef}>
+              <div style={{ position: "relative", width: "100%", overflow: "hidden" }}>
+                <div
+                  ref={canvasRef}
+                  style={{ transform: "scale(0.3)", transformOrigin: "top left", width: 1080 }}
+                >
                   <MasterPosterTemplate
                     profile={{
                       ...synaProfile,
@@ -396,8 +399,11 @@ const AfficheChabbatWidget = () => {
             </div>
           ) : (
             <div className="rounded-2xl overflow-hidden" style={{ padding: "6px", background: "hsl(var(--muted))" }}>
-              <div style={{ transform: "scale(0.34)", transformOrigin: "top left", width: 1080, marginRight: -1080 * (1 - 0.34) }}>
-                <div ref={cardRef}>
+              <div style={{ position: "relative", width: "100%", overflow: "hidden" }}>
+                <div
+                  ref={cardRef}
+                  style={{ transform: "scale(0.34)", transformOrigin: "top left", width: 1080 }}
+                >
                   <CardPosterTemplate
                     profile={{ name: synaProfile.name || synaName, logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
                     content={cardContent}
