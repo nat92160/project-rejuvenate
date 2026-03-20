@@ -15,6 +15,7 @@ import { useSynaProfile } from "@/hooks/useSynaProfile";
 
 const features = [
   { id: "syna-profile", icon: "🏛️", title: "Mon Espace Syna" },
+  { id: "chat", icon: "💬", title: "Chat Fidèles" },
   { id: "affiche", icon: "📋", title: "Affiche Chabbat" },
   { id: "annonces", icon: "📢", title: "Annonces" },
   { id: "refoua", icon: "🙏", title: "Refoua Chelema" },
