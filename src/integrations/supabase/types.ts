@@ -343,6 +343,44 @@ export type Database = {
         }
         Relationships: []
       }
+      synagogue_chat_requests: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          reviewed_at: string | null
+          status: string
+          synagogue_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          reviewed_at?: string | null
+          status?: string
+          synagogue_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          reviewed_at?: string | null
+          status?: string
+          synagogue_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "synagogue_chat_requests_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       synagogue_messages: {
         Row: {
           content: string
@@ -383,6 +421,7 @@ export type Database = {
       }
       synagogue_profiles: {
         Row: {
+          chat_enabled: boolean
           created_at: string
           font_family: string | null
           id: string
@@ -396,6 +435,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          chat_enabled?: boolean
           created_at?: string
           font_family?: string | null
           id?: string
@@ -409,6 +449,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          chat_enabled?: boolean
           created_at?: string
           font_family?: string | null
           id?: string
