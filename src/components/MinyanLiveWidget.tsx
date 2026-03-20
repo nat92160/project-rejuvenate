@@ -68,6 +68,7 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
 
 const MinyanLiveWidget = () => {
   const { user, dbRole } = useAuth();
+  const { subIds, loading: subLoading } = useSubscribedSynaIds();
   const isPresident = dbRole === "president";
   const [sessions, setSessions] = useState<MinyanSession[]>([]);
   const [registrations, setRegistrations] = useState<Record<string, Registration[]>>({});
