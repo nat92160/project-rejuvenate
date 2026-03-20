@@ -27,6 +27,7 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
   const [address, setAddress] = useState("");
   const [desc, setDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [zoomAccountId, setZoomAccountId] = useState<string | null>(null);
 
   useEffect(() => {
     setCourseType(initialCourseType);
