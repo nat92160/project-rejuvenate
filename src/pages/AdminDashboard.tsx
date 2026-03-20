@@ -49,7 +49,7 @@ const AdminDashboard = () => {
   const [userProcessing, setUserProcessing] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
-  const [profileForm, setProfileForm] = useState({ display_name: "", city: "" });
+  const [profileForm, setProfileForm] = useState({ first_name: "", last_name: "", city: "" });
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
