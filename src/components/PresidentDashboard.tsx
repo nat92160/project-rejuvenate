@@ -10,6 +10,8 @@ import MinyanLiveWidget from "./MinyanLiveWidget";
 import EvenementsWidget from "./EvenementsWidget";
 import CoursVirtuelWidget from "./CoursVirtuelWidget";
 import SynaProfileManager from "./SynaProfileManager";
+import SynagogueChat from "./SynagogueChat";
+import { useSynaProfile } from "@/hooks/useSynaProfile";
 
 const features = [
   { id: "syna-profile", icon: "🏛️", title: "Mon Espace Syna" },
