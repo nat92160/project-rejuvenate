@@ -13,6 +13,8 @@ interface SynaProfile {
   secondary_color: string;
   font_family: string;
   speakers: string[];
+  president_first_name: string;
+  president_last_name: string;
 }
 
 const FONT_OPTIONS = ["Lora", "Playfair Display", "Georgia", "Merriweather", "Noto Serif"];
@@ -25,6 +27,8 @@ const DEFAULT_PROFILE: SynaProfile = {
   secondary_color: "#c9a84c",
   font_family: "Lora",
   speakers: [],
+  president_first_name: "",
+  president_last_name: "",
 };
 
 const SynaProfileManager = () => {
@@ -54,6 +58,8 @@ const SynaProfileManager = () => {
           secondary_color: data.secondary_color || "#c9a84c",
           font_family: data.font_family || "Lora",
           speakers: Array.isArray(data.speakers) ? (data.speakers as string[]) : [],
+          president_first_name: (data as any).president_first_name || "",
+          president_last_name: (data as any).president_last_name || "",
         });
       }
       setLoading(false);
@@ -95,6 +101,8 @@ const SynaProfileManager = () => {
       secondary_color: profile.secondary_color,
       font_family: profile.font_family,
       speakers: profile.speakers,
+      president_first_name: profile.president_first_name,
+      president_last_name: profile.president_last_name,
     };
 
     let error;
@@ -138,6 +146,15 @@ const SynaProfileManager = () => {
         <span className="text-3xl">🏛️</span>
         <h3 className="mt-2 font-display text-lg font-bold text-foreground">Mon Espace Syna</h3>
         <p className="mt-1 text-xs text-muted-foreground">Définissez l'identité visuelle de votre synagogue</p>
+      </div>
+
+      {/* Président */}
+      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <label className="mb-2 block text-xs font-bold text-foreground">Président de la synagogue</label>
+        <div className="flex gap-2">
+          <input className={`${inputCls} flex-1`} value={profile.president_first_name} onChange={(e) => setProfile((p) => ({ ...p, president_first_name: e.target.value }))} placeholder="Prénom" />
+          <input className={`${inputCls} flex-1`} value={profile.president_last_name} onChange={(e) => setProfile((p) => ({ ...p, president_last_name: e.target.value }))} placeholder="Nom" />
+        </div>
       </div>
 
       {/* Nom */}

@@ -29,6 +29,8 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
   const [success, setSuccess] = useState<string | null>(null);
 
   // Signup extra fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [signupRole, setSignupRole] = useState<SignupRole>("fidele");
   const [synagogueName, setSynagogueName] = useState("");
   const [city, setCity] = useState("Paris");
@@ -43,6 +45,8 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
       setSignupRole("fidele");
       setSynagogueName("");
       setPresidentMessage("");
+      setFirstName("");
+      setLastName("");
     }
   }, [open]);
 
@@ -55,6 +59,11 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
     const trimmedEmail = email.trim();
 
     if (mode === "signup") {
+      if (!firstName.trim() || !lastName.trim()) {
+        setError("Le prénom et le nom sont requis");
+        setLoading(false);
+        return;
+      }
       if (signupRole === "president" && !synagogueName.trim()) {
         setError("Le nom de la synagogue est requis");
         setLoading(false);
@@ -64,7 +73,14 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
-        options: { emailRedirectTo: window.location.origin },
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            full_name: `${firstName.trim()} ${lastName.trim()}`,
+          },
+        },
       });
 
       if (signUpError) {
@@ -174,6 +190,26 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
             required
             className={inputClass}
           />
+          {mode === "signup" && (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Prénom *"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                className={inputClass}
+              />
+              <input
+                type="text"
+                placeholder="Nom *"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+                className={inputClass}
+              />
+            </div>
+          )}
           <input
             type="password"
             placeholder="Mot de passe"

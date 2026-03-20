@@ -54,6 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error: insertProfileError } = await supabase.from("profiles").insert({
           user_id: authUser.id,
           display_name: fallbackDisplayName || null,
+          first_name: authUser.user_metadata?.first_name || null,
+          last_name: authUser.user_metadata?.last_name || null,
           city: "Paris",
         });
 
