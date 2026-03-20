@@ -13,6 +13,8 @@ interface SynaProfile {
   secondary_color: string;
   font_family: string;
   speakers: string[];
+  president_first_name: string;
+  president_last_name: string;
 }
 
 const FONT_OPTIONS = ["Lora", "Playfair Display", "Georgia", "Merriweather", "Noto Serif"];
