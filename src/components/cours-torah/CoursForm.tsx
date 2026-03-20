@@ -172,6 +172,14 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
 
         {courseType === "zoom" ? (
           <>
+            {/* Zoom account selector */}
+            <ZoomAccountManager
+              userId={userId}
+              onSelect={setZoomAccountId}
+              selectedAccountId={zoomAccountId}
+              compact
+            />
+
             {/* Zoom mode: instant vs scheduled */}
             <div className="flex rounded-lg overflow-hidden border border-[#2D8CFF]/30">
               <button
