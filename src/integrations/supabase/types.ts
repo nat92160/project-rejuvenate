@@ -247,6 +247,30 @@ export type Database = {
         }
         Relationships: []
       }
+      shabbat_posters: {
+        Row: {
+          created_at: string
+          form_data: Json
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          form_data?: Json
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          form_data?: Json
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       synagogue_profiles: {
         Row: {
           created_at: string
