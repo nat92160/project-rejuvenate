@@ -195,7 +195,7 @@ const ChatManagement = () => {
                   className="rounded-2xl border border-border bg-card p-4"
                   style={{ boxShadow: "var(--shadow-card)" }}
                 >
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold text-foreground">{req.display_name || "Utilisateur"}</p>
                       <p className="mt-0.5 text-[10px] text-muted-foreground">
@@ -208,7 +208,7 @@ const ChatManagement = () => {
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-end gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {req.status === "pending" && (
                         <>
                           <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-bold text-muted-foreground">⏳ En attente</span>

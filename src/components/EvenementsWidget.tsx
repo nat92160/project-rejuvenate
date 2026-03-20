@@ -163,14 +163,14 @@ const EvenementsWidget = () => {
                 className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="📝 Description (optionnel)" rows={2}
                 className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="relative pt-1">
-                  <label className="absolute -top-2 left-3 px-1 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10 rounded">📅 Date</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">📅 Date</label>
                   <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })}
                     className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
                 </div>
-                <div className="relative pt-1">
-                  <label className="absolute -top-2 left-3 px-1 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider z-10 rounded">🕐 Heure</label>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">🕐 Heure</label>
                   <input type="time" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })}
                     className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
                 </div>
@@ -215,15 +215,15 @@ const EvenementsWidget = () => {
                     {evTc.emoji}
                   </div>
                   <div className="rounded-2xl bg-card p-5 border border-border hover:border-primary/20 transition-all" style={{ boxShadow: "var(--shadow-soft)" }}>
-                    <div className="flex items-center gap-2 mb-1.5">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
                       <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${evTc.color}`}>{ev.event_type}</span>
                       <span className="text-xs text-muted-foreground">{formatDate(ev.event_date)}</span>
                     </div>
                     <h4 className="font-display text-sm font-bold text-foreground">{ev.title}</h4>
                     <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">{ev.description}</p>
-                    <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground/80">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-[11px] text-muted-foreground/80">
                       <span>🕐 {ev.event_time}</span>
-                      {ev.location && <span>📍 {ev.location}</span>}
+                      {ev.location && <span className="break-all">📍 {ev.location}</span>}
                     </div>
                     {ev.zoom_link && (
                       <a href={ev.zoom_link} target="_blank" rel="noopener noreferrer"
@@ -232,7 +232,7 @@ const EvenementsWidget = () => {
                         🎥 Rejoindre le Zoom
                       </a>
                     )}
-                    <div className="flex gap-2 mt-3">
+                    <div className="flex flex-wrap gap-2 mt-3">
                       <button
                         onClick={() => triggerExport(ev)}
                         disabled={exportingId === ev.id}
