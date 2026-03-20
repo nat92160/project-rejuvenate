@@ -68,7 +68,7 @@ const EvenementsWidget = () => {
       location: form.location.trim(),
       event_type: form.event_type,
       zoom_link: form.zoom_link.trim() || null,
-      synagogue_id: synaProfile?.id || null,
+      synagogue_id: synagogueId || null,
     } as any).select().single();
 
     if (error) {
