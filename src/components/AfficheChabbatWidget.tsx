@@ -160,10 +160,10 @@ const AfficheChabbatWidget = () => {
     date: data?.candleLightingDate || "",
     details: [
       { section: "VENDREDI SOIR", label: "Allumage des bougies", value: data?.candleLighting || "--:--" },
-      ...(minhaFri || notes.minhaFri ? [{ section: "VENDREDI SOIR", label: "Minha", value: minhaFri || notes.minhaFri || "", sub: minhaFri && notes.minhaFri ? notes.minhaFri : undefined }] : []),
-      ...(kabbalat || notes.kabbalat ? [{ section: "VENDREDI SOIR", label: "Kabbalat Chabbat", value: kabbalat || notes.kabbalat || "", sub: kabbalat && notes.kabbalat ? notes.kabbalat : undefined }] : []),
-      ...(arvitFri || notes.arvitFri ? [{ section: "VENDREDI SOIR", label: "Arvit", value: arvitFri || notes.arvitFri || "", sub: arvitFri && notes.arvitFri ? notes.arvitFri : undefined }] : []),
-      ...(shaharit || notes.shaharit ? [{ section: "CHABBAT MATIN", label: "Shaharit", value: shaharit || notes.shaharit || "", sub: shaharit && notes.shaharit ? notes.shaharit : undefined }] : []),
+      ...(minhaFri || notes.minhaFri ? [{ section: "VENDREDI SOIR", label: "Minha", value: minhaFri || "—", sub: notes.minhaFri || undefined }] : []),
+      ...(kabbalat || notes.kabbalat ? [{ section: "VENDREDI SOIR", label: "Kabbalat Chabbat", value: kabbalat || "—", sub: notes.kabbalat || undefined }] : []),
+      ...(arvitFri || notes.arvitFri ? [{ section: "VENDREDI SOIR", label: "Arvit", value: arvitFri || "—", sub: notes.arvitFri || undefined }] : []),
+      ...(shaharit || notes.shaharit ? [{ section: "CHABBAT MATIN", label: "Shaharit", value: shaharit || "—", sub: notes.shaharit || undefined }] : []),
       {
         section: "CHABBAT MATIN",
         label: "Lecture de la Torah",
