@@ -125,6 +125,20 @@ const IndexContent = () => {
             {/* Top bar — no dark mode toggle */}
             <div className="flex justify-end items-center py-2.5">
               <div className="flex items-center gap-2">
+                {dbRole === "admin" && (
+                  <button
+                    onClick={() => setActiveTab("dashboard") || window.location.assign("/admin")}
+                    className="relative h-9 w-9 rounded-xl bg-card border border-border flex items-center justify-center text-base cursor-pointer hover:bg-muted transition-all active:scale-95"
+                    title="Demandes en attente"
+                  >
+                    🔔
+                    {pendingCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1 animate-pulse">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </button>
+                )}
                 {isPresident && (
                   <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full"
                     style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}>
