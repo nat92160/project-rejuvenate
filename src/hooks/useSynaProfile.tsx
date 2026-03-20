@@ -15,6 +15,7 @@ const DEFAULT_PROFILE: SynaProfile = {
 export const useSynaProfile = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<SynaProfile>(DEFAULT_PROFILE);
+  const [synagogueId, setSynagogueId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,10 +23,11 @@ export const useSynaProfile = () => {
     const load = async () => {
       const { data } = await supabase
         .from("synagogue_profiles")
-        .select("name, logo_url, signature, primary_color, secondary_color, font_family")
+        .select("id, name, logo_url, signature, primary_color, secondary_color, font_family")
         .eq("president_id", user.id)
         .maybeSingle();
       if (data) {
+        setSynagogueId(data.id);
         setProfile({
           name: data.name || "",
           logo_url: data.logo_url,
@@ -40,5 +42,5 @@ export const useSynaProfile = () => {
     void load();
   }, [user]);
 
-  return { profile, loading };
+  return { profile, synagogueId, loading };
 };

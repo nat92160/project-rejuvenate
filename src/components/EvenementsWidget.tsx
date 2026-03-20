@@ -28,7 +28,7 @@ const typeConfig: Record<string, { emoji: string; color: string; badgeColor: str
 
 const EvenementsWidget = () => {
   const { user, dbRole } = useAuth();
-  const { profile: synaProfile } = useSynaProfile();
+  const { profile: synaProfile, synagogueId } = useSynaProfile();
   const [events, setEvents] = useState<Evenement[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -68,7 +68,8 @@ const EvenementsWidget = () => {
       location: form.location.trim(),
       event_type: form.event_type,
       zoom_link: form.zoom_link.trim() || null,
-    }).select().single();
+      synagogue_id: synagogueId || null,
+    } as any).select().single();
 
     if (error) {
       toast.error("Erreur: vérifiez que vous avez le rôle Président.");

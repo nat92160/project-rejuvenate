@@ -21,6 +21,7 @@ export type Database = {
           creator_id: string
           id: string
           priority: string
+          synagogue_id: string | null
           title: string
           updated_at: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           creator_id: string
           id?: string
           priority?: string
+          synagogue_id?: string | null
           title: string
           updated_at?: string
         }
@@ -39,10 +41,19 @@ export type Database = {
           creator_id?: string
           id?: string
           priority?: string
+          synagogue_id?: string | null
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "annonces_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cours_zoom: {
         Row: {
@@ -55,6 +66,7 @@ export type Database = {
           description: string
           id: string
           rav: string
+          synagogue_id: string | null
           title: string
           zoom_link: string
         }
@@ -68,6 +80,7 @@ export type Database = {
           description?: string
           id?: string
           rav?: string
+          synagogue_id?: string | null
           title: string
           zoom_link?: string
         }
@@ -81,10 +94,19 @@ export type Database = {
           description?: string
           id?: string
           rav?: string
+          synagogue_id?: string | null
           title?: string
           zoom_link?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cours_zoom_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       evenements: {
         Row: {
@@ -96,6 +118,7 @@ export type Database = {
           event_type: string
           id: string
           location: string
+          synagogue_id: string | null
           title: string
           zoom_link: string | null
         }
@@ -108,6 +131,7 @@ export type Database = {
           event_type?: string
           id?: string
           location?: string
+          synagogue_id?: string | null
           title: string
           zoom_link?: string | null
         }
@@ -120,10 +144,19 @@ export type Database = {
           event_type?: string
           id?: string
           location?: string
+          synagogue_id?: string | null
           title?: string
           zoom_link?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "evenements_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       minyan_registrations: {
         Row: {
@@ -349,6 +382,35 @@ export type Database = {
         }
         Relationships: []
       }
+      synagogue_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          synagogue_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          synagogue_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          synagogue_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "synagogue_subscriptions_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tehilim_chains: {
         Row: {
           completed_at: string | null
@@ -358,6 +420,7 @@ export type Database = {
           dedication_type: string | null
           id: string
           status: string
+          synagogue_id: string | null
           title: string
         }
         Insert: {
@@ -368,6 +431,7 @@ export type Database = {
           dedication_type?: string | null
           id?: string
           status?: string
+          synagogue_id?: string | null
           title?: string
         }
         Update: {
@@ -378,9 +442,18 @@ export type Database = {
           dedication_type?: string | null
           id?: string
           status?: string
+          synagogue_id?: string | null
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tehilim_chains_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tehilim_claims: {
         Row: {

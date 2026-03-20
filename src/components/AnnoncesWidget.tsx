@@ -18,7 +18,7 @@ interface Annonce {
 
 const AnnoncesWidget = () => {
   const { user, dbRole } = useAuth();
-  const { profile: synaProfile } = useSynaProfile();
+  const { profile: synaProfile, synagogueId } = useSynaProfile();
   const [annonces, setAnnonces] = useState<Annonce[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -49,8 +49,8 @@ const AnnoncesWidget = () => {
     if (!user || dbRole !== "president") { toast.error("Seul le président peut publier des annonces"); return; }
     setSubmitting(true);
     const { data, error } = await supabase.from("annonces").insert({
-      creator_id: user.id, title: newTitle.trim(), content: newContent.trim(), priority: newPriority,
-    }).select().single();
+      creator_id: user.id, title: newTitle.trim(), content: newContent.trim(), priority: newPriority, synagogue_id: synagogueId || null,
+    } as any).select().single();
     if (error) toast.error("Erreur lors de la publication.");
     else if (data) {
       setAnnonces(prev => [data, ...prev]);

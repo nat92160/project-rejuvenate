@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 interface CoursFormProps {
   userId: string;
+  synagogueId?: string | null;
   onCreated: (cours: Record<string, unknown>) => void;
   onClose: () => void;
   initialCourseType?: "zoom" | "presentiel";
@@ -15,7 +16,7 @@ const inputClass =
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Dimanche"];
 
-const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: CoursFormProps) => {
+const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType = "zoom" }: CoursFormProps) => {
   const [courseType, setCourseType] = useState<"zoom" | "presentiel">(initialCourseType);
   const [zoomMode, setZoomMode] = useState<"instant" | "scheduled">("scheduled");
   const [zoomSource, setZoomSource] = useState<"auto" | "manual">("auto");
@@ -114,6 +115,7 @@ const CoursForm = ({ userId, onCreated, onClose, initialCourseType = "zoom" }: C
       zoom_link: zoomLink,
       address: courseType === "presentiel" ? address.trim() : "",
       description: desc.trim(),
+      ...(synagogueId ? { synagogue_id: synagogueId } : {}),
     };
     const { data, error } = await supabase
       .from("cours_zoom")
