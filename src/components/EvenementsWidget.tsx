@@ -97,6 +97,23 @@ const EvenementsWidget = () => {
 
   const formatDate = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
+  const scheduleFields = [
+    {
+      key: "event_date",
+      icon: "📅",
+      label: "Date",
+      type: "date",
+      value: form.event_date,
+    },
+    {
+      key: "event_time",
+      icon: "🕐",
+      label: "Heure",
+      type: "time",
+      value: form.event_time,
+    },
+  ] as const;
+
   const triggerExport = useCallback(async (ev: Evenement) => {
     setExportingId(ev.id);
     setPosterEvent(ev);
@@ -163,36 +180,26 @@ const EvenementsWidget = () => {
                 className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="📝 Description (optionnel)" rows={2}
                 className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 sm:p-4">
-                <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <div className="overflow-hidden rounded-2xl border border-border/70 bg-muted/20 p-3 sm:p-4">
+                <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                   <span aria-hidden="true">🗓️</span>
                   <span>Date et heure</span>
                 </div>
                 <div className="space-y-3">
-                  <div className="min-w-0 space-y-1.5">
-                    <label className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground">
-                      <span aria-hidden="true">📅</span>
-                      <span>Date</span>
-                    </label>
-                    <input
-                      type="date"
-                      value={form.event_date}
-                      onChange={(e) => setForm({ ...form, event_date: e.target.value })}
-                      className="w-full min-w-0 rounded-xl border border-border bg-background px-3 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-                  </div>
-                  <div className="min-w-0 space-y-1.5">
-                    <label className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground">
-                      <span aria-hidden="true">🕐</span>
-                      <span>Heure</span>
-                    </label>
-                    <input
-                      type="time"
-                      value={form.event_time}
-                      onChange={(e) => setForm({ ...form, event_time: e.target.value })}
-                      className="w-full min-w-0 rounded-xl border border-border bg-background px-3 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-                  </div>
+                  {scheduleFields.map((field) => (
+                    <div key={field.key} className="min-w-0 overflow-hidden rounded-xl border border-border/80 bg-background shadow-[var(--shadow-soft)]">
+                      <div className="flex items-center gap-2 border-b border-border/70 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                        <span aria-hidden="true">{field.icon}</span>
+                        <span>{field.label}</span>
+                      </div>
+                      <input
+                        type={field.type}
+                        value={field.value}
+                        onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                        className="block h-14 w-full min-w-0 max-w-full border-0 bg-transparent px-3 text-base font-medium text-foreground [color-scheme:light] [appearance:none] [-webkit-appearance:none] focus:outline-none focus:ring-0"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
               <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="📍 Lieu"
