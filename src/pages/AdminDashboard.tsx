@@ -30,6 +30,8 @@ interface ManagedUser {
   email: string;
   created_at: string;
   display_name: string;
+  first_name: string;
+  last_name: string;
   suspended: boolean;
   city: string;
   roles: string[];
@@ -47,7 +49,7 @@ const AdminDashboard = () => {
   const [userProcessing, setUserProcessing] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
-  const [profileForm, setProfileForm] = useState({ display_name: "", city: "" });
+  const [profileForm, setProfileForm] = useState({ first_name: "", last_name: "", city: "" });
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -151,7 +153,8 @@ const AdminDashboard = () => {
   const openEditDialog = (managedUser: ManagedUser) => {
     setEditingUser(managedUser);
     setProfileForm({
-      display_name: managedUser.display_name || "",
+      first_name: managedUser.first_name || "",
+      last_name: managedUser.last_name || "",
       city: managedUser.city || "",
     });
   };
@@ -163,7 +166,8 @@ const AdminDashboard = () => {
       body: {
         action: "update_profile",
         user_id: editingUser.id,
-        display_name: profileForm.display_name.trim(),
+        first_name: profileForm.first_name.trim(),
+        last_name: profileForm.last_name.trim(),
         city: profileForm.city.trim(),
       },
     });
@@ -174,6 +178,19 @@ const AdminDashboard = () => {
       toast.success("✅ Profil mis à jour");
       await fetchUsers();
       setEditingUser(null);
+    }
+    setUserProcessing(null);
+  };
+
+  const handleSetRole = async (userId: string, role: string) => {
+    setUserProcessing(userId);
+    const { error } = await supabase.functions.invoke("admin-users", {
+      body: { action: "set_role", user_id: userId, role },
+    });
+    if (error) toast.error("Erreur de changement de rôle");
+    else {
+      toast.success(`Rôle mis à jour : ${role}`);
+      await fetchUsers();
     }
     setUserProcessing(null);
   };
@@ -340,7 +357,9 @@ const AdminDashboard = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-bold text-foreground">{u.display_name || "Sans nom"}</p>
+                          <p className="text-sm font-bold text-foreground">
+                            {[u.first_name, u.last_name].filter(Boolean).join(" ") || u.display_name || "Sans nom"}
+                          </p>
                           {u.suspended && (
                             <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">Suspendu</span>
                           )}
@@ -359,36 +378,38 @@ const AdminDashboard = () => {
                         </p>
                       </div>
 
-                      {!u.roles.includes("admin") && (
-                        <div className="flex flex-col gap-1.5 shrink-0">
-                          <button
-                            onClick={() => openEditDialog(u)}
-                            disabled={userProcessing === u.id}
-                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
-                            style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
-                          >
-                            ✏️ Modifier
-                          </button>
-                          <button
-                            onClick={() => handleSuspend(u.id, !u.suspended)}
-                            disabled={userProcessing === u.id}
-                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
-                            style={u.suspended
-                              ? { background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }
-                              : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
-                            }
-                          >
-                            {userProcessing === u.id ? "⏳" : u.suspended ? "▶️ Réactiver" : "⏸️ Suspendre"}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(u.id, u.email || "")}
-                            disabled={userProcessing === u.id}
-                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-destructive/10 text-destructive border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
-                          >
-                            {userProcessing === u.id ? "⏳" : "🗑️ Supprimer"}
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex flex-col gap-1.5 shrink-0">
+                        <button
+                          onClick={() => openEditDialog(u)}
+                          disabled={userProcessing === u.id}
+                          className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                          style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}
+                        >
+                          ✏️ Modifier
+                        </button>
+                        {!u.roles.includes("admin") && (
+                          <>
+                            <button
+                              onClick={() => handleSuspend(u.id, !u.suspended)}
+                              disabled={userProcessing === u.id}
+                              className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                              style={u.suspended
+                                ? { background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }
+                                : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                              }
+                            >
+                              {userProcessing === u.id ? "⏳" : u.suspended ? "▶️ Réactiver" : "⏸️ Suspendre"}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(u.id, u.email || "")}
+                              disabled={userProcessing === u.id}
+                              className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-destructive/10 text-destructive border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                            >
+                              {userProcessing === u.id ? "⏳" : "🗑️ Supprimer"}
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -415,13 +436,23 @@ const AdminDashboard = () => {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Nom affiché</label>
-              <Input
-                value={profileForm.display_name}
-                onChange={(e) => setProfileForm((prev) => ({ ...prev, display_name: e.target.value }))}
-                placeholder="Nom et prénom"
-              />
+            <div className="flex gap-3">
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium text-foreground">Prénom</label>
+                <Input
+                  value={profileForm.first_name}
+                  onChange={(e) => setProfileForm((prev) => ({ ...prev, first_name: e.target.value }))}
+                  placeholder="Prénom"
+                />
+              </div>
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium text-foreground">Nom</label>
+                <Input
+                  value={profileForm.last_name}
+                  onChange={(e) => setProfileForm((prev) => ({ ...prev, last_name: e.target.value }))}
+                  placeholder="Nom"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Ville</label>
@@ -431,6 +462,31 @@ const AdminDashboard = () => {
                 placeholder="Paris"
               />
             </div>
+            {editingUser && !editingUser.roles.includes("admin") && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Rôle</label>
+                <div className="flex gap-2">
+                  {(["guest", "fidele", "president"] as const).map((r) => {
+                    const currentRole = editingUser.roles.find((role) => role !== "admin") || "guest";
+                    const isActive = currentRole === r;
+                    return (
+                      <button
+                        key={r}
+                        onClick={() => void handleSetRole(editingUser.id, r)}
+                        disabled={isActive || userProcessing === editingUser.id}
+                        className="flex-1 rounded-xl border py-2 text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:cursor-default"
+                        style={isActive
+                          ? { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", border: "none" }
+                          : { background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
+                        }
+                      >
+                        {r === "guest" ? "👤 Guest" : r === "fidele" ? "🙏 Fidèle" : "🏛️ Président"}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
