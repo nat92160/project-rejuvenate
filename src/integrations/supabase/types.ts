@@ -340,6 +340,44 @@ export type Database = {
         }
         Relationships: []
       }
+      synagogue_messages: {
+        Row: {
+          content: string
+          created_at: string
+          display_name: string
+          id: string
+          is_president: boolean
+          synagogue_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_president?: boolean
+          synagogue_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_president?: boolean
+          synagogue_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "synagogue_messages_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       synagogue_profiles: {
         Row: {
           created_at: string

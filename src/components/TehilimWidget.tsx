@@ -352,9 +352,37 @@ const TehilimWidget = () => {
 
   const fetchChains = useCallback(async () => {
     setLoadingChains(true);
-    const { data } = await supabase.from("tehilim_chains").select("*").eq("status", "active").order("created_at", { ascending: false });
+
+    // Get user's subscribed synagogue IDs
+    let subIds: string[] = [];
+    if (user) {
+      const { data: mySubs } = await supabase
+        .from("synagogue_subscriptions")
+        .select("synagogue_id")
+        .eq("user_id", user.id);
+      subIds = (mySubs || []).map((s: any) => s.synagogue_id);
+    }
+
+    let query = supabase.from("tehilim_chains").select("*").eq("status", "active").order("created_at", { ascending: false });
+
+    // If user is logged in, filter to own chains + subscribed synagogues
+    if (user) {
+      if (subIds.length > 0) {
+        // Show chains from subscribed synagogues OR created by the user
+        query = query.or(`creator_id.eq.${user.id},synagogue_id.in.(${subIds.join(",")})`);
+      } else {
+        // No subscriptions — only show own chains
+        query = query.eq("creator_id", user.id);
+      }
+    }
+    // If not logged in, show nothing (they need to subscribe)
+    else {
+      setChains([]); setLoadingChains(false); return;
+    }
+
+    const { data } = await query;
     setChains((data as Chain[]) || []); setLoadingChains(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => { if (tab === "chain") fetchChains(); }, [tab, fetchChains]);
 

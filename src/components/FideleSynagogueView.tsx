@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCity } from "@/hooks/useCity";
 import { fetchNearbySynagogues, formatDistance, SynagogueResult } from "@/lib/synagogues";
 import { toast } from "sonner";
+import SynagogueChat from "./SynagogueChat";
 
 interface SynaDirectoryItem {
   id: string;
@@ -34,7 +35,8 @@ const formatTravelTime = (minutes?: number) => {
 const FideleSynagogueView = () => {
   const { user } = useAuth();
   const { city, geolocate, isGeolocating, locationError } = useCity();
-  const [tab, setTab] = useState<"annuaire" | "synagogues" | "cours" | "events" | "annonces">("annuaire");
+  const [tab, setTab] = useState<"annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat">("annuaire");
+  const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
 
   // Directory state
   const [directory, setDirectory] = useState<SynaDirectoryItem[]>([]);
@@ -169,12 +171,15 @@ const FideleSynagogueView = () => {
   const subscribedCount = directory.filter((d) => d.isSubscribed).length;
   const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 
+  const subscribedSynas = directory.filter(d => d.isSubscribed);
+
   const tabs = [
     { id: "annuaire" as const, icon: "📋", label: "Annuaire", count: directory.length },
     { id: "synagogues" as const, icon: "🕍", label: "Proches", count: synagogues.length },
     { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
     { id: "events" as const, icon: "📅", label: "Événements", count: events.length },
     { id: "annonces" as const, icon: "📢", label: "Annonces", count: annonces.length },
+    ...(subscribedSynas.length > 0 ? [{ id: "chat" as const, icon: "💬", label: "Chat", count: 0 }] : []),
   ];
 
   return (
@@ -444,6 +449,48 @@ const FideleSynagogueView = () => {
               <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{a.content}</p>
             </motion.div>
           ))}
+        </div>
+      )}
+
+      {/* Chat */}
+      {tab === "chat" && (
+        <div className="space-y-3">
+          {!chatSyna ? (
+            <>
+              <p className="text-sm text-muted-foreground text-center mb-3">Choisissez une synagogue pour discuter :</p>
+              {subscribedSynas.map((syna) => (
+                <button
+                  key={syna.id}
+                  onClick={() => setChatSyna({ id: syna.id, name: syna.name })}
+                  className="w-full flex items-center gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/20 transition-all cursor-pointer text-left"
+                  style={{ boxShadow: "var(--shadow-card)" }}
+                >
+                  {syna.logo_url ? (
+                    <img src={syna.logo_url} alt="" className="h-10 w-10 rounded-xl border border-border object-contain bg-white" />
+                  ) : (
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold text-white" style={{ background: syna.primary_color }}>
+                      {syna.name.charAt(0)}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
+                    <p className="text-[10px] text-muted-foreground">💬 Ouvrir le chat</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">→</span>
+                </button>
+              ))}
+            </>
+          ) : (
+            <div>
+              <button
+                onClick={() => setChatSyna(null)}
+                className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline mb-3"
+              >
+                ← Retour aux synagogues
+              </button>
+              <SynagogueChat synagogueId={chatSyna.id} synagogueName={chatSyna.name} />
+            </div>
+          )}
         </div>
       )}
     </motion.div>
