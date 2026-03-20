@@ -42,17 +42,28 @@ const EvenementsWidget = () => {
   const isPresident = dbRole === "president";
 
   useEffect(() => {
+    if (subLoading) return;
     const fetchEvents = async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("evenements")
         .select("*")
         .order("event_date", { ascending: true })
         .limit(20);
+
+      if (isPresident && synagogueId) {
+        query = query.eq("synagogue_id", synagogueId);
+      } else if (user && subIds.length > 0) {
+        query = query.in("synagogue_id", subIds);
+      } else if (user && subIds.length === 0) {
+        setEvents([]); setLoading(false); return;
+      }
+
+      const { data } = await query;
       setEvents(data || []);
       setLoading(false);
     };
     fetchEvents();
-  }, []);
+  }, [subLoading, subIds, user, isPresident, synagogueId]);
 
   const handleAdd = async () => {
     if (!form.title.trim() || !form.event_date) {

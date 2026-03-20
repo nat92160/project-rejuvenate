@@ -100,7 +100,7 @@ const MinyanLiveWidget = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchSessions(); }, []);
+  useEffect(() => { if (!subLoading) fetchSessions(); }, [subLoading, subIds]);
   useEffect(() => {
     const channel = supabase.channel("minyan-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "minyan_registrations" }, () => fetchSessions())

@@ -34,18 +34,31 @@ const AnnoncesWidget = () => {
   const posterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (subLoading) return;
     const fetchAnnonces = async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("annonces")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(20);
+
+      // Fidèles: filter by subscribed synagogues; Presidents see their own
+      if (isPresident && synagogueId) {
+        query = query.eq("synagogue_id", synagogueId);
+      } else if (user && subIds.length > 0) {
+        query = query.in("synagogue_id", subIds);
+      } else if (user && subIds.length === 0) {
+        // No subscription = no content
+        setAnnonces([]); setLoading(false); return;
+      }
+
+      const { data, error } = await query;
       if (error) toast.error("Erreur lors du chargement des annonces");
       setAnnonces(data || []);
       setLoading(false);
     };
     fetchAnnonces();
-  }, []);
+  }, [subLoading, subIds, user, isPresident, synagogueId]);
 
   const handleAdd = async () => {
     if (!newTitle.trim()) { toast.error("Veuillez entrer un titre"); return; }
