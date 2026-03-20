@@ -39,6 +39,7 @@ const IndexContent = () => {
   const [authOpen, setAuthOpen] = useState(false);
   const { role, setRole } = useRole();
   const { user, dbRole, signOut, loading: authLoading } = useAuth();
+  const pendingCount = usePendingRequests();
 
   const isPresident = dbRole === "president";
 
