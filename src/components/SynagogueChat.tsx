@@ -117,7 +117,8 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
 
     setChatEnabled(enabled);
     setPresidentId(resolvedPresidentId);
-    setViewerIsPresident(isPresident || isOwner);
+    setAdjointId(resolvedAdjointId);
+    setViewerIsPresident(isPresident || isOwner || isAdjoint);
 
     if (isPresident || isOwner) {
       setIsApproved(true);
