@@ -6,6 +6,7 @@ import { useCity } from "@/hooks/useCity";
 import { fetchNearbySynagogues, formatDistance, SynagogueResult } from "@/lib/synagogues";
 import { toast } from "sonner";
 import SynagogueChat from "./SynagogueChat";
+import SynaInfoCard from "./SynaInfoCard";
 
 interface SynaDirectoryItem {
   id: string;
