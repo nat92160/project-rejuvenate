@@ -1,0 +1,2 @@
+DROP POLICY "Presidents can create sessions" ON public.minyan_sessions;
+CREATE POLICY "Authenticated users can create sessions" ON public.minyan_sessions FOR INSERT TO authenticated WITH CHECK (auth.uid() = creator_id);

@@ -206,18 +206,25 @@ const MinyanLiveWidget = () => {
       <div className="rounded-2xl p-5 mb-4 border border-primary/15" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">👥 Minyan Live</h3>
+           <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">👥 Minyan Live</h3>
             <p className="text-xs text-muted-foreground mt-1">Inscrivez-vous et complétez le Minyan</p>
           </div>
-          {isPresident && (
-            <button onClick={() => setShowCreateForm(!showCreateForm)} className="px-3 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground" style={{ background: "var(--gradient-gold)" }}>
-              {showCreateForm ? "✕" : "➕ Créer"}
-            </button>
-          )}
+          <div className="flex gap-2">
+            {!isPresident && user && (
+              <button onClick={() => setShowCreateForm(!showCreateForm)} className="px-3 py-2 rounded-xl text-xs font-bold border border-border cursor-pointer bg-card text-foreground">
+                {showCreateForm ? "✕" : "📍 Mon Minyan"}
+              </button>
+            )}
+            {isPresident && (
+              <button onClick={() => setShowCreateForm(!showCreateForm)} className="px-3 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground" style={{ background: "var(--gradient-gold)" }}>
+                {showCreateForm ? "✕" : "➕ Créer"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      <AnimatePresence>{isPresident && showCreateForm && <CreateMinyanInline onCreated={() => { setShowCreateForm(false); fetchSessions(); }} />}</AnimatePresence>
+      <AnimatePresence>{(isPresident || user) && showCreateForm && <CreateMinyanInline onCreated={() => { setShowCreateForm(false); fetchSessions(); }} />}</AnimatePresence>
 
       {sessions.length === 0 ? (
         <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -265,6 +272,14 @@ const MinyanLiveWidget = () => {
               </div>
             )}
 
+            {/* Fidèles en route indicator */}
+            {count > 0 && !isFull && (
+              <div className="mb-3 inline-flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: "hsl(var(--gold) / 0.1)", border: "1px solid hsl(var(--gold) / 0.2)" }}>
+                <span className="text-sm">🏃</span>
+                <span className="text-xs font-bold" style={{ color: "hsl(var(--gold-matte))" }}>{count} fidèle{count > 1 ? "s" : ""} en route</span>
+              </div>
+            )}
+
             {isFull ? (
               <div className="text-sm font-bold text-green-600">✅ Minyan atteint !</div>
             ) : (
@@ -284,7 +299,7 @@ const MinyanLiveWidget = () => {
               </>
             ) : (
               <>
-                <button onClick={handleRegister} className="py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>➕ Je suis là</button>
+                <button onClick={handleRegister} className="py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>🙋 Je serai présent</button>
                 <button onClick={shareMinyan} className="py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer text-center" style={{ background: "var(--gradient-gold)" }}>📤 Partager</button>
               </>
             )}

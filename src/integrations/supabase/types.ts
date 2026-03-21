@@ -488,6 +488,7 @@ export type Database = {
           signature: string | null
           speakers: Json | null
           updated_at: string
+          verified: boolean
         }
         Insert: {
           address?: string | null
@@ -513,6 +514,7 @@ export type Database = {
           signature?: string | null
           speakers?: Json | null
           updated_at?: string
+          verified?: boolean
         }
         Update: {
           address?: string | null
@@ -538,6 +540,7 @@ export type Database = {
           signature?: string | null
           speakers?: Json | null
           updated_at?: string
+          verified?: boolean
         }
         Relationships: []
       }
