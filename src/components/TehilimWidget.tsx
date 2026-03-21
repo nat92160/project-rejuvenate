@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSynaProfile } from "@/hooks/useSynaProfile";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
@@ -92,6 +93,7 @@ const PsalmReader = ({ chapter, onClose }: { chapter: number; onClose: () => voi
 // Chain Create Form
 const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
   const { user } = useAuth();
+  const { synagogueId } = useSynaProfile();
   const [title, setTitle] = useState("Chaîne de Tehilim");
   const [dedication, setDedication] = useState("");
   const [dedicationType, setDedicationType] = useState("general");
@@ -100,7 +102,7 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
   const handleCreate = async () => {
     if (!user) { toast.error("Connectez-vous pour créer une chaîne"); return; }
     setCreating(true);
-    const { error } = await supabase.from("tehilim_chains").insert({ creator_id: user.id, title, dedication: dedication || null, dedication_type: dedicationType });
+    const { error } = await supabase.from("tehilim_chains").insert({ creator_id: user.id, synagogue_id: synagogueId, title, dedication: dedication || null, dedication_type: dedicationType });
     if (error) { toast.error("Erreur: vérifiez que vous avez le rôle Président."); }
     else { toast.success("✅ Chaîne de Tehilim créée !"); }
     setCreating(false); onCreated();
