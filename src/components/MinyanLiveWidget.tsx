@@ -224,7 +224,7 @@ const MinyanLiveWidget = () => {
         </div>
       </div>
 
-      <AnimatePresence>{isPresident && showCreateForm && <CreateMinyanInline onCreated={() => { setShowCreateForm(false); fetchSessions(); }} />}</AnimatePresence>
+      <AnimatePresence>{(isPresident || user) && showCreateForm && <CreateMinyanInline onCreated={() => { setShowCreateForm(false); fetchSessions(); }} />}</AnimatePresence>
 
       {sessions.length === 0 ? (
         <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
