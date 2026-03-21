@@ -6,6 +6,7 @@ import { useCity } from "@/hooks/useCity";
 import { fetchNearbySynagogues, formatDistance, SynagogueResult } from "@/lib/synagogues";
 import { toast } from "sonner";
 import SynagogueChat from "./SynagogueChat";
+import SynaInfoCard from "./SynaInfoCard";
 
 interface SynaDirectoryItem {
   id: string;
@@ -18,6 +19,11 @@ interface SynaDirectoryItem {
   shacharit_time: string | null;
   minha_time: string | null;
   arvit_time: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 interface CoursItem { id: string; title: string; rav: string; day_of_week: string; course_time: string; zoom_link: string; description: string; synagogue_name?: string; }
@@ -62,7 +68,7 @@ const FideleSynagogueView = () => {
     setDirLoading(true);
     const { data: allSynas } = await supabase
       .from("synagogue_profiles")
-      .select("id, name, logo_url, primary_color, secondary_color, shacharit_time, minha_time, arvit_time")
+      .select("id, name, logo_url, primary_color, secondary_color, shacharit_time, minha_time, arvit_time, address, phone, email, latitude, longitude")
       .neq("name", "")
       .order("name");
 
@@ -98,6 +104,11 @@ const FideleSynagogueView = () => {
         shacharit_time: s.shacharit_time || null,
         minha_time: s.minha_time || null,
         arvit_time: s.arvit_time || null,
+        address: s.address || null,
+        phone: s.phone || null,
+        email: s.email || null,
+        latitude: s.latitude || null,
+        longitude: s.longitude || null,
       }))
     );
     setDirLoading(false);
@@ -226,6 +237,10 @@ const FideleSynagogueView = () => {
       {/* Annuaire tab */}
       {tab === "annuaire" && (
         <div className="space-y-3">
+          {/* Info cards for subscribed synagogues */}
+          {subscribedSynas.filter(s => s.address || s.phone || s.email).map((syna) => (
+            <SynaInfoCard key={`info-${syna.id}`} info={syna} />
+          ))}
           {dirLoading ? (
             <div className="py-10 text-center text-sm text-muted-foreground">Chargement de l'annuaire…</div>
           ) : directory.length === 0 ? (

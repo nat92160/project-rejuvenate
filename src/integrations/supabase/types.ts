@@ -465,15 +465,20 @@ export type Database = {
       }
       synagogue_profiles: {
         Row: {
+          address: string | null
           adjoint_id: string | null
           arvit_time: string | null
           chat_enabled: boolean
           created_at: string
+          email: string | null
           font_family: string | null
           id: string
+          latitude: number | null
           logo_url: string | null
+          longitude: number | null
           minha_time: string | null
           name: string
+          phone: string | null
           president_first_name: string | null
           president_id: string
           president_last_name: string | null
@@ -485,15 +490,20 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
           adjoint_id?: string | null
           arvit_time?: string | null
           chat_enabled?: boolean
           created_at?: string
+          email?: string | null
           font_family?: string | null
           id?: string
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           minha_time?: string | null
           name?: string
+          phone?: string | null
           president_first_name?: string | null
           president_id: string
           president_last_name?: string | null
@@ -505,15 +515,20 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
           adjoint_id?: string | null
           arvit_time?: string | null
           chat_enabled?: boolean
           created_at?: string
+          email?: string | null
           font_family?: string | null
           id?: string
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           minha_time?: string | null
           name?: string
+          phone?: string | null
           president_first_name?: string | null
           president_id?: string
           president_last_name?: string | null
