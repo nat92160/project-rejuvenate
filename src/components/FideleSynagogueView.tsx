@@ -24,6 +24,7 @@ interface SynaDirectoryItem {
   email: string | null;
   latitude: number | null;
   longitude: number | null;
+  verified: boolean;
 }
 
 interface CoursItem { id: string; title: string; rav: string; day_of_week: string; course_time: string; zoom_link: string; description: string; synagogue_name?: string; }
