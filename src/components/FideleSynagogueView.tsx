@@ -15,6 +15,9 @@ interface SynaDirectoryItem {
   secondary_color: string;
   subscriber_count: number;
   isSubscribed: boolean;
+  shacharit_time: string | null;
+  minha_time: string | null;
+  arvit_time: string | null;
 }
 
 interface CoursItem { id: string; title: string; rav: string; day_of_week: string; course_time: string; zoom_link: string; description: string; synagogue_name?: string; }
