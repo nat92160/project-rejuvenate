@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
+import { useSynaProfile } from "@/hooks/useSynaProfile";
+import { useCity } from "@/hooks/useCity";
+import { fetchMinhaTime } from "@/lib/hebcal";
 import { toast } from "sonner";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 
@@ -27,8 +30,24 @@ const downloadICS = (session: MinyanSession) => {
 
 const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
   const { user } = useAuth();
+  const { city } = useCity();
   const [form, setForm] = useState({ office_type: "shacharit", office_date: "", office_time: "", target_count: "10" });
   const [submitting, setSubmitting] = useState(false);
+  const [suggestedMinha, setSuggestedMinha] = useState<string | null>(null);
+
+  // Auto-calculate Minha time
+  useEffect(() => {
+    if (form.office_type === "minha" && form.office_date) {
+      fetchMinhaTime(city, new Date(form.office_date)).then(t => setSuggestedMinha(t));
+    }
+  }, [form.office_type, form.office_date, city]);
+
+  // Auto-fill time when minha is selected and we have a suggestion
+  useEffect(() => {
+    if (form.office_type === "minha" && suggestedMinha && !form.office_time) {
+      setForm(f => ({ ...f, office_time: suggestedMinha }));
+    }
+  }, [suggestedMinha, form.office_type]);
 
   const handleCreate = async () => {
     if (!form.office_date || !form.office_time) { toast.error("Remplissez date et heure"); return; }
@@ -60,6 +79,12 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
             <input type="time" value={form.office_time} onChange={e => setForm({...form, office_time: e.target.value})}
               className="w-full rounded-xl bg-background border border-border text-foreground text-sm"
               style={{ height: "56px", minHeight: "56px", padding: "0 16px", WebkitAppearance: "none", appearance: "none" }} />
+            {form.office_type === "minha" && suggestedMinha && (
+              <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                <span>🕐</span> Heure halakhique suggérée : <strong className="text-foreground">{suggestedMinha}</strong>
+                <button onClick={() => setForm(f => ({ ...f, office_time: suggestedMinha }))} className="text-primary font-bold bg-transparent border-none cursor-pointer text-[10px] underline ml-1">Appliquer</button>
+              </p>
+            )}
           </div>
         </div>
         <button onClick={handleCreate} disabled={submitting || !form.office_date || !form.office_time} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50" style={{ background: "var(--gradient-gold)" }}>
@@ -73,6 +98,7 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
 const MinyanLiveWidget = () => {
   const { user, dbRole } = useAuth();
   const { subIds, loading: subLoading } = useSubscribedSynaIds();
+  const { synagogueId } = useSynaProfile();
   const isPresident = dbRole === "president";
   const [sessions, setSessions] = useState<MinyanSession[]>([]);
   const [registrations, setRegistrations] = useState<Record<string, Registration[]>>({});
@@ -80,6 +106,7 @@ const MinyanLiveWidget = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [guestPromptOpen, setGuestPromptOpen] = useState(false);
+  const [sendingUrgency, setSendingUrgency] = useState(false);
 
   const fetchSessions = async () => {
     const today = new Date().toISOString().split("T")[0];
@@ -271,6 +298,31 @@ const MinyanLiveWidget = () => {
           {currentSession && (
             <button onClick={() => downloadICS(currentSession)} className="w-full mt-2 py-2.5 rounded-xl text-xs font-bold bg-card text-foreground border border-border cursor-pointer hover:bg-muted transition-all">
               📅 Ajouter à mon calendrier
+            </button>
+          )}
+
+          {/* Emergency Minyan Button */}
+          {isPresident && synagogueId && currentSession && !isFull && (
+            <button
+              onClick={async () => {
+                setSendingUrgency(true);
+                const label = OFFICE_LABELS[currentSession.office_type] || currentSession.office_type;
+                await supabase.functions.invoke("send-push", {
+                  body: {
+                    synagogue_id: synagogueId,
+                    title: "🚨 Urgence Minyan !",
+                    body: `Il manque ${needed} personne${needed > 1 ? "s" : ""} pour le ${label}. On vous attend !`,
+                    sender_id: user?.id,
+                  },
+                });
+                toast.success("🚨 Notification d'urgence envoyée !");
+                setSendingUrgency(false);
+              }}
+              disabled={sendingUrgency}
+              className="w-full mt-3 py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+              style={{ background: "linear-gradient(135deg, hsl(0 84% 50%), hsl(0 84% 40%))", boxShadow: "0 4px 15px hsl(0 84% 50% / 0.3)" }}
+            >
+              {sendingUrgency ? "⏳ Envoi..." : `🚨 Urgence Minyan — Il manque ${needed} !`}
             </button>
           )}
 

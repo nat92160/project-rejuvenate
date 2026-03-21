@@ -37,6 +37,7 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [presidentId, setPresidentId] = useState<string | null>(null);
+  const [adjointId, setAdjointId] = useState<string | null>(null);
   const [viewerIsPresident, setViewerIsPresident] = useState(isPresident);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { isSubscribed, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe, supported: pushSupported } = usePushSubscription(synagogueId);
@@ -101,15 +102,25 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
       .eq("id", synagogueId)
       .maybeSingle();
 
+    // Fetch adjoint_id separately since it's not in types yet
+    const { data: synaFull } = await (supabase
+      .from("synagogue_profiles")
+      .select("adjoint_id") as any)
+      .eq("id", synagogueId)
+      .maybeSingle();
+
     const enabled = syna?.chat_enabled ?? false;
     const resolvedPresidentId = syna?.president_id ?? null;
+    const resolvedAdjointId = synaFull?.adjoint_id ?? null;
     const isOwner = resolvedPresidentId === user.id;
+    const isAdjoint = resolvedAdjointId === user.id;
 
     setChatEnabled(enabled);
     setPresidentId(resolvedPresidentId);
-    setViewerIsPresident(isPresident || isOwner);
+    setAdjointId(resolvedAdjointId);
+    setViewerIsPresident(isPresident || isOwner || isAdjoint);
 
-    if (isPresident || isOwner) {
+    if (isPresident || isOwner || isAdjoint) {
       setIsApproved(true);
       setRequestStatus("approved");
       setChatEnabledLoading(false);
@@ -427,7 +438,8 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
             {messages.map((msg) => {
               const isMine = msg.user_id === user.id;
               const isEditing = editingId === msg.id;
-              const msgFromPresident = msg.is_president || (!!presidentId && msg.user_id === presidentId);
+              const msgFromPresident = msg.is_president || (!!presidentId && msg.user_id === presidentId) || (!!adjointId && msg.user_id === adjointId);
+              const isAdjointMsg = !!adjointId && msg.user_id === adjointId;
 
               return (
                 <motion.div
@@ -462,7 +474,7 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
                             className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider"
                             style={{ background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }}
                           >
-                            🏛️ Président
+                            {isAdjointMsg ? "🏅 Adjoint" : "🏛️ Président"}
                           </span>
                         )}
                       </div>

@@ -11,10 +11,12 @@ import EvenementsWidget from "./EvenementsWidget";
 import CoursVirtuelWidget from "./CoursVirtuelWidget";
 import SynaProfileManager from "./SynaProfileManager";
 import ChatManagement from "./ChatManagement";
+import AdjointManager from "./AdjointManager";
 
 
 const features = [
   { id: "syna-profile", icon: "🏛️", title: "Mon Espace Syna" },
+  { id: "adjoint", icon: "🏅", title: "Adjoint" },
   { id: "chat", icon: "💬", title: "Chat Fidèles" },
   { id: "affiche", icon: "📋", title: "Affiche Chabbat" },
   { id: "annonces", icon: "📢", title: "Annonces" },
@@ -141,6 +143,7 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
   const renderFeature = () => {
     switch (activeFeature) {
       case "syna-profile": return <SynaProfileManager />;
+      case "adjoint": return <AdjointManager />;
       case "chat": return <ChatManagement />;
       case "affiche": return <AfficheChabbatWidget />;
       case "annonces": return <AnnoncesWidget />;

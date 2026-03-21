@@ -1,0 +1,1 @@
+ALTER TABLE public.synagogue_profiles ADD COLUMN IF NOT EXISTS adjoint_id uuid DEFAULT NULL;
