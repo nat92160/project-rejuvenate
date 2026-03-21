@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCity } from "@/hooks/useCity";
 import { toast } from "sonner";
+import { fetchNearbySynagogues, formatDistance, type SynagogueResult } from "@/lib/synagogues";
 import SynagogueChat from "./SynagogueChat";
 import SynaInfoCard from "./SynaInfoCard";
 
@@ -70,6 +71,11 @@ const FideleSynagogueView = () => {
   const [directory, setDirectory] = useState<SynaDirectoryItem[]>([]);
   const [dirLoading, setDirLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+
+  // Google Maps nearby results
+  const [googleResults, setGoogleResults] = useState<SynagogueResult[]>([]);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleSearched, setGoogleSearched] = useState(false);
 
   // Content state
   const [cours, setCours] = useState<CoursItem[]>([]);
@@ -205,9 +211,27 @@ const FideleSynagogueView = () => {
   useEffect(() => { fetchDirectory(); }, [user]);
   useEffect(() => { fetchContent(); }, [user]);
 
-  const nearbySynagogues = useMemo(() => {
-    if (!hasCoordinates(city.lat, city.lng)) return [];
+  // Fetch Google Maps nearby synagogues when GPS is active
+  const fetchGoogleNearby = useCallback(async () => {
+    if (!hasCoordinates(city.lat, city.lng) || !city._gps) return;
+    setGoogleLoading(true);
+    try {
+      const results = await fetchNearbySynagogues(city.lat, city.lng);
+      setGoogleResults(results.filter(r => r.distance <= 15000));
+      setGoogleSearched(true);
+    } catch (err) {
+      console.warn("Google nearby search failed:", err);
+      setGoogleSearched(true);
+    } finally {
+      setGoogleLoading(false);
+    }
+  }, [city.lat, city.lng, city._gps]);
 
+  useEffect(() => { fetchGoogleNearby(); }, [fetchGoogleNearby]);
+
+  // Partner synagogues from our DB within 15km
+  const nearbyPartners = useMemo(() => {
+    if (!hasCoordinates(city.lat, city.lng)) return [];
     return directory
       .filter((syna) => hasCoordinates(syna.latitude, syna.longitude))
       .map((syna) => ({
@@ -217,6 +241,19 @@ const FideleSynagogueView = () => {
       .filter((syna) => syna.dist <= 15000)
       .sort((a, b) => a.dist - b.dist);
   }, [directory, city.lat, city.lng]);
+
+  // Google results that are NOT already in our DB (deduplicate by proximity)
+  const externalGoogleResults = useMemo(() => {
+    if (nearbyPartners.length === 0) return googleResults;
+    return googleResults.filter((gr) => {
+      // Exclude if a DB partner is within 100m of this Google result
+      return !nearbyPartners.some(
+        (p) => hasCoordinates(p.latitude, p.longitude) && getDistanceInMeters(p.latitude!, p.longitude!, gr.lat, gr.lon) < 100
+      );
+    });
+  }, [googleResults, nearbyPartners]);
+
+  const totalNearbyCount = nearbyPartners.length + externalGoogleResults.length;
 
   const handleSubscribe = async (synaId: string) => {
     if (!user) { toast.error("Connectez-vous pour vous abonner"); return; }
@@ -242,7 +279,7 @@ const FideleSynagogueView = () => {
   const tabs = [
     { id: "annuaire" as const, icon: "📋", label: "Annuaire", count: directory.length },
     { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
-    { id: "synagogues" as const, icon: "🕍", label: "Proches", count: nearbySynagogues.length },
+    { id: "synagogues" as const, icon: "🕍", label: "Proches", count: totalNearbyCount },
     { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
     { id: "tehilim" as const, icon: "📜", label: "Tehilim", count: tehilimChains.length },
     { id: "minyan" as const, icon: "👥", label: "Minyan", count: minyans.length },
@@ -395,72 +432,113 @@ const FideleSynagogueView = () => {
             </div>
           </div>
 
-          {(() => {
-            if (nearbySynagogues.length === 0) return (
-              <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
-                <span className="text-4xl">🏛️</span>
-                <p className="mt-3 text-sm text-muted-foreground">Aucune synagogue trouvée dans un rayon de 15 km.</p>
-                <p className="mt-1 text-xs text-muted-foreground/60">Activez votre GPS pour des résultats précis.</p>
-              </div>
-            );
+          {/* Partner synagogues first */}
+          {nearbyPartners.length > 0 && (
+            <>
+              <p className="text-xs font-bold uppercase tracking-wider text-primary/70 px-1">⭐ Partenaires ({nearbyPartners.length})</p>
+              {nearbyPartners.map((syna, index) => {
+                const distLabel = syna.dist < 1000 ? `${Math.round(syna.dist)} m` : `${(syna.dist / 1000).toFixed(1)} km`;
+                const synaMinyans = minyans.filter(m => (m as any).synagogue_id === syna.id);
+                return (
+                  <motion.div
+                    key={syna.id}
+                    className="rounded-2xl border bg-card p-4"
+                    style={{ boxShadow: "var(--shadow-card)", borderColor: "hsl(var(--gold) / 0.3)" }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.04 }}
+                  >
+                    <div className="flex items-start gap-3">
+                      {syna.logo_url ? (
+                        <img src={syna.logo_url} alt="" className="h-12 w-12 rounded-xl border border-border object-contain bg-white" />
+                      ) : (
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold text-white" style={{ background: syna.primary_color }}>
+                          {syna.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className="font-display text-sm font-bold leading-tight text-foreground">{syna.name}</h4>
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full" style={{ background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }}>⭐ Partenaire</span>
+                          {syna.verified && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">✅</span>}
+                        </div>
+                        {syna.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {syna.address}</p>}
+                        <span className="text-[11px] font-bold text-primary/80">📏 {distLabel}</span>
+                        {(syna.shacharit_time || syna.minha_time || syna.arvit_time) && (
+                          <div className="mt-1.5 flex flex-wrap gap-2">
+                            {syna.shacharit_time && <span className="text-[10px] font-bold text-primary/80">🌅 {syna.shacharit_time.slice(0, 5)}</span>}
+                            {syna.minha_time && <span className="text-[10px] font-bold text-primary/80">🌇 {syna.minha_time.slice(0, 5)}</span>}
+                            {syna.arvit_time && <span className="text-[10px] font-bold text-primary/80">🌙 {syna.arvit_time.slice(0, 5)}</span>}
+                          </div>
+                        )}
+                        {synaMinyans.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {synaMinyans.slice(0, 3).map(m => (
+                              <a key={m.id} href={`/minyan/${m.id}`} className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-2 py-1 text-[10px] font-bold text-foreground no-underline transition-all active:scale-95">
+                                {OFFICE_LABELS[m.office_type] || m.office_type} {m.current_count}/{m.target_count}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                        <div className="mt-2 flex gap-2">
+                          {syna.latitude && syna.longitude && (
+                            <a href={`https://www.google.com/maps/dir/?api=1&destination=${syna.latitude},${syna.longitude}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all hover:scale-105 active:scale-95">
+                              🧭 Itinéraire
+                            </a>
+                          )}
+                          {syna.phone && (
+                            <a href={`tel:${syna.phone}`} className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all active:scale-95">
+                              📞 Appeler
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </>
+          )}
 
-            return nearbySynagogues.map((syna, index) => {
-              const distLabel = syna.dist < 1000 ? `${Math.round(syna.dist)} m` : `${(syna.dist / 1000).toFixed(1)} km`;
-              const synaMinyans = minyans.filter(m => (m as any).synagogue_id === syna.id);
-              return (
+          {/* Google Maps results */}
+          {googleLoading && (
+            <div className="py-6 text-center text-sm text-muted-foreground">🔍 Recherche des synagogues à proximité…</div>
+          )}
+
+          {!googleLoading && externalGoogleResults.length > 0 && (
+            <>
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1 mt-2">🗺️ Autres synagogues à proximité ({externalGoogleResults.length})</p>
+              {externalGoogleResults.map((gr, index) => (
                 <motion.div
-                  key={syna.id}
-                  className="rounded-2xl border bg-card p-4"
-                  style={{ boxShadow: "var(--shadow-card)", borderColor: "hsl(142 76% 36% / 0.2)" }}
+                  key={gr.id}
+                  className="rounded-2xl border border-border bg-card p-4"
+                  style={{ boxShadow: "var(--shadow-card)" }}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.04 }}
+                  transition={{ delay: (nearbyPartners.length + index) * 0.04 }}
                 >
                   <div className="flex items-start gap-3">
-                    {syna.logo_url ? (
-                      <img src={syna.logo_url} alt="" className="h-12 w-12 rounded-xl border border-border object-contain bg-white" />
-                    ) : (
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold text-white" style={{ background: syna.primary_color }}>
-                        {syna.name.charAt(0)}
-                      </div>
-                    )}
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold bg-muted text-muted-foreground">
+                      🕍
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <h4 className="font-display text-sm font-bold leading-tight text-foreground">{syna.name}</h4>
-                        {syna.verified ? (
-                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">✅ Vérifiée</span>
-                        ) : (
-                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-500">⏳</span>
+                      <h4 className="font-display text-sm font-bold leading-tight text-foreground">{gr.name}</h4>
+                      {gr.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {gr.address}</p>}
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-primary/80">📏 {formatDistance(gr.distance)}</span>
+                        {gr.travelDurationMinutes && (
+                          <span className="text-[10px] text-muted-foreground">🚗 {formatTravelTime(gr.travelDurationMinutes)}</span>
                         )}
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          {gr.distanceSource === "road" ? "route" : "vol d'oiseau"}
+                        </span>
                       </div>
-                      {syna.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {syna.address}</p>}
-                      <span className="text-[11px] font-bold text-primary/80">📏 {distLabel}</span>
-                      {/* Upcoming prayer times */}
-                      {(syna.shacharit_time || syna.minha_time || syna.arvit_time) && (
-                        <div className="mt-1.5 flex flex-wrap gap-2">
-                          {syna.shacharit_time && <span className="text-[10px] font-bold text-primary/80">🌅 {syna.shacharit_time.slice(0, 5)}</span>}
-                          {syna.minha_time && <span className="text-[10px] font-bold text-primary/80">🌇 {syna.minha_time.slice(0, 5)}</span>}
-                          {syna.arvit_time && <span className="text-[10px] font-bold text-primary/80">🌙 {syna.arvit_time.slice(0, 5)}</span>}
-                        </div>
-                      )}
-                      {/* Active minyans */}
-                      {synaMinyans.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {synaMinyans.slice(0, 3).map(m => (
-                            <a key={m.id} href={`/minyan/${m.id}`} className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-2 py-1 text-[10px] font-bold text-foreground no-underline transition-all active:scale-95">
-                              {OFFICE_LABELS[m.office_type] || m.office_type} {m.current_count}/{m.target_count}
-                            </a>
-                          ))}
-                        </div>
-                      )}
                       <div className="mt-2 flex gap-2">
-                        {syna.latitude && syna.longitude && (
-                          <a href={`https://www.google.com/maps/dir/?api=1&destination=${syna.latitude},${syna.longitude}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all hover:scale-105 active:scale-95">
-                            🧭 Itinéraire
-                          </a>
-                        )}
-                        {syna.phone && (
-                          <a href={`tel:${syna.phone}`} className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all active:scale-95">
+                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${gr.lat},${gr.lon}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all hover:scale-105 active:scale-95">
+                          🧭 Itinéraire
+                        </a>
+                        {gr.phone && (
+                          <a href={`tel:${gr.phone}`} className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all active:scale-95">
                             📞 Appeler
                           </a>
                         )}
@@ -468,9 +546,23 @@ const FideleSynagogueView = () => {
                     </div>
                   </div>
                 </motion.div>
-              );
-            });
-          })()}
+              ))}
+            </>
+          )}
+
+          {!googleLoading && !googleSearched && nearbyPartners.length === 0 && (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+              <span className="text-4xl">🏛️</span>
+              <p className="mt-3 text-sm text-muted-foreground">Activez votre GPS pour trouver les synagogues autour de vous.</p>
+            </div>
+          )}
+
+          {!googleLoading && googleSearched && nearbyPartners.length === 0 && externalGoogleResults.length === 0 && (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+              <span className="text-4xl">🏛️</span>
+              <p className="mt-3 text-sm text-muted-foreground">Aucune synagogue trouvée dans un rayon de 15 km.</p>
+            </div>
+          )}
         </div>
       )}
 
