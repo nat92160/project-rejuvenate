@@ -111,7 +111,9 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
 
     const enabled = syna?.chat_enabled ?? false;
     const resolvedPresidentId = syna?.president_id ?? null;
+    const resolvedAdjointId = synaFull?.adjoint_id ?? null;
     const isOwner = resolvedPresidentId === user.id;
+    const isAdjoint = resolvedAdjointId === user.id;
 
     setChatEnabled(enabled);
     setPresidentId(resolvedPresidentId);
