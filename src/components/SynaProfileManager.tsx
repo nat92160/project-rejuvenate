@@ -15,6 +15,9 @@ interface SynaProfile {
   speakers: string[];
   president_first_name: string;
   president_last_name: string;
+  shacharit_time: string;
+  minha_time: string;
+  arvit_time: string;
 }
 
 const FONT_OPTIONS = ["Lora", "Playfair Display", "Georgia", "Merriweather", "Noto Serif"];
