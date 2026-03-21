@@ -279,7 +279,7 @@ const FideleSynagogueView = () => {
   const tabs = [
     { id: "annuaire" as const, icon: "📋", label: "Annuaire", count: directory.length },
     { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
-    { id: "synagogues" as const, icon: "🕍", label: "Proches", count: nearbySynagogues.length },
+    { id: "synagogues" as const, icon: "🕍", label: "Proches", count: totalNearbyCount },
     { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
     { id: "tehilim" as const, icon: "📜", label: "Tehilim", count: tehilimChains.length },
     { id: "minyan" as const, icon: "👥", label: "Minyan", count: minyans.length },
