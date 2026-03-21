@@ -5,8 +5,6 @@ import { Slider } from "@/components/ui/slider";
 
 type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat" | "kaddish";
 
-type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat" | "kaddish";
-
 interface Section {
   index: number;
   title: string;
