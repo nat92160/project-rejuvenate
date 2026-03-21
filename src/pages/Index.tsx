@@ -29,6 +29,7 @@ import EvenementsWidget from "@/components/EvenementsWidget";
 import CoursVirtuelWidget from "@/components/CoursVirtuelWidget";
 import FideleSynagogueView from "@/components/FideleSynagogueView";
 import SynaProfileManager from "@/components/SynaProfileManager";
+import PrayerTimesWidget from "@/components/PrayerTimesWidget";
 import SiddourWidget from "@/components/SiddourWidget";
 
 import BottomNav from "@/components/BottomNav";
