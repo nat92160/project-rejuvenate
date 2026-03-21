@@ -292,7 +292,7 @@ const MinyanLiveWidget = () => {
               </>
             ) : (
               <>
-                <button onClick={handleRegister} className="py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>➕ Je suis là</button>
+                <button onClick={handleRegister} className="py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>🙋 Je serai présent</button>
                 <button onClick={shareMinyan} className="py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer text-center" style={{ background: "var(--gradient-gold)" }}>📤 Partager</button>
               </>
             )}
