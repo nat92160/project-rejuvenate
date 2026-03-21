@@ -34,7 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
 
 export const DEFAULT_BOTTOM_TABS_BY_MODE: Record<BottomNavMode, string[]> = {
   fidele: ["dashboard", "chabbat", "zmanim", "synagogue"],
-  president: ["dashboard", "affiche", "masynagogue", "annonces"],
+  president: ["dashboard", "affiche", "infosyna", "annonces"],
 };
 
 export function getBottomNavStorageKey(mode: BottomNavMode) {

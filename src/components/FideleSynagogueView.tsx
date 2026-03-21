@@ -201,37 +201,41 @@ const FideleSynagogueView = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      {/* Header – Ma Communauté */}
       <div
-        className="mb-4 rounded-2xl border border-primary/15 p-5 text-center"
+        className="mb-5 rounded-2xl border border-primary/15 p-6 text-center space-y-4"
         style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))" }}
       >
-        <span className="text-3xl">🏛️</span>
-        <h3 className="mt-2 font-display text-lg font-bold text-foreground">Ma Communauté</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <span className="block text-4xl">🏛️</span>
+        <h3 className="font-display text-lg font-bold text-foreground">Ma Communauté</h3>
+        <p className="text-xs text-muted-foreground">
           {subscribedCount > 0
             ? `Abonné à ${subscribedCount} synagogue${subscribedCount > 1 ? "s" : ""} — ${city.name}`
             : `${city.name} — Abonnez-vous à une synagogue pour recevoir ses actualités`}
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-4 flex gap-1 overflow-x-auto rounded-2xl border border-border bg-muted/60 p-1.5">
-        {tabs.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setTab(item.id)}
-            className="flex min-w-0 flex-1 items-center justify-center gap-0.5 whitespace-nowrap rounded-xl border-none py-2 text-[10px] font-bold transition-all cursor-pointer active:scale-95"
-            style={{
-              background: tab === item.id ? "var(--gradient-gold)" : "transparent",
-              color: tab === item.id ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-              boxShadow: tab === item.id ? "var(--shadow-gold)" : "none",
-            }}
-          >
-            <span>{item.icon}</span>
-            <span>{item.label}</span>
-            {item.count > 0 && <span className="ml-0.5 text-[9px] opacity-70">({item.count})</span>}
-          </button>
-        ))}
+      {/* Tabs – h-scroll, aerated */}
+      <div className="mb-5 overflow-x-auto rounded-2xl border border-border bg-muted/60 p-2 shadow-sm" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+        <div className="flex gap-3" style={{ minWidth: "max-content" }}>
+          {tabs.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setTab(item.id)}
+              className="flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border-none px-4 py-2.5 text-xs font-medium transition-all cursor-pointer active:scale-95"
+              style={{
+                minHeight: "44px",
+                background: tab === item.id ? "var(--gradient-gold)" : "transparent",
+                color: tab === item.id ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                boxShadow: tab === item.id ? "var(--shadow-gold)" : "none",
+              }}
+            >
+              <span className="text-sm">{item.icon}</span>
+              <span>{item.label}</span>
+              {item.count > 0 && <span className="text-[10px] opacity-70">({item.count})</span>}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Annuaire tab */}

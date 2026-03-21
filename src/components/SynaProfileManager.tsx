@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Building2, MapPin, Phone, Mail, Save } from "lucide-react";
 
 interface SynaProfile {
   id?: string;
@@ -15,9 +16,9 @@ interface SynaProfile {
   speakers: string[];
   president_first_name: string;
   president_last_name: string;
-  shacharit_time: string;
-  minha_time: string;
-  arvit_time: string;
+  address: string;
+  phone: string;
+  email: string;
 }
 
 const FONT_OPTIONS = ["Lora", "Playfair Display", "Georgia", "Merriweather", "Noto Serif"];
@@ -32,9 +33,9 @@ const DEFAULT_PROFILE: SynaProfile = {
   speakers: [],
   president_first_name: "",
   president_last_name: "",
-  shacharit_time: "",
-  minha_time: "",
-  arvit_time: "",
+  address: "",
+  phone: "",
+  email: "",
 };
 
 const SynaProfileManager = () => {
@@ -66,9 +67,9 @@ const SynaProfileManager = () => {
           speakers: Array.isArray(data.speakers) ? (data.speakers as string[]) : [],
           president_first_name: (data as any).president_first_name || "",
           president_last_name: (data as any).president_last_name || "",
-          shacharit_time: (data as any).shacharit_time || "",
-          minha_time: (data as any).minha_time || "",
-          arvit_time: (data as any).arvit_time || "",
+          address: (data as any).address || "",
+          phone: (data as any).phone || "",
+          email: (data as any).email || "",
         });
       }
       setLoading(false);
@@ -101,7 +102,24 @@ const SynaProfileManager = () => {
     if (!user) return;
     setSaving(true);
 
-    const payload = {
+    // Geocode address
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    if (profile.address.trim()) {
+      try {
+        const { data: funcData } = await supabase.functions.invoke("geocode-address", {
+          body: { address: profile.address },
+        });
+        if (funcData?.lat && funcData?.lng) {
+          latitude = funcData.lat;
+          longitude = funcData.lng;
+        }
+      } catch {
+        // Geocoding is optional
+      }
+    }
+
+    const payload: Record<string, any> = {
       president_id: user.id,
       name: profile.name,
       logo_url: profile.logo_url,
@@ -112,10 +130,14 @@ const SynaProfileManager = () => {
       speakers: profile.speakers,
       president_first_name: profile.president_first_name,
       president_last_name: profile.president_last_name,
-      shacharit_time: profile.shacharit_time || null,
-      minha_time: profile.minha_time || null,
-      arvit_time: profile.arvit_time || null,
+      address: profile.address || null,
+      phone: profile.phone || null,
+      email: profile.email || null,
     };
+    if (latitude !== null) {
+      payload.latitude = latitude;
+      payload.longitude = longitude;
+    }
 
     let error;
     if (profile.id) {
@@ -131,7 +153,7 @@ const SynaProfileManager = () => {
       toast.error("Erreur lors de la sauvegarde");
       console.error(error);
     } else {
-      toast.success("Profil de la synagogue enregistré !");
+      toast.success("Profil de la synagogue enregistré ✅");
     }
   };
 
@@ -154,117 +176,160 @@ const SynaProfileManager = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
-      <div className="rounded-2xl border border-primary/15 p-5" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))" }}>
-        <span className="text-3xl">🏛️</span>
-        <h3 className="mt-2 font-display text-lg font-bold text-foreground">Mon Espace Syna</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Définissez l'identité visuelle de votre synagogue</p>
+      {/* Header */}
+      <div className="rounded-2xl border border-primary/15 p-5 text-center" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))" }}>
+        <Building2 className="mx-auto h-8 w-8 text-primary/70" />
+        <h3 className="mt-2 font-display text-lg font-bold text-foreground">Infos Synagogue</h3>
+        <p className="mt-1 text-xs text-muted-foreground">Identité visuelle et coordonnées de votre synagogue</p>
       </div>
 
-      {/* Président */}
-      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
-        <label className="mb-2 block text-xs font-bold text-foreground">Président de la synagogue</label>
-        <div className="flex gap-2">
-          <input className={`${inputCls} flex-1`} value={profile.president_first_name} onChange={(e) => setProfile((p) => ({ ...p, president_first_name: e.target.value }))} placeholder="Prénom" />
-          <input className={`${inputCls} flex-1`} value={profile.president_last_name} onChange={(e) => setProfile((p) => ({ ...p, president_last_name: e.target.value }))} placeholder="Nom" />
-        </div>
-      </div>
+      {/* ───── COORDONNÉES ───── */}
+      <div className="rounded-2xl border border-primary/10 bg-primary/[0.02] p-4">
+        <h4 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary/70">
+          <MapPin className="h-4 w-4" /> Coordonnées
+        </h4>
+        <div className="space-y-3">
+          {/* Name */}
+          <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+            <label className="mb-2 flex items-center gap-2 text-xs font-bold text-foreground">
+              <Building2 className="h-4 w-4 text-primary/60" /> Nom de la Synagogue
+            </label>
+            <input className={inputCls} value={profile.name} onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))} placeholder="Beth Abraham" />
+          </div>
 
-      {/* Nom */}
-      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
-        <label className="mb-2 block text-xs font-bold text-foreground">Nom de la synagogue</label>
-        <input className={inputCls} value={profile.name} onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))} placeholder="Beth Abraham" />
-      </div>
+          {/* Address */}
+          <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+            <label className="mb-2 flex items-center gap-2 text-xs font-bold text-foreground">
+              <MapPin className="h-4 w-4 text-primary/60" /> Adresse complète
+            </label>
+            <input className={inputCls} value={profile.address} onChange={(e) => setProfile((p) => ({ ...p, address: e.target.value }))} placeholder="12 Rue de la Paix, 75002 Paris" />
+            <p className="mt-1 text-[10px] text-muted-foreground">📍 Les coordonnées GPS seront calculées automatiquement</p>
+          </div>
 
-      {/* Logo */}
-      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
-        <label className="mb-2 block text-xs font-bold text-foreground">Logo de la synagogue</label>
-        <div className="flex items-center gap-4">
-          {profile.logo_url ? (
-            <img src={profile.logo_url} alt="Logo" className="h-16 w-16 rounded-xl border border-border object-contain bg-white" />
-          ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed border-border bg-muted text-2xl">🏛️</div>
-          )}
-          <div>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-            <button onClick={() => fileRef.current?.click()} disabled={uploading} className="rounded-xl border-none px-4 py-2 text-xs font-bold text-primary-foreground cursor-pointer disabled:opacity-50" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
-              {uploading ? "Upload…" : "Choisir un logo"}
-            </button>
-            <p className="mt-1 text-[10px] text-muted-foreground">PNG transparent recommandé</p>
+          {/* Phone */}
+          <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+            <label className="mb-2 flex items-center gap-2 text-xs font-bold text-foreground">
+              <Phone className="h-4 w-4 text-primary/60" /> Téléphone
+            </label>
+            <input className={inputCls} type="tel" inputMode="tel" value={profile.phone} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} placeholder="01 23 45 67 89" />
+          </div>
+
+          {/* Email */}
+          <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+            <label className="mb-2 flex items-center gap-2 text-xs font-bold text-foreground">
+              <Mail className="h-4 w-4 text-primary/60" /> Email de contact
+            </label>
+            <input className={inputCls} type="email" inputMode="email" value={profile.email} onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))} placeholder="contact@synagogue.fr" />
           </div>
         </div>
       </div>
 
-      {/* Couleurs */}
-      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
-        <label className="mb-3 block text-xs font-bold text-foreground">Couleurs maîtresses</label>
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <p className="mb-1 text-[10px] text-muted-foreground">Couleur principale</p>
-            <div className="flex items-center gap-2">
-              <input type="color" value={profile.primary_color} onChange={(e) => setProfile((p) => ({ ...p, primary_color: e.target.value }))} className="h-10 w-10 cursor-pointer rounded-lg border border-border" />
-              <span className="text-xs text-muted-foreground">{profile.primary_color}</span>
+      {/* ───── IDENTITÉ VISUELLE ───── */}
+      <div className="rounded-2xl border border-primary/10 bg-primary/[0.02] p-4">
+        <h4 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary/70">
+          🎨 Identité visuelle
+        </h4>
+        <div className="space-y-3">
+          {/* Président */}
+          <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+            <label className="mb-2 block text-xs font-bold text-foreground">Président de la synagogue</label>
+            <div className="flex gap-2">
+              <input className={`${inputCls} flex-1`} value={profile.president_first_name} onChange={(e) => setProfile((p) => ({ ...p, president_first_name: e.target.value }))} placeholder="Prénom" />
+              <input className={`${inputCls} flex-1`} value={profile.president_last_name} onChange={(e) => setProfile((p) => ({ ...p, president_last_name: e.target.value }))} placeholder="Nom" />
             </div>
           </div>
-          <div className="flex-1">
-            <p className="mb-1 text-[10px] text-muted-foreground">Couleur secondaire</p>
-            <div className="flex items-center gap-2">
-              <input type="color" value={profile.secondary_color} onChange={(e) => setProfile((p) => ({ ...p, secondary_color: e.target.value }))} className="h-10 w-10 cursor-pointer rounded-lg border border-border" />
-              <span className="text-xs text-muted-foreground">{profile.secondary_color}</span>
+
+          {/* Logo */}
+          <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+            <label className="mb-2 block text-xs font-bold text-foreground">Logo de la synagogue</label>
+            <div className="flex items-center gap-4">
+              {profile.logo_url ? (
+                <img src={profile.logo_url} alt="Logo" className="h-16 w-16 rounded-xl border border-border object-contain bg-white" />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed border-border bg-muted text-2xl">🏛️</div>
+              )}
+              <div>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                <button onClick={() => fileRef.current?.click()} disabled={uploading} className="rounded-xl border-none px-4 py-2 text-xs font-bold text-primary-foreground cursor-pointer disabled:opacity-50" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+                  {uploading ? "Upload…" : "Choisir un logo"}
+                </button>
+                <p className="mt-1 text-[10px] text-muted-foreground">PNG transparent recommandé</p>
+              </div>
             </div>
           </div>
-        </div>
-        {/* Preview */}
-        <div className="mt-3 flex h-12 items-center justify-center gap-2 rounded-xl" style={{ background: `linear-gradient(135deg, ${profile.primary_color}, ${profile.primary_color}cc)` }}>
-          <span className="text-sm font-bold" style={{ color: profile.secondary_color, fontFamily: profile.font_family }}>{profile.name || "Aperçu"}</span>
-        </div>
-      </div>
 
-      {/* Police */}
-      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
-        <label className="mb-2 block text-xs font-bold text-foreground">Typographie</label>
-        <div className="flex flex-wrap gap-2">
-          {FONT_OPTIONS.map((font) => (
-            <button key={font} onClick={() => setProfile((p) => ({ ...p, font_family: font }))} className="rounded-xl border px-3 py-2 text-xs font-bold cursor-pointer transition-all" style={{
-              fontFamily: font,
-              borderColor: profile.font_family === font ? "hsl(var(--gold-matte))" : "hsl(var(--border))",
-              background: profile.font_family === font ? "hsl(var(--gold) / 0.1)" : "transparent",
-              color: profile.font_family === font ? "hsl(var(--gold-matte))" : "hsl(var(--foreground))",
-            }}>
-              {font}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Signature */}
-      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
-        <label className="mb-2 block text-xs font-bold text-foreground">Signature automatique</label>
-        <textarea className={`${inputCls} min-h-[60px] resize-y`} value={profile.signature} onChange={(e) => setProfile((p) => ({ ...p, signature: e.target.value }))} placeholder="Le comité Beth Abraham vous souhaite Chabbat Chalom" />
-      </div>
-
-      {/* Intervenants */}
-      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
-        <label className="mb-2 block text-xs font-bold text-foreground">Intervenants / Rabbanim</label>
-        <div className="flex gap-2">
-          <input className={`${inputCls} flex-1`} value={newSpeaker} onChange={(e) => setNewSpeaker(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addSpeaker()} placeholder="Nom du Rav ou conférencier" />
-          <button onClick={addSpeaker} className="shrink-0 rounded-xl border-none px-4 py-2 text-xs font-bold text-primary-foreground cursor-pointer" style={{ background: "var(--gradient-gold)" }}>+</button>
-        </div>
-        {profile.speakers.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {profile.speakers.map((s) => (
-              <span key={s} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">
-                {s}
-                <button onClick={() => removeSpeaker(s)} className="ml-0.5 text-destructive/70 hover:text-destructive bg-transparent border-none cursor-pointer text-xs">✕</button>
-              </span>
-            ))}
+          {/* Couleurs */}
+          <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+            <label className="mb-3 block text-xs font-bold text-foreground">Couleurs maîtresses</label>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <p className="mb-1 text-[10px] text-muted-foreground">Couleur principale</p>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={profile.primary_color} onChange={(e) => setProfile((p) => ({ ...p, primary_color: e.target.value }))} className="h-10 w-10 cursor-pointer rounded-lg border border-border" />
+                  <span className="text-xs text-muted-foreground">{profile.primary_color}</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="mb-1 text-[10px] text-muted-foreground">Couleur secondaire</p>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={profile.secondary_color} onChange={(e) => setProfile((p) => ({ ...p, secondary_color: e.target.value }))} className="h-10 w-10 cursor-pointer rounded-lg border border-border" />
+                  <span className="text-xs text-muted-foreground">{profile.secondary_color}</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 flex h-12 items-center justify-center gap-2 rounded-xl" style={{ background: `linear-gradient(135deg, ${profile.primary_color}, ${profile.primary_color}cc)` }}>
+              <span className="text-sm font-bold" style={{ color: profile.secondary_color, fontFamily: profile.font_family }}>{profile.name || "Aperçu"}</span>
+            </div>
           </div>
-        )}
-      </div>
 
+          {/* Police */}
+          <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+            <label className="mb-2 block text-xs font-bold text-foreground">Typographie</label>
+            <div className="flex flex-wrap gap-2">
+              {FONT_OPTIONS.map((font) => (
+                <button key={font} onClick={() => setProfile((p) => ({ ...p, font_family: font }))} className="rounded-xl border px-3 py-2 text-xs font-bold cursor-pointer transition-all" style={{
+                  fontFamily: font,
+                  borderColor: profile.font_family === font ? "hsl(var(--gold-matte))" : "hsl(var(--border))",
+                  background: profile.font_family === font ? "hsl(var(--gold) / 0.1)" : "transparent",
+                  color: profile.font_family === font ? "hsl(var(--gold-matte))" : "hsl(var(--foreground))",
+                }}>
+                  {font}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Signature */}
+          <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+            <label className="mb-2 block text-xs font-bold text-foreground">Signature automatique</label>
+            <textarea className={`${inputCls} min-h-[60px] resize-y`} value={profile.signature} onChange={(e) => setProfile((p) => ({ ...p, signature: e.target.value }))} placeholder="Le comité Beth Abraham vous souhaite Chabbat Chalom" />
+          </div>
+
+          {/* Intervenants */}
+          <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+            <label className="mb-2 block text-xs font-bold text-foreground">Intervenants / Rabbanim</label>
+            <div className="flex gap-2">
+              <input className={`${inputCls} flex-1`} value={newSpeaker} onChange={(e) => setNewSpeaker(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addSpeaker()} placeholder="Nom du Rav ou conférencier" />
+              <button onClick={addSpeaker} className="shrink-0 rounded-xl border-none px-4 py-2 text-xs font-bold text-primary-foreground cursor-pointer" style={{ background: "var(--gradient-gold)" }}>+</button>
+            </div>
+            {profile.speakers.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {profile.speakers.map((s) => (
+                  <span key={s} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">
+                    {s}
+                    <button onClick={() => removeSpeaker(s)} className="ml-0.5 text-destructive/70 hover:text-destructive bg-transparent border-none cursor-pointer text-xs">✕</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Save */}
-      <button onClick={handleSave} disabled={saving || !profile.name.trim()} className="w-full rounded-2xl border-none py-4 text-sm font-bold text-primary-foreground cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
-        {saving ? "Enregistrement…" : "💾 Enregistrer le profil"}
+      <button onClick={handleSave} disabled={saving || !profile.name.trim()} className="flex w-full items-center justify-center gap-2 rounded-2xl border-none py-4 text-sm font-bold text-primary-foreground cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+        <Save className="h-4 w-4" />
+        {saving ? "Enregistrement…" : "Enregistrer le profil"}
       </button>
     </motion.div>
   );
