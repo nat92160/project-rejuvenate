@@ -15,6 +15,7 @@ import ChatManagement from "./ChatManagement";
 
 const features = [
   { id: "syna-profile", icon: "🏛️", title: "Mon Espace Syna" },
+  { id: "adjoint", icon: "🏅", title: "Adjoint" },
   { id: "chat", icon: "💬", title: "Chat Fidèles" },
   { id: "affiche", icon: "📋", title: "Affiche Chabbat" },
   { id: "annonces", icon: "📢", title: "Annonces" },
