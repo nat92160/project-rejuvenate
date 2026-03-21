@@ -388,53 +388,89 @@ const FideleSynagogueView = () => {
             </div>
           </div>
 
-          {synLoading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">🔍 Recherche des synagogues proches…</div>
-          ) : synError ? (
-            <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
-              <span className="text-4xl">😕</span>
-              <p className="mt-3 text-sm text-muted-foreground">{synError}</p>
-            </div>
-          ) : synagogues.length === 0 ? (
-            <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
-              <span className="text-4xl">🏛️</span>
-              <p className="mt-3 text-sm text-muted-foreground">Aucune synagogue trouvée.</p>
-            </div>
-          ) : (
-            synagogues.map((synagogue, index) => {
-              const routeLabel = synagogue.distanceSource === "road"
-                ? `${formatDistance(synagogue.distance)} par route`
-                : `${formatDistance(synagogue.distance)} à vol d'oiseau`;
-              const travelLabel = formatTravelTime(synagogue.travelDurationMinutes);
+          {/* Verified synagogues from our DB with distance */}
+          {(() => {
+            const verifiedSynas = directory.filter(s => s.verified && s.latitude && s.longitude);
+            const withDistance = verifiedSynas.map(s => {
+              if (!city.lat || !city.lng || !s.latitude || !s.longitude) return { ...s, dist: Infinity };
+              const R = 6371000;
+              const dLat = ((s.latitude - city.lat) * Math.PI) / 180;
+              const dLon = ((s.longitude - city.lng) * Math.PI) / 180;
+              const a = Math.sin(dLat / 2) ** 2 + Math.cos((city.lat * Math.PI) / 180) * Math.cos((s.latitude * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+              return { ...s, dist: R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) };
+            }).sort((a, b) => a.dist - b.dist);
+
+            if (withDistance.length === 0) return (
+              <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+                <span className="text-4xl">🏛️</span>
+                <p className="mt-3 text-sm text-muted-foreground">Aucune synagogue vérifiée à proximité.</p>
+              </div>
+            );
+
+            return withDistance.map((syna, index) => {
+              const distLabel = syna.dist < 1000 ? `${Math.round(syna.dist)} m` : `${(syna.dist / 1000).toFixed(1)} km`;
+              // Find upcoming minyans for this synagogue
+              const synaMinyans = minyans.filter(m => (m as any).synagogue_id === syna.id);
               return (
                 <motion.div
-                  key={synagogue.id}
-                  className="rounded-2xl border border-border bg-card p-4"
-                  style={{ boxShadow: "var(--shadow-card)" }}
+                  key={syna.id}
+                  className="rounded-2xl border bg-card p-4"
+                  style={{ boxShadow: "var(--shadow-card)", borderColor: "hsl(142 76% 36% / 0.2)" }}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.15), hsl(var(--gold) / 0.05))" }}>🕍</div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-display text-sm font-bold leading-tight text-foreground">{synagogue.name}</h4>
-                      {synagogue.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {synagogue.address}</p>}
-                      <div className="mt-1.5 flex flex-wrap items-center gap-3">
-                        <span className="text-[11px] font-bold text-primary/80">📏 {routeLabel}</span>
-                        {travelLabel && <span className="text-[11px] text-muted-foreground">🚗 {travelLabel}</span>}
+                    {syna.logo_url ? (
+                      <img src={syna.logo_url} alt="" className="h-12 w-12 rounded-xl border border-border object-contain bg-white" />
+                    ) : (
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold text-white" style={{ background: syna.primary_color }}>
+                        {syna.name.charAt(0)}
                       </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-display text-sm font-bold leading-tight text-foreground">{syna.name}</h4>
+                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">✅ Vérifiée</span>
+                      </div>
+                      {syna.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {syna.address}</p>}
+                      <span className="text-[11px] font-bold text-primary/80">📏 {distLabel}</span>
+                      {/* Upcoming prayer times */}
+                      {(syna.shacharit_time || syna.minha_time || syna.arvit_time) && (
+                        <div className="mt-1.5 flex flex-wrap gap-2">
+                          {syna.shacharit_time && <span className="text-[10px] font-bold text-primary/80">🌅 {syna.shacharit_time.slice(0, 5)}</span>}
+                          {syna.minha_time && <span className="text-[10px] font-bold text-primary/80">🌇 {syna.minha_time.slice(0, 5)}</span>}
+                          {syna.arvit_time && <span className="text-[10px] font-bold text-primary/80">🌙 {syna.arvit_time.slice(0, 5)}</span>}
+                        </div>
+                      )}
+                      {/* Active minyans */}
+                      {synaMinyans.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {synaMinyans.slice(0, 3).map(m => (
+                            <a key={m.id} href={`/minyan/${m.id}`} className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-2 py-1 text-[10px] font-bold text-foreground no-underline transition-all active:scale-95">
+                              {OFFICE_LABELS[m.office_type] || m.office_type} {m.current_count}/{m.target_count}
+                            </a>
+                          ))}
+                        </div>
+                      )}
                       <div className="mt-2 flex gap-2">
-                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${synagogue.lat},${synagogue.lon}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all hover:scale-105 active:scale-95">
-                          🧭 Itinéraire
-                        </a>
+                        {syna.latitude && syna.longitude && (
+                          <a href={`https://www.google.com/maps/dir/?api=1&destination=${syna.latitude},${syna.longitude}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all hover:scale-105 active:scale-95">
+                            🧭 Itinéraire
+                          </a>
+                        )}
+                        {syna.phone && (
+                          <a href={`tel:${syna.phone}`} className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all active:scale-95">
+                            📞 Appeler
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>
                 </motion.div>
               );
-            })
-          )}
+            });
+          })()}
         </div>
       )}
 
