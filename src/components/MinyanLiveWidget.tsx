@@ -30,8 +30,24 @@ const downloadICS = (session: MinyanSession) => {
 
 const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
   const { user } = useAuth();
+  const { city } = useCity();
   const [form, setForm] = useState({ office_type: "shacharit", office_date: "", office_time: "", target_count: "10" });
   const [submitting, setSubmitting] = useState(false);
+  const [suggestedMinha, setSuggestedMinha] = useState<string | null>(null);
+
+  // Auto-calculate Minha time
+  useEffect(() => {
+    if (form.office_type === "minha" && form.office_date) {
+      fetchMinhaTime(city, new Date(form.office_date)).then(t => setSuggestedMinha(t));
+    }
+  }, [form.office_type, form.office_date, city]);
+
+  // Auto-fill time when minha is selected and we have a suggestion
+  useEffect(() => {
+    if (form.office_type === "minha" && suggestedMinha && !form.office_time) {
+      setForm(f => ({ ...f, office_time: suggestedMinha }));
+    }
+  }, [suggestedMinha, form.office_type]);
 
   const handleCreate = async () => {
     if (!form.office_date || !form.office_time) { toast.error("Remplissez date et heure"); return; }

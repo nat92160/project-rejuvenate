@@ -187,6 +187,34 @@ export async function fetchZmanim(city: CityConfig, date?: Date): Promise<ZmanIt
   }
 }
 
+/** Calculate suggested Minha time: Minha Ketana or 15 min before sunset, whichever is earlier */
+export async function fetchMinhaTime(city: CityConfig, date?: Date): Promise<string | null> {
+  try {
+    const d = date || new Date();
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const geoP = hebcalGeoParam(city);
+    const data = await fetchJson<any>(`https://www.hebcal.com/zmanim?cfg=json&${geoP}&date=${dateStr}`);
+    const times = data.times || {};
+
+    const minchaKetana = times.minchaKetana ? new Date(times.minchaKetana) : null;
+    const sunset = times.sunset ? new Date(times.sunset) : null;
+
+    if (!sunset) return null;
+
+    const fifteenBeforeSunset = new Date(sunset.getTime() - 15 * 60 * 1000);
+
+    // Use the earlier of the two
+    let minhaTime = fifteenBeforeSunset;
+    if (minchaKetana && minchaKetana < fifteenBeforeSunset) {
+      minhaTime = minchaKetana;
+    }
+
+    return minhaTime.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchHolidays(city: CityConfig): Promise<HolidayItem[]> {
   try {
     const now = new Date();
