@@ -390,20 +390,21 @@ const FideleSynagogueView = () => {
 
           {/* Verified synagogues from our DB with distance */}
           {(() => {
-            const verifiedSynas = directory.filter(s => s.verified && s.latitude && s.longitude);
-            const withDistance = verifiedSynas.map(s => {
+            const allSynas = directory.filter(s => s.latitude && s.longitude);
+            const withDistance = allSynas.map(s => {
               if (!city.lat || !city.lng || !s.latitude || !s.longitude) return { ...s, dist: Infinity };
               const R = 6371000;
               const dLat = ((s.latitude - city.lat) * Math.PI) / 180;
               const dLon = ((s.longitude - city.lng) * Math.PI) / 180;
               const a = Math.sin(dLat / 2) ** 2 + Math.cos((city.lat * Math.PI) / 180) * Math.cos((s.latitude * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
               return { ...s, dist: R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) };
-            }).sort((a, b) => a.dist - b.dist);
+            }).filter(s => s.dist <= 15000).sort((a, b) => a.dist - b.dist);
 
             if (withDistance.length === 0) return (
               <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
                 <span className="text-4xl">🏛️</span>
-                <p className="mt-3 text-sm text-muted-foreground">Aucune synagogue vérifiée à proximité.</p>
+                <p className="mt-3 text-sm text-muted-foreground">Aucune synagogue trouvée dans un rayon de 15 km.</p>
+                <p className="mt-1 text-xs text-muted-foreground/60">Activez votre GPS pour des résultats précis.</p>
               </div>
             );
 
@@ -431,7 +432,11 @@ const FideleSynagogueView = () => {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <h4 className="font-display text-sm font-bold leading-tight text-foreground">{syna.name}</h4>
-                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">✅ Vérifiée</span>
+                        {syna.verified ? (
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">✅ Vérifiée</span>
+                        ) : (
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-500">⏳</span>
+                        )}
                       </div>
                       {syna.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {syna.address}</p>}
                       <span className="text-[11px] font-bold text-primary/80">📏 {distLabel}</span>

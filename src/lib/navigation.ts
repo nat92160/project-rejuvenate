@@ -11,10 +11,10 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", icon: "🏠", label: "Accueil", modes: ["fidele", "president"] },
   { id: "chabbat", icon: "🕯️", label: "Chabbat", modes: ["fidele", "president"] },
   { id: "zmanim", icon: "⏰", label: "Zmanim", modes: ["fidele", "president"] },
-  { id: "synagogue", icon: "🏛️", label: "Synagogues", modes: ["fidele"] },
+  { id: "synagogue", icon: "🏛️", label: "Synagogues", modes: ["fidele", "president"] },
   { id: "siddour", icon: "📖", label: "Siddour", modes: ["fidele", "president"] },
   { id: "tehilimlibre", icon: "📜", label: "Tehilim", modes: ["fidele", "president"] },
-  { id: "tehilim", icon: "🤝", label: "Chaînes", modes: ["fidele", "president"] },
+  
   { id: "fetes", icon: "📅", label: "Fêtes", modes: ["fidele", "president"] },
   { id: "roshhodesh", icon: "🌙", label: "Roch Hodech", modes: ["fidele", "president"] },
   { id: "shabbatspec", icon: "✨", label: "Chabbatot", modes: ["fidele", "president"] },
