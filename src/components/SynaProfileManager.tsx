@@ -112,6 +112,9 @@ const SynaProfileManager = () => {
       speakers: profile.speakers,
       president_first_name: profile.president_first_name,
       president_last_name: profile.president_last_name,
+      shacharit_time: profile.shacharit_time || null,
+      minha_time: profile.minha_time || null,
+      arvit_time: profile.arvit_time || null,
     };
 
     let error;
