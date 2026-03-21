@@ -323,7 +323,14 @@ const FideleSynagogueView = () => {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
+                      {syna.verified ? (
+                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">✅</span>
+                      ) : (
+                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500">⏳</span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-muted-foreground">
                       👥 {syna.subscriber_count} abonné{syna.subscriber_count !== 1 ? "s" : ""}
                     </p>
