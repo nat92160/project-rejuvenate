@@ -141,9 +141,9 @@ const SynaProfileManager = () => {
 
     let error;
     if (profile.id) {
-      ({ error } = await supabase.from("synagogue_profiles").update(payload).eq("id", profile.id));
+      ({ error } = await supabase.from("synagogue_profiles").update(payload as any).eq("id", profile.id));
     } else {
-      const { data, error: insertError } = await supabase.from("synagogue_profiles").insert(payload).select().single();
+      const { data, error: insertError } = await supabase.from("synagogue_profiles").insert(payload as any).select().single();
       error = insertError;
       if (data) setProfile((p) => ({ ...p, id: data.id }));
     }
