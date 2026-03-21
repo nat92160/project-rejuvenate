@@ -13,7 +13,7 @@ import ZmanimWidget from "@/components/ZmanimWidget";
 import HolidaysWidget from "@/components/HolidaysWidget";
 import ParashaSearchWidget from "@/components/ParashaSearchWidget";
 import FestivalCalendar from "@/components/FestivalCalendar";
-import TehilimWidget from "@/components/TehilimWidget";
+import TehilimCombinedWidget from "@/components/TehilimCombinedWidget";
 import DateConverterWidget from "@/components/DateConverterWidget";
 import MizrahCompass from "@/components/MizrahCompass";
 import RoshHodeshWidget from "@/components/RoshHodeshWidget";
@@ -30,7 +30,7 @@ import CoursVirtuelWidget from "@/components/CoursVirtuelWidget";
 import FideleSynagogueView from "@/components/FideleSynagogueView";
 import SynaProfileManager from "@/components/SynaProfileManager";
 import SiddourWidget from "@/components/SiddourWidget";
-import TehilimLibreWidget from "@/components/TehilimLibreWidget";
+
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
@@ -83,8 +83,8 @@ const IndexContent = () => {
           </div>
         );
       case "siddour": return <SiddourWidget />;
-      case "tehilimlibre": return <TehilimLibreWidget />;
-      case "tehilim": return <TehilimWidget />;
+      case "tehilimlibre":
+      case "tehilim": return <TehilimCombinedWidget />;
       case "synagogue": return isPresident ? <PresidentDashboard onLoginClick={() => setAuthOpen(true)} /> : <FideleSynagogueView />;
       case "fetes": return <FestivalCalendar />;
       case "convertisseur": return <DateConverterWidget />;
