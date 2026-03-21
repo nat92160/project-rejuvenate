@@ -82,6 +82,8 @@ const IndexContent = () => {
             <p className="text-sm mt-2 text-muted-foreground">Bientôt disponible</p>
           </div>
         );
+      case "siddour": return <SiddourWidget />;
+      case "tehilimlibre": return <TehilimLibreWidget />;
       case "tehilim": return <TehilimWidget />;
       case "synagogue": return isPresident ? <PresidentDashboard onLoginClick={() => setAuthOpen(true)} /> : <FideleSynagogueView />;
       case "fetes": return <FestivalCalendar />;
