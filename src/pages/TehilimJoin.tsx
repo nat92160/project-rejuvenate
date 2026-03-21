@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
+import HazakCelebration from "@/components/HazakCelebration";
 
 const TOTAL_PSALMS = 150;
 
@@ -36,6 +37,8 @@ const TehilimJoinContent = () => {
   const [guestPromptOpen, setGuestPromptOpen] = useState(false);
   const [pendingPsalm, setPendingPsalm] = useState<number | null>(null);
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
+  const [showHazak, setShowHazak] = useState(false);
+  const [prevCompletedCount, setPrevCompletedCount] = useState<number | null>(null);
 
   const fetchClaims = useCallback(async () => {
     if (!id) return;
@@ -73,6 +76,15 @@ const TehilimJoinContent = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [id, fetchClaims]);
+
+  // Detect completion for Hazak
+  const totalCompleted = claims.filter((c) => c.completed).length;
+  useEffect(() => {
+    if (prevCompletedCount !== null && prevCompletedCount < TOTAL_PSALMS && totalCompleted >= TOTAL_PSALMS) {
+      setShowHazak(true);
+    }
+    setPrevCompletedCount(totalCompleted);
+  }, [totalCompleted, prevCompletedCount]);
 
   const isOwnClaim = (claim: Claim) => {
     if (user && claim.user_id === user.id) return true;
@@ -148,10 +160,11 @@ const TehilimJoinContent = () => {
   };
 
   const totalClaimed = claims.length;
-  const totalCompleted = claims.filter((c) => c.completed).length;
   const progress = Math.round((totalClaimed / TOTAL_PSALMS) * 100);
+  const completedPct = Math.round((totalCompleted / TOTAL_PSALMS) * 100);
 
   const myClaims = claims.filter(c => isOwnClaim(c));
+  const participants = [...new Set(claims.map(c => c.display_name))];
 
   const shareChain = async () => {
     if (!chain) return;
@@ -203,16 +216,50 @@ const TehilimJoinContent = () => {
                 {DEDICATION_LABELS[chain.dedication_type || "general"]} {chain.dedication}
               </p>
             )}
-            <div className="mt-4">
-              <div className="flex justify-between text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-                <span>{totalClaimed}/{TOTAL_PSALMS} réservés</span>
-                <span>{totalCompleted}/{TOTAL_PSALMS} terminés</span>
+
+            {/* Participants */}
+            {participants.length > 0 && (
+              <p className="text-[10px] text-muted-foreground mt-2">
+                👥 {participants.length} participant{participants.length > 1 ? "s" : ""} : {participants.slice(0, 5).join(", ")}{participants.length > 5 ? ` +${participants.length - 5}` : ""}
+              </p>
+            )}
+
+            <div className="mt-4 space-y-2">
+              <div>
+                <div className="flex justify-between text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                  <span>📖 {totalClaimed}/{TOTAL_PSALMS} réservés</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                  <motion.div className="h-full rounded-full" style={{ background: progress === 100 ? "#22c55e" : "var(--gradient-gold)" }}
+                    initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.8 }} />
+                </div>
               </div>
-              <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                <motion.div className="h-full rounded-full" style={{ background: progress === 100 ? "#22c55e" : "var(--gradient-gold)" }}
-                  initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.8 }} />
+              <div>
+                <div className="flex justify-between text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                  <span>✅ {totalCompleted}/{TOTAL_PSALMS} terminés</span>
+                  <span>{completedPct}%</span>
+                </div>
+                <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                  <motion.div className="h-full rounded-full" style={{ background: "#22c55e" }}
+                    initial={{ width: 0 }} animate={{ width: `${completedPct}%` }} transition={{ duration: 0.8 }} />
+                </div>
               </div>
             </div>
+
+            {/* Completion badge */}
+            {completedPct === 100 && (
+              <motion.div
+                className="mt-3 p-3 rounded-xl text-center border border-green-500/30"
+                style={{ background: "hsl(142 76% 36% / 0.08)" }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+              >
+                <span className="text-2xl">🏆</span>
+                <p className="text-xs font-bold text-green-600 mt-1">Chaîne complétée — Hazak Hazak !</p>
+              </motion.div>
+            )}
+
             <div className="flex gap-2 mt-3">
               <button onClick={shareChain} className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border-none text-primary-foreground" style={{ background: "var(--gradient-gold)" }}>
                 📤 Partager
@@ -252,16 +299,17 @@ const TehilimJoinContent = () => {
           {Array.from({ length: TOTAL_PSALMS }, (_, i) => i + 1).map((num) => {
             const claim = claims.find((c) => c.chapter_start === num && c.chapter_end === num);
             const isMine = claim ? isOwnClaim(claim) : false;
+            const firstName = claim?.display_name?.split(" ")[0] || "";
 
             return (
-              <button
+              <motion.button
                 key={num}
                 onClick={() => {
                   if (!claim) { claimPsalm(num); return; }
                   if (isMine) { setSelectedClaim(claim); return; }
                 }}
                 disabled={!!claim && !isMine}
-                className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-all cursor-pointer border ${
+                className={`relative aspect-square rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer border overflow-hidden ${
                   claim?.completed
                     ? "bg-green-500/15 border-green-500/30 text-green-600"
                     : claim
@@ -272,11 +320,20 @@ const TehilimJoinContent = () => {
                 }`}
                 style={isMine && claim && !claim.completed ? { background: "hsl(var(--gold) / 0.1)" } : {}}
                 title={claim ? `${claim.display_name}${claim.completed ? " ✅" : ""}` : `Psaume ${num}`}
+                whileTap={{ scale: 0.92 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.15, delay: num * 0.003 }}
               >
-                <span className="text-sm">{num}</span>
-                {claim?.completed && <span className="text-[8px] absolute bottom-0.5">✅</span>}
-                {isMine && claim && !claim.completed && <span className="text-[7px] absolute bottom-0.5">📖</span>}
-              </button>
+                <span className="text-sm font-bold">{num}</span>
+                {claim && (
+                  <span className="text-[6px] leading-tight truncate w-full text-center px-0.5 mt-0.5 font-medium" style={{ color: claim.completed ? "hsl(142 76% 36%)" : "hsl(var(--gold-matte))" }}>
+                    {firstName}
+                  </span>
+                )}
+                {claim?.completed && <span className="text-[7px] absolute top-0.5 right-0.5">✅</span>}
+                {isMine && claim && !claim.completed && <span className="text-[7px] absolute top-0.5 right-0.5">📖</span>}
+              </motion.button>
             );
           })}
         </div>
@@ -361,6 +418,7 @@ const TehilimJoinContent = () => {
       </AnimatePresence>
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
+      <HazakCelebration show={showHazak} onDone={() => setShowHazak(false)} />
     </div>
   );
 };

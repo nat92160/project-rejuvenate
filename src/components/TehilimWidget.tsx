@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
+import HazakCelebration from "@/components/HazakCelebration";
 
 const TEHILIM_DAILY = [
   { day: "Dimanche", chapters: "1 – 29", yom: "Yom Rishon" },
@@ -119,6 +120,53 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
   );
 };
 
+// Psalm tile with name tooltip
+const PsalmTile = ({
+  num, claim, isMine, onClaim, onToggle, onUnclaim
+}: {
+  num: number;
+  claim: Claim | undefined;
+  isMine: boolean;
+  onClaim: () => void;
+  onToggle: () => void;
+  onUnclaim: () => void;
+}) => {
+  const firstName = claim?.display_name?.split(" ")[0] || "";
+
+  return (
+    <motion.button
+      layout
+      onClick={() => {
+        if (claim?.completed) return;
+        if (isMine && claim) { onToggle(); return; }
+        if (!claim) onClaim();
+      }}
+      onContextMenu={(e) => { e.preventDefault(); if (isMine && claim && !claim.completed) onUnclaim(); }}
+      disabled={!!claim && !isMine}
+      className={`relative aspect-square rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer border overflow-hidden ${
+        claim?.completed ? "bg-green-500/15 border-green-500/30 text-green-600"
+        : claim ? isMine ? "border-primary/40 text-primary" : "border-border text-muted-foreground opacity-60"
+        : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-primary/5"
+      }`}
+      style={isMine && claim && !claim.completed ? { background: "hsl(var(--gold) / 0.1)" } : {}}
+      title={claim ? `${claim.display_name}${claim.completed ? " ✅" : isMine ? " — clic long pour annuler" : ""}` : `Psaume ${num}`}
+      whileTap={{ scale: 0.92 }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.15, delay: num * 0.003 }}
+    >
+      <span className="text-sm font-bold">{num}</span>
+      {claim && (
+        <span className="text-[6px] leading-tight truncate w-full text-center px-0.5 mt-0.5 font-medium" style={{ color: claim.completed ? "hsl(142 76% 36%)" : "hsl(var(--gold-matte))" }}>
+          {firstName}
+        </span>
+      )}
+      {claim?.completed && <span className="text-[7px] absolute top-0.5 right-0.5">✅</span>}
+      {isMine && claim && !claim.completed && <span className="text-[7px] absolute top-0.5 right-0.5">📖</span>}
+    </motion.button>
+  );
+};
+
 // Chain Detail — guest-friendly
 const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) => {
   const { user } = useAuth();
@@ -126,6 +174,8 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
   const [loading, setLoading] = useState(true);
   const [guestPromptOpen, setGuestPromptOpen] = useState(false);
   const [pendingPsalm, setPendingPsalm] = useState<number | null>(null);
+  const [showHazak, setShowHazak] = useState(false);
+  const [prevCompletedCount, setPrevCompletedCount] = useState<number | null>(null);
 
   const fetchClaims = useCallback(async () => {
     const { data } = await supabase.from("tehilim_claims").select("*").eq("chain_id", chain.id).order("chapter_start");
@@ -139,6 +189,15 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [chain.id, fetchClaims]);
+
+  // Detect completion for Hazak
+  const totalCompleted = claims.filter(c => c.completed).length;
+  useEffect(() => {
+    if (prevCompletedCount !== null && prevCompletedCount < TOTAL_PSALMS && totalCompleted >= TOTAL_PSALMS) {
+      setShowHazak(true);
+    }
+    setPrevCompletedCount(totalCompleted);
+  }, [totalCompleted, prevCompletedCount]);
 
   const getDisplayName = async (): Promise<string> => {
     if (user) {
@@ -196,7 +255,6 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
   };
 
   const totalClaimed = claims.length;
-  const totalCompleted = claims.filter(c => c.completed).length;
   const progressPct = Math.round((totalClaimed / TOTAL_PSALMS) * 100);
   const completedPct = Math.round((totalCompleted / TOTAL_PSALMS) * 100);
 
@@ -228,6 +286,9 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
     toast.success("Lien copié dans le presse-papier !");
   };
 
+  // Unique participants
+  const participants = [...new Set(claims.map(c => c.display_name))];
+
   return (
     <div>
       <button onClick={onBack} className="text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline mb-3">← Retour</button>
@@ -252,6 +313,13 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
         )}
         {chain.dedication && <p className="text-sm text-muted-foreground mt-1">{DEDICATION_LABELS[chain.dedication_type || "general"]} {chain.dedication}</p>}
 
+        {/* Participants count */}
+        {participants.length > 0 && (
+          <p className="text-[10px] text-muted-foreground mt-2">
+            👥 {participants.length} participant{participants.length > 1 ? "s" : ""} : {participants.slice(0, 5).join(", ")}{participants.length > 5 ? ` +${participants.length - 5}` : ""}
+          </p>
+        )}
+
         {/* Progress bars */}
         <div className="mt-3 space-y-2">
           <div>
@@ -265,10 +333,29 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
               <span>✅ {totalCompleted}/150 terminés ({completedPct}%)</span>
             </div>
             <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${completedPct}%`, background: completedPct === 100 ? "#22c55e" : "#22c55e" }} />
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: completedPct === 100 ? "#22c55e" : "#22c55e" }}
+                initial={{ width: 0 }}
+                animate={{ width: `${completedPct}%` }}
+                transition={{ duration: 0.8 }}
+              />
             </div>
           </div>
         </div>
+
+        {/* Completion badge */}
+        {completedPct === 100 && (
+          <motion.div
+            className="mt-3 p-3 rounded-xl text-center border border-green-500/30"
+            style={{ background: "hsl(142 76% 36% / 0.08)" }}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+          >
+            <span className="text-2xl">🏆</span>
+            <p className="text-xs font-bold text-green-600 mt-1">Chaîne complétée — Hazak Hazak !</p>
+          </motion.div>
+        )}
 
         <div className="flex gap-2 mt-3 flex-wrap">
           <button onClick={shareChain} className="px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border-none text-primary-foreground" style={{ background: "var(--gradient-gold)" }}>📤 Partager</button>
@@ -285,26 +372,15 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
               const claim = claims.find(c => c.chapter_start === num && c.chapter_end === num);
               const isMine = claim ? isOwnClaim(claim) : false;
               return (
-                <button key={num}
-                  onClick={() => {
-                    if (claim?.completed) return;
-                    if (isMine && claim) { toggleComplete(claim); return; }
-                    if (!claim) claimPsalm(num);
-                  }}
-                  onContextMenu={(e) => { e.preventDefault(); if (isMine && claim && !claim.completed) unclaimPsalm(claim); }}
-                  disabled={!!claim && !isMine}
-                  className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-all cursor-pointer border ${
-                    claim?.completed ? "bg-green-500/15 border-green-500/30 text-green-600"
-                    : claim ? isMine ? "border-primary/40 text-primary" : "border-border text-muted-foreground opacity-60"
-                    : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-primary/5"
-                  }`}
-                  style={isMine && claim && !claim.completed ? { background: "hsl(var(--gold) / 0.1)" } : {}}
-                  title={claim ? `${claim.display_name}${claim.completed ? " ✅" : isMine ? " — clic long pour annuler" : ""}` : `Psaume ${num}`}
-                >
-                  <span className="text-sm">{num}</span>
-                  {claim?.completed && <span className="text-[8px] absolute bottom-0.5">✅</span>}
-                  {isMine && claim && !claim.completed && <span className="text-[7px] absolute bottom-0.5">📖</span>}
-                </button>
+                <PsalmTile
+                  key={num}
+                  num={num}
+                  claim={claim}
+                  isMine={isMine}
+                  onClaim={() => claimPsalm(num)}
+                  onToggle={() => claim && toggleComplete(claim)}
+                  onUnclaim={() => claim && unclaimPsalm(claim)}
+                />
               );
             })}
           </div>
@@ -333,6 +409,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
       )}
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
+      <HazakCelebration show={showHazak} onDone={() => setShowHazak(false)} />
     </div>
   );
 };
@@ -353,7 +430,6 @@ const TehilimWidget = () => {
   const fetchChains = useCallback(async () => {
     setLoadingChains(true);
 
-    // Get user's subscribed synagogue IDs
     let subIds: string[] = [];
     if (user) {
       const { data: mySubs } = await supabase
@@ -365,18 +441,13 @@ const TehilimWidget = () => {
 
     let query = supabase.from("tehilim_chains").select("*").eq("status", "active").order("created_at", { ascending: false });
 
-    // If user is logged in, filter to own chains + subscribed synagogues
     if (user) {
       if (subIds.length > 0) {
-        // Show chains from subscribed synagogues OR created by the user
         query = query.or(`creator_id.eq.${user.id},synagogue_id.in.(${subIds.join(",")})`);
       } else {
-        // No subscriptions — only show own chains
         query = query.eq("creator_id", user.id);
       }
-    }
-    // If not logged in, show nothing (they need to subscribe)
-    else {
+    } else {
       setChains([]); setLoadingChains(false); return;
     }
 
