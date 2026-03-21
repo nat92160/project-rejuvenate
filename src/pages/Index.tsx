@@ -13,7 +13,7 @@ import ZmanimWidget from "@/components/ZmanimWidget";
 import HolidaysWidget from "@/components/HolidaysWidget";
 import ParashaSearchWidget from "@/components/ParashaSearchWidget";
 import FestivalCalendar from "@/components/FestivalCalendar";
-import TehilimWidget from "@/components/TehilimWidget";
+import TehilimCombinedWidget from "@/components/TehilimCombinedWidget";
 import DateConverterWidget from "@/components/DateConverterWidget";
 import MizrahCompass from "@/components/MizrahCompass";
 import RoshHodeshWidget from "@/components/RoshHodeshWidget";
