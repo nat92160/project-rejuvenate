@@ -30,7 +30,6 @@ import CoursVirtuelWidget from "@/components/CoursVirtuelWidget";
 import FideleSynagogueView from "@/components/FideleSynagogueView";
 import SynaProfileManager from "@/components/SynaProfileManager";
 import PrayerTimesWidget from "@/components/PrayerTimesWidget";
-import SynaInfoWidget from "@/components/SynaInfoWidget";
 import SiddourWidget from "@/components/SiddourWidget";
 
 import BottomNav from "@/components/BottomNav";
@@ -102,8 +101,7 @@ const IndexContent = () => {
       case "coursvirtuel": return <CoursVirtuelWidget />;
       case "affiche": return <AfficheChabbatWidget />;
       case "horaires": return <PrayerTimesWidget />;
-      case "infosyna": return <SynaInfoWidget />;
-      case "masynagogue": return <SynaProfileManager />;
+      case "infosyna": return <SynaProfileManager />;
       case "shabbatspec": return <ShabbatSpeciauxWidget />;
       case "communaute":
         return (
