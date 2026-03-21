@@ -120,7 +120,7 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
     setAdjointId(resolvedAdjointId);
     setViewerIsPresident(isPresident || isOwner || isAdjoint);
 
-    if (isPresident || isOwner) {
+    if (isPresident || isOwner || isAdjoint) {
       setIsApproved(true);
       setRequestStatus("approved");
       setChatEnabledLoading(false);
