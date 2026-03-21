@@ -301,6 +301,31 @@ const MinyanLiveWidget = () => {
             </button>
           )}
 
+          {/* Emergency Minyan Button */}
+          {isPresident && synagogueId && currentSession && !isFull && (
+            <button
+              onClick={async () => {
+                setSendingUrgency(true);
+                const label = OFFICE_LABELS[currentSession.office_type] || currentSession.office_type;
+                await supabase.functions.invoke("send-push", {
+                  body: {
+                    synagogue_id: synagogueId,
+                    title: "🚨 Urgence Minyan !",
+                    body: `Il manque ${needed} personne${needed > 1 ? "s" : ""} pour le ${label}. On vous attend !`,
+                    sender_id: user?.id,
+                  },
+                });
+                toast.success("🚨 Notification d'urgence envoyée !");
+                setSendingUrgency(false);
+              }}
+              disabled={sendingUrgency}
+              className="w-full mt-3 py-3.5 rounded-xl font-bold text-sm text-white border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+              style={{ background: "linear-gradient(135deg, hsl(0 84% 50%), hsl(0 84% 40%))", boxShadow: "0 4px 15px hsl(0 84% 50% / 0.3)" }}
+            >
+              {sendingUrgency ? "⏳ Envoi..." : `🚨 Urgence Minyan — Il manque ${needed} !`}
+            </button>
+          )}
+
           {isPresident && currentSession && user?.id === currentSession.creator_id && (
             <button onClick={() => handleDelete(currentSession.id)} className="w-full mt-2 py-2.5 rounded-xl text-xs font-bold bg-destructive/10 text-destructive border-none cursor-pointer">🗑️ Supprimer</button>
           )}
