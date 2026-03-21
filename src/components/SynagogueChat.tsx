@@ -102,6 +102,13 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
       .eq("id", synagogueId)
       .maybeSingle();
 
+    // Fetch adjoint_id separately since it's not in types yet
+    const { data: synaFull } = await (supabase
+      .from("synagogue_profiles")
+      .select("adjoint_id") as any)
+      .eq("id", synagogueId)
+      .maybeSingle();
+
     const enabled = syna?.chat_enabled ?? false;
     const resolvedPresidentId = syna?.president_id ?? null;
     const isOwner = resolvedPresidentId === user.id;
