@@ -403,7 +403,8 @@ const FideleSynagogueView = () => {
             if (withDistance.length === 0) return (
               <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
                 <span className="text-4xl">🏛️</span>
-                <p className="mt-3 text-sm text-muted-foreground">Aucune synagogue vérifiée à proximité.</p>
+                <p className="mt-3 text-sm text-muted-foreground">Aucune synagogue trouvée dans un rayon de 15 km.</p>
+                <p className="mt-1 text-xs text-muted-foreground/60">Activez votre GPS pour des résultats précis.</p>
               </div>
             );
 
