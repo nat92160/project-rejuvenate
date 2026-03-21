@@ -237,6 +237,10 @@ const FideleSynagogueView = () => {
       {/* Annuaire tab */}
       {tab === "annuaire" && (
         <div className="space-y-3">
+          {/* Info cards for subscribed synagogues */}
+          {subscribedSynas.filter(s => s.address || s.phone || s.email).map((syna) => (
+            <SynaInfoCard key={`info-${syna.id}`} info={syna} />
+          ))}
           {dirLoading ? (
             <div className="py-10 text-center text-sm text-muted-foreground">Chargement de l'annuaire…</div>
           ) : directory.length === 0 ? (
