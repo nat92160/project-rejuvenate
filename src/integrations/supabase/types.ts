@@ -465,6 +465,7 @@ export type Database = {
       }
       synagogue_profiles: {
         Row: {
+          adjoint_id: string | null
           chat_enabled: boolean
           created_at: string
           font_family: string | null
@@ -481,6 +482,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          adjoint_id?: string | null
           chat_enabled?: boolean
           created_at?: string
           font_family?: string | null
@@ -497,6 +499,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          adjoint_id?: string | null
           chat_enabled?: boolean
           created_at?: string
           font_family?: string | null
