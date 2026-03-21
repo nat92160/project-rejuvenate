@@ -25,10 +25,10 @@ const resolveRole = (roles: string[]): AppRole => {
 
 // Check if user is adjoint (has president role via adjoint assignment)
 export const checkIsAdjoint = async (userId: string): Promise<boolean> => {
-  const { data } = await supabase
+  const { data } = await (supabase
     .from("synagogue_profiles")
-    .select("id")
-    .eq("adjoint_id" as any, userId)
+    .select("id") as any)
+    .eq("adjoint_id", userId)
     .maybeSingle();
   return !!data;
 };

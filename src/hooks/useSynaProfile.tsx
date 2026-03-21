@@ -29,10 +29,10 @@ export const useSynaProfile = () => {
         .maybeSingle();
       
       if (!data) {
-        const res = await supabase
+        const res = await (supabase
           .from("synagogue_profiles")
-          .select("id, name, logo_url, signature, primary_color, secondary_color, font_family")
-          .eq("adjoint_id" as any, user.id)
+          .select("id, name, logo_url, signature, primary_color, secondary_color, font_family") as any)
+          .eq("adjoint_id", user.id)
           .maybeSingle();
         data = res.data;
       }
