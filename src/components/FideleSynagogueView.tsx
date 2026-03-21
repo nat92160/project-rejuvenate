@@ -15,6 +15,9 @@ interface SynaDirectoryItem {
   secondary_color: string;
   subscriber_count: number;
   isSubscribed: boolean;
+  shacharit_time: string | null;
+  minha_time: string | null;
+  arvit_time: string | null;
 }
 
 interface CoursItem { id: string; title: string; rav: string; day_of_week: string; course_time: string; zoom_link: string; description: string; synagogue_name?: string; }
@@ -59,7 +62,7 @@ const FideleSynagogueView = () => {
     setDirLoading(true);
     const { data: allSynas } = await supabase
       .from("synagogue_profiles")
-      .select("id, name, logo_url, primary_color, secondary_color")
+      .select("id, name, logo_url, primary_color, secondary_color, shacharit_time, minha_time, arvit_time")
       .neq("name", "")
       .order("name");
 
@@ -92,6 +95,9 @@ const FideleSynagogueView = () => {
         secondary_color: s.secondary_color || "#c9a84c",
         subscriber_count: countMap.get(s.id) || 0,
         isSubscribed: userSubs.includes(s.id),
+        shacharit_time: s.shacharit_time || null,
+        minha_time: s.minha_time || null,
+        arvit_time: s.arvit_time || null,
       }))
     );
     setDirLoading(false);
@@ -257,6 +263,13 @@ const FideleSynagogueView = () => {
                     <p className="text-[11px] text-muted-foreground">
                       👥 {syna.subscriber_count} abonné{syna.subscriber_count !== 1 ? "s" : ""}
                     </p>
+                    {(syna.shacharit_time || syna.minha_time || syna.arvit_time) && (
+                      <div className="mt-1.5 flex flex-wrap gap-2">
+                        {syna.shacharit_time && <span className="text-[10px] font-bold text-primary/80">🌅 {syna.shacharit_time.slice(0, 5)}</span>}
+                        {syna.minha_time && <span className="text-[10px] font-bold text-primary/80">🌇 {syna.minha_time.slice(0, 5)}</span>}
+                        {syna.arvit_time && <span className="text-[10px] font-bold text-primary/80">🌙 {syna.arvit_time.slice(0, 5)}</span>}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => handleSubscribe(syna.id)}

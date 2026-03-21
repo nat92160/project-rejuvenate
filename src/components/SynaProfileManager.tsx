@@ -15,6 +15,9 @@ interface SynaProfile {
   speakers: string[];
   president_first_name: string;
   president_last_name: string;
+  shacharit_time: string;
+  minha_time: string;
+  arvit_time: string;
 }
 
 const FONT_OPTIONS = ["Lora", "Playfair Display", "Georgia", "Merriweather", "Noto Serif"];
@@ -29,6 +32,9 @@ const DEFAULT_PROFILE: SynaProfile = {
   speakers: [],
   president_first_name: "",
   president_last_name: "",
+  shacharit_time: "",
+  minha_time: "",
+  arvit_time: "",
 };
 
 const SynaProfileManager = () => {
@@ -60,6 +66,9 @@ const SynaProfileManager = () => {
           speakers: Array.isArray(data.speakers) ? (data.speakers as string[]) : [],
           president_first_name: (data as any).president_first_name || "",
           president_last_name: (data as any).president_last_name || "",
+          shacharit_time: (data as any).shacharit_time || "",
+          minha_time: (data as any).minha_time || "",
+          arvit_time: (data as any).arvit_time || "",
         });
       }
       setLoading(false);
@@ -103,6 +112,9 @@ const SynaProfileManager = () => {
       speakers: profile.speakers,
       president_first_name: profile.president_first_name,
       president_last_name: profile.president_last_name,
+      shacharit_time: profile.shacharit_time || null,
+      minha_time: profile.minha_time || null,
+      arvit_time: profile.arvit_time || null,
     };
 
     let error;
@@ -247,6 +259,25 @@ const SynaProfileManager = () => {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Horaires des offices */}
+      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <label className="mb-3 block text-xs font-bold text-foreground">🕐 Horaires des offices</label>
+        <div className="space-y-3">
+          <div>
+            <p className="mb-1 text-[10px] text-muted-foreground">🌅 Chaharit</p>
+            <input type="time" className={inputCls} value={profile.shacharit_time} onChange={(e) => setProfile((p) => ({ ...p, shacharit_time: e.target.value }))} />
+          </div>
+          <div>
+            <p className="mb-1 text-[10px] text-muted-foreground">🌇 Min'ha</p>
+            <input type="time" className={inputCls} value={profile.minha_time} onChange={(e) => setProfile((p) => ({ ...p, minha_time: e.target.value }))} />
+          </div>
+          <div>
+            <p className="mb-1 text-[10px] text-muted-foreground">🌙 Arvit</p>
+            <input type="time" className={inputCls} value={profile.arvit_time} onChange={(e) => setProfile((p) => ({ ...p, arvit_time: e.target.value }))} />
+          </div>
+        </div>
       </div>
 
       {/* Save */}

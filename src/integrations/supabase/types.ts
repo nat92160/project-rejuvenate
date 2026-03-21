@@ -466,51 +466,60 @@ export type Database = {
       synagogue_profiles: {
         Row: {
           adjoint_id: string | null
+          arvit_time: string | null
           chat_enabled: boolean
           created_at: string
           font_family: string | null
           id: string
           logo_url: string | null
+          minha_time: string | null
           name: string
           president_first_name: string | null
           president_id: string
           president_last_name: string | null
           primary_color: string | null
           secondary_color: string | null
+          shacharit_time: string | null
           signature: string | null
           speakers: Json | null
           updated_at: string
         }
         Insert: {
           adjoint_id?: string | null
+          arvit_time?: string | null
           chat_enabled?: boolean
           created_at?: string
           font_family?: string | null
           id?: string
           logo_url?: string | null
+          minha_time?: string | null
           name?: string
           president_first_name?: string | null
           president_id: string
           president_last_name?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          shacharit_time?: string | null
           signature?: string | null
           speakers?: Json | null
           updated_at?: string
         }
         Update: {
           adjoint_id?: string | null
+          arvit_time?: string | null
           chat_enabled?: boolean
           created_at?: string
           font_family?: string | null
           id?: string
           logo_url?: string | null
+          minha_time?: string | null
           name?: string
           president_first_name?: string | null
           president_id?: string
           president_last_name?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          shacharit_time?: string | null
           signature?: string | null
           speakers?: Json | null
           updated_at?: string
