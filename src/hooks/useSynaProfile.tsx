@@ -21,11 +21,21 @@ export const useSynaProfile = () => {
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     const load = async () => {
-      const { data } = await supabase
+      // Check as president first, then as adjoint
+      let { data } = await supabase
         .from("synagogue_profiles")
         .select("id, name, logo_url, signature, primary_color, secondary_color, font_family")
         .eq("president_id", user.id)
         .maybeSingle();
+      
+      if (!data) {
+        const res = await supabase
+          .from("synagogue_profiles")
+          .select("id, name, logo_url, signature, primary_color, secondary_color, font_family")
+          .eq("adjoint_id" as any, user.id)
+          .maybeSingle();
+        data = res.data;
+      }
       if (data) {
         setSynagogueId(data.id);
         setProfile({

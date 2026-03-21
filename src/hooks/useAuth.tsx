@@ -23,6 +23,16 @@ const resolveRole = (roles: string[]): AppRole => {
   return "guest";
 };
 
+// Check if user is adjoint (has president role via adjoint assignment)
+export const checkIsAdjoint = async (userId: string): Promise<boolean> => {
+  const { data } = await supabase
+    .from("synagogue_profiles")
+    .select("id")
+    .eq("adjoint_id" as any, userId)
+    .maybeSingle();
+  return !!data;
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
