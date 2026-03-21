@@ -95,6 +95,9 @@ const FideleSynagogueView = () => {
         secondary_color: s.secondary_color || "#c9a84c",
         subscriber_count: countMap.get(s.id) || 0,
         isSubscribed: userSubs.includes(s.id),
+        shacharit_time: s.shacharit_time || null,
+        minha_time: s.minha_time || null,
+        arvit_time: s.arvit_time || null,
       }))
     );
     setDirLoading(false);
