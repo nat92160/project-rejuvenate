@@ -60,6 +60,8 @@ const FideleSynagogueView = () => {
   const [cours, setCours] = useState<CoursItem[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [annonces, setAnnonces] = useState<AnnonceItem[]>([]);
+  const [minyans, setMinyans] = useState<MinyanSessionView[]>([]);
+  const [tehilimChains, setTehilimChains] = useState<TehilimChainView[]>([]);
   const [contentLoading, setContentLoading] = useState(true);
 
   // Google Maps synagogues
