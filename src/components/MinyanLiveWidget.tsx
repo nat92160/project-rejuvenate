@@ -265,6 +265,14 @@ const MinyanLiveWidget = () => {
               </div>
             )}
 
+            {/* Fidèles en route indicator */}
+            {count > 0 && !isFull && (
+              <div className="mb-3 inline-flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: "hsl(var(--gold) / 0.1)", border: "1px solid hsl(var(--gold) / 0.2)" }}>
+                <span className="text-sm">🏃</span>
+                <span className="text-xs font-bold" style={{ color: "hsl(var(--gold-matte))" }}>{count} fidèle{count > 1 ? "s" : ""} en route</span>
+              </div>
+            )}
+
             {isFull ? (
               <div className="text-sm font-bold text-green-600">✅ Minyan atteint !</div>
             ) : (
