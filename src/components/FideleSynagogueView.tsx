@@ -104,6 +104,11 @@ const FideleSynagogueView = () => {
         shacharit_time: s.shacharit_time || null,
         minha_time: s.minha_time || null,
         arvit_time: s.arvit_time || null,
+        address: s.address || null,
+        phone: s.phone || null,
+        email: s.email || null,
+        latitude: s.latitude || null,
+        longitude: s.longitude || null,
       }))
     );
     setDirLoading(false);
