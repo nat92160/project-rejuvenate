@@ -68,7 +68,7 @@ const FideleSynagogueView = () => {
     setDirLoading(true);
     const { data: allSynas } = await supabase
       .from("synagogue_profiles")
-      .select("id, name, logo_url, primary_color, secondary_color, shacharit_time, minha_time, arvit_time")
+      .select("id, name, logo_url, primary_color, secondary_color, shacharit_time, minha_time, arvit_time, address, phone, email, latitude, longitude")
       .neq("name", "")
       .order("name");
 
