@@ -19,6 +19,11 @@ interface SynaDirectoryItem {
   shacharit_time: string | null;
   minha_time: string | null;
   arvit_time: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 interface CoursItem { id: string; title: string; rav: string; day_of_week: string; course_time: string; zoom_link: string; description: string; synagogue_name?: string; }
