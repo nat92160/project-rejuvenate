@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCity } from "@/hooks/useCity";
-import { fetchNearbySynagogues, formatDistance, SynagogueResult } from "@/lib/synagogues";
 import { toast } from "sonner";
 import SynagogueChat from "./SynagogueChat";
 import SynaInfoCard from "./SynaInfoCard";
@@ -30,8 +29,8 @@ interface SynaDirectoryItem {
 interface CoursItem { id: string; title: string; rav: string; day_of_week: string; course_time: string; zoom_link: string; description: string; synagogue_name?: string; }
 interface EventItem { id: string; title: string; description: string; event_date: string; event_time: string; location: string; event_type: string; zoom_link: string | null; synagogue_name?: string; }
 interface AnnonceItem { id: string; title: string; content: string; priority: string; created_at: string; synagogue_name?: string; }
-interface MinyanSessionView { id: string; office_type: string; office_date: string; office_time: string; target_count: number; current_count: number; synagogue_name?: string; }
-interface TehilimChainView { id: string; title: string; dedication: string | null; dedication_type: string | null; status: string; total_chapters: number; completed_chapters: number; synagogue_name?: string; }
+interface MinyanSessionView { id: string; office_type: string; office_date: string; office_time: string; target_count: number; current_count: number; synagogue_id: string | null; synagogue_name?: string; }
+interface TehilimChainView { id: string; title: string; dedication: string | null; dedication_type: string | null; status: string; total_chapters: number; completed_chapters: number; synagogue_id: string | null; synagogue_name?: string; }
 
 const dayColors: Record<string, string> = { Lundi: "#3b82f6", Mardi: "#8b5cf6", Mercredi: "#22c55e", Jeudi: "#f97316", Vendredi: "#ef4444", Dimanche: "#eab308" };
 const typeEmoji: Record<string, string> = { kidouch: "🍷", cours: "📖", fete: "🎉", autre: "📌" };
@@ -44,6 +43,21 @@ const formatTravelTime = (minutes?: number) => {
   const hours = Math.floor(minutes / 60);
   const rem = minutes % 60;
   return rem > 0 ? `${hours} h ${rem} min` : `${hours} h`;
+};
+
+const hasCoordinates = (lat?: number | null, lng?: number | null) =>
+  typeof lat === "number" && Number.isFinite(lat) && typeof lng === "number" && Number.isFinite(lng);
+
+const getDistanceInMeters = (originLat: number, originLng: number, targetLat: number, targetLng: number) => {
+  const R = 6371000;
+  const dLat = ((targetLat - originLat) * Math.PI) / 180;
+  const dLng = ((targetLng - originLng) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos((originLat * Math.PI) / 180) *
+    Math.cos((targetLat * Math.PI) / 180) *
+    Math.sin(dLng / 2) ** 2;
+
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
 const FideleSynagogueView = () => {
@@ -64,11 +78,6 @@ const FideleSynagogueView = () => {
   const [minyans, setMinyans] = useState<MinyanSessionView[]>([]);
   const [tehilimChains, setTehilimChains] = useState<TehilimChainView[]>([]);
   const [contentLoading, setContentLoading] = useState(true);
-
-  // Google Maps synagogues
-  const [synagogues, setSynagogues] = useState<SynagogueResult[]>([]);
-  const [synLoading, setSynLoading] = useState(false);
-  const [synError, setSynError] = useState<string | null>(null);
 
   // Fetch directory of registered synagogues
   const fetchDirectory = async () => {
@@ -140,20 +149,19 @@ const FideleSynagogueView = () => {
     // Fetch content — if subscribed, filter by synagogue; otherwise show all
     const filter = subIds.length > 0;
 
-    const coursQuery = supabase.from("cours_zoom").select("*").order("created_at", { ascending: false }).limit(20);
-    const eventsQuery = supabase.from("evenements").select("*").gte("event_date", today).order("event_date", { ascending: true }).limit(20);
-    const annoncesQuery = supabase.from("annonces").select("*").order("created_at", { ascending: false }).limit(10);
-    const minyanQuery = supabase.from("minyan_sessions").select("*").gte("office_date", today).order("office_date", { ascending: true }).limit(20);
-    const tehilimQuery = supabase.from("tehilim_chains").select("*").eq("status", "active").order("created_at", { ascending: false }).limit(20);
+    let coursQuery = supabase.from("cours_zoom").select("*").order("created_at", { ascending: false }).limit(20);
+    let eventsQuery = supabase.from("evenements").select("*").gte("event_date", today).order("event_date", { ascending: true }).limit(20);
+    let annoncesQuery = supabase.from("annonces").select("*").order("created_at", { ascending: false }).limit(10);
+    let minyanQuery = supabase.from("minyan_sessions").select("*").gte("office_date", today).order("office_date", { ascending: true }).limit(20);
+    let tehilimQuery = supabase.from("tehilim_chains").select("*").eq("status", "active").order("created_at", { ascending: false }).limit(20);
 
-    // If subscribed, filter by synagogue_id using raw filter
+    // If subscribed, filter by synagogue_id
     if (filter) {
-      const idList = `(${subIds.join(",")})`;
-      coursQuery.filter("synagogue_id", "in", idList);
-      eventsQuery.filter("synagogue_id", "in", idList);
-      annoncesQuery.filter("synagogue_id", "in", idList);
-      minyanQuery.filter("synagogue_id", "in", idList);
-      tehilimQuery.filter("synagogue_id", "in", idList);
+      coursQuery = coursQuery.in("synagogue_id", subIds);
+      eventsQuery = eventsQuery.in("synagogue_id", subIds);
+      annoncesQuery = annoncesQuery.in("synagogue_id", subIds);
+      minyanQuery = minyanQuery.in("synagogue_id", subIds);
+      tehilimQuery = tehilimQuery.in("synagogue_id", subIds);
     }
 
     const [coursRes, eventsRes, annoncesRes, minyanRes, tehilimRes] = await Promise.all([coursQuery, eventsQuery, annoncesQuery, minyanQuery, tehilimQuery]);
@@ -197,19 +205,18 @@ const FideleSynagogueView = () => {
   useEffect(() => { fetchDirectory(); }, [user]);
   useEffect(() => { fetchContent(); }, [user]);
 
-  // Google Maps nearby synagogues
-  useEffect(() => {
-    if (!city.lat || !city.lng) return;
-    const controller = new AbortController();
-    setSynLoading(true);
-    setSynError(null);
-    setSynagogues([]);
-    fetchNearbySynagogues(city.lat, city.lng, controller.signal)
-      .then((results) => { if (!controller.signal.aborted) setSynagogues(results); })
-      .catch((error) => { if (!controller.signal.aborted) { console.error(error); setSynError("Impossible de charger les synagogues proches."); } })
-      .finally(() => { if (!controller.signal.aborted) setSynLoading(false); });
-    return () => controller.abort();
-  }, [city.lat, city.lng]);
+  const nearbySynagogues = useMemo(() => {
+    if (!hasCoordinates(city.lat, city.lng)) return [];
+
+    return directory
+      .filter((syna) => hasCoordinates(syna.latitude, syna.longitude))
+      .map((syna) => ({
+        ...syna,
+        dist: getDistanceInMeters(city.lat, city.lng, syna.latitude!, syna.longitude!),
+      }))
+      .filter((syna) => syna.dist <= 15000)
+      .sort((a, b) => a.dist - b.dist);
+  }, [directory, city.lat, city.lng]);
 
   const handleSubscribe = async (synaId: string) => {
     if (!user) { toast.error("Connectez-vous pour vous abonner"); return; }
@@ -235,7 +242,7 @@ const FideleSynagogueView = () => {
   const tabs = [
     { id: "annuaire" as const, icon: "📋", label: "Annuaire", count: directory.length },
     { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
-    { id: "synagogues" as const, icon: "🕍", label: "Proches", count: synagogues.length },
+    { id: "synagogues" as const, icon: "🕍", label: "Proches", count: nearbySynagogues.length },
     { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
     { id: "tehilim" as const, icon: "📜", label: "Tehilim", count: tehilimChains.length },
     { id: "minyan" as const, icon: "👥", label: "Minyan", count: minyans.length },
@@ -361,7 +368,7 @@ const FideleSynagogueView = () => {
         </div>
       )}
 
-      {/* Nearby synagogues (Google Maps) */}
+      {/* Nearby official synagogues */}
       {tab === "synagogues" && (
         <div className="space-y-3">
           <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -388,19 +395,8 @@ const FideleSynagogueView = () => {
             </div>
           </div>
 
-          {/* Verified synagogues from our DB with distance */}
           {(() => {
-            const allSynas = directory.filter(s => s.latitude && s.longitude);
-            const withDistance = allSynas.map(s => {
-              if (!city.lat || !city.lng || !s.latitude || !s.longitude) return { ...s, dist: Infinity };
-              const R = 6371000;
-              const dLat = ((s.latitude - city.lat) * Math.PI) / 180;
-              const dLon = ((s.longitude - city.lng) * Math.PI) / 180;
-              const a = Math.sin(dLat / 2) ** 2 + Math.cos((city.lat * Math.PI) / 180) * Math.cos((s.latitude * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-              return { ...s, dist: R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) };
-            }).filter(s => s.dist <= 15000).sort((a, b) => a.dist - b.dist);
-
-            if (withDistance.length === 0) return (
+            if (nearbySynagogues.length === 0) return (
               <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
                 <span className="text-4xl">🏛️</span>
                 <p className="mt-3 text-sm text-muted-foreground">Aucune synagogue trouvée dans un rayon de 15 km.</p>
@@ -408,9 +404,8 @@ const FideleSynagogueView = () => {
               </div>
             );
 
-            return withDistance.map((syna, index) => {
+            return nearbySynagogues.map((syna, index) => {
               const distLabel = syna.dist < 1000 ? `${Math.round(syna.dist)} m` : `${(syna.dist / 1000).toFixed(1)} km`;
-              // Find upcoming minyans for this synagogue
               const synaMinyans = minyans.filter(m => (m as any).synagogue_id === syna.id);
               return (
                 <motion.div
