@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
 
-type Office = "shacharit" | "minha" | "arvit" | "shabbat";
+type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat" | "bedtime";
 
 interface Section {
   index: number;
@@ -18,26 +18,20 @@ interface SectionContent {
   heTitle: string;
 }
 
-const OFFICE_LABELS: Record<Office, { label: string; icon: string }> = {
-  shacharit: { label: "Chaharit", icon: "🌅" },
-  minha: { label: "Min'ha", icon: "🌇" },
-  arvit: { label: "Arvit", icon: "🌙" },
-  shabbat: { label: "Chabbat", icon: "🕯️" },
-};
+const OFFICES: { key: Office; label: string; icon: string }[] = [
+  { key: "shacharit", label: "Cha'harit", icon: "🌅" },
+  { key: "minha", label: "Min'ha", icon: "🌇" },
+  { key: "arvit", label: "Arvit", icon: "🌙" },
+  { key: "shabbat", label: "Chabbat", icon: "🕯️" },
+  { key: "hallel", label: "Hallel", icon: "🎶" },
+  { key: "birkat", label: "Birkat", icon: "🍞" },
+  { key: "bedtime", label: "Coucher", icon: "😴" },
+];
 
-const detectCurrentOffice = (): Office => {
-  const hour = new Date().getHours();
-  const day = new Date().getDay();
-  if (day === 6) return "shabbat"; // Saturday
-  if (hour < 12) return "shacharit";
-  if (hour < 18) return "minha";
-  return "arvit";
-};
-
-const CACHE_PREFIX = "siddour_cache_";
+const CACHE_PREFIX = "siddour_v2_";
 
 const SiddourWidget = () => {
-  const [office, setOffice] = useState<Office>(detectCurrentOffice);
+  const [office, setOffice] = useState<Office>("shacharit");
   const [sections, setSections] = useState<Section[]>([]);
   const [activeSection, setActiveSection] = useState<number | null>(null);
   const [content, setContent] = useState<SectionContent | null>(null);
@@ -56,21 +50,18 @@ const SiddourWidget = () => {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       try {
-        const parsed = JSON.parse(cached);
-        setSections(parsed);
+        setSections(JSON.parse(cached));
         setTocLoading(false);
         return;
       } catch { /* ignore */ }
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke("get-siddour", {
-        body: { office: off },
-      });
+      const { data, error } = await supabase.functions.invoke("get-siddour", { body: { office: off } });
       if (error) throw error;
       if (data?.sections) {
         setSections(data.sections);
-        try { localStorage.setItem(cacheKey, JSON.stringify(data.sections)); } catch { /* ignore */ }
+        try { localStorage.setItem(cacheKey, JSON.stringify(data.sections)); } catch { /* */ }
       }
     } catch (err) {
       console.error("Error fetching siddour toc:", err);
@@ -86,27 +77,19 @@ const SiddourWidget = () => {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       try {
-        const parsed = JSON.parse(cached);
-        setContent(parsed);
+        setContent(JSON.parse(cached));
         setLoading(false);
         return;
       } catch { /* ignore */ }
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke("get-siddour", {
-        body: { office: off, section: idx },
-      });
+      const { data, error } = await supabase.functions.invoke("get-siddour", { body: { office: off, section: idx } });
       if (error) throw error;
       if (data?.hebrew) {
-        const c: SectionContent = {
-          hebrew: data.hebrew,
-          french: data.french || [],
-          title: data.title,
-          heTitle: data.heTitle,
-        };
+        const c: SectionContent = { hebrew: data.hebrew, french: data.french || [], title: data.title, heTitle: data.heTitle };
         setContent(c);
-        try { localStorage.setItem(cacheKey, JSON.stringify(c)); } catch { /* ignore */ }
+        try { localStorage.setItem(cacheKey, JSON.stringify(c)); } catch { /* */ }
       }
     } catch (err) {
       console.error("Error fetching section:", err);
@@ -115,48 +98,45 @@ const SiddourWidget = () => {
   }, []);
 
   useEffect(() => { fetchToc(office); }, [office, fetchToc]);
-
-  useEffect(() => {
-    if (activeSection !== null) fetchSection(office, activeSection);
-  }, [activeSection, office, fetchSection]);
+  useEffect(() => { if (activeSection !== null) fetchSection(office, activeSection); }, [activeSection, office, fetchSection]);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
       {/* Header */}
       <div className="rounded-2xl border border-primary/15 p-5 text-center" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))" }}>
         <span className="text-3xl">📖</span>
-        <h3 className="mt-2 font-display text-lg font-bold text-foreground">Siddour Intelligent</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Prières quotidiennes — Hébreu & Traduction</p>
+        <h3 className="mt-2 font-display text-lg font-bold text-foreground">Siddour Complet</h3>
+        <p className="mt-1 text-xs text-muted-foreground">Navigation libre — Hébreu & Traduction</p>
       </div>
 
-      {/* Office tabs */}
-      <div className="flex gap-1 rounded-2xl border border-border bg-muted/60 p-1.5">
-        {(Object.keys(OFFICE_LABELS) as Office[]).map((off) => (
+      {/* Office selector — scrollable row */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        {OFFICES.map((off) => (
           <button
-            key={off}
-            onClick={() => { setOffice(off); setActiveSection(null); }}
-            className="flex flex-1 items-center justify-center gap-1 rounded-xl border-none py-2.5 text-[10px] font-bold transition-all cursor-pointer active:scale-95"
+            key={off.key}
+            onClick={() => { setOffice(off.key); setActiveSection(null); }}
+            className="shrink-0 flex items-center gap-1 rounded-xl border-none px-3 py-2 text-[10px] font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap"
             style={{
-              background: office === off ? "var(--gradient-gold)" : "transparent",
-              color: office === off ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-              boxShadow: office === off ? "var(--shadow-gold)" : "none",
+              background: office === off.key ? "var(--gradient-gold)" : "hsl(var(--muted))",
+              color: office === off.key ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+              boxShadow: office === off.key ? "var(--shadow-gold)" : "none",
             }}
           >
-            <span>{OFFICE_LABELS[off].icon}</span>
-            <span>{OFFICE_LABELS[off].label}</span>
+            <span>{off.icon}</span>
+            <span>{off.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Font size slider */}
-      <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+      {/* Font size slider + translation toggle */}
+      <div className="rounded-2xl border border-border bg-card p-3" style={{ boxShadow: "var(--shadow-card)" }}>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">A-</span>
+          <span className="text-xs text-muted-foreground font-bold">A-</span>
           <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={36} step={1} className="flex-1" />
           <span className="text-sm font-bold text-muted-foreground">A+</span>
           <button
             onClick={() => setShowFrench(!showFrench)}
-            className="ml-2 shrink-0 rounded-xl border px-3 py-1.5 text-[10px] font-bold cursor-pointer transition-all active:scale-95"
+            className="ml-1 shrink-0 rounded-xl border px-3 py-1.5 text-[10px] font-bold cursor-pointer transition-all active:scale-95"
             style={{
               borderColor: showFrench ? "hsl(var(--gold-matte))" : "hsl(var(--border))",
               background: showFrench ? "hsl(var(--gold) / 0.1)" : "transparent",
@@ -168,12 +148,12 @@ const SiddourWidget = () => {
         </div>
       </div>
 
-      {/* Table of Contents or Content */}
+      {/* Table of Contents or Reading content */}
       <AnimatePresence mode="wait">
         {activeSection === null ? (
           <motion.div key="toc" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
             {tocLoading ? (
-              <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
+              <div className="py-10 text-center text-sm text-muted-foreground">Chargement du sommaire…</div>
             ) : sections.length === 0 ? (
               <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
                 <span className="text-4xl">📖</span>
@@ -186,18 +166,18 @@ const SiddourWidget = () => {
                   onClick={() => setActiveSection(sec.index)}
                   className="w-full flex items-center gap-4 rounded-2xl border border-border bg-card p-4 text-left cursor-pointer transition-all hover:border-primary/20 hover:-translate-y-0.5 active:scale-[0.98]"
                   style={{ boxShadow: "var(--shadow-card)" }}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
+                  transition={{ delay: i * 0.03 }}
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.15), hsl(var(--gold) / 0.05))" }}>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.15), hsl(var(--gold) / 0.05))", color: "hsl(var(--gold-matte))" }}>
                     {i + 1}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-display text-sm font-bold text-foreground">{sec.title}</p>
                     <p className="text-xs text-muted-foreground" style={{ fontFamily: "'Frank Ruhl Libre', serif" }}>{sec.heTitle}</p>
                   </div>
-                  <span className="text-muted-foreground">→</span>
+                  <span className="text-muted-foreground/50">›</span>
                 </motion.button>
               ))
             )}
@@ -208,27 +188,27 @@ const SiddourWidget = () => {
               onClick={() => { setActiveSection(null); setContent(null); }}
               className="flex items-center gap-2 mb-4 text-sm font-bold text-primary bg-transparent border-none cursor-pointer hover:underline"
             >
-              ← Retour au sommaire
+              ← Sommaire
             </button>
 
             {loading ? (
               <div className="py-10 text-center text-sm text-muted-foreground">Chargement du texte…</div>
             ) : content ? (
               <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
-                <h4 className="text-center font-display text-base font-bold text-foreground mb-1">{content.title}</h4>
-                <p className="text-center text-lg text-muted-foreground mb-5" style={{ fontFamily: "'Frank Ruhl Libre', serif" }}>{content.heTitle}</p>
+                <h4 className="text-center font-display text-base font-bold text-foreground mb-0.5">{content.title}</h4>
+                <p className="text-center text-lg text-muted-foreground mb-6" style={{ fontFamily: "'Frank Ruhl Libre', serif" }}>{content.heTitle}</p>
 
                 <div className="space-y-4">
                   {content.hebrew.map((verse, i) => (
                     <div key={i}>
                       <p
                         className="text-center leading-relaxed text-foreground"
-                        style={{ fontSize: `${fontSize}px`, fontFamily: "'Frank Ruhl Libre', serif", direction: "rtl", lineHeight: 1.8 }}
+                        style={{ fontSize: `${fontSize}px`, fontFamily: "'Frank Ruhl Libre', serif", direction: "rtl", lineHeight: 1.9 }}
                         dangerouslySetInnerHTML={{ __html: verse }}
                       />
                       {showFrench && content.french[i] && (
                         <p
-                          className="mt-1 text-center text-muted-foreground leading-relaxed"
+                          className="mt-1.5 text-center text-muted-foreground leading-relaxed"
                           style={{ fontSize: `${Math.max(fontSize - 6, 12)}px` }}
                           dangerouslySetInnerHTML={{ __html: content.french[i] }}
                         />
@@ -237,7 +217,7 @@ const SiddourWidget = () => {
                   ))}
                 </div>
 
-                {/* Navigation between sections */}
+                {/* Section navigation */}
                 <div className="flex justify-between mt-6 pt-4 border-t border-border">
                   <button
                     onClick={() => activeSection > 0 && setActiveSection(activeSection - 1)}
