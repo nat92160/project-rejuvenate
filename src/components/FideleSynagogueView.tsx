@@ -263,6 +263,13 @@ const FideleSynagogueView = () => {
                     <p className="text-[11px] text-muted-foreground">
                       👥 {syna.subscriber_count} abonné{syna.subscriber_count !== 1 ? "s" : ""}
                     </p>
+                    {(syna.shacharit_time || syna.minha_time || syna.arvit_time) && (
+                      <div className="mt-1.5 flex flex-wrap gap-2">
+                        {syna.shacharit_time && <span className="text-[10px] font-bold text-primary/80">🌅 {syna.shacharit_time.slice(0, 5)}</span>}
+                        {syna.minha_time && <span className="text-[10px] font-bold text-primary/80">🌇 {syna.minha_time.slice(0, 5)}</span>}
+                        {syna.arvit_time && <span className="text-[10px] font-bold text-primary/80">🌙 {syna.arvit_time.slice(0, 5)}</span>}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => handleSubscribe(syna.id)}
