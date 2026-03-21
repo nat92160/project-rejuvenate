@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
 
-type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat" | "bedtime";
+type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat";
 
 interface Section {
   index: number;
@@ -25,10 +25,9 @@ const OFFICES: { key: Office; label: string; icon: string }[] = [
   { key: "shabbat", label: "Chabbat", icon: "🕯️" },
   { key: "hallel", label: "Hallel", icon: "🎶" },
   { key: "birkat", label: "Birkat", icon: "🍞" },
-  { key: "bedtime", label: "Coucher", icon: "😴" },
 ];
 
-const CACHE_PREFIX = "siddour_v2_";
+const CACHE_PREFIX = "siddour_v3_";
 
 const SiddourWidget = () => {
   const [office, setOffice] = useState<Office>("shacharit");
