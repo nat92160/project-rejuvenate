@@ -6,44 +6,60 @@ const corsHeaders = {
 const SIDDOUR_REFS: Record<string, { ref: string; title: string; heTitle: string }[]> = {
   shacharit: [
     { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Preparatory_Prayers,_Modeh_Ani", title: "Modé Ani", heTitle: "מודה אני" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Preparatory_Prayers,_Washing_the_Hands", title: "Nétilat Yadaïm", heTitle: "נטילת ידים" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Preparatory_Prayers,_Netilat_Yadayim", title: "Nétilat Yadaïm", heTitle: "נטילת ידים" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Preparatory_Prayers,_Asher_Yatzar", title: "Achèr Yatsar", heTitle: "אשר יצר" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Preparatory_Prayers,_Elokai_Neshama", title: "Élokaï Néchama", heTitle: "אלוקי נשמה" },
     { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Preparatory_Prayers,_Morning_Blessings", title: "Birkhot HaChahar", heTitle: "ברכות השחר" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Preparatory_Prayers,_Torah_Blessings", title: "Birkhot HaTorah", heTitle: "ברכות התורה" },
     { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Preparatory_Prayers,_Akedah", title: "Akéda", heTitle: "עקידה" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Pesukei_Dezimrah,_Introductory_Psalm", title: "Pessouké Dézimra", heTitle: "פסוקי דזמרא" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Pesukei_Dezimrah,_Baruch_She'amar", title: "Baroukh Chéamar", heTitle: "ברוך שאמר" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Pesukei_Dezimrah,_Ashrei", title: "Achré", heTitle: "אשרי" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Pesukei_Dezimrah,_Yishtabach", title: "Yichtabah", heTitle: "ישתבח" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Shema", title: "Chéma Israël", heTitle: "שמע ישראל" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Amidah", title: "Amida (Chaharit)", heTitle: "עמידה" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Post_Amidah,_Tachanun", title: "Tahanoun", heTitle: "תחנון" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Post_Amidah,_Ashrei", title: "Achré (fin)", heTitle: "אשרי" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Post_Amidah,_Aleinu", title: "Alénou", heTitle: "עלינו" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Preparatory_Prayers,_Ma_Tovu", title: "Ma Tovou", heTitle: "מה טובו" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Preparatory_Prayers,_Adon_Olam", title: "Adon Olam", heTitle: "אדון עולם" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Pesukei_Dezimra,_Barukh_She'amar", title: "Baroukh Chéamar", heTitle: "ברוך שאמר" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Pesukei_Dezimra,_Hodu", title: "Hodou", heTitle: "הודו" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Pesukei_Dezimra,_Az_Yashir", title: "Az Yachir (Chirat HaYam)", heTitle: "אז ישיר" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Blessings_of_the_Shema,_Shema", title: "Chéma Israël", heTitle: "שמע ישראל" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Amidah,_Patriarchs", title: "Amida — Avot", heTitle: "עמידה — אבות" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Amidah,_Healing", title: "Amida — Guérison", heTitle: "רפאנו" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Amidah,_Peace", title: "Amida — Paix", heTitle: "שים שלום" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Amidah,_Concluding_Passage", title: "Amida — Conclusion", heTitle: "אלוקי נצור" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Post_Amidah,_Tachanun,_Nefilat_Apayim", title: "Tahanoun", heTitle: "תחנון" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Shacharit,_Post_Amidah,_Avinu_Malkenu", title: "Avinou Malkénou", heTitle: "אבינו מלכנו" },
   ],
   minha: [
-    { ref: "Siddur_Ashkenaz,_Weekday,_Mincha,_Ashrei", title: "Achré", heTitle: "אשרי" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Mincha,_Amidah", title: "Amida (Min'ha)", heTitle: "עמידת מנחה" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Mincha,_Post_Amidah,_Tachanun", title: "Tahanoun", heTitle: "תחנון" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Mincha,_Post_Amidah,_Aleinu", title: "Alénou", heTitle: "עלינו" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Minchah,_Ashrei", title: "Achré", heTitle: "אשרי" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Minchah,_Amida,_Patriarchs", title: "Amida — Avot", heTitle: "עמידה — אבות" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Minchah,_Amida,_Concluding_Passage", title: "Amida — Conclusion", heTitle: "אלוקי נצור" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Minchah,_Concluding_Prayers,_Alenu", title: "Alénou", heTitle: "עלינו" },
   ],
   arvit: [
-    { ref: "Siddur_Ashkenaz,_Weekday,_Maariv,_Shema", title: "Chéma du soir", heTitle: "שמע של ערבית" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Maariv,_Amidah", title: "Amida du soir", heTitle: "עמידת ערבית" },
-    { ref: "Siddur_Ashkenaz,_Weekday,_Maariv,_Post_Amidah,_Aleinu", title: "Alénou", heTitle: "עלינו" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Maariv,_Vehu_Rachum", title: "Véhou Rahoum", heTitle: "והוא רחום" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Maariv,_Blessings_of_the_Shema,_Shema", title: "Chéma du soir", heTitle: "שמע של ערבית" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Maariv,_Amidah,_Patriarchs", title: "Amida — Avot", heTitle: "עמידה — אבות" },
+    { ref: "Siddur_Ashkenaz,_Weekday,_Maariv,_Amidah,_Concluding_Passage", title: "Amida — Conclusion", heTitle: "אלוקי נצור" },
   ],
   shabbat: [
-    { ref: "Siddur_Ashkenaz,_Shabbat,_Kabbalat_Shabbat,_Lechu_Neranena", title: "Lékha Dodi", heTitle: "לכה דודי" },
-    { ref: "Siddur_Ashkenaz,_Shabbat,_Kabbalat_Shabbat,_Psalms_for_Friday", title: "Psaumes du vendredi", heTitle: "מזמורי שבת" },
-    { ref: "Siddur_Ashkenaz,_Shabbat,_Shacharit,_Amidah", title: "Amida de Chabbat", heTitle: "עמידת שבת" },
-    { ref: "Siddur_Ashkenaz,_Shabbat,_Musaf,_Amidah", title: "Moussaf", heTitle: "מוסף" },
+    { ref: "Siddur_Ashkenaz,_Shabbat,_Kabbalat_Shabbat,_Lekha_Dodi", title: "Lékha Dodi", heTitle: "לכה דודי" },
+    { ref: "Siddur_Ashkenaz,_Shabbat,_Kabbalat_Shabbat,_Psalm_92", title: "Mizmor Chir léYom HaChabbat", heTitle: "מזמור שיר ליום השבת" },
+    { ref: "Siddur_Ashkenaz,_Shabbat,_Maariv,_Veshamru", title: "Véchamrou", heTitle: "ושמרו" },
+    { ref: "Siddur_Ashkenaz,_Shabbat,_Maariv,_Blessings_of_the_Shema,_Shema", title: "Chéma de Chabbat", heTitle: "שמע של שבת" },
+    { ref: "Siddur_Ashkenaz,_Shabbat,_Maariv,_Amidah,_Patriarchs", title: "Amida de Chabbat soir", heTitle: "עמידת שבת ערבית" },
+    { ref: "Siddur_Ashkenaz,_Shabbat,_Maariv,_Vay'chulu", title: "Vayékhoulou", heTitle: "ויכולו" },
+    { ref: "Siddur_Ashkenaz,_Shabbat,_Shabbat_Evening,_Kiddush", title: "Kiddouch", heTitle: "קידוש" },
+    { ref: "Siddur_Ashkenaz,_Shabbat,_Musaf_LeShabbat,_Amidah,_Patriarchs", title: "Moussaf — Avot", heTitle: "מוסף — אבות" },
+    { ref: "Siddur_Ashkenaz,_Shabbat,_Havdalah", title: "Havdala", heTitle: "הבדלה" },
   ],
   hallel: [
-    { ref: "Siddur_Ashkenaz,_Festivals,_Hallel,_Full_Hallel", title: "Hallel complet", heTitle: "הלל שלם" },
+    { ref: "Siddur_Ashkenaz,_Festivals,_Rosh_Chodesh,_Hallel,_Berakhah_before_the_Hallel", title: "Bénédiction du Hallel", heTitle: "ברכת ההלל" },
+    { ref: "Siddur_Ashkenaz,_Festivals,_Rosh_Chodesh,_Hallel,_Psalm_113", title: "Psaume 113", heTitle: "תהילים קיג" },
+    { ref: "Siddur_Ashkenaz,_Festivals,_Rosh_Chodesh,_Hallel,_Psalm_114", title: "Psaume 114", heTitle: "תהילים קיד" },
+    { ref: "Siddur_Ashkenaz,_Festivals,_Rosh_Chodesh,_Hallel,_Psalm_115", title: "Psaume 115", heTitle: "תהילים קטו" },
+    { ref: "Siddur_Ashkenaz,_Festivals,_Rosh_Chodesh,_Hallel,_Psalm_116", title: "Psaume 116", heTitle: "תהילים קטז" },
+    { ref: "Siddur_Ashkenaz,_Festivals,_Rosh_Chodesh,_Hallel,_Psalm_117", title: "Psaume 117", heTitle: "תהילים קיז" },
+    { ref: "Siddur_Ashkenaz,_Festivals,_Rosh_Chodesh,_Hallel,_Psalm_118", title: "Psaume 118", heTitle: "תהילים קיח" },
+    { ref: "Siddur_Ashkenaz,_Festivals,_Rosh_Chodesh,_Hallel,_Berakhah_after_the_Hallel", title: "Bénédiction finale", heTitle: "ברכה אחרונה" },
   ],
   birkat: [
-    { ref: "Siddur_Ashkenaz,_Weekday,_Birkat_Hamazon,_Birkat_Hamazon", title: "Birkat HaMazone", heTitle: "ברכת המזון" },
-  ],
-  bedtime: [
-    { ref: "Siddur_Ashkenaz,_Weekday,_Bedtime_Shema,_Shema", title: "Chéma du coucher", heTitle: "קריאת שמע על המיטה" },
+    { ref: "Siddur_Ashkenaz,_Berachot,_Birkat_HaMazon", title: "Birkat HaMazone", heTitle: "ברכת המזון" },
   ],
 };
 
@@ -75,7 +91,7 @@ Deno.serve(async (req) => {
       );
 
       if (!response.ok) {
-        throw new Error(`Sefaria API error: ${response.status}`);
+        throw new Error(`Sefaria API error: ${response.status} for ref ${targetSection.ref}`);
       }
 
       const data = await response.json();
