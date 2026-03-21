@@ -37,6 +37,7 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [presidentId, setPresidentId] = useState<string | null>(null);
+  const [adjointId, setAdjointId] = useState<string | null>(null);
   const [viewerIsPresident, setViewerIsPresident] = useState(isPresident);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { isSubscribed, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe, supported: pushSupported } = usePushSubscription(synagogueId);
