@@ -83,8 +83,8 @@ const IndexContent = () => {
           </div>
         );
       case "siddour": return <SiddourWidget />;
-      case "tehilimlibre": return <TehilimLibreWidget />;
-      case "tehilim": return <TehilimWidget />;
+      case "tehilimlibre":
+      case "tehilim": return <TehilimCombinedWidget />;
       case "synagogue": return isPresident ? <PresidentDashboard onLoginClick={() => setAuthOpen(true)} /> : <FideleSynagogueView />;
       case "fetes": return <FestivalCalendar />;
       case "convertisseur": return <DateConverterWidget />;
