@@ -29,9 +29,13 @@ interface SynaDirectoryItem {
 interface CoursItem { id: string; title: string; rav: string; day_of_week: string; course_time: string; zoom_link: string; description: string; synagogue_name?: string; }
 interface EventItem { id: string; title: string; description: string; event_date: string; event_time: string; location: string; event_type: string; zoom_link: string | null; synagogue_name?: string; }
 interface AnnonceItem { id: string; title: string; content: string; priority: string; created_at: string; synagogue_name?: string; }
+interface MinyanSessionView { id: string; office_type: string; office_date: string; office_time: string; target_count: number; current_count: number; synagogue_name?: string; }
+interface TehilimChainView { id: string; title: string; dedication: string | null; dedication_type: string | null; status: string; total_chapters: number; completed_chapters: number; synagogue_name?: string; }
 
 const dayColors: Record<string, string> = { Lundi: "#3b82f6", Mardi: "#8b5cf6", Mercredi: "#22c55e", Jeudi: "#f97316", Vendredi: "#ef4444", Dimanche: "#eab308" };
 const typeEmoji: Record<string, string> = { kidouch: "🍷", cours: "📖", fete: "🎉", autre: "📌" };
+const OFFICE_LABELS: Record<string, string> = { shacharit: "🌅 Cha'harit", minha: "☀️ Min'ha", arvit: "🌙 Arvit" };
+const DEDICATION_LABELS: Record<string, string> = { general: "📜 Général", refoua: "🙏 Réfoua", elevation: "🕯️ Élévation", hatzlakha: "🌟 Hatzlakha" };
 
 const formatTravelTime = (minutes?: number) => {
   if (!minutes) return null;
@@ -44,7 +48,7 @@ const formatTravelTime = (minutes?: number) => {
 const FideleSynagogueView = () => {
   const { user } = useAuth();
   const { city, geolocate, isGeolocating, locationError } = useCity();
-  const [tab, setTab] = useState<"annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat">("annuaire");
+  const [tab, setTab] = useState<"annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat" | "horaires" | "tehilim" | "minyan">("annuaire");
   const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
 
   // Directory state
@@ -56,6 +60,8 @@ const FideleSynagogueView = () => {
   const [cours, setCours] = useState<CoursItem[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [annonces, setAnnonces] = useState<AnnonceItem[]>([]);
+  const [minyans, setMinyans] = useState<MinyanSessionView[]>([]);
+  const [tehilimChains, setTehilimChains] = useState<TehilimChainView[]>([]);
   const [contentLoading, setContentLoading] = useState(true);
 
   // Google Maps synagogues
@@ -135,6 +141,8 @@ const FideleSynagogueView = () => {
     const coursQuery = supabase.from("cours_zoom").select("*").order("created_at", { ascending: false }).limit(20);
     const eventsQuery = supabase.from("evenements").select("*").gte("event_date", today).order("event_date", { ascending: true }).limit(20);
     const annoncesQuery = supabase.from("annonces").select("*").order("created_at", { ascending: false }).limit(10);
+    const minyanQuery = supabase.from("minyan_sessions").select("*").gte("office_date", today).order("office_date", { ascending: true }).limit(20);
+    const tehilimQuery = supabase.from("tehilim_chains").select("*").eq("status", "active").order("created_at", { ascending: false }).limit(20);
 
     // If subscribed, filter by synagogue_id using raw filter
     if (filter) {
@@ -142,13 +150,45 @@ const FideleSynagogueView = () => {
       coursQuery.filter("synagogue_id", "in", idList);
       eventsQuery.filter("synagogue_id", "in", idList);
       annoncesQuery.filter("synagogue_id", "in", idList);
+      minyanQuery.filter("synagogue_id", "in", idList);
+      tehilimQuery.filter("synagogue_id", "in", idList);
     }
 
-    const [coursRes, eventsRes, annoncesRes] = await Promise.all([coursQuery, eventsQuery, annoncesQuery]);
+    const [coursRes, eventsRes, annoncesRes, minyanRes, tehilimRes] = await Promise.all([coursQuery, eventsQuery, annoncesQuery, minyanQuery, tehilimQuery]);
 
     setCours((coursRes.data || []) as CoursItem[]);
     setEvents((eventsRes.data || []) as EventItem[]);
     setAnnonces((annoncesRes.data || []) as AnnonceItem[]);
+
+    // Enrich minyan with registration counts
+    const sessions = (minyanRes.data || []) as any[];
+    if (sessions.length > 0) {
+      const sessionIds = sessions.map(s => s.id);
+      const { data: regs } = await supabase.from("minyan_registrations").select("session_id, guest_count").in("session_id", sessionIds);
+      const countMap = new Map<string, number>();
+      (regs || []).forEach((r: any) => {
+        countMap.set(r.session_id, (countMap.get(r.session_id) || 0) + (r.guest_count || 1));
+      });
+      setMinyans(sessions.map(s => ({ ...s, current_count: countMap.get(s.id) || 0 })));
+    } else {
+      setMinyans([]);
+    }
+
+    // Enrich tehilim with completion counts
+    const chains = (tehilimRes.data || []) as any[];
+    if (chains.length > 0) {
+      const chainIds = chains.map(c => c.id);
+      const { data: claims } = await supabase.from("tehilim_claims").select("chain_id, completed").in("chain_id", chainIds);
+      const totalMap = new Map<string, number>();
+      const completedMap = new Map<string, number>();
+      (claims || []).forEach((cl: any) => {
+        totalMap.set(cl.chain_id, (totalMap.get(cl.chain_id) || 0) + 1);
+        if (cl.completed) completedMap.set(cl.chain_id, (completedMap.get(cl.chain_id) || 0) + 1);
+      });
+      setTehilimChains(chains.map(c => ({ ...c, total_chapters: totalMap.get(c.id) || 0, completed_chapters: completedMap.get(c.id) || 0 })));
+    } else {
+      setTehilimChains([]);
+    }
     setContentLoading(false);
   };
 
@@ -192,8 +232,11 @@ const FideleSynagogueView = () => {
 
   const tabs = [
     { id: "annuaire" as const, icon: "📋", label: "Annuaire", count: directory.length },
+    { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
     { id: "synagogues" as const, icon: "🕍", label: "Proches", count: synagogues.length },
     { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
+    { id: "tehilim" as const, icon: "📜", label: "Tehilim", count: tehilimChains.length },
+    { id: "minyan" as const, icon: "👥", label: "Minyan", count: minyans.length },
     { id: "events" as const, icon: "📅", label: "Événements", count: events.length },
     { id: "annonces" as const, icon: "📢", label: "Annonces", count: annonces.length },
     ...(subscribedSynas.length > 0 ? [{ id: "chat" as const, icon: "💬", label: "Chat", count: 0 }] : []),
@@ -481,6 +524,154 @@ const FideleSynagogueView = () => {
               <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{a.content}</p>
             </motion.div>
           ))}
+        </div>
+      )}
+      {/* Horaires – prayer times from subscribed synagogues */}
+      {tab === "horaires" && (
+        <div className="space-y-3">
+          {subscribedSynas.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+              <span className="text-4xl">🕐</span>
+              <p className="mt-3 text-sm text-muted-foreground">Abonnez-vous à une synagogue pour voir ses horaires.</p>
+            </div>
+          ) : subscribedSynas.map((syna, i) => (
+            <motion.div key={syna.id} className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+              <div className="flex items-center gap-3 mb-4">
+                {syna.logo_url ? (
+                  <img src={syna.logo_url} alt="" className="h-10 w-10 rounded-xl border border-border object-contain bg-white" />
+                ) : (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold text-white" style={{ background: syna.primary_color }}>
+                    {syna.name.charAt(0)}
+                  </div>
+                )}
+                <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
+              </div>
+              {(syna.shacharit_time || syna.minha_time || syna.arvit_time) ? (
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-2">Horaires de la semaine</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {syna.shacharit_time && (
+                      <div className="rounded-xl border border-border bg-muted/50 p-3 text-center">
+                        <span className="block text-lg mb-1">🌅</span>
+                        <span className="block text-[10px] text-muted-foreground">Cha'harit</span>
+                        <span className="block text-sm font-bold text-foreground mt-0.5">{syna.shacharit_time.slice(0, 5)}</span>
+                      </div>
+                    )}
+                    {syna.minha_time && (
+                      <div className="rounded-xl border border-border bg-muted/50 p-3 text-center">
+                        <span className="block text-lg mb-1">🌇</span>
+                        <span className="block text-[10px] text-muted-foreground">Min'ha</span>
+                        <span className="block text-sm font-bold text-foreground mt-0.5">{syna.minha_time.slice(0, 5)}</span>
+                      </div>
+                    )}
+                    {syna.arvit_time && (
+                      <div className="rounded-xl border border-border bg-muted/50 p-3 text-center">
+                        <span className="block text-lg mb-1">🌙</span>
+                        <span className="block text-[10px] text-muted-foreground">Arvit</span>
+                        <span className="block text-sm font-bold text-foreground mt-0.5">{syna.arvit_time.slice(0, 5)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground text-center py-2">Aucun horaire renseigné par le président.</p>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Tehilim chains */}
+      {tab === "tehilim" && (
+        <div className="space-y-3">
+          {contentLoading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
+          ) : tehilimChains.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+              <span className="text-4xl">📜</span>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {subscribedCount > 0 ? "Aucune chaîne de Tehilim active." : "Abonnez-vous pour voir les chaînes de Tehilim."}
+              </p>
+            </div>
+          ) : tehilimChains.map((chain, i) => {
+            const progress = chain.total_chapters > 0 ? Math.round((chain.completed_chapters / chain.total_chapters) * 100) : 0;
+            return (
+              <motion.div key={chain.id} className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-display text-sm font-bold text-foreground">{chain.title}</h4>
+                    {chain.dedication && <p className="mt-0.5 text-[11px] text-muted-foreground italic">"{chain.dedication}"</p>}
+                    {chain.dedication_type && (
+                      <span className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}>
+                        {DEDICATION_LABELS[chain.dedication_type] || chain.dedication_type}
+                      </span>
+                    )}
+                  </div>
+                  <a href={`/tehilim/${chain.id}`} className="shrink-0 rounded-xl border-none px-3 py-2 text-xs font-bold text-primary-foreground no-underline cursor-pointer transition-all active:scale-95" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+                    Participer
+                  </a>
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+                    <span>{chain.completed_chapters}/{chain.total_chapters} portions</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: "var(--gradient-gold)" }} />
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Minyan Live */}
+      {tab === "minyan" && (
+        <div className="space-y-3">
+          {contentLoading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
+          ) : minyans.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+              <span className="text-4xl">👥</span>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {subscribedCount > 0 ? "Aucun minyan ouvert actuellement." : "Abonnez-vous pour voir les minyans."}
+              </p>
+            </div>
+          ) : minyans.map((session, i) => {
+            const progress = Math.min(100, Math.round((session.current_count / session.target_count) * 100));
+            const isFull = session.current_count >= session.target_count;
+            return (
+              <motion.div key={session.id} className="rounded-2xl border bg-card p-4" style={{ boxShadow: "var(--shadow-card)", borderColor: isFull ? "hsl(var(--gold) / 0.3)" : "hsl(var(--border))" }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-bold text-foreground">{OFFICE_LABELS[session.office_type] || session.office_type}</span>
+                      {isFull && <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }}>✅ Complet</span>}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      📅 {formatDate(session.office_date)} — 🕐 {session.office_time?.slice(0, 5)}
+                    </p>
+                  </div>
+                  <a href={`/minyan/${session.id}`} className="shrink-0 rounded-xl border-none px-3 py-2 text-xs font-bold text-primary-foreground no-underline cursor-pointer transition-all active:scale-95" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+                    Rejoindre
+                  </a>
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+                    <span>{session.current_count}/{session.target_count} inscrits</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: isFull ? "hsl(var(--gold-matte))" : "var(--gradient-gold)" }} />
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
