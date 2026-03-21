@@ -211,9 +211,27 @@ const FideleSynagogueView = () => {
   useEffect(() => { fetchDirectory(); }, [user]);
   useEffect(() => { fetchContent(); }, [user]);
 
-  const nearbySynagogues = useMemo(() => {
-    if (!hasCoordinates(city.lat, city.lng)) return [];
+  // Fetch Google Maps nearby synagogues when GPS is active
+  const fetchGoogleNearby = useCallback(async () => {
+    if (!hasCoordinates(city.lat, city.lng) || !city._gps) return;
+    setGoogleLoading(true);
+    try {
+      const results = await fetchNearbySynagogues(city.lat, city.lng);
+      setGoogleResults(results.filter(r => r.distance <= 15000));
+      setGoogleSearched(true);
+    } catch (err) {
+      console.warn("Google nearby search failed:", err);
+      setGoogleSearched(true);
+    } finally {
+      setGoogleLoading(false);
+    }
+  }, [city.lat, city.lng, city._gps]);
 
+  useEffect(() => { fetchGoogleNearby(); }, [fetchGoogleNearby]);
+
+  // Partner synagogues from our DB within 15km
+  const nearbyPartners = useMemo(() => {
+    if (!hasCoordinates(city.lat, city.lng)) return [];
     return directory
       .filter((syna) => hasCoordinates(syna.latitude, syna.longitude))
       .map((syna) => ({
@@ -223,6 +241,19 @@ const FideleSynagogueView = () => {
       .filter((syna) => syna.dist <= 15000)
       .sort((a, b) => a.dist - b.dist);
   }, [directory, city.lat, city.lng]);
+
+  // Google results that are NOT already in our DB (deduplicate by proximity)
+  const externalGoogleResults = useMemo(() => {
+    if (nearbyPartners.length === 0) return googleResults;
+    return googleResults.filter((gr) => {
+      // Exclude if a DB partner is within 100m of this Google result
+      return !nearbyPartners.some(
+        (p) => hasCoordinates(p.latitude, p.longitude) && getDistanceInMeters(p.latitude!, p.longitude!, gr.lat, gr.lon) < 100
+      );
+    });
+  }, [googleResults, nearbyPartners]);
+
+  const totalNearbyCount = nearbyPartners.length + externalGoogleResults.length;
 
   const handleSubscribe = async (synaId: string) => {
     if (!user) { toast.error("Connectez-vous pour vous abonner"); return; }
