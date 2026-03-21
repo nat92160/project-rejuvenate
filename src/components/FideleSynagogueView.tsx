@@ -29,9 +29,13 @@ interface SynaDirectoryItem {
 interface CoursItem { id: string; title: string; rav: string; day_of_week: string; course_time: string; zoom_link: string; description: string; synagogue_name?: string; }
 interface EventItem { id: string; title: string; description: string; event_date: string; event_time: string; location: string; event_type: string; zoom_link: string | null; synagogue_name?: string; }
 interface AnnonceItem { id: string; title: string; content: string; priority: string; created_at: string; synagogue_name?: string; }
+interface MinyanSessionView { id: string; office_type: string; office_date: string; office_time: string; target_count: number; current_count: number; synagogue_name?: string; }
+interface TehilimChainView { id: string; title: string; dedication: string | null; dedication_type: string | null; status: string; total_chapters: number; completed_chapters: number; synagogue_name?: string; }
 
 const dayColors: Record<string, string> = { Lundi: "#3b82f6", Mardi: "#8b5cf6", Mercredi: "#22c55e", Jeudi: "#f97316", Vendredi: "#ef4444", Dimanche: "#eab308" };
 const typeEmoji: Record<string, string> = { kidouch: "🍷", cours: "📖", fete: "🎉", autre: "📌" };
+const OFFICE_LABELS: Record<string, string> = { shacharit: "🌅 Cha'harit", minha: "☀️ Min'ha", arvit: "🌙 Arvit" };
+const DEDICATION_LABELS: Record<string, string> = { general: "📜 Général", refoua: "🙏 Réfoua", elevation: "🕯️ Élévation", hatzlakha: "🌟 Hatzlakha" };
 
 const formatTravelTime = (minutes?: number) => {
   if (!minutes) return null;
