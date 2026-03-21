@@ -30,6 +30,7 @@ const downloadICS = (session: MinyanSession) => {
 
 const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
   const { user } = useAuth();
+  const { synagogueId } = useSynaProfile();
   const { city } = useCity();
   const [form, setForm] = useState({ office_type: "shacharit", office_date: "", office_time: "", target_count: "10" });
   const [submitting, setSubmitting] = useState(false);
@@ -53,8 +54,8 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
     if (!form.office_date || !form.office_time) { toast.error("Remplissez date et heure"); return; }
     if (!user) { toast.error("Connectez-vous"); return; }
     setSubmitting(true);
-    const { error } = await supabase.from("minyan_sessions").insert({ creator_id: user.id, office_type: form.office_type, office_date: form.office_date, office_time: form.office_time, target_count: parseInt(form.target_count) || 10 } as any);
-    if (error) toast.error("Erreur: rôle Président requis.");
+    const { error } = await supabase.from("minyan_sessions").insert({ creator_id: user.id, synagogue_id: synagogueId, office_type: form.office_type, office_date: form.office_date, office_time: form.office_time, target_count: parseInt(form.target_count) || 10 } as any);
+    if (error) toast.error("Erreur lors de la création du minyan.");
     else { toast.success("✅ Session créée !"); setForm({ office_type: "shacharit", office_date: "", office_time: "", target_count: "10" }); onCreated(); }
     setSubmitting(false);
   };
