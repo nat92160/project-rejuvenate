@@ -1,0 +1,1 @@
+ALTER TABLE public.synagogue_profiles ADD COLUMN verified boolean NOT NULL DEFAULT false;
