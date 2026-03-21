@@ -72,6 +72,11 @@ const FideleSynagogueView = () => {
   const [dirLoading, setDirLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
 
+  // Google Maps nearby results
+  const [googleResults, setGoogleResults] = useState<SynagogueResult[]>([]);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleSearched, setGoogleSearched] = useState(false);
+
   // Content state
   const [cours, setCours] = useState<CoursItem[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
