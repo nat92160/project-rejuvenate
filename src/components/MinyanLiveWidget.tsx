@@ -98,6 +98,7 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
 const MinyanLiveWidget = () => {
   const { user, dbRole } = useAuth();
   const { subIds, loading: subLoading } = useSubscribedSynaIds();
+  const { synagogueId } = useSynaProfile();
   const isPresident = dbRole === "president";
   const [sessions, setSessions] = useState<MinyanSession[]>([]);
   const [registrations, setRegistrations] = useState<Record<string, Registration[]>>({});
@@ -105,6 +106,7 @@ const MinyanLiveWidget = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [guestPromptOpen, setGuestPromptOpen] = useState(false);
+  const [sendingUrgency, setSendingUrgency] = useState(false);
 
   const fetchSessions = async () => {
     const today = new Date().toISOString().split("T")[0];
