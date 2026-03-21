@@ -526,6 +526,154 @@ const FideleSynagogueView = () => {
           ))}
         </div>
       )}
+      {/* Horaires – prayer times from subscribed synagogues */}
+      {tab === "horaires" && (
+        <div className="space-y-3">
+          {subscribedSynas.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+              <span className="text-4xl">🕐</span>
+              <p className="mt-3 text-sm text-muted-foreground">Abonnez-vous à une synagogue pour voir ses horaires.</p>
+            </div>
+          ) : subscribedSynas.map((syna, i) => (
+            <motion.div key={syna.id} className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+              <div className="flex items-center gap-3 mb-4">
+                {syna.logo_url ? (
+                  <img src={syna.logo_url} alt="" className="h-10 w-10 rounded-xl border border-border object-contain bg-white" />
+                ) : (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold text-white" style={{ background: syna.primary_color }}>
+                    {syna.name.charAt(0)}
+                  </div>
+                )}
+                <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
+              </div>
+              {(syna.shacharit_time || syna.minha_time || syna.arvit_time) ? (
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-2">Horaires de la semaine</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {syna.shacharit_time && (
+                      <div className="rounded-xl border border-border bg-muted/50 p-3 text-center">
+                        <span className="block text-lg mb-1">🌅</span>
+                        <span className="block text-[10px] text-muted-foreground">Cha'harit</span>
+                        <span className="block text-sm font-bold text-foreground mt-0.5">{syna.shacharit_time.slice(0, 5)}</span>
+                      </div>
+                    )}
+                    {syna.minha_time && (
+                      <div className="rounded-xl border border-border bg-muted/50 p-3 text-center">
+                        <span className="block text-lg mb-1">🌇</span>
+                        <span className="block text-[10px] text-muted-foreground">Min'ha</span>
+                        <span className="block text-sm font-bold text-foreground mt-0.5">{syna.minha_time.slice(0, 5)}</span>
+                      </div>
+                    )}
+                    {syna.arvit_time && (
+                      <div className="rounded-xl border border-border bg-muted/50 p-3 text-center">
+                        <span className="block text-lg mb-1">🌙</span>
+                        <span className="block text-[10px] text-muted-foreground">Arvit</span>
+                        <span className="block text-sm font-bold text-foreground mt-0.5">{syna.arvit_time.slice(0, 5)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground text-center py-2">Aucun horaire renseigné par le président.</p>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Tehilim chains */}
+      {tab === "tehilim" && (
+        <div className="space-y-3">
+          {contentLoading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
+          ) : tehilimChains.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+              <span className="text-4xl">📜</span>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {subscribedCount > 0 ? "Aucune chaîne de Tehilim active." : "Abonnez-vous pour voir les chaînes de Tehilim."}
+              </p>
+            </div>
+          ) : tehilimChains.map((chain, i) => {
+            const progress = chain.total_chapters > 0 ? Math.round((chain.completed_chapters / chain.total_chapters) * 100) : 0;
+            return (
+              <motion.div key={chain.id} className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-display text-sm font-bold text-foreground">{chain.title}</h4>
+                    {chain.dedication && <p className="mt-0.5 text-[11px] text-muted-foreground italic">"{chain.dedication}"</p>}
+                    {chain.dedication_type && (
+                      <span className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}>
+                        {DEDICATION_LABELS[chain.dedication_type] || chain.dedication_type}
+                      </span>
+                    )}
+                  </div>
+                  <a href={`/tehilim/${chain.id}`} className="shrink-0 rounded-xl border-none px-3 py-2 text-xs font-bold text-primary-foreground no-underline cursor-pointer transition-all active:scale-95" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+                    Participer
+                  </a>
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+                    <span>{chain.completed_chapters}/{chain.total_chapters} portions</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: "var(--gradient-gold)" }} />
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Minyan Live */}
+      {tab === "minyan" && (
+        <div className="space-y-3">
+          {contentLoading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
+          ) : minyans.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+              <span className="text-4xl">👥</span>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {subscribedCount > 0 ? "Aucun minyan ouvert actuellement." : "Abonnez-vous pour voir les minyans."}
+              </p>
+            </div>
+          ) : minyans.map((session, i) => {
+            const progress = Math.min(100, Math.round((session.current_count / session.target_count) * 100));
+            const isFull = session.current_count >= session.target_count;
+            return (
+              <motion.div key={session.id} className="rounded-2xl border bg-card p-4" style={{ boxShadow: "var(--shadow-card)", borderColor: isFull ? "hsl(var(--gold) / 0.3)" : "hsl(var(--border))" }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-bold text-foreground">{OFFICE_LABELS[session.office_type] || session.office_type}</span>
+                      {isFull && <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }}>✅ Complet</span>}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      📅 {formatDate(session.office_date)} — 🕐 {session.office_time?.slice(0, 5)}
+                    </p>
+                  </div>
+                  <a href={`/minyan/${session.id}`} className="shrink-0 rounded-xl border-none px-3 py-2 text-xs font-bold text-primary-foreground no-underline cursor-pointer transition-all active:scale-95" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+                    Rejoindre
+                  </a>
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+                    <span>{session.current_count}/{session.target_count} inscrits</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: isFull ? "hsl(var(--gold-matte))" : "var(--gradient-gold)" }} />
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Chat */}
       {tab === "chat" && (
