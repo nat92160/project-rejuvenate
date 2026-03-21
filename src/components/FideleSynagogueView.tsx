@@ -116,6 +116,7 @@ const FideleSynagogueView = () => {
         email: s.email || null,
         latitude: s.latitude || null,
         longitude: s.longitude || null,
+        verified: s.verified ?? false,
       }))
     );
     setDirLoading(false);
