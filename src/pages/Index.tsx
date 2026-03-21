@@ -29,6 +29,8 @@ import EvenementsWidget from "@/components/EvenementsWidget";
 import CoursVirtuelWidget from "@/components/CoursVirtuelWidget";
 import FideleSynagogueView from "@/components/FideleSynagogueView";
 import SynaProfileManager from "@/components/SynaProfileManager";
+import SiddourWidget from "@/components/SiddourWidget";
+import TehilimLibreWidget from "@/components/TehilimLibreWidget";
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
