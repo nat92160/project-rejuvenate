@@ -3,20 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
 
-type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat";
-
-interface Section {
-  index: number;
-  title: string;
-  heTitle: string;
-}
-
-interface SectionContent {
-  hebrew: string[];
-  french: string[];
-  title: string;
-  heTitle: string;
-}
+type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat" | "kaddish";
 
 type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat" | "kaddish";
 
