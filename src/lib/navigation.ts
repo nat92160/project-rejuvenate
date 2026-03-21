@@ -28,6 +28,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "evenements", icon: "📅", label: "Événements", modes: ["fidele", "president"] },
   { id: "coursvirtuel", icon: "🎥", label: "Cours", modes: ["fidele", "president"] },
   { id: "affiche", icon: "📋", label: "Affiche", modes: ["president"] },
+  { id: "horaires", icon: "🕐", label: "Horaires", modes: ["president"] },
   { id: "masynagogue", icon: "🏛️", label: "Ma Synagogue", modes: ["president"] },
 ];
 
