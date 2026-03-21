@@ -18,6 +18,21 @@ interface SectionContent {
   heTitle: string;
 }
 
+type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat" | "kaddish";
+
+interface Section {
+  index: number;
+  title: string;
+  heTitle: string;
+}
+
+interface SectionContent {
+  hebrew: string[];
+  french: string[];
+  title: string;
+  heTitle: string;
+}
+
 const OFFICES: { key: Office; label: string; icon: string }[] = [
   { key: "shacharit", label: "Cha'harit", icon: "🌅" },
   { key: "minha", label: "Min'ha", icon: "🌇" },
@@ -25,6 +40,7 @@ const OFFICES: { key: Office; label: string; icon: string }[] = [
   { key: "shabbat", label: "Chabbat", icon: "🕯️" },
   { key: "hallel", label: "Hallel", icon: "🎶" },
   { key: "birkat", label: "Birkat", icon: "🍞" },
+  { key: "kaddish", label: "Kaddich", icon: "📜" },
 ];
 
 const CACHE_PREFIX = "siddour_v3_";
