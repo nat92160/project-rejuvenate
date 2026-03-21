@@ -474,7 +474,7 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
                             className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider"
                             style={{ background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }}
                           >
-                            🏛️ Président
+                            {isAdjointMsg ? "🏅 Adjoint" : "🏛️ Président"}
                           </span>
                         )}
                       </div>
