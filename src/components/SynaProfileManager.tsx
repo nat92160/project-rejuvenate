@@ -32,6 +32,9 @@ const DEFAULT_PROFILE: SynaProfile = {
   speakers: [],
   president_first_name: "",
   president_last_name: "",
+  shacharit_time: "",
+  minha_time: "",
+  arvit_time: "",
 };
 
 const SynaProfileManager = () => {
