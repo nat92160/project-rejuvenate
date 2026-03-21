@@ -14,7 +14,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "synagogue", icon: "🏛️", label: "Synagogues", modes: ["fidele"] },
   { id: "siddour", icon: "📖", label: "Siddour", modes: ["fidele", "president"] },
   { id: "tehilimlibre", icon: "📜", label: "Tehilim", modes: ["fidele", "president"] },
-  { id: "tehilim", icon: "🤝", label: "Chaînes", modes: ["fidele", "president"] },
+  
   { id: "fetes", icon: "📅", label: "Fêtes", modes: ["fidele", "president"] },
   { id: "roshhodesh", icon: "🌙", label: "Roch Hodech", modes: ["fidele", "president"] },
   { id: "shabbatspec", icon: "✨", label: "Chabbatot", modes: ["fidele", "president"] },
