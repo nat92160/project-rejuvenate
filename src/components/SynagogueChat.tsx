@@ -438,7 +438,8 @@ const SynagogueChat = ({ synagogueId, synagogueName, isPresident = false }: Syna
             {messages.map((msg) => {
               const isMine = msg.user_id === user.id;
               const isEditing = editingId === msg.id;
-              const msgFromPresident = msg.is_president || (!!presidentId && msg.user_id === presidentId);
+              const msgFromPresident = msg.is_president || (!!presidentId && msg.user_id === presidentId) || (!!adjointId && msg.user_id === adjointId);
+              const isAdjointMsg = !!adjointId && msg.user_id === adjointId;
 
               return (
                 <motion.div
