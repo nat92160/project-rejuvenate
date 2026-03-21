@@ -142,6 +142,7 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
   const renderFeature = () => {
     switch (activeFeature) {
       case "syna-profile": return <SynaProfileManager />;
+      case "adjoint": return <AdjointManager />;
       case "chat": return <ChatManagement />;
       case "affiche": return <AfficheChabbatWidget />;
       case "annonces": return <AnnoncesWidget />;
