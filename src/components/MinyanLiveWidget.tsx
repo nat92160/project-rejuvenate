@@ -79,6 +79,12 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
             <input type="time" value={form.office_time} onChange={e => setForm({...form, office_time: e.target.value})}
               className="w-full rounded-xl bg-background border border-border text-foreground text-sm"
               style={{ height: "56px", minHeight: "56px", padding: "0 16px", WebkitAppearance: "none", appearance: "none" }} />
+            {form.office_type === "minha" && suggestedMinha && (
+              <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                <span>🕐</span> Heure halakhique suggérée : <strong className="text-foreground">{suggestedMinha}</strong>
+                <button onClick={() => setForm(f => ({ ...f, office_time: suggestedMinha }))} className="text-primary font-bold bg-transparent border-none cursor-pointer text-[10px] underline ml-1">Appliquer</button>
+              </p>
+            )}
           </div>
         </div>
         <button onClick={handleCreate} disabled={submitting || !form.office_date || !form.office_time} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50" style={{ background: "var(--gradient-gold)" }}>
