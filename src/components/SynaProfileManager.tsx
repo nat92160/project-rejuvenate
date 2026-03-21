@@ -66,6 +66,9 @@ const SynaProfileManager = () => {
           speakers: Array.isArray(data.speakers) ? (data.speakers as string[]) : [],
           president_first_name: (data as any).president_first_name || "",
           president_last_name: (data as any).president_last_name || "",
+          shacharit_time: (data as any).shacharit_time || "",
+          minha_time: (data as any).minha_time || "",
+          arvit_time: (data as any).arvit_time || "",
         });
       }
       setLoading(false);
