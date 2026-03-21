@@ -43,7 +43,7 @@ const OFFICES: { key: Office; label: string; icon: string }[] = [
   { key: "kaddish", label: "Kaddich", icon: "📜" },
 ];
 
-const CACHE_PREFIX = "siddour_v3_";
+const CACHE_PREFIX = "siddour_v4_";
 
 const SiddourWidget = () => {
   const [office, setOffice] = useState<Office>("shacharit");
