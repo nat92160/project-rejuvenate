@@ -390,15 +390,15 @@ const FideleSynagogueView = () => {
 
           {/* Verified synagogues from our DB with distance */}
           {(() => {
-            const verifiedSynas = directory.filter(s => s.verified && s.latitude && s.longitude);
-            const withDistance = verifiedSynas.map(s => {
+            const allSynas = directory.filter(s => s.latitude && s.longitude);
+            const withDistance = allSynas.map(s => {
               if (!city.lat || !city.lng || !s.latitude || !s.longitude) return { ...s, dist: Infinity };
               const R = 6371000;
               const dLat = ((s.latitude - city.lat) * Math.PI) / 180;
               const dLon = ((s.longitude - city.lng) * Math.PI) / 180;
               const a = Math.sin(dLat / 2) ** 2 + Math.cos((city.lat * Math.PI) / 180) * Math.cos((s.latitude * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
               return { ...s, dist: R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) };
-            }).sort((a, b) => a.dist - b.dist);
+            }).filter(s => s.dist <= 15000).sort((a, b) => a.dist - b.dist);
 
             if (withDistance.length === 0) return (
               <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
