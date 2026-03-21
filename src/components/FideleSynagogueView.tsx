@@ -141,6 +141,8 @@ const FideleSynagogueView = () => {
     const coursQuery = supabase.from("cours_zoom").select("*").order("created_at", { ascending: false }).limit(20);
     const eventsQuery = supabase.from("evenements").select("*").gte("event_date", today).order("event_date", { ascending: true }).limit(20);
     const annoncesQuery = supabase.from("annonces").select("*").order("created_at", { ascending: false }).limit(10);
+    const minyanQuery = supabase.from("minyan_sessions").select("*").gte("office_date", today).order("office_date", { ascending: true }).limit(20);
+    const tehilimQuery = supabase.from("tehilim_chains").select("*").eq("status", "active").order("created_at", { ascending: false }).limit(20);
 
     // If subscribed, filter by synagogue_id using raw filter
     if (filter) {
@@ -148,13 +150,45 @@ const FideleSynagogueView = () => {
       coursQuery.filter("synagogue_id", "in", idList);
       eventsQuery.filter("synagogue_id", "in", idList);
       annoncesQuery.filter("synagogue_id", "in", idList);
+      minyanQuery.filter("synagogue_id", "in", idList);
+      tehilimQuery.filter("synagogue_id", "in", idList);
     }
 
-    const [coursRes, eventsRes, annoncesRes] = await Promise.all([coursQuery, eventsQuery, annoncesQuery]);
+    const [coursRes, eventsRes, annoncesRes, minyanRes, tehilimRes] = await Promise.all([coursQuery, eventsQuery, annoncesQuery, minyanQuery, tehilimQuery]);
 
     setCours((coursRes.data || []) as CoursItem[]);
     setEvents((eventsRes.data || []) as EventItem[]);
     setAnnonces((annoncesRes.data || []) as AnnonceItem[]);
+
+    // Enrich minyan with registration counts
+    const sessions = (minyanRes.data || []) as any[];
+    if (sessions.length > 0) {
+      const sessionIds = sessions.map(s => s.id);
+      const { data: regs } = await supabase.from("minyan_registrations").select("session_id, guest_count").in("session_id", sessionIds);
+      const countMap = new Map<string, number>();
+      (regs || []).forEach((r: any) => {
+        countMap.set(r.session_id, (countMap.get(r.session_id) || 0) + (r.guest_count || 1));
+      });
+      setMinyans(sessions.map(s => ({ ...s, current_count: countMap.get(s.id) || 0 })));
+    } else {
+      setMinyans([]);
+    }
+
+    // Enrich tehilim with completion counts
+    const chains = (tehilimRes.data || []) as any[];
+    if (chains.length > 0) {
+      const chainIds = chains.map(c => c.id);
+      const { data: claims } = await supabase.from("tehilim_claims").select("chain_id, completed").in("chain_id", chainIds);
+      const totalMap = new Map<string, number>();
+      const completedMap = new Map<string, number>();
+      (claims || []).forEach((cl: any) => {
+        totalMap.set(cl.chain_id, (totalMap.get(cl.chain_id) || 0) + 1);
+        if (cl.completed) completedMap.set(cl.chain_id, (completedMap.get(cl.chain_id) || 0) + 1);
+      });
+      setTehilimChains(chains.map(c => ({ ...c, total_chapters: totalMap.get(c.id) || 0, completed_chapters: completedMap.get(c.id) || 0 })));
+    } else {
+      setTehilimChains([]);
+    }
     setContentLoading(false);
   };
 
