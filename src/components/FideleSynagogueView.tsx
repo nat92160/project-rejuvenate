@@ -765,7 +765,7 @@ const FideleSynagogueView = () => {
         </div>
       )}
 
-      {/* Minyan Live */}
+      {/* Urgence Minyan */}
       {tab === "minyan" && (
         <div className="space-y-3">
           {contentLoading ? (
