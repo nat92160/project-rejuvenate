@@ -42,7 +42,6 @@ const PrayerTimesWidget = () => {
         .maybeSingle();
       if (data) {
         setSynaId(data.id);
-        // Also fetch the _2 columns via a raw-ish approach since types may not have them yet
         const { data: extra } = await supabase
           .from("synagogue_profiles")
           .select("shacharit_time_2, minha_time_2, arvit_time_2" as any)
@@ -95,7 +94,7 @@ const PrayerTimesWidget = () => {
       <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
         <span className="text-4xl">🏛️</span>
         <p className="mt-3 text-sm text-muted-foreground">
-          Créez d'abord votre profil de synagogue dans "Infos Syna" pour gérer les horaires.
+          Créez d'abord votre profil dans "Infos Syna" pour gérer les horaires.
         </p>
       </div>
     );
@@ -115,7 +114,7 @@ const PrayerTimesWidget = () => {
         </p>
       </div>
 
-      {/* Time inputs */}
+      {/* Time inputs — stacked vertical layout for mobile */}
       <div className="space-y-3">
         {offices.map((office) => (
           <div
@@ -123,7 +122,7 @@ const PrayerTimesWidget = () => {
             className="rounded-2xl border border-border bg-card p-4"
             style={{ boxShadow: "var(--shadow-card)" }}
           >
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-3 mb-3">
               <div
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl"
                 style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.15), hsl(var(--gold) / 0.05))" }}
@@ -136,35 +135,37 @@ const PrayerTimesWidget = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <div>
-                <label className="text-[10px] text-muted-foreground mb-1 block">Horaire 1</label>
-                <input
-                  type="time"
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
-                  value={times[office.key]}
-                  onChange={(e) => update(office.key, e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground mb-1 block">Horaire 2 <span className="opacity-50">(optionnel)</span></label>
-                <input
-                  type="time"
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
-                  value={times[office.key2]}
-                  onChange={(e) => update(office.key2, e.target.value)}
-                />
-              </div>
+            {/* Horaire 1 */}
+            <div className="mb-2">
+              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Horaire 1</label>
+              <input
+                type="time"
+                className="block w-full h-[52px] rounded-xl border border-border bg-background px-4 text-base text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                value={times[office.key]}
+                onChange={(e) => update(office.key, e.target.value)}
+              />
+            </div>
+
+            {/* Horaire 2 */}
+            <div>
+              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">
+                Horaire 2 <span className="opacity-50">(optionnel)</span>
+              </label>
+              <input
+                type="time"
+                className="block w-full h-[52px] rounded-xl border border-border bg-background px-4 text-base text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                value={times[office.key2]}
+                onChange={(e) => update(office.key2, e.target.value)}
+              />
             </div>
           </div>
         ))}
       </div>
 
-      {/* Info card */}
+      {/* Info */}
       <div className="rounded-2xl border border-border bg-muted/30 p-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          💡 Ces horaires seront affichés dans l'annuaire et l'onglet <strong>"Ma Synagogue"</strong> de vos fidèles,
-          au même titre que les horaires de Chabbat.
+          💡 Ces horaires seront affichés dans l'annuaire et l'onglet <strong>"Ma Synagogue"</strong> de vos fidèles.
         </p>
       </div>
 
