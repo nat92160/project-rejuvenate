@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
+import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
+import { exportPosterPng } from "@/components/poster/usePosterExport";
 
 const ShabbatWidget = () => {
   const { city } = useCity();
