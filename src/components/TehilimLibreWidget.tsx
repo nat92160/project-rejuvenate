@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
+import { toHebrewLetter } from "@/lib/utils";
 
 const TOTAL_PSALMS = 150;
 const CACHE_PREFIX = "tehilim_libre_";
@@ -195,10 +196,10 @@ const TehilimLibreWidget = () => {
           </h4>
           <p className="text-center text-xs text-muted-foreground mb-5">Psaume {selectedChapter}</p>
 
-          <div dir="rtl" style={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2, textAlign: "justify" }} className="text-foreground">
+          <div dir="rtl" style={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.2, textAlign: "justify", fontWeight: 500, color: "#1a1a1a", letterSpacing: "0.02em", wordSpacing: "0.08em" }} className="text-foreground">
             {verses.map((verse, i) => (
               <span key={i}>
-                <span className="text-muted-foreground/40 font-bold" style={{ fontSize: `${Math.max(fontSize - 6, 11)}px`, marginInlineEnd: "4px" }}>{i + 1}</span>
+                <span style={{ fontSize: `${Math.max(fontSize - 4, 13)}px`, marginInlineEnd: "6px", fontWeight: 700, color: "#555" }}>{toHebrewLetter(i + 1)}</span>
                 <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
               </span>
             ))}
