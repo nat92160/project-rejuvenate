@@ -387,6 +387,27 @@ export type Database = {
         }
         Relationships: []
       }
+      shabbat_push_log: {
+        Row: {
+          id: string
+          recipients_count: number
+          sent_at: string
+          sent_date: string
+        }
+        Insert: {
+          id?: string
+          recipients_count?: number
+          sent_at?: string
+          sent_date?: string
+        }
+        Update: {
+          id?: string
+          recipients_count?: number
+          sent_at?: string
+          sent_date?: string
+        }
+        Relationships: []
+      }
       synagogue_chat_requests: {
         Row: {
           created_at: string
