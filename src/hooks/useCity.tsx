@@ -158,8 +158,21 @@ export function CityProvider({ children }: { children: ReactNode }) {
           accuracyMeters: null,
         };
 
+  // Auto-geolocate on first visit
+  const triggerAutoGeo = () => {
+    if (autoGeoTriggered) return;
+    setAutoGeoTriggered(true);
+    try {
+      const hasVisited = localStorage.getItem("calj_has_visited");
+      if (!hasVisited && navigator.geolocation) {
+        localStorage.setItem("calj_has_visited", "1");
+        geolocate();
+      }
+    } catch { /* ignore */ }
+  };
+
   return (
-    <CityContext.Provider value={{ city, cityKey, setCityKey, isGeolocating, geolocate, locationError }}>
+    <CityContext.Provider value={{ city, cityKey, setCityKey, isGeolocating, geolocate, locationError, triggerAutoGeo }}>
       {children}
     </CityContext.Provider>
   );
