@@ -135,8 +135,8 @@ const PrayerTimesWidget = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="min-w-0 sm:min-w-[140px]">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="min-w-0">
                 <label className="mb-1.5 block text-[10px] font-medium text-muted-foreground/60">Horaire 1</label>
                 <input
                   type="time"
@@ -145,7 +145,7 @@ const PrayerTimesWidget = () => {
                   onChange={(e) => update(office.key, e.target.value)}
                 />
               </div>
-              <div className="min-w-0 sm:min-w-[140px]">
+              <div className="min-w-0">
                 <label className="mb-1.5 block text-[10px] font-medium text-muted-foreground/60">Horaire 2 (opt.)</label>
                 <input
                   type="time"
