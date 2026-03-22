@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 
 // Données Consistoire 5786 (2025-2026)
@@ -9,6 +10,7 @@ const FORBIDDEN_PERIODS = [
     icon: "🌾",
     detail: "Du lendemain du dernier Yom Tov de Pessah jusqu'à Lag BaOmer inclus.",
     rite: "Séfarade",
+    month: "avril-mai",
   },
   {
     name: "Omer — Rite Ashkénaze",
@@ -17,6 +19,7 @@ const FORBIDDEN_PERIODS = [
     icon: "🌾",
     detail: "Sauf le 5 mai 2026 (Lag BaOmer). Du 2e jour de Pessah jusqu'au 3 Sivan.",
     rite: "Ashkénaze",
+    month: "avril-mai",
   },
   {
     name: "Trois Semaines (Bein HaMétsarim)",
@@ -24,10 +27,19 @@ const FORBIDDEN_PERIODS = [
     end: "2026-07-28",
     icon: "😢",
     detail: "Du 17 Tamouz au 9 Av — Période de deuil national. Mariages strictement interdits.",
+    month: "juillet",
   },
 ];
 
+const FILTER_OPTIONS = [
+  { value: "all", label: "Tout" },
+  { value: "interdit", label: "🚫 Interdit" },
+  { value: "autorise", label: "✅ Autorisé" },
+];
+
 const MariagesWidget = () => {
+  const [filter, setFilter] = useState("all");
+  const [searchText, setSearchText] = useState("");
   const now = new Date();
 
   const isInPeriod = (start: string, end: string) => {
@@ -84,6 +96,32 @@ const MariagesWidget = () => {
           : "✅ Aujourd'hui — Mariage autorisé"}
       </div>
 
+      {/* Filter bar */}
+      <div className="mt-4 space-y-2">
+        <input
+          type="text"
+          placeholder="🔍 Rechercher (mois, rite, période...)"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+        <div className="flex justify-center gap-2">
+          {FILTER_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setFilter(opt.value)}
+              className="px-3 py-1.5 rounded-full text-[11px] font-bold border-none cursor-pointer transition-all"
+              style={{
+                background: filter === opt.value ? "hsl(var(--gold) / 0.15)" : "hsl(var(--muted) / 0.5)",
+                color: filter === opt.value ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))",
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Legend */}
       <div className="flex justify-center gap-5 flex-wrap mt-4 mb-5 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
@@ -98,7 +136,20 @@ const MariagesWidget = () => {
 
       {/* Periods */}
       <div className="space-y-3">
-        {FORBIDDEN_PERIODS.filter((p) => !isPast(p.end)).map((p) => {
+        {FORBIDDEN_PERIODS.filter((p) => {
+          if (isPast(p.end)) return false;
+          if (filter === "interdit") return true; // All periods are forbidden
+          if (filter === "autorise") return false; // Hide all forbidden periods
+          if (searchText.trim()) {
+            const q = searchText.toLowerCase();
+            const matchName = p.name.toLowerCase().includes(q);
+            const matchRite = ("rite" in p) && p.rite?.toLowerCase().includes(q);
+            const matchMonth = ("month" in p) && p.month?.toLowerCase().includes(q);
+            const matchDetail = p.detail.toLowerCase().includes(q);
+            return matchName || matchRite || matchMonth || matchDetail;
+          }
+          return true;
+        }).map((p) => {
           const active = isInPeriod(p.start, p.end);
           return (
             <div

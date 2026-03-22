@@ -7,8 +7,15 @@ import {
   getAvailableTabs,
   getBottomNavStorageKey,
   sanitizeBottomTabs,
+  NAV_ITEMS,
   type BottomNavMode,
 } from "@/lib/navigation";
+
+function isFridayOrShabbat(): boolean {
+  const now = new Date();
+  const day = now.getDay();
+  return (day === 5 && now.getHours() >= 12) || day === 6;
+}
 
 interface BottomNavProps {
   activeTab: string;
@@ -55,9 +62,19 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
     }
   }, [selectedTabs, mode]);
 
+  const fridayMode = isFridayOrShabbat();
+
   const visibleTabs = [
     ...selectedTabs
-      .map((id) => availableTabs.find((tab) => tab.id === id))
+      .map((id) => {
+        const tab = availableTabs.find((tab) => tab.id === id) || NAV_ITEMS.find((t) => t.id === id);
+        if (!tab) return null;
+        // On Friday/Shabbat, replace the central tab with "Focus Chabbat"
+        if (fridayMode && id === selectedTabs[Math.floor(selectedTabs.length / 2)]) {
+          return { ...tab, id: "chabbat", icon: "🕯️", label: "Chabbat" };
+        }
+        return tab;
+      })
       .filter((tab): tab is (typeof availableTabs)[number] => Boolean(tab)),
     { id: "menu", icon: "☰", label: "Plus" },
   ];
@@ -111,9 +128,15 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                   event.preventDefault();
                   if (tab.id !== "menu") setShowCustomize(true);
                 }}
-                className="relative flex flex-1 min-w-0 flex-col items-center justify-center gap-1 border-none bg-transparent px-0 transition-all duration-200 cursor-pointer"
+                className={`relative flex flex-1 min-w-0 flex-col items-center justify-center gap-1 border-none bg-transparent px-0 transition-all duration-200 cursor-pointer ${
+                  fridayMode && tab.id === "chabbat" ? "animate-pulse" : ""
+                }`}
                 style={{
-                  color: isActive ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))",
+                  color: isActive
+                    ? "hsl(var(--gold-matte))"
+                    : fridayMode && tab.id === "chabbat"
+                    ? "hsl(var(--gold))"
+                    : "hsl(var(--muted-foreground))",
                   fontFamily: "'Montserrat', sans-serif",
                   padding: "8px 0",
                   WebkitTapHighlightColor: "transparent",
