@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
-import { toHebrewLetter } from "@/lib/utils";
+import { toHebrewLetter, isInstructionOnly } from "@/lib/utils";
 
 type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat" | "kaddish";
 
