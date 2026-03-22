@@ -2,3 +2,6 @@ project_id = "kkocryqhlieoyhtsqlns"
 
 [functions.send-push]
 verify_jwt = false
+
+[functions.shabbat-reminder]
+verify_jwt = false
