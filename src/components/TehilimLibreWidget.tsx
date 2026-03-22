@@ -22,7 +22,7 @@ const TehilimLibreWidget = () => {
   const [verses, setVerses] = useState<string[]>([]);
   const [heTitle, setHeTitle] = useState("");
   const [loading, setLoading] = useState(false);
-  const [fontSize, setFontSize] = useState(22);
+  const [fontSize, setFontSize] = useState(24);
   const [favorites, setFavorites] = useState<number[]>(loadFavorites);
   const [showFavOnly, setShowFavOnly] = useState(false);
 
@@ -190,16 +190,16 @@ const TehilimLibreWidget = () => {
       {loading ? (
         <div className="py-10 text-center text-sm text-muted-foreground">Chargement du psaume…</div>
       ) : (
-        <div className="rounded-2xl border border-border p-6 px-7" style={{ boxShadow: "var(--shadow-card)", background: "#FDFDFD" }}>
-          <h4 className="text-center text-lg font-bold text-foreground mb-1" style={{ fontFamily: "'Frank Ruhl Libre', serif", direction: "rtl" }}>
+        <div className="rounded-2xl border border-border/50 px-5 py-6 sm:px-8" style={{ boxShadow: "var(--shadow-card)", background: "#FEFEFE" }}>
+          <h4 className="text-center font-bold text-foreground mb-0.5" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", direction: "rtl", fontSize: `${fontSize + 2}px` }}>
             {heTitle}
           </h4>
-          <p className="text-center text-xs text-muted-foreground mb-5">Psaume {selectedChapter}</p>
+          <p className="text-center text-xs text-muted-foreground mb-6">Psaume {selectedChapter}</p>
 
-          <div dir="rtl" style={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.2, textAlign: "justify", fontWeight: 500, color: "#1a1a1a", letterSpacing: "0.02em", wordSpacing: "0.08em" }} className="text-foreground">
+          <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.4, textAlign: "justify", fontWeight: 600, color: "#111", wordSpacing: "0.06em" }}>
             {verses.map((verse, i) => (
               <span key={i}>
-                <span style={{ fontSize: `${Math.max(fontSize - 4, 13)}px`, marginInlineEnd: "6px", fontWeight: 700, color: "#555" }}>{toHebrewLetter(i + 1)}</span>
+                <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
                 <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
               </span>
             ))}

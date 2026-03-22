@@ -38,7 +38,7 @@ const SiddourWidget = () => {
   const [content, setContent] = useState<SectionContent | null>(null);
   const [loading, setLoading] = useState(false);
   const [tocLoading, setTocLoading] = useState(true);
-  const [fontSize, setFontSize] = useState(22);
+  const [fontSize, setFontSize] = useState(24);
   const [showFrench, setShowFrench] = useState(false);
 
   const fetchToc = useCallback(async (off: Office) => {
@@ -195,20 +195,20 @@ const SiddourWidget = () => {
             {loading ? (
               <div className="py-10 text-center text-sm text-muted-foreground">Chargement du texte…</div>
             ) : content ? (
-              <div className="rounded-2xl border border-border p-6 px-7" style={{ boxShadow: "var(--shadow-card)", background: "#FDFDFD" }}>
+              <div className="rounded-2xl border border-border/50 px-5 py-6 sm:px-8" style={{ boxShadow: "var(--shadow-card)", background: "#FEFEFE" }}>
                 <h4 className="text-center font-display text-base font-bold text-foreground mb-0.5">{content.title}</h4>
-                <p className="text-center text-lg text-muted-foreground mb-6" style={{ fontFamily: "'Frank Ruhl Libre', serif" }}>{content.heTitle}</p>
+                <p className="text-center text-muted-foreground mb-6" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px` }}>{content.heTitle}</p>
 
-                <div dir="rtl" style={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.2, textAlign: "justify", fontWeight: 500, color: "#1a1a1a", letterSpacing: "0.02em", wordSpacing: "0.08em" }} className="text-foreground">
+                <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.4, textAlign: "justify", fontWeight: 600, color: "#111", wordSpacing: "0.06em" }}>
                   {content.hebrew.map((verse, i) => (
                     <span key={i}>
-                      <span style={{ fontSize: `${Math.max(fontSize - 4, 13)}px`, marginInlineEnd: "6px", fontWeight: 700, color: "#555" }}>{toHebrewLetter(i + 1)}</span>
+                      <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
                       <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
                       {showFrench && content.french[i] && (
                         <p
                           dir="ltr"
-                          className="text-muted-foreground leading-relaxed my-1"
-                          style={{ fontSize: `${Math.max(fontSize - 6, 12)}px`, textAlign: "left" }}
+                          className="text-muted-foreground leading-relaxed my-2"
+                          style={{ fontSize: `${Math.max(fontSize - 6, 12)}px`, textAlign: "left", fontWeight: 400, color: "#666", fontFamily: "'Lora', serif", fontStyle: "italic" }}
                           dangerouslySetInnerHTML={{ __html: content.french[i] }}
                         />
                       )}
