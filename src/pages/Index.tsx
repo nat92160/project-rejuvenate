@@ -106,6 +106,9 @@ const IndexContent = () => {
       case "horaires": return <PrayerTimesWidget />;
       case "infosyna": return <SynaProfileManager />;
       case "shabbatspec": return <ShabbatSpeciauxWidget />;
+      case "perso": return <EspacePersonnelWidget />;
+      case "alerte": return <AlerteCommunautaireWidget />;
+      case "calendrier-mariages": return <MariagesCalendarWidget />;
       case "communaute":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
