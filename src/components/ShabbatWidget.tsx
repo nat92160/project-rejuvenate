@@ -110,9 +110,26 @@ const ShabbatWidget = () => {
               )}
             </div>
           )}
+
+          {/* Share button */}
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="mt-3 w-full py-2.5 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground disabled:opacity-50 transition-all active:scale-95"
+            style={{ background: "var(--gradient-gold)" }}
+          >
+            {exporting ? "⏳ Génération..." : "🖼️ Générer l'image de Chabbat"}
+          </button>
         </>
       ) : (
         <p className="mt-3 text-sm text-muted-foreground">Impossible de charger les horaires</p>
+      )}
+
+      {/* Hidden poster */}
+      {posterContent && (
+        <div style={{ position: "fixed", left: 0, top: 0, zIndex: -1, opacity: 0, pointerEvents: "none" }}>
+          <CardPosterTemplate ref={posterRef} profile={{ name: city.name, logo_url: null, website: "chabbat-chalom.com" }} content={posterContent} />
+        </div>
       )}
     </motion.div>
   );
