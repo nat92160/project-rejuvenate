@@ -121,9 +121,15 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                   event.preventDefault();
                   if (tab.id !== "menu") setShowCustomize(true);
                 }}
-                className="relative flex flex-1 min-w-0 flex-col items-center justify-center gap-1 border-none bg-transparent px-0 transition-all duration-200 cursor-pointer"
+                className={`relative flex flex-1 min-w-0 flex-col items-center justify-center gap-1 border-none bg-transparent px-0 transition-all duration-200 cursor-pointer ${
+                  fridayMode && tab.id === "chabbat" ? "animate-pulse" : ""
+                }`}
                 style={{
-                  color: isActive ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))",
+                  color: isActive
+                    ? "hsl(var(--gold-matte))"
+                    : fridayMode && tab.id === "chabbat"
+                    ? "hsl(var(--gold))"
+                    : "hsl(var(--muted-foreground))",
                   fontFamily: "'Montserrat', sans-serif",
                   padding: "8px 0",
                   WebkitTapHighlightColor: "transparent",

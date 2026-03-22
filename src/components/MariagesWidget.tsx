@@ -136,7 +136,20 @@ const MariagesWidget = () => {
 
       {/* Periods */}
       <div className="space-y-3">
-        {FORBIDDEN_PERIODS.filter((p) => !isPast(p.end)).map((p) => {
+        {FORBIDDEN_PERIODS.filter((p) => {
+          if (isPast(p.end)) return false;
+          if (filter === "interdit") return true; // All periods are forbidden
+          if (filter === "autorise") return false; // Hide all forbidden periods
+          if (searchText.trim()) {
+            const q = searchText.toLowerCase();
+            const matchName = p.name.toLowerCase().includes(q);
+            const matchRite = ("rite" in p) && p.rite?.toLowerCase().includes(q);
+            const matchMonth = ("month" in p) && p.month?.toLowerCase().includes(q);
+            const matchDetail = p.detail.toLowerCase().includes(q);
+            return matchName || matchRite || matchMonth || matchDetail;
+          }
+          return true;
+        }).map((p) => {
           const active = isInPeriod(p.start, p.end);
           return (
             <div
