@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import PrayerTimesPosterTemplate from "@/components/poster/PrayerTimesPosterTemplate";
+import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import { exportPosterPng } from "@/components/poster/usePosterExport";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
 
