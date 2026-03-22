@@ -198,10 +198,10 @@ const SiddourWidget = () => {
                 <h4 className="text-center font-display text-base font-bold text-foreground mb-0.5">{content.title}</h4>
                 <p className="text-center text-lg text-muted-foreground mb-6" style={{ fontFamily: "'Frank Ruhl Libre', serif" }}>{content.heTitle}</p>
 
-                <div dir="rtl" style={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2, textAlign: "justify" }} className="text-foreground">
+                <div dir="rtl" style={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.2, textAlign: "justify", fontWeight: 500, color: "#1a1a1a", letterSpacing: "0.02em", wordSpacing: "0.08em" }} className="text-foreground">
                   {content.hebrew.map((verse, i) => (
                     <span key={i}>
-                      <span className="text-muted-foreground/40 font-bold" style={{ fontSize: `${Math.max(fontSize - 6, 11)}px`, marginInlineEnd: "4px" }}>{i + 1}</span>
+                      <span style={{ fontSize: `${Math.max(fontSize - 4, 13)}px`, marginInlineEnd: "6px", fontWeight: 700, color: "#555" }}>{toHebrewLetter(i + 1)}</span>
                       <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
                       {showFrench && content.french[i] && (
                         <p
