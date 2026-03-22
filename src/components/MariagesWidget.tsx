@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 
 // Données Consistoire 5786 (2025-2026)
@@ -9,6 +10,7 @@ const FORBIDDEN_PERIODS = [
     icon: "🌾",
     detail: "Du lendemain du dernier Yom Tov de Pessah jusqu'à Lag BaOmer inclus.",
     rite: "Séfarade",
+    month: "avril-mai",
   },
   {
     name: "Omer — Rite Ashkénaze",
@@ -17,6 +19,7 @@ const FORBIDDEN_PERIODS = [
     icon: "🌾",
     detail: "Sauf le 5 mai 2026 (Lag BaOmer). Du 2e jour de Pessah jusqu'au 3 Sivan.",
     rite: "Ashkénaze",
+    month: "avril-mai",
   },
   {
     name: "Trois Semaines (Bein HaMétsarim)",
@@ -24,10 +27,19 @@ const FORBIDDEN_PERIODS = [
     end: "2026-07-28",
     icon: "😢",
     detail: "Du 17 Tamouz au 9 Av — Période de deuil national. Mariages strictement interdits.",
+    month: "juillet",
   },
 ];
 
+const FILTER_OPTIONS = [
+  { value: "all", label: "Tout" },
+  { value: "interdit", label: "🚫 Interdit" },
+  { value: "autorise", label: "✅ Autorisé" },
+];
+
 const MariagesWidget = () => {
+  const [filter, setFilter] = useState("all");
+  const [searchText, setSearchText] = useState("");
   const now = new Date();
 
   const isInPeriod = (start: string, end: string) => {
