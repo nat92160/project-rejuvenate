@@ -7,8 +7,15 @@ import {
   getAvailableTabs,
   getBottomNavStorageKey,
   sanitizeBottomTabs,
+  NAV_ITEMS,
   type BottomNavMode,
 } from "@/lib/navigation";
+
+function isFridayOrShabbat(): boolean {
+  const now = new Date();
+  const day = now.getDay();
+  return (day === 5 && now.getHours() >= 12) || day === 6;
+}
 
 interface BottomNavProps {
   activeTab: string;
