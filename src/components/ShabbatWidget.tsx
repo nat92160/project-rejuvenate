@@ -9,11 +9,37 @@ const ShabbatWidget = () => {
   const { city } = useCity();
   const [data, setData] = useState<ShabbatTimes | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const posterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLoading(true);
     fetchShabbatTimes(city).then((d) => { setData(d); setLoading(false); });
   }, [city]);
+
+  const handleExport = useCallback(async () => {
+    if (!data) return;
+    setExporting(true);
+    await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 100)));
+    const filename = `chabbat-${city.name.replace(/[^a-zA-Z0-9]/g, "-")}.png`;
+    await exportPosterPng(posterRef.current, filename);
+    setExporting(false);
+  }, [data, city]);
+
+  const posterContent: CardPosterContent | null = data ? {
+    topEmoji: "🕯️",
+    badge: "HORAIRES DE CHABBAT",
+    badgeColor: "#D4AF37",
+    title: data.parasha || "Chabbat Chalom",
+    items: [
+      { emoji: "🕯️", label: "Allumage", value: data.candleLighting || "--:--", sub: data.candleLightingDate },
+      { emoji: "✨", label: "Havdala", value: data.havdalah || "--:--", sub: data.havdalahDate },
+    ],
+    date: city.name,
+    dateEmoji: "📍",
+    accentColor: "#D4AF37",
+    bgColor: "#FDFAF3",
+  } : null;
 
   return (
     <motion.div
