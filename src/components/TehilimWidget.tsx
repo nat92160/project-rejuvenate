@@ -76,10 +76,10 @@ const PsalmReader = ({ chapter, onClose }: { chapter: number; onClose: () => voi
           {loading && <div className="text-center py-10"><div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" /><p className="text-sm text-muted-foreground mt-3">Chargement…</p></div>}
           {error && <div className="text-center py-10"><p className="text-sm text-destructive">{error}</p></div>}
           {!loading && !error && (
-            <div dir="rtl" className="text-foreground font-hebrew" style={{ fontSize: "20px", lineHeight: 2.2, textAlign: "justify", fontWeight: 500, color: "#1a1a1a", letterSpacing: "0.02em", wordSpacing: "0.08em" }}>
+            <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: "22px", lineHeight: 2.4, textAlign: "justify", fontWeight: 600, color: "#111", wordSpacing: "0.06em" }}>
               {verses.map((verse, i) => (
                 <span key={i}>
-                  <span style={{ fontSize: "14px", marginInlineEnd: "6px", fontWeight: 700, color: "#555" }}>{toHebrewLetter(i + 1)}</span>
+                  <span style={{ fontSize: "15px", marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
                   <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
                 </span>
               ))}
