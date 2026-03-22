@@ -124,6 +124,30 @@
   .font-hebrew {
     font-family: 'Frank Ruhl Libre', serif;
   }
+
+  /* Hebrew reading block styles — Consistoire-like */
+  .hebrew-reading-block small {
+    display: inline;
+    font-size: 0.7em;
+    color: #999;
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .hebrew-reading-block b {
+    font-weight: 700;
+  }
+
+  /* Instruction-only paragraphs (pure <small>) */
+  .hebrew-reading-block .verse-instruction {
+    display: block;
+    font-size: 0.65em;
+    color: #aaa;
+    font-weight: 400;
+    font-style: italic;
+    margin-block: 0.3em;
+    text-align: right;
+  }
 }
 
 @layer utilities {
