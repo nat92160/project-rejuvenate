@@ -468,6 +468,7 @@ export type Database = {
           address: string | null
           adjoint_id: string | null
           arvit_time: string | null
+          arvit_time_2: string | null
           chat_enabled: boolean
           created_at: string
           email: string | null
@@ -477,6 +478,7 @@ export type Database = {
           logo_url: string | null
           longitude: number | null
           minha_time: string | null
+          minha_time_2: string | null
           name: string
           phone: string | null
           president_first_name: string | null
@@ -485,6 +487,7 @@ export type Database = {
           primary_color: string | null
           secondary_color: string | null
           shacharit_time: string | null
+          shacharit_time_2: string | null
           signature: string | null
           speakers: Json | null
           updated_at: string
@@ -494,6 +497,7 @@ export type Database = {
           address?: string | null
           adjoint_id?: string | null
           arvit_time?: string | null
+          arvit_time_2?: string | null
           chat_enabled?: boolean
           created_at?: string
           email?: string | null
@@ -503,6 +507,7 @@ export type Database = {
           logo_url?: string | null
           longitude?: number | null
           minha_time?: string | null
+          minha_time_2?: string | null
           name?: string
           phone?: string | null
           president_first_name?: string | null
@@ -511,6 +516,7 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           shacharit_time?: string | null
+          shacharit_time_2?: string | null
           signature?: string | null
           speakers?: Json | null
           updated_at?: string
@@ -520,6 +526,7 @@ export type Database = {
           address?: string | null
           adjoint_id?: string | null
           arvit_time?: string | null
+          arvit_time_2?: string | null
           chat_enabled?: boolean
           created_at?: string
           email?: string | null
@@ -529,6 +536,7 @@ export type Database = {
           logo_url?: string | null
           longitude?: number | null
           minha_time?: string | null
+          minha_time_2?: string | null
           name?: string
           phone?: string | null
           president_first_name?: string | null
@@ -537,6 +545,7 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           shacharit_time?: string | null
+          shacharit_time_2?: string | null
           signature?: string | null
           speakers?: Json | null
           updated_at?: string
