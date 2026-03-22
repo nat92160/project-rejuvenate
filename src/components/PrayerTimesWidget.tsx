@@ -81,6 +81,9 @@ const PrayerTimesWidget = () => {
   const [synaId, setSynaId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const posterRef = useRef<HTMLDivElement>(null);
+  const { profile } = useSynaProfile();
 
   useEffect(() => {
     if (!user) return;
