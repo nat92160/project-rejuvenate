@@ -241,7 +241,26 @@ const PrayerTimesWidget = () => {
 
       {/* Hidden poster for PNG export */}
       <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-        <PrayerTimesPosterTemplate ref={posterRef} profile={profile} times={times} />
+        <CardPosterTemplate
+          ref={posterRef}
+          profile={{ name: profile.name, logo_url: profile.logo_url }}
+          content={(() => {
+            const details: { icon: string; text: string }[] = [];
+            if (times.shacharit_time) details.push({ icon: "🌅", text: `Cha'harit — ${times.shacharit_time}${times.shacharit_time_2 ? ` / ${times.shacharit_time_2}` : ""}` });
+            if (times.minha_time) details.push({ icon: "🌇", text: `Min'ha — ${times.minha_time}${times.minha_time_2 ? ` / ${times.minha_time_2}` : ""}` });
+            if (times.arvit_time) details.push({ icon: "🌙", text: `Arvit — ${times.arvit_time}${times.arvit_time_2 ? ` / ${times.arvit_time_2}` : ""}` });
+            return {
+              topEmoji: "🕐",
+              badge: "HORAIRES DES OFFICES",
+              badgeColor: profile.secondary_color || "#B8860B",
+              title: "Horaires de la Semaine",
+              description: `Semaine du ${new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`,
+              details,
+              accentColor: profile.secondary_color || "#B8860B",
+              bgColor: "#FFF8EE",
+            } satisfies CardPosterContent;
+          })()}
+        />
       </div>
     </motion.div>
   );
