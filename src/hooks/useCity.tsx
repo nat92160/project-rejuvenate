@@ -14,6 +14,7 @@ interface CityContextType {
   isGeolocating: boolean;
   geolocate: () => void;
   locationError: string | null;
+  triggerAutoGeo: () => void;
 }
 
 const CityContext = createContext<CityContextType | null>(null);
