@@ -147,16 +147,19 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
 
   const renderFeature = () => {
     switch (activeFeature) {
+      case "overview": return <StatsDashboard />;
       case "syna-profile": return <SynaProfileManager />;
       case "adjoint": return <AdjointManager />;
       case "chat": return <ChatManagement />;
       case "affiche": return <AfficheChabbatWidget />;
       case "annonces": return <AnnoncesWidget />;
+      case "alerte": return <AlerteCommunautaireWidget />;
       case "refoua": return <RefouaChelemaWidget />;
       case "create-minyan":
       case "minyan": return <MinyanLiveWidget />;
       case "evenements": return <EvenementsWidget />;
       case "cours": return <CoursVirtuelWidget />;
+      case "calendrier-mariages": return <MariagesCalendarWidget />;
       case "stats": return <StatsDashboard />;
       default: return null;
     }
