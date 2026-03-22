@@ -14,6 +14,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "synagogue", icon: "🏛️", label: "Synagogues", modes: ["fidele"] },
   { id: "siddour", icon: "📖", label: "Siddour", modes: ["fidele", "president"] },
   { id: "tehilimlibre", icon: "📜", label: "Tehilim", modes: ["fidele", "president"] },
+  { id: "perso", icon: "👤", label: "Mon Espace", modes: ["fidele", "president"] },
   
   { id: "fetes", icon: "📅", label: "Fêtes", modes: ["fidele", "president"] },
   { id: "roshhodesh", icon: "🌙", label: "Roch Hodech", modes: ["fidele", "president"] },
@@ -24,12 +25,14 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "reveil", icon: "⏰", label: "Réveil", modes: ["fidele", "president"] },
   { id: "annonces", icon: "📢", label: "Annonces", modes: ["fidele", "president"] },
   { id: "refoua", icon: "🙏", label: "Refoua", modes: ["fidele", "president"] },
-  { id: "minyan", icon: "👥", label: "Minyan", modes: ["fidele", "president"] },
+  { id: "minyan", icon: "🚨", label: "Urgence Minyan", modes: ["fidele", "president"] },
   { id: "evenements", icon: "📅", label: "Événements", modes: ["fidele", "president"] },
   { id: "coursvirtuel", icon: "🎥", label: "Cours", modes: ["fidele", "president"] },
   { id: "affiche", icon: "📋", label: "Affiche", modes: ["president"] },
   { id: "horaires", icon: "🕐", label: "Horaires", modes: ["president"] },
   { id: "infosyna", icon: "🏛️", label: "Infos Syna", modes: ["president"] },
+  { id: "alerte", icon: "📡", label: "Alerte", modes: ["president"] },
+  { id: "calendrier-mariages", icon: "📅", label: "Cal. Mariages", modes: ["president"] },
 ];
 
 export const DEFAULT_BOTTOM_TABS_BY_MODE: Record<BottomNavMode, string[]> = {
