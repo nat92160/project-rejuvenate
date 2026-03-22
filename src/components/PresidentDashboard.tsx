@@ -17,16 +17,19 @@ import MariagesCalendarWidget from "./MariagesCalendarWidget";
 
 
 const features = [
+  { id: "overview", icon: "📊", title: "Vue d'ensemble" },
   { id: "syna-profile", icon: "🏛️", title: "Mon Espace Syna" },
   { id: "adjoint", icon: "🏅", title: "Adjoint" },
   { id: "chat", icon: "💬", title: "Chat Fidèles" },
   { id: "affiche", icon: "📋", title: "Affiche Chabbat" },
   { id: "annonces", icon: "📢", title: "Annonces" },
+  { id: "alerte", icon: "📡", title: "Alerte Communautaire" },
   { id: "refoua", icon: "🙏", title: "Refoua Chelema" },
   { id: "minyan", icon: "🚨", title: "Urgence Minyan" },
   { id: "evenements", icon: "📅", title: "Événements" },
   { id: "cours", icon: "🎥", title: "Cours de Torah" },
-  { id: "stats", icon: "📊", title: "Statistiques" },
+  { id: "calendrier-mariages", icon: "💍", title: "Cal. Mariages" },
+  { id: "stats", icon: "📈", title: "Statistiques" },
 ];
 
 interface PresidentDashboardProps {
