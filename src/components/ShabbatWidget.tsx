@@ -31,9 +31,10 @@ const ShabbatWidget = () => {
     badge: "HORAIRES DE CHABBAT",
     badgeColor: "#D4AF37",
     title: data.parasha || "Chabbat Chalom",
-    items: [
-      { emoji: "🕯️", label: "Allumage", value: data.candleLighting || "--:--", sub: data.candleLightingDate },
-      { emoji: "✨", label: "Havdala", value: data.havdalah || "--:--", sub: data.havdalahDate },
+    description: `🕯️ Allumage : ${data.candleLighting || "--:--"} — ${data.candleLightingDate || ""}\n✨ Havdala : ${data.havdalah || "--:--"} — ${data.havdalahDate || ""}`,
+    details: [
+      { icon: "🕯️", text: `Allumage : ${data.candleLighting} • ${data.candleLightingDate}` },
+      { icon: "✨", text: `Havdala : ${data.havdalah} • ${data.havdalahDate}` },
     ],
     date: city.name,
     dateEmoji: "📍",
