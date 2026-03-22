@@ -38,6 +38,7 @@ import MariagesCalendarWidget from "@/components/MariagesCalendarWidget";
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
+import { useCity } from "@/hooks/useCity";
 
 const IndexContent = () => {
   const [showDashboard, setShowDashboard] = useState(false);
