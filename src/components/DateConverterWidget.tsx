@@ -89,13 +89,14 @@ const DateConverterWidget = () => {
               type="date"
               value={gDate}
               onChange={(e) => setGDate(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30"
+              className="w-full px-4 py-3 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30 min-h-[52px]"
+              style={{ colorScheme: "light" }}
             />
           </div>
           <button
             onClick={convertG2H}
             disabled={loading || !gDate}
-            className="px-6 py-2.5 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-95"
+            className="px-6 py-3 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-95 min-h-[52px]"
             style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
           >
             {loading ? "..." : "Convertir"}
