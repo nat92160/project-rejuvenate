@@ -34,6 +34,7 @@ import SiddourWidget from "@/components/SiddourWidget";
 import EspacePersonnelWidget from "@/components/EspacePersonnelWidget";
 import AlerteCommunautaireWidget from "@/components/AlerteCommunautaireWidget";
 import MariagesCalendarWidget from "@/components/MariagesCalendarWidget";
+import BrakhotWidget from "@/components/BrakhotWidget";
 
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
@@ -113,6 +114,7 @@ const IndexContent = () => {
       case "perso": return <EspacePersonnelWidget />;
       case "alerte": return <AlerteCommunautaireWidget />;
       case "calendrier-mariages": return <MariagesCalendarWidget />;
+      case "brakhot": return <BrakhotWidget />;
       case "communaute":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>

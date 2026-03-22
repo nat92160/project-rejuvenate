@@ -60,10 +60,33 @@ const MariagesWidget = () => {
       year: "numeric",
     });
 
-  // Check if today is forbidden
   const todayForbidden = FORBIDDEN_PERIODS.some(
     (p) => !isPast(p.end) && isInPeriod(p.start, p.end)
   );
+
+  // Fixed filtering: search works across ALL fields including when filter is active
+  const filteredPeriods = FORBIDDEN_PERIODS.filter((p) => {
+    if (isPast(p.end)) return false;
+
+    // Status filter
+    if (filter === "autorise") return false; // All shown periods are forbidden
+    // filter === "interdit" or "all" → show forbidden periods
+
+    // Text search
+    if (searchText.trim()) {
+      const q = searchText.toLowerCase();
+      return (
+        p.name.toLowerCase().includes(q) ||
+        (p.rite?.toLowerCase().includes(q) ?? false) ||
+        (p.month?.toLowerCase().includes(q) ?? false) ||
+        p.detail.toLowerCase().includes(q) ||
+        fmtDate(p.start).toLowerCase().includes(q) ||
+        fmtDate(p.end).toLowerCase().includes(q)
+      );
+    }
+
+    return true;
+  });
 
   return (
     <motion.div
@@ -100,7 +123,7 @@ const MariagesWidget = () => {
       <div className="mt-4 space-y-2">
         <input
           type="text"
-          placeholder="🔍 Rechercher (mois, rite, période...)"
+          placeholder="🔍 Rechercher (mois, rite, période, date...)"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -136,20 +159,14 @@ const MariagesWidget = () => {
 
       {/* Periods */}
       <div className="space-y-3">
-        {FORBIDDEN_PERIODS.filter((p) => {
-          if (isPast(p.end)) return false;
-          if (filter === "interdit") return true; // All periods are forbidden
-          if (filter === "autorise") return false; // Hide all forbidden periods
-          if (searchText.trim()) {
-            const q = searchText.toLowerCase();
-            const matchName = p.name.toLowerCase().includes(q);
-            const matchRite = ("rite" in p) && p.rite?.toLowerCase().includes(q);
-            const matchMonth = ("month" in p) && p.month?.toLowerCase().includes(q);
-            const matchDetail = p.detail.toLowerCase().includes(q);
-            return matchName || matchRite || matchMonth || matchDetail;
-          }
-          return true;
-        }).map((p) => {
+        {filteredPeriods.length === 0 && (
+          <div className="text-center py-6 text-sm text-muted-foreground">
+            {filter === "autorise"
+              ? "✅ Toutes les périodes non-interdites sont autorisées pour le mariage."
+              : "Aucun résultat pour cette recherche."}
+          </div>
+        )}
+        {filteredPeriods.map((p) => {
           const active = isInPeriod(p.start, p.end);
           return (
             <div
@@ -181,7 +198,7 @@ const MariagesWidget = () => {
                 <p className="text-[11px] text-muted-foreground/80 mt-1 italic">
                   {p.detail}
                 </p>
-                {"rite" in p && (
+                {"rite" in p && p.rite && (
                   <span
                     className="inline-block mt-2 text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border"
                     style={{
