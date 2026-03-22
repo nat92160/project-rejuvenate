@@ -55,9 +55,19 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
     }
   }, [selectedTabs, mode]);
 
+  const fridayMode = isFridayOrShabbat();
+
   const visibleTabs = [
     ...selectedTabs
-      .map((id) => availableTabs.find((tab) => tab.id === id))
+      .map((id) => {
+        const tab = availableTabs.find((tab) => tab.id === id) || NAV_ITEMS.find((t) => t.id === id);
+        if (!tab) return null;
+        // On Friday/Shabbat, replace the central tab with "Focus Chabbat"
+        if (fridayMode && id === selectedTabs[Math.floor(selectedTabs.length / 2)]) {
+          return { ...tab, id: "chabbat", icon: "🕯️", label: "Chabbat" };
+        }
+        return tab;
+      })
       .filter((tab): tab is (typeof availableTabs)[number] => Boolean(tab)),
     { id: "menu", icon: "☰", label: "Plus" },
   ];
