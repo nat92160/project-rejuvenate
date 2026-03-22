@@ -135,21 +135,21 @@ const PrayerTimesWidget = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div className="min-w-0">
-                <label className="text-[10px] font-medium text-muted-foreground/60 mb-1.5 block">Horaire 1</label>
+                <label className="mb-1.5 block text-[10px] font-medium text-muted-foreground/60">Horaire 1</label>
                 <input
                   type="time"
-                  className="block w-full min-w-[120px] h-11 rounded-xl border border-border bg-background px-3 text-sm text-center text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                  className="block h-11 w-full min-w-0 max-w-full rounded-xl border border-border bg-background px-3 text-sm text-center text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
                   value={times[office.key]}
                   onChange={(e) => update(office.key, e.target.value)}
                 />
               </div>
               <div className="min-w-0">
-                <label className="text-[10px] font-medium text-muted-foreground/60 mb-1.5 block">Horaire 2 (opt.)</label>
+                <label className="mb-1.5 block text-[10px] font-medium text-muted-foreground/60">Horaire 2 (opt.)</label>
                 <input
                   type="time"
-                  className="block w-full min-w-[120px] h-11 rounded-xl border border-border bg-background px-3 text-sm text-center text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                  className="block h-11 w-full min-w-0 max-w-full rounded-xl border border-border bg-background px-3 text-sm text-center text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
                   value={times[office.key2]}
                   onChange={(e) => update(office.key2, e.target.value)}
                 />
