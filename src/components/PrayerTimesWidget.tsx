@@ -225,6 +225,24 @@ const PrayerTimesWidget = () => {
       >
         {saving ? "Enregistrement…" : "💾 Enregistrer les horaires"}
       </button>
+
+      <button
+        onClick={async () => {
+          setExporting(true);
+          await new Promise(r => setTimeout(r, 100));
+          await exportPosterPng(posterRef.current, `horaires-${profile.name?.replace(/\s+/g, "-").toLowerCase() || "synagogue"}.png`);
+          setExporting(false);
+        }}
+        disabled={exporting}
+        className="w-full cursor-pointer rounded-2xl border border-border bg-card py-4 text-sm font-bold text-foreground transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50"
+      >
+        {exporting ? "Génération…" : "🖼️ Télécharger l'affiche PNG"}
+      </button>
+
+      {/* Hidden poster for PNG export */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <PrayerTimesPosterTemplate ref={posterRef} profile={profile} times={times} />
+      </div>
     </motion.div>
   );
 };
