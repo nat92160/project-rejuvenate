@@ -31,6 +31,9 @@ import FideleSynagogueView from "@/components/FideleSynagogueView";
 import SynaProfileManager from "@/components/SynaProfileManager";
 import PrayerTimesWidget from "@/components/PrayerTimesWidget";
 import SiddourWidget from "@/components/SiddourWidget";
+import EspacePersonnelWidget from "@/components/EspacePersonnelWidget";
+import AlerteCommunautaireWidget from "@/components/AlerteCommunautaireWidget";
+import MariagesCalendarWidget from "@/components/MariagesCalendarWidget";
 
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
