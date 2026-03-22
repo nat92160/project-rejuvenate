@@ -135,28 +135,28 @@ const PrayerTimesWidget = () => {
               </div>
             </div>
 
-            {/* Horaire 1 */}
-            <div className="mb-2">
-              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Horaire 1</label>
-              <input
-                type="time"
-                className="block w-full h-[52px] rounded-xl border border-border bg-background px-4 text-base text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
-                value={times[office.key]}
-                onChange={(e) => update(office.key, e.target.value)}
-              />
-            </div>
-
-            {/* Horaire 2 */}
-            <div>
-              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">
-                Horaire 2 <span className="opacity-50">(optionnel)</span>
-              </label>
-              <input
-                type="time"
-                className="block w-full h-[52px] rounded-xl border border-border bg-background px-4 text-base text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
-                value={times[office.key2]}
-                onChange={(e) => update(office.key2, e.target.value)}
-              />
+            {/* Two time inputs side by side */}
+            <div className="flex gap-2 mt-2">
+              <div className="flex-1">
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Horaire 1</label>
+                <input
+                  type="time"
+                  className="block w-full h-11 rounded-xl border border-border bg-background px-3 text-sm text-center text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                  value={times[office.key]}
+                  onChange={(e) => update(office.key, e.target.value)}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">
+                  Horaire 2 <span className="opacity-50">(opt.)</span>
+                </label>
+                <input
+                  type="time"
+                  className="block w-full h-11 rounded-xl border border-border bg-background px-3 text-sm text-center text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                  value={times[office.key2]}
+                  onChange={(e) => update(office.key2, e.target.value)}
+                />
+              </div>
             </div>
           </div>
         ))}
