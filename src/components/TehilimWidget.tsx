@@ -75,12 +75,12 @@ const PsalmReader = ({ chapter, onClose }: { chapter: number; onClose: () => voi
           {loading && <div className="text-center py-10"><div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" /><p className="text-sm text-muted-foreground mt-3">Chargement…</p></div>}
           {error && <div className="text-center py-10"><p className="text-sm text-destructive">{error}</p></div>}
           {!loading && !error && (
-            <div dir="rtl" className="space-y-3 text-right">
+            <div dir="rtl" className="text-foreground font-hebrew" style={{ fontSize: "18px", lineHeight: 2, textAlign: "justify" }}>
               {verses.map((verse, i) => (
-                <p key={i} className="text-base leading-loose font-hebrew text-foreground">
-                  <span className="inline-block w-7 text-center text-xs font-bold mr-2 rounded-full" style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}>{i + 1}</span>
-                  <span dangerouslySetInnerHTML={{ __html: verse }} />
-                </p>
+                <span key={i}>
+                  <span className="text-muted-foreground/40 font-bold" style={{ fontSize: "12px", marginInlineEnd: "4px" }}>{i + 1}</span>
+                  <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
+                </span>
               ))}
             </div>
           )}

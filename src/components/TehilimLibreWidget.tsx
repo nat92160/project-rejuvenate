@@ -189,22 +189,18 @@ const TehilimLibreWidget = () => {
       {loading ? (
         <div className="py-10 text-center text-sm text-muted-foreground">Chargement du psaume…</div>
       ) : (
-        <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="rounded-2xl border border-border p-6 px-7" style={{ boxShadow: "var(--shadow-card)", background: "#FDFDFD" }}>
           <h4 className="text-center text-lg font-bold text-foreground mb-1" style={{ fontFamily: "'Frank Ruhl Libre', serif", direction: "rtl" }}>
             {heTitle}
           </h4>
           <p className="text-center text-xs text-muted-foreground mb-5">Psaume {selectedChapter}</p>
 
-          <div className="space-y-3">
+          <div dir="rtl" style={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2, textAlign: "justify" }} className="text-foreground">
             {verses.map((verse, i) => (
-              <div key={i} className="flex gap-3 items-start">
-                <span className="shrink-0 mt-1 text-[10px] font-bold text-muted-foreground/50 w-5 text-right">{i + 1}</span>
-                <p
-                  className="flex-1 text-foreground leading-relaxed"
-                  style={{ fontSize: `${fontSize}px`, fontFamily: "'Frank Ruhl Libre', serif", direction: "rtl", textAlign: "center", lineHeight: 1.9 }}
-                  dangerouslySetInnerHTML={{ __html: verse }}
-                />
-              </div>
+              <span key={i}>
+                <span className="text-muted-foreground/40 font-bold" style={{ fontSize: `${Math.max(fontSize - 6, 11)}px`, marginInlineEnd: "4px" }}>{i + 1}</span>
+                <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
+              </span>
             ))}
           </div>
 
