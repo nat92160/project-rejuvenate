@@ -34,6 +34,7 @@ import SiddourWidget from "@/components/SiddourWidget";
 import EspacePersonnelWidget from "@/components/EspacePersonnelWidget";
 import AlerteCommunautaireWidget from "@/components/AlerteCommunautaireWidget";
 import MariagesCalendarWidget from "@/components/MariagesCalendarWidget";
+import BrakhotWidget from "@/components/BrakhotWidget";
 
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
