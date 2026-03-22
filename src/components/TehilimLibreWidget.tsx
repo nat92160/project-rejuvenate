@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
+import { toHebrewLetter } from "@/lib/utils";
 
 const TOTAL_PSALMS = 150;
 const CACHE_PREFIX = "tehilim_libre_";
