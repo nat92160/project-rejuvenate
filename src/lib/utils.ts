@@ -24,3 +24,18 @@ export function toHebrewLetter(n: number): string {
   if (t === 1 && o === 6) result = (hunds[h] || "") + "טז";
   return result;
 }
+
+/**
+ * Check if a verse is a pure instruction (only <small> tags, no actual prayer text).
+ * Returns true if the verse should be rendered as an instruction, not as prayer text.
+ */
+export function isInstructionOnly(html: string): boolean {
+  const stripped = html.trim();
+  // Pure <small>...</small> with no text outside
+  if (stripped.startsWith("<small>") && stripped.endsWith("</small>")) {
+    // Check there's no text between </small> and <small> (i.e. only one small block)
+    const withoutOuter = stripped.slice(7, -8);
+    if (!withoutOuter.includes("</small>")) return true;
+  }
+  return false;
+}

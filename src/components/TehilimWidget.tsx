@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 import HazakCelebration from "@/components/HazakCelebration";
-import { toHebrewLetter } from "@/lib/utils";
+import { toHebrewLetter, isInstructionOnly } from "@/lib/utils";
 
 const TEHILIM_DAILY = [
   { day: "Dimanche", chapters: "1 – 29", yom: "Yom Rishon" },

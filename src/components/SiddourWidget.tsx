@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
-import { toHebrewLetter } from "@/lib/utils";
+import { toHebrewLetter, isInstructionOnly } from "@/lib/utils";
 
 type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat" | "kaddish";
 
@@ -200,20 +200,29 @@ const SiddourWidget = () => {
                 <p className="text-center text-muted-foreground mb-6" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px` }}>{content.heTitle}</p>
 
                 <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.4, textAlign: "justify", fontWeight: 600, color: "#111", wordSpacing: "0.06em" }}>
-                  {content.hebrew.map((verse, i) => (
-                    <span key={i}>
-                      <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
-                      <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
-                      {showFrench && content.french[i] && (
-                        <p
-                          dir="ltr"
-                          className="text-muted-foreground leading-relaxed my-2"
-                          style={{ fontSize: `${Math.max(fontSize - 6, 12)}px`, textAlign: "left", fontWeight: 400, color: "#666", fontFamily: "'Lora', serif", fontStyle: "italic" }}
-                          dangerouslySetInnerHTML={{ __html: content.french[i] }}
-                        />
-                      )}
-                    </span>
-                  ))}
+                  {(() => {
+                    let verseNum = 0;
+                    return content.hebrew.map((verse, i) => {
+                      if (isInstructionOnly(verse)) {
+                        return <span key={i} className="verse-instruction" dangerouslySetInnerHTML={{ __html: verse }} />;
+                      }
+                      verseNum++;
+                      return (
+                        <span key={i}>
+                          <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(verseNum)}</span>
+                          <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
+                          {showFrench && content.french[i] && (
+                            <p
+                              dir="ltr"
+                              className="text-muted-foreground leading-relaxed my-2"
+                              style={{ fontSize: `${Math.max(fontSize - 6, 12)}px`, textAlign: "left", fontWeight: 400, color: "#666", fontFamily: "'Lora', serif", fontStyle: "italic" }}
+                              dangerouslySetInnerHTML={{ __html: content.french[i] }}
+                            />
+                          )}
+                        </span>
+                      );
+                    });
+                  })()}
                 </div>
 
                 {/* Section navigation */}
