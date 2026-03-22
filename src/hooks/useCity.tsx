@@ -86,9 +86,6 @@ export function CityProvider({ children }: { children: ReactNode }) {
   const [gpsCity, setGpsCity] = useState<ActiveCityConfig | null>(() => loadStoredGpsCity());
   const [locationError, setLocationError] = useState<string | null>(null);
   const [autoGeoTriggered, setAutoGeoTriggered] = useState(false);
-  const [isGeolocating, setIsGeolocating] = useState(false);
-  const [gpsCity, setGpsCity] = useState<ActiveCityConfig | null>(() => loadStoredGpsCity());
-  const [locationError, setLocationError] = useState<string | null>(null);
 
   const setCityKey = (key: string) => {
     setCityKeyState(key);
