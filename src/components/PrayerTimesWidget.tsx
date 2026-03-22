@@ -4,9 +4,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+interface PrayerTimes {
+  shacharit_time: string;
+  shacharit_time_2: string;
+  minha_time: string;
+  minha_time_2: string;
+  arvit_time: string;
+  arvit_time_2: string;
+}
+
+const EMPTY: PrayerTimes = {
+  shacharit_time: "", shacharit_time_2: "",
+  minha_time: "", minha_time_2: "",
+  arvit_time: "", arvit_time_2: "",
+};
+
+const offices = [
+  { key: "shacharit_time" as const, key2: "shacharit_time_2" as const, label: "Cha'harit", icon: "🌅", desc: "Office du matin" },
+  { key: "minha_time" as const, key2: "minha_time_2" as const, label: "Min'ha", icon: "🌇", desc: "Office de l'après-midi" },
+  { key: "arvit_time" as const, key2: "arvit_time_2" as const, label: "Arvit", icon: "🌙", desc: "Office du soir" },
+];
+
 const PrayerTimesWidget = () => {
   const { user } = useAuth();
-  const [times, setTimes] = useState({ shacharit_time: "", minha_time: "", arvit_time: "" });
+  const [times, setTimes] = useState<PrayerTimes>(EMPTY);
   const [synaId, setSynaId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -21,10 +42,19 @@ const PrayerTimesWidget = () => {
         .maybeSingle();
       if (data) {
         setSynaId(data.id);
+        // Also fetch the _2 columns via a raw-ish approach since types may not have them yet
+        const { data: extra } = await supabase
+          .from("synagogue_profiles")
+          .select("shacharit_time_2, minha_time_2, arvit_time_2" as any)
+          .eq("id", data.id)
+          .maybeSingle();
         setTimes({
           shacharit_time: data.shacharit_time || "",
+          shacharit_time_2: (extra as any)?.shacharit_time_2 || "",
           minha_time: data.minha_time || "",
+          minha_time_2: (extra as any)?.minha_time_2 || "",
           arvit_time: data.arvit_time || "",
+          arvit_time_2: (extra as any)?.arvit_time_2 || "",
         });
       }
       setLoading(false);
@@ -40,7 +70,10 @@ const PrayerTimesWidget = () => {
         shacharit_time: times.shacharit_time || null,
         minha_time: times.minha_time || null,
         arvit_time: times.arvit_time || null,
-      })
+        shacharit_time_2: times.shacharit_time_2 || null,
+        minha_time_2: times.minha_time_2 || null,
+        arvit_time_2: times.arvit_time_2 || null,
+      } as any)
       .eq("id", synaId);
     setSaving(false);
     if (error) {
@@ -50,12 +83,11 @@ const PrayerTimesWidget = () => {
     }
   };
 
-  const inputCls = "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10";
+  const update = (key: keyof PrayerTimes, value: string) =>
+    setTimes((prev) => ({ ...prev, [key]: value }));
 
   if (loading) {
-    return (
-      <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
-    );
+    return <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>;
   }
 
   if (!synaId) {
@@ -63,7 +95,7 @@ const PrayerTimesWidget = () => {
       <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
         <span className="text-4xl">🏛️</span>
         <p className="mt-3 text-sm text-muted-foreground">
-          Créez d'abord votre profil de synagogue dans "Ma Synagogue" pour gérer les horaires.
+          Créez d'abord votre profil de synagogue dans "Infos Syna" pour gérer les horaires.
         </p>
       </div>
     );
@@ -85,22 +117,16 @@ const PrayerTimesWidget = () => {
 
       {/* Time inputs */}
       <div className="space-y-3">
-        {[
-          { key: "shacharit_time" as const, label: "Cha'harit", icon: "🌅", desc: "Office du matin" },
-          { key: "minha_time" as const, label: "Min'ha", icon: "🌇", desc: "Office de l'après-midi" },
-          { key: "arvit_time" as const, label: "Arvit", icon: "🌙", desc: "Office du soir" },
-        ].map((office) => (
+        {offices.map((office) => (
           <div
             key={office.key}
             className="rounded-2xl border border-border bg-card p-4"
             style={{ boxShadow: "var(--shadow-card)" }}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-2">
               <div
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl"
-                style={{
-                  background: "linear-gradient(135deg, hsl(var(--gold) / 0.15), hsl(var(--gold) / 0.05))",
-                }}
+                style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.15), hsl(var(--gold) / 0.05))" }}
               >
                 {office.icon}
               </div>
@@ -108,12 +134,27 @@ const PrayerTimesWidget = () => {
                 <p className="font-display text-sm font-bold text-foreground">{office.label}</p>
                 <p className="text-[10px] text-muted-foreground">{office.desc}</p>
               </div>
-              <input
-                type="time"
-                className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10 w-[110px]"
-                value={times[office.key]}
-                onChange={(e) => setTimes((prev) => ({ ...prev, [office.key]: e.target.value }))}
-              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div>
+                <label className="text-[10px] text-muted-foreground mb-1 block">Horaire 1</label>
+                <input
+                  type="time"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                  value={times[office.key]}
+                  onChange={(e) => update(office.key, e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground mb-1 block">Horaire 2 <span className="opacity-50">(optionnel)</span></label>
+                <input
+                  type="time"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                  value={times[office.key2]}
+                  onChange={(e) => update(office.key2, e.target.value)}
+                />
+              </div>
             </div>
           </div>
         ))}

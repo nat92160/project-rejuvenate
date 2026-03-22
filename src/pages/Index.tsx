@@ -86,7 +86,7 @@ const IndexContent = () => {
       case "siddour": return <SiddourWidget />;
       case "tehilimlibre":
       case "tehilim": return <TehilimCombinedWidget />;
-      case "synagogue": return isPresident ? <PresidentDashboard onLoginClick={() => setAuthOpen(true)} /> : <FideleSynagogueView />;
+      case "synagogue": return <FideleSynagogueView />;
       case "fetes": return <FestivalCalendar />;
       case "convertisseur": return <DateConverterWidget />;
       case "mizrah": return <MizrahCompass />;
