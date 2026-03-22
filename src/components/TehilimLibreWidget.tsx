@@ -22,7 +22,7 @@ const TehilimLibreWidget = () => {
   const [verses, setVerses] = useState<string[]>([]);
   const [heTitle, setHeTitle] = useState("");
   const [loading, setLoading] = useState(false);
-  const [fontSize, setFontSize] = useState(22);
+  const [fontSize, setFontSize] = useState(24);
   const [favorites, setFavorites] = useState<number[]>(loadFavorites);
   const [showFavOnly, setShowFavOnly] = useState(false);
 

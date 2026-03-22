@@ -38,7 +38,7 @@ const SiddourWidget = () => {
   const [content, setContent] = useState<SectionContent | null>(null);
   const [loading, setLoading] = useState(false);
   const [tocLoading, setTocLoading] = useState(true);
-  const [fontSize, setFontSize] = useState(22);
+  const [fontSize, setFontSize] = useState(24);
   const [showFrench, setShowFrench] = useState(false);
 
   const fetchToc = useCallback(async (off: Office) => {
