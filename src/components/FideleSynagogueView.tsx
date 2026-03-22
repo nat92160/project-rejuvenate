@@ -282,7 +282,7 @@ const FideleSynagogueView = () => {
     { id: "synagogues" as const, icon: "🕍", label: "Proches", count: totalNearbyCount },
     { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
     { id: "tehilim" as const, icon: "📜", label: "Tehilim", count: tehilimChains.length },
-    { id: "minyan" as const, icon: "👥", label: "Minyan", count: minyans.length },
+    { id: "minyan" as const, icon: "🚨", label: "Urgence", count: minyans.length },
     { id: "events" as const, icon: "📅", label: "Événements", count: events.length },
     { id: "annonces" as const, icon: "📢", label: "Annonces", count: annonces.length },
     ...(subscribedSynas.length > 0 ? [{ id: "chat" as const, icon: "💬", label: "Chat", count: 0 }] : []),
