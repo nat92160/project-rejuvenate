@@ -31,10 +31,14 @@ import FideleSynagogueView from "@/components/FideleSynagogueView";
 import SynaProfileManager from "@/components/SynaProfileManager";
 import PrayerTimesWidget from "@/components/PrayerTimesWidget";
 import SiddourWidget from "@/components/SiddourWidget";
+import EspacePersonnelWidget from "@/components/EspacePersonnelWidget";
+import AlerteCommunautaireWidget from "@/components/AlerteCommunautaireWidget";
+import MariagesCalendarWidget from "@/components/MariagesCalendarWidget";
 
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
+import { useCity } from "@/hooks/useCity";
 
 const IndexContent = () => {
   const [showDashboard, setShowDashboard] = useState(false);
@@ -43,6 +47,7 @@ const IndexContent = () => {
   const { role, setRole } = useRole();
   const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
   const pendingCount = usePendingRequests();
+  const { triggerAutoGeo } = useCity();
 
   const isPresident = dbRole === "president";
 
@@ -51,10 +56,12 @@ const IndexContent = () => {
       setRole("guest");
       setShowDashboard(true);
       if (!user && !authLoading) setAuthOpen(true);
+      triggerAutoGeo();
       return;
     }
     setRole(selectedRole === "fidele" ? "fidele" : "guest");
     setShowDashboard(true);
+    triggerAutoGeo();
   };
 
   const renderTabContent = () => {
@@ -103,6 +110,9 @@ const IndexContent = () => {
       case "horaires": return <PrayerTimesWidget />;
       case "infosyna": return <SynaProfileManager />;
       case "shabbatspec": return <ShabbatSpeciauxWidget />;
+      case "perso": return <EspacePersonnelWidget />;
+      case "alerte": return <AlerteCommunautaireWidget />;
+      case "calendrier-mariages": return <MariagesCalendarWidget />;
       case "communaute":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>

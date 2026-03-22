@@ -24,6 +24,22 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/],
         runtimeCaching: [
           {
+            urlPattern: /^https:\/\/www\.hebcal\.com\/shabbat.*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "hebcal-shabbat-cache",
+              expiration: { maxEntries: 10, maxAgeSeconds: 7 * 86400 },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/www\.hebcal\.com\/zmanim.*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "hebcal-zmanim-cache",
+              expiration: { maxEntries: 30, maxAgeSeconds: 86400 },
+            },
+          },
+          {
             urlPattern: /^https:\/\/www\.hebcal\.com\/.*/i,
             handler: "CacheFirst",
             options: {

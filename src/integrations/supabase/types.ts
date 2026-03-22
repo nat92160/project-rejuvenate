@@ -226,6 +226,45 @@ export type Database = {
         }
         Relationships: []
       }
+      personal_dates: {
+        Row: {
+          civil_date: string | null
+          created_at: string
+          date_type: string
+          hebrew_date_day: number | null
+          hebrew_date_month: string | null
+          hebrew_date_year: number | null
+          hebrew_name: string
+          id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          civil_date?: string | null
+          created_at?: string
+          date_type?: string
+          hebrew_date_day?: number | null
+          hebrew_date_month?: string | null
+          hebrew_date_year?: number | null
+          hebrew_name?: string
+          id?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          civil_date?: string | null
+          created_at?: string
+          date_type?: string
+          hebrew_date_day?: number | null
+          hebrew_date_month?: string | null
+          hebrew_date_year?: number | null
+          hebrew_name?: string
+          id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       president_requests: {
         Row: {
           city: string

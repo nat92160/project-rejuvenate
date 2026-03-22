@@ -1,17 +1,46 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
+import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
+import { exportPosterPng } from "@/components/poster/usePosterExport";
 
 const ShabbatWidget = () => {
   const { city } = useCity();
   const [data, setData] = useState<ShabbatTimes | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const posterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLoading(true);
     fetchShabbatTimes(city).then((d) => { setData(d); setLoading(false); });
   }, [city]);
+
+  const handleExport = useCallback(async () => {
+    if (!data) return;
+    setExporting(true);
+    await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 100)));
+    const filename = `chabbat-${city.name.replace(/[^a-zA-Z0-9]/g, "-")}.png`;
+    await exportPosterPng(posterRef.current, filename);
+    setExporting(false);
+  }, [data, city]);
+
+  const posterContent: CardPosterContent | null = data ? {
+    topEmoji: "🕯️",
+    badge: "HORAIRES DE CHABBAT",
+    badgeColor: "#D4AF37",
+    title: data.parasha || "Chabbat Chalom",
+    description: `🕯️ Allumage : ${data.candleLighting || "--:--"} — ${data.candleLightingDate || ""}\n✨ Havdala : ${data.havdalah || "--:--"} — ${data.havdalahDate || ""}`,
+    details: [
+      { icon: "🕯️", text: `Allumage : ${data.candleLighting} • ${data.candleLightingDate}` },
+      { icon: "✨", text: `Havdala : ${data.havdalah} • ${data.havdalahDate}` },
+    ],
+    date: city.name,
+    dateEmoji: "📍",
+    accentColor: "#D4AF37",
+    bgColor: "#FDFAF3",
+  } : null;
 
   return (
     <motion.div
@@ -82,9 +111,26 @@ const ShabbatWidget = () => {
               )}
             </div>
           )}
+
+          {/* Share button */}
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="mt-3 w-full py-2.5 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground disabled:opacity-50 transition-all active:scale-95"
+            style={{ background: "var(--gradient-gold)" }}
+          >
+            {exporting ? "⏳ Génération..." : "🖼️ Générer l'image de Chabbat"}
+          </button>
         </>
       ) : (
         <p className="mt-3 text-sm text-muted-foreground">Impossible de charger les horaires</p>
+      )}
+
+      {/* Hidden poster */}
+      {posterContent && (
+        <div style={{ position: "fixed", left: 0, top: 0, zIndex: -1, opacity: 0, pointerEvents: "none" }}>
+          <CardPosterTemplate ref={posterRef} profile={{ name: city.name, logo_url: null, website: "chabbat-chalom.com" }} content={posterContent} />
+        </div>
       )}
     </motion.div>
   );

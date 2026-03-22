@@ -14,6 +14,7 @@ interface CityContextType {
   isGeolocating: boolean;
   geolocate: () => void;
   locationError: string | null;
+  triggerAutoGeo: () => void;
 }
 
 const CityContext = createContext<CityContextType | null>(null);
@@ -84,6 +85,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
   const [isGeolocating, setIsGeolocating] = useState(false);
   const [gpsCity, setGpsCity] = useState<ActiveCityConfig | null>(() => loadStoredGpsCity());
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [autoGeoTriggered, setAutoGeoTriggered] = useState(false);
 
   const setCityKey = (key: string) => {
     setCityKeyState(key);
@@ -154,8 +156,21 @@ export function CityProvider({ children }: { children: ReactNode }) {
           accuracyMeters: null,
         };
 
+  // Auto-geolocate on first visit
+  const triggerAutoGeo = () => {
+    if (autoGeoTriggered) return;
+    setAutoGeoTriggered(true);
+    try {
+      const hasVisited = localStorage.getItem("calj_has_visited");
+      if (!hasVisited && navigator.geolocation) {
+        localStorage.setItem("calj_has_visited", "1");
+        geolocate();
+      }
+    } catch { /* ignore */ }
+  };
+
   return (
-    <CityContext.Provider value={{ city, cityKey, setCityKey, isGeolocating, geolocate, locationError }}>
+    <CityContext.Provider value={{ city, cityKey, setCityKey, isGeolocating, geolocate, locationError, triggerAutoGeo }}>
       {children}
     </CityContext.Provider>
   );

@@ -12,19 +12,24 @@ import CoursVirtuelWidget from "./CoursVirtuelWidget";
 import SynaProfileManager from "./SynaProfileManager";
 import ChatManagement from "./ChatManagement";
 import AdjointManager from "./AdjointManager";
+import AlerteCommunautaireWidget from "./AlerteCommunautaireWidget";
+import MariagesCalendarWidget from "./MariagesCalendarWidget";
 
 
 const features = [
+  { id: "overview", icon: "📊", title: "Vue d'ensemble" },
   { id: "syna-profile", icon: "🏛️", title: "Mon Espace Syna" },
   { id: "adjoint", icon: "🏅", title: "Adjoint" },
   { id: "chat", icon: "💬", title: "Chat Fidèles" },
   { id: "affiche", icon: "📋", title: "Affiche Chabbat" },
   { id: "annonces", icon: "📢", title: "Annonces" },
+  { id: "alerte", icon: "📡", title: "Alerte Communautaire" },
   { id: "refoua", icon: "🙏", title: "Refoua Chelema" },
   { id: "minyan", icon: "🚨", title: "Urgence Minyan" },
   { id: "evenements", icon: "📅", title: "Événements" },
   { id: "cours", icon: "🎥", title: "Cours de Torah" },
-  { id: "stats", icon: "📊", title: "Statistiques" },
+  { id: "calendrier-mariages", icon: "💍", title: "Cal. Mariages" },
+  { id: "stats", icon: "📈", title: "Statistiques" },
 ];
 
 interface PresidentDashboardProps {
@@ -142,16 +147,19 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
 
   const renderFeature = () => {
     switch (activeFeature) {
+      case "overview": return <StatsDashboard />;
       case "syna-profile": return <SynaProfileManager />;
       case "adjoint": return <AdjointManager />;
       case "chat": return <ChatManagement />;
       case "affiche": return <AfficheChabbatWidget />;
       case "annonces": return <AnnoncesWidget />;
+      case "alerte": return <AlerteCommunautaireWidget />;
       case "refoua": return <RefouaChelemaWidget />;
       case "create-minyan":
       case "minyan": return <MinyanLiveWidget />;
       case "evenements": return <EvenementsWidget />;
       case "cours": return <CoursVirtuelWidget />;
+      case "calendrier-mariages": return <MariagesCalendarWidget />;
       case "stats": return <StatsDashboard />;
       default: return null;
     }
