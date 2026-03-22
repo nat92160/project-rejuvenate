@@ -194,26 +194,24 @@ const SiddourWidget = () => {
             {loading ? (
               <div className="py-10 text-center text-sm text-muted-foreground">Chargement du texte…</div>
             ) : content ? (
-              <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="rounded-2xl border border-border p-6 px-7" style={{ boxShadow: "var(--shadow-card)", background: "#FDFDFD" }}>
                 <h4 className="text-center font-display text-base font-bold text-foreground mb-0.5">{content.title}</h4>
                 <p className="text-center text-lg text-muted-foreground mb-6" style={{ fontFamily: "'Frank Ruhl Libre', serif" }}>{content.heTitle}</p>
 
-                <div className="space-y-4">
+                <div dir="rtl" style={{ fontFamily: "'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2, textAlign: "justify" }} className="text-foreground">
                   {content.hebrew.map((verse, i) => (
-                    <div key={i}>
-                      <p
-                        className="text-center leading-relaxed text-foreground"
-                        style={{ fontSize: `${fontSize}px`, fontFamily: "'Frank Ruhl Libre', serif", direction: "rtl", lineHeight: 1.9 }}
-                        dangerouslySetInnerHTML={{ __html: verse }}
-                      />
+                    <span key={i}>
+                      <span className="text-muted-foreground/40 font-bold" style={{ fontSize: `${Math.max(fontSize - 6, 11)}px`, marginInlineEnd: "4px" }}>{i + 1}</span>
+                      <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
                       {showFrench && content.french[i] && (
                         <p
-                          className="mt-1.5 text-center text-muted-foreground leading-relaxed"
-                          style={{ fontSize: `${Math.max(fontSize - 6, 12)}px` }}
+                          dir="ltr"
+                          className="text-muted-foreground leading-relaxed my-1"
+                          style={{ fontSize: `${Math.max(fontSize - 6, 12)}px`, textAlign: "left" }}
                           dangerouslySetInnerHTML={{ __html: content.french[i] }}
                         />
                       )}
-                    </div>
+                    </span>
                   ))}
                 </div>
 
