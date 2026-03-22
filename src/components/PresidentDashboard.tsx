@@ -12,6 +12,8 @@ import CoursVirtuelWidget from "./CoursVirtuelWidget";
 import SynaProfileManager from "./SynaProfileManager";
 import ChatManagement from "./ChatManagement";
 import AdjointManager from "./AdjointManager";
+import AlerteCommunautaireWidget from "./AlerteCommunautaireWidget";
+import MariagesCalendarWidget from "./MariagesCalendarWidget";
 
 
 const features = [
