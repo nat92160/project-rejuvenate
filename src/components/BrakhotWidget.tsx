@@ -6,6 +6,7 @@ interface Brakha {
   hebrew: string;
   transliteration: string;
   translation: string;
+  keywords: string[]; // food/item names that map to this brakha
 }
 
 interface Category {
@@ -21,12 +22,48 @@ const BRAKHOT_DATA: Category[] = [
     label: "Nourriture",
     icon: "🍎",
     items: [
-      { name: "Pain", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הַמּוֹצִיא לֶחֶם מִן הָאָרֶץ", transliteration: "Hamotsi lé'hem min haarets", translation: "Qui fait sortir le pain de la terre" },
-      { name: "Pâtisseries / Gâteaux", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא מִינֵי מְזוֹנוֹת", transliteration: "Boré miné mézonot", translation: "Qui crée diverses sortes de nourritures" },
-      { name: "Vin / Jus de raisin", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא פְּרִי הַגָּפֶן", transliteration: "Boré péri haguefen", translation: "Qui crée le fruit de la vigne" },
-      { name: "Fruits de l'arbre", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא פְּרִי הָעֵץ", transliteration: "Boré péri haèts", translation: "Qui crée le fruit de l'arbre" },
-      { name: "Fruits de la terre / Légumes", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא פְּרִי הָאֲדָמָה", transliteration: "Boré péri haadama", translation: "Qui crée le fruit de la terre" },
-      { name: "Eau / Boissons / Divers", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, שֶׁהַכֹּל נִהְיָה בִּדְבָרוֹ", transliteration: "Chéhakol nihya bidvaro", translation: "Par la parole de Qui tout existe" },
+      {
+        name: "Pain",
+        hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הַמּוֹצִיא לֶחֶם מִן הָאָרֶץ",
+        transliteration: "Hamotsi lé'hem min haarets",
+        translation: "Qui fait sortir le pain de la terre",
+        keywords: ["pain", "bread", "pita", "hallah", "'hala", "baguette", "matsa", "matzah", "le'hem"],
+      },
+      {
+        name: "Pâtisseries / Gâteaux",
+        hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא מִינֵי מְזוֹנוֹת",
+        transliteration: "Boré miné mézonot",
+        translation: "Qui crée diverses sortes de nourritures",
+        keywords: ["gateau", "gâteau", "cake", "biscuit", "cookie", "pâtisserie", "patisserie", "croissant", "brioche", "crêpe", "crepe", "pizza", "pâtes", "pates", "riz", "couscous", "semoule", "céréale", "cereale", "mezonot", "mézonot"],
+      },
+      {
+        name: "Vin / Jus de raisin",
+        hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא פְּרִי הַגָּפֶן",
+        transliteration: "Boré péri haguefen",
+        translation: "Qui crée le fruit de la vigne",
+        keywords: ["vin", "wine", "raisin", "grape", "jus de raisin", "kiddouch", "kidouch", "haguefen", "mousseux"],
+      },
+      {
+        name: "Fruits de l'arbre",
+        hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא פְּרִי הָעֵץ",
+        transliteration: "Boré péri haèts",
+        translation: "Qui crée le fruit de l'arbre",
+        keywords: ["pomme", "apple", "poire", "pear", "banane", "banana", "orange", "mangue", "mango", "cerise", "cherry", "abricot", "prune", "pêche", "peche", "figue", "fig", "datte", "date", "olive", "grenade", "noix", "amande", "noisette", "pistache", "avocat", "citron", "pamplemousse", "clémentine", "clementine", "kiwi", "ananas", "litchi", "fruit", "haèts"],
+      },
+      {
+        name: "Fruits de la terre / Légumes",
+        hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא פְּרִי הָאֲדָמָה",
+        transliteration: "Boré péri haadama",
+        translation: "Qui crée le fruit de la terre",
+        keywords: ["tomate", "carotte", "pomme de terre", "patate", "concombre", "poivron", "courgette", "aubergine", "salade", "laitue", "oignon", "ail", "haricot", "petit pois", "maïs", "melon", "pastèque", "pasteque", "fraise", "strawberry", "framboise", "myrtille", "légume", "legume", "haadama", "adama"],
+      },
+      {
+        name: "Eau / Boissons / Divers",
+        hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, שֶׁהַכֹּל נִהְיָה בִּדְבָרוֹ",
+        transliteration: "Chéhakol nihya bidvaro",
+        translation: "Par la parole de Qui tout existe",
+        keywords: ["eau", "water", "café", "coffee", "thé", "tea", "jus", "juice", "lait", "milk", "soda", "coca", "bière", "biere", "soupe", "bouillon", "viande", "poulet", "poisson", "oeuf", "fromage", "yaourt", "chocolat", "bonbon", "glace", "sucre", "chéhakol", "chehakol"],
+      },
     ],
   },
   {
@@ -34,11 +71,11 @@ const BRAKHOT_DATA: Category[] = [
     label: "Événements",
     icon: "🌟",
     items: [
-      { name: "Nouveau fruit / Vêtement / Événement rare", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, שֶׁהֶחֱיָנוּ וְקִיְּמָנוּ וְהִגִּיעָנוּ לַזְּמַן הַזֶּה", transliteration: "Chéhé'héyanou vékiyémanou véhiguiyanou lazman hazé", translation: "Qui nous a fait vivre, nous a maintenus et nous a fait atteindre ce moment" },
-      { name: "Éclair / Tonnerre", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, שֶׁכֹּחוֹ וּגְבוּרָתוֹ מָלֵא עוֹלָם", transliteration: "Chéko'ho ouguévourato malé olam", translation: "Dont la force et la puissance remplissent le monde" },
-      { name: "Arc-en-ciel", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, זוֹכֵר הַבְּרִית וְנֶאֱמָן בִּבְרִיתוֹ וְקַיָּם בְּמַאֲמָרוֹ", transliteration: "Zokhér habrit vénééman bivrito vékayam bémaemaro", translation: "Qui se souvient de l'alliance, fidèle à Son alliance et accomplit Sa parole" },
-      { name: "Bonne nouvelle", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הַטּוֹב וְהַמֵּטִיב", transliteration: "Hatov véhamétiv", translation: "Qui est bon et fait le bien" },
-      { name: "Mauvaise nouvelle", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, דַּיַּן הָאֱמֶת", transliteration: "Dayan haémet", translation: "Le juge de vérité" },
+      { name: "Nouveau fruit / Vêtement / Événement rare", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, שֶׁהֶחֱיָנוּ וְקִיְּמָנוּ וְהִגִּיעָנוּ לַזְּמַן הַזֶּה", transliteration: "Chéhé'héyanou vékiyémanou véhiguiyanou lazman hazé", translation: "Qui nous a fait vivre, nous a maintenus et nous a fait atteindre ce moment", keywords: ["nouveau", "new", "première fois", "cheheheyanou", "vêtement", "vetement"] },
+      { name: "Éclair / Tonnerre", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, שֶׁכֹּחוֹ וּגְבוּרָתוֹ מָלֵא עוֹלָם", transliteration: "Chéko'ho ouguévourato malé olam", translation: "Dont la force et la puissance remplissent le monde", keywords: ["éclair", "eclair", "tonnerre", "orage", "foudre", "thunder", "lightning"] },
+      { name: "Arc-en-ciel", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, זוֹכֵר הַבְּרִית וְנֶאֱמָן בִּבְרִיתוֹ וְקַיָּם בְּמַאֲמָרוֹ", transliteration: "Zokhér habrit vénééman bivrito vékayam bémaemaro", translation: "Qui se souvient de l'alliance, fidèle à Son alliance et accomplit Sa parole", keywords: ["arc-en-ciel", "arc en ciel", "rainbow"] },
+      { name: "Bonne nouvelle", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הַטּוֹב וְהַמֵּטִיב", transliteration: "Hatov véhamétiv", translation: "Qui est bon et fait le bien", keywords: ["bonne nouvelle", "good news", "hatov"] },
+      { name: "Mauvaise nouvelle", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, דַּיַּן הָאֱמֶת", transliteration: "Dayan haémet", translation: "Le juge de vérité", keywords: ["mauvaise nouvelle", "décès", "deces", "mort", "dayan"] },
     ],
   },
   {
@@ -46,11 +83,11 @@ const BRAKHOT_DATA: Category[] = [
     label: "Mitsvot",
     icon: "✡️",
     items: [
-      { name: "Lavage des mains (Nétilat Yadaïm)", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ עַל נְטִילַת יָדַיִם", transliteration: "Al nétilat yadaïm", translation: "Qui nous a sanctifiés par Ses commandements et nous a ordonné le lavage des mains" },
-      { name: "Allumage des bougies de Chabbat", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ לְהַדְלִיק נֵר שֶׁל שַׁבָּת", transliteration: "Léhadlik nèr chel Chabbat", translation: "Qui nous a ordonné d'allumer la lumière du Chabbat" },
-      { name: "Tsitsit", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ עַל מִצְוַת צִיצִית", transliteration: "Al mitsvat tsitsit", translation: "Qui nous a ordonné la mitsva des tsitsit" },
-      { name: "Mezouza", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ לִקְבֹּעַ מְזוּזָה", transliteration: "Likboa mézouza", translation: "Qui nous a ordonné de fixer la mézouza" },
-      { name: "Havdala (bougie)", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא מְאוֹרֵי הָאֵשׁ", transliteration: "Boré méoré haèch", translation: "Qui crée les lumières du feu" },
+      { name: "Lavage des mains (Nétilat Yadaïm)", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ עַל נְטִילַת יָדַיִם", transliteration: "Al nétilat yadaïm", translation: "Qui nous a sanctifiés par Ses commandements et nous a ordonné le lavage des mains", keywords: ["mains", "lavage", "netilat", "yadaim"] },
+      { name: "Allumage des bougies de Chabbat", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ לְהַדְלִיק נֵר שֶׁל שַׁבָּת", transliteration: "Léhadlik nèr chel Chabbat", translation: "Qui nous a ordonné d'allumer la lumière du Chabbat", keywords: ["bougie", "allumage", "chabbat", "nèr", "hadlik"] },
+      { name: "Tsitsit", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ עַל מִצְוַת צִיצִית", transliteration: "Al mitsvat tsitsit", translation: "Qui nous a ordonné la mitsva des tsitsit", keywords: ["tsitsit", "tzitzit", "frange"] },
+      { name: "Mezouza", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ לִקְבֹּעַ מְזוּזָה", transliteration: "Likboa mézouza", translation: "Qui nous a ordonné de fixer la mézouza", keywords: ["mezouza", "mézouza", "mezuzah"] },
+      { name: "Havdala (bougie)", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא מְאוֹרֵי הָאֵשׁ", transliteration: "Boré méoré haèch", translation: "Qui crée les lumières du feu", keywords: ["havdala", "havdalah", "feu", "bougie havdala"] },
     ],
   },
   {
@@ -58,10 +95,10 @@ const BRAKHOT_DATA: Category[] = [
     label: "Quotidien",
     icon: "🌅",
     items: [
-      { name: "Au réveil (Modé Ani)", hebrew: "מוֹדֶה אֲנִי לְפָנֶיךָ מֶלֶךְ חַי וְקַיָּם, שֶׁהֶחֱזַרְתָּ בִּי נִשְׁמָתִי בְּחֶמְלָה, רַבָּה אֱמוּנָתֶךָ", transliteration: "Modé ani léfanékha mélekh 'haï vékayam, chéhé'hézarta bi nichmati bé'hemla, raba émounatékha", translation: "Je Te remercie, Roi vivant et éternel, d'avoir rendu mon âme en moi avec miséricorde" },
-      { name: "Sortie des toilettes (Achèr Yatsar)", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר יָצַר אֶת הָאָדָם בְּחָכְמָה", transliteration: "Achèr yatsar èt haadam bé'hokhma", translation: "Qui a formé l'homme avec sagesse" },
-      { name: "Birkat Hamazon (résumé)", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הַזָּן אֶת הָעוֹלָם כֻּלּוֹ בְּטוּבוֹ", transliteration: "Hazan èt haolam koulo bétouvo", translation: "Qui nourrit le monde entier par Sa bonté" },
-      { name: "Avant de dormir (Chéma)", hebrew: "שְׁמַע יִשְׂרָאֵל ה' אֱלֹהֵינוּ ה' אֶחָד", transliteration: "Chéma Israël Ado-naï Élohénou Ado-naï É'had", translation: "Écoute Israël, l'Éternel est notre Dieu, l'Éternel est Un" },
+      { name: "Au réveil (Modé Ani)", hebrew: "מוֹדֶה אֲנִי לְפָנֶיךָ מֶלֶךְ חַי וְקַיָּם, שֶׁהֶחֱזַרְתָּ בִּי נִשְׁמָתִי בְּחֶמְלָה, רַבָּה אֱמוּנָתֶךָ", transliteration: "Modé ani léfanékha mélekh 'haï vékayam, chéhé'hézarta bi nichmati bé'hemla, raba émounatékha", translation: "Je Te remercie, Roi vivant et éternel, d'avoir rendu mon âme en moi avec miséricorde", keywords: ["réveil", "reveil", "matin", "modé ani", "mode ani", "morning"] },
+      { name: "Sortie des toilettes (Achèr Yatsar)", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר יָצַר אֶת הָאָדָם בְּחָכְמָה", transliteration: "Achèr yatsar èt haadam bé'hokhma", translation: "Qui a formé l'homme avec sagesse", keywords: ["toilette", "wc", "acher yatsar", "asher yatzar"] },
+      { name: "Birkat Hamazon (résumé)", hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הַזָּן אֶת הָעוֹלָם כֻּלּוֹ בְּטוּבוֹ", transliteration: "Hazan èt haolam koulo bétouvo", translation: "Qui nourrit le monde entier par Sa bonté", keywords: ["birkat", "hamazon", "benedicite", "après repas", "apres repas"] },
+      { name: "Avant de dormir (Chéma)", hebrew: "שְׁמַע יִשְׂרָאֵל ה' אֱלֹהֵינוּ ה' אֶחָד", transliteration: "Chéma Israël Ado-naï Élohénou Ado-naï É'had", translation: "Écoute Israël, l'Éternel est notre Dieu, l'Éternel est Un", keywords: ["dormir", "coucher", "nuit", "chema", "shema", "sleep"] },
     ],
   },
 ];
@@ -80,10 +117,16 @@ const BrakhotWidget = () => {
           (b) =>
             b.name.toLowerCase().includes(q) ||
             b.transliteration.toLowerCase().includes(q) ||
-            b.translation.toLowerCase().includes(q)
+            b.translation.toLowerCase().includes(q) ||
+            b.keywords.some((kw) => kw.includes(q))
         ),
       })).filter((cat) => cat.items.length > 0)
     : BRAKHOT_DATA;
+
+  // When searching, auto-expand the first matching brakha
+  const firstMatch = q && filteredCategories.length > 0 && filteredCategories[0].items.length > 0
+    ? `${filteredCategories[0].id}-${filteredCategories[0].items[0].name}`
+    : null;
 
   return (
     <motion.div
@@ -96,23 +139,32 @@ const BrakhotWidget = () => {
         <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
           🙌 Brakhot — Bénédictions
         </h3>
-        <p className="text-xs text-muted-foreground mt-1">Retrouvez toutes les bénédictions classées par catégorie</p>
+        <p className="text-xs text-muted-foreground mt-1">Tapez un aliment (pomme, café, riz…) pour trouver sa brakha</p>
       </div>
 
       {/* Search */}
       <input
         type="text"
-        placeholder="🔍 Rechercher une bénédiction..."
+        placeholder="🔍 Quel aliment ? (pomme, café, pain...)"
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
         className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
 
+      {/* Search result hint */}
+      {q && filteredCategories.length > 0 && (
+        <div className="rounded-xl p-3 border border-primary/20" style={{ background: "hsl(var(--gold) / 0.06)" }}>
+          <p className="text-xs font-bold" style={{ color: "hsl(var(--gold-matte))" }}>
+            ✨ La brakha pour « {searchText} » :
+          </p>
+        </div>
+      )}
+
       {/* Categories */}
       {filteredCategories.length === 0 && (
         <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
           <span className="text-3xl">🔍</span>
-          <p className="text-sm text-muted-foreground mt-3">Aucune bénédiction trouvée.</p>
+          <p className="text-sm text-muted-foreground mt-3">Aucune bénédiction trouvée pour « {searchText} ».</p>
         </div>
       )}
 
@@ -146,12 +198,12 @@ const BrakhotWidget = () => {
                   <div className="px-4 pb-4 space-y-2">
                     {cat.items.map((b) => {
                       const bKey = `${cat.id}-${b.name}`;
-                      const isExpanded = expandedBrakha === bKey;
+                      const isExpanded = expandedBrakha === bKey || firstMatch === bKey;
                       return (
                         <div
                           key={b.name}
                           className="rounded-xl border border-border p-3 cursor-pointer transition-all hover:border-primary/20"
-                          style={{ background: isExpanded ? "hsl(var(--gold) / 0.03)" : "transparent" }}
+                          style={{ background: isExpanded ? "hsl(var(--gold) / 0.05)" : "transparent" }}
                           onClick={() => setExpandedBrakha(isExpanded ? null : bKey)}
                         >
                           <div className="flex items-center justify-between">
