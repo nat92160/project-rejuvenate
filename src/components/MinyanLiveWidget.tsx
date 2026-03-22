@@ -207,7 +207,7 @@ const MinyanLiveWidget = () => {
       <div className="rounded-2xl p-5 mb-4 border border-primary/15" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}>
         <div className="flex items-center justify-between">
           <div>
-           <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">👥 Minyan Live</h3>
+           <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">🚨 Urgence Minyan</h3>
             <p className="text-xs text-muted-foreground mt-1">Inscrivez-vous et complétez le Minyan</p>
           </div>
           <div className="flex gap-2">

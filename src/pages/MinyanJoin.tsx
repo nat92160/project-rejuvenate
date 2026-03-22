@@ -155,7 +155,7 @@ const MinyanJoinContent = () => {
     <div className="min-h-screen bg-background">
       <div className="max-w-[500px] mx-auto px-4 py-8">
         <div className="text-center mb-6">
-          <h1 className="font-display text-2xl font-bold text-foreground">🕍 Minyan Live</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground">🚨 Urgence Minyan</h1>
           <p className="text-sm text-muted-foreground mt-1">Rejoignez ce Minyan</p>
         </div>
 

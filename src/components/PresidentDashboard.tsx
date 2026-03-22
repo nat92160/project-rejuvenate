@@ -21,7 +21,7 @@ const features = [
   { id: "affiche", icon: "📋", title: "Affiche Chabbat" },
   { id: "annonces", icon: "📢", title: "Annonces" },
   { id: "refoua", icon: "🙏", title: "Refoua Chelema" },
-  { id: "minyan", icon: "👥", title: "Minyan Live" },
+  { id: "minyan", icon: "🚨", title: "Urgence Minyan" },
   { id: "evenements", icon: "📅", title: "Événements" },
   { id: "cours", icon: "🎥", title: "Cours de Torah" },
   { id: "stats", icon: "📊", title: "Statistiques" },
