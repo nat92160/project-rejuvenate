@@ -46,6 +46,7 @@ const IndexContent = () => {
   const { role, setRole } = useRole();
   const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
   const pendingCount = usePendingRequests();
+  const { triggerAutoGeo } = useCity();
 
   const isPresident = dbRole === "president";
 
@@ -54,10 +55,12 @@ const IndexContent = () => {
       setRole("guest");
       setShowDashboard(true);
       if (!user && !authLoading) setAuthOpen(true);
+      triggerAutoGeo();
       return;
     }
     setRole(selectedRole === "fidele" ? "fidele" : "guest");
     setShowDashboard(true);
+    triggerAutoGeo();
   };
 
   const renderTabContent = () => {
