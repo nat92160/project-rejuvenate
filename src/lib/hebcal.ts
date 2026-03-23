@@ -228,14 +228,18 @@ export async function fetchMinhaTime(city: CityConfig, date?: Date): Promise<str
 export async function fetchHolidays(city: CityConfig): Promise<HolidayItem[]> {
   try {
     const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const il = city.country === 'IL';
     const year = now.getFullYear();
 
+    // Fetch from today to end of year, plus next year's first months for continuity
+    const endDate = new Date(year + 1, 5, 30);
+
     const events = HebrewCalendar.calendar({
-      start: new Date(year, 0, 1),
-      end: new Date(year, 11, 31),
+      start: today,
+      end: endDate,
       il,
-    }).filter(ev => ev.getDate().greg().getFullYear() === year);
+    });
 
     const seen = new Set<string>();
     const results: HolidayItem[] = [];
@@ -245,12 +249,15 @@ export async function fetchHolidays(city: CityConfig): Promise<HolidayItem[]> {
       if (!(f & (flags.CHAG | flags.MAJOR_FAST | flags.MINOR_FAST | flags.MINOR_HOLIDAY))) continue;
       if (f & (flags.OMER_COUNT | flags.DAF_YOMI | flags.DAILY_LEARNING | flags.SHABBAT_MEVARCHIM)) continue;
 
+      const greg = ev.getDate().greg();
+      // Only future or today
+      if (greg < today) continue;
+
       const desc = ev.getDesc();
       if (seen.has(desc)) continue;
       seen.add(desc);
 
-      const greg = ev.getDate().greg();
-      const daysLeft = Math.ceil((greg.getTime() - now.getTime()) / 86400000);
+      const daysLeft = Math.ceil((greg.getTime() - today.getTime()) / 86400000);
       const t = translateHoliday(desc);
 
       results.push({
