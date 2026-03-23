@@ -205,7 +205,7 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
 
 // Psalm tile with name tooltip
 const PsalmTile = ({
-  num, claim, isMine, onClaim, onToggle, onUnclaim, onRead
+  num, claim, isMine, onClaim, onToggle, onUnclaim, onRead, onSelect
 }: {
   num: number;
   claim: Claim | undefined;
@@ -214,6 +214,7 @@ const PsalmTile = ({
   onToggle: () => void;
   onUnclaim: () => void;
   onRead: () => void;
+  onSelect: () => void;
 }) => {
   const firstName = claim?.display_name?.split(" ")[0] || "";
 
@@ -222,7 +223,7 @@ const PsalmTile = ({
       layout
       onClick={() => {
         if (!claim) { onClaim(); return; }
-        if (isMine) { onRead(); return; }
+        if (isMine) { onSelect(); return; }
       }}
       onContextMenu={(e) => { e.preventDefault(); if (isMine && claim && !claim.completed) onUnclaim(); }}
       disabled={!!claim && !isMine}
@@ -232,13 +233,14 @@ const PsalmTile = ({
         : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-primary/5"
       }`}
       style={isMine && claim && !claim.completed ? { background: "hsl(var(--gold) / 0.1)" } : {}}
-      title={claim ? `${claim.display_name}${claim.completed ? " ✅" : isMine ? " — clic pour lire" : ""}` : `Psaume ${num}`}
+      title={claim ? `${claim.display_name}${claim.completed ? " ✅" : isMine ? " — clic pour gérer" : ""}` : `Psaume ${num}`}
       whileTap={{ scale: 0.92 }}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.15, delay: num * 0.003 }}
     >
-      <span className="text-sm font-bold">{num}</span>
+      <span className="text-[11px] font-bold leading-none">{num}</span>
+      <span className="text-[8px] leading-none mt-0.5 font-hebrew text-muted-foreground" dir="rtl">{toHebrewLetter(num)}</span>
       {claim && (
         <span className="text-[6px] leading-tight truncate w-full text-center px-0.5 mt-0.5 font-medium" style={{ color: claim.completed ? "hsl(142 76% 36%)" : "hsl(var(--gold-matte))" }}>
           {firstName}
