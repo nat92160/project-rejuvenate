@@ -180,8 +180,8 @@ const SiddourWidget = ({ prayerMode = false }: SiddourWidgetProps) => {
                 <motion.button
                   key={sec.index}
                   onClick={() => setActiveSection(sec.index)}
-                  className="w-full flex items-center gap-4 rounded-2xl border border-border bg-card p-4 text-left cursor-pointer transition-all hover:border-primary/20 hover:-translate-y-0.5 active:scale-[0.98]"
-                  style={{ boxShadow: "var(--shadow-card)" }}
+                  className="w-full flex items-center gap-4 rounded-2xl border p-4 text-left cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+                  style={{ boxShadow: prayerMode ? "none" : "var(--shadow-card)", background: prayerMode ? pmCard : "hsl(var(--card))", borderColor: pmBorder || "hsl(var(--border))" }}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
