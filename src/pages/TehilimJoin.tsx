@@ -421,6 +421,22 @@ const TehilimJoinContent = () => {
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
       <HazakCelebration show={showHazak} onDone={() => setShowHazak(false)} />
+
+      {/* Psalm Reader */}
+      <AnimatePresence>
+        {readingChapter !== null && (() => {
+          const myClaim = claims.find(c => c.chapter_start === readingChapter && isOwnClaim(c));
+          return (
+            <PsalmReaderOverlay
+              chapter={readingChapter}
+              claim={myClaim}
+              onClose={() => setReadingChapter(null)}
+              onMarkComplete={(claim) => { toggleComplete(claim); setReadingChapter(null); }}
+              onUnclaim={(claim) => { unclaimPsalm(claim); setReadingChapter(null); }}
+            />
+          );
+        })()}
+      </AnimatePresence>
     </div>
   );
 };
