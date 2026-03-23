@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CityProvider } from "@/hooks/useCity";
 import { RoleProvider, useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,11 +52,27 @@ const IndexContent = () => {
   const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
   const pendingCount = usePendingRequests();
   const { triggerAutoGeo } = useCity();
+  const [showHomeBtn, setShowHomeBtn] = useState(false);
 
   const isPresident = dbRole === "president";
 
   // Auto-trigger geolocation on mount
   useEffect(() => { triggerAutoGeo(); }, []);
+
+  // Show floating home button when scrolled and not on dashboard
+  useEffect(() => {
+    const onScroll = () => {
+      setShowHomeBtn(window.scrollY > 200 && activeTab !== "dashboard");
+    };
+    onScroll(); // check immediately on tab change
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [activeTab]);
+
+  const goHome = useCallback(() => {
+    setActiveTab("dashboard");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const renderTabContent = () => {
     if (isPresident && activeTab === "dashboard") {
@@ -208,6 +224,25 @@ const IndexContent = () => {
               </a>
             </div>
           </div>
+
+          {/* Floating home button */}
+          {showHomeBtn && (
+            <button
+              onClick={goHome}
+              className="fixed z-40 flex items-center gap-1.5 rounded-full border border-border shadow-lg cursor-pointer transition-all active:scale-95 hover:-translate-y-0.5"
+              style={{
+                bottom: "calc(84px + env(safe-area-inset-bottom, 0px))",
+                left: "16px",
+                background: "hsl(var(--card))",
+                color: "hsl(var(--foreground))",
+                padding: "10px 16px",
+                boxShadow: "var(--shadow-elevated)",
+              }}
+            >
+              <span className="text-base">🏠</span>
+              <span className="text-xs font-bold">Accueil</span>
+            </button>
+          )}
 
           <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
