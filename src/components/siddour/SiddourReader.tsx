@@ -19,8 +19,8 @@ function findPrayerStartIndex(hebrew: string[]): number {
   }
   return firstNonInstruction >= 0 ? firstNonInstruction : 0;
 }
-import ViewModeSelector from "@/components/ViewModeSelector";
-import type { ViewMode } from "@/hooks/useTransliteration";
+
+
 
 interface SectionContent {
   hebrew: string[];
