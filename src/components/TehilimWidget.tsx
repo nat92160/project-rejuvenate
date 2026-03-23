@@ -781,7 +781,7 @@ const TehilimWidget = () => {
                     <span className="text-5xl">🤝</span>
                     <h4 className="font-display text-lg font-bold mt-4 text-foreground">Chaîne de Tehilim</h4>
                     <p className="text-sm mt-2 text-muted-foreground max-w-[300px] mx-auto">
-                      {isPresident ? "Créez votre première chaîne." : "Aucune chaîne active pour le moment."}
+                      Créez votre première chaîne ou attendez qu'une chaîne soit partagée.
                     </p>
                   </div>
                 ) : (
