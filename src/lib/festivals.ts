@@ -1,28 +1,28 @@
+import { HebrewCalendar, Location, flags } from '@hebcal/core';
 import { CityConfig } from "./cities";
+import { cityToLocation } from "./hebcal";
 
 // ─── Festival grouping logic ───
 
-/** A single day within a festival */
 export interface FestivalDay {
-  date: string;           // ISO date "2026-04-01"
-  dateFr: string;         // "mercredi 1 avril"
-  dayOfWeek: number;      // 0=Sun...6=Sat
-  title: string;          // French name
+  date: string;
+  dateFr: string;
+  dayOfWeek: number;
+  title: string;
   hebrew: string;
   type: "erev" | "yomtov" | "holhamoed" | "isrouHag" | "fast" | "single";
-  candles?: string;       // "18:45"
-  havdalah?: string;      // "19:52"
+  candles?: string;
+  havdalah?: string;
   isShabbat: boolean;
   memo?: string;
 }
 
-/** A grouped festival card */
 export interface FestivalCard {
   id: string;
-  name: string;           // e.g. "Pessa'h"
+  name: string;
   emoji: string;
   hebrew: string;
-  dateRange: string;      // "1 – 9 avril 2026"
+  dateRange: string;
   daysLeft: number;
   status: "bientot" | "encours" | "holhamoed" | "termine";
   days: FestivalDay[];
@@ -98,12 +98,7 @@ const DAY_TYPE_LABELS: Record<FestivalDay["type"], string> = {
 
 export { DAY_TYPE_LABELS };
 
-function hebcalGeoParam(city: CityConfig): string {
-  if ((city as any)._gps) {
-    return `geo=pos&latitude=${city.lat}&longitude=${city.lng}&tzid=${city.tz}`;
-  }
-  return `geo=geoname&geonameid=${city.geonameid}`;
-}
+// ─── Helpers ───
 
 function fmtDate(iso: string): string {
   const d = new Date(iso + "T12:00:00");
@@ -115,8 +110,12 @@ function fmtDateShort(iso: string): string {
   return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 }
 
-function fmtTime(isoDateTime: string): string {
-  return new Date(isoDateTime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+function fmtTime(d: Date): string {
+  return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function toIsoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function getStatus(days: FestivalDay[], now: Date): FestivalCard["status"] {
@@ -133,64 +132,73 @@ function getStatus(days: FestivalDay[], now: Date): FestivalCard["status"] {
   return "encours";
 }
 
+// ─── Main fetch using @hebcal/core SDK (offline) ───
+
 export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard[]> {
   try {
     const now = new Date();
-    const year = now.getFullYear();
-    const geoP = hebcalGeoParam(city);
+    const location = cityToLocation(city);
+    const il = city.country === 'IL';
 
-    // Fetch both years with nx=on (Rosh Chodesh) and mf=on (minor fasts) — v2
-    const makeUrl = (y: number) =>
-      `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${y}&month=x&maj=on&min=on&mod=on&nx=on&ss=off&mf=on&c=on&${geoP}&i=off&b=18`;
-    
-    const [r1, r2] = await Promise.all([fetch(makeUrl(year)), fetch(makeUrl(year + 1))]);
-    const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
-    const items: any[] = [...(d1.items || []), ...(d2.items || [])];
+    // Generate events for a ~14-month window using SDK (no API calls)
+    const events = HebrewCalendar.calendar({
+      start: new Date(now.getTime() - 30 * 86400000),
+      end: new Date(now.getTime() + 400 * 86400000),
+      candlelighting: true,
+      location,
+      il,
+      candleLightingMins: city.candleOffset,
+    });
 
-    // Build maps of times by date
+    // Build candle/havdalah time maps by date
     const candlesByDate: Record<string, string> = {};
     const havdalahByDate: Record<string, string> = {};
-    const fastBeginByDate: Record<string, string> = {};
-    const fastEndByDate: Record<string, string> = {};
 
-    for (const item of items) {
-      const dateKey = item.date?.substring(0, 10);
-      if (!dateKey) continue;
-      if (item.category === "candles") candlesByDate[dateKey] = fmtTime(item.date);
-      if (item.category === "havdalah") havdalahByDate[dateKey] = fmtTime(item.date);
-      if (item.subcat === "fast" && item.category === "zmanim") {
-        if (item.title?.toLowerCase().includes("begins")) fastBeginByDate[dateKey] = fmtTime(item.date);
-        if (item.title?.toLowerCase().includes("ends")) fastEndByDate[dateKey] = fmtTime(item.date);
+    for (const ev of events) {
+      const desc = ev.getDesc();
+      const greg = ev.getDate().greg();
+      const dateKey = toIsoDate(greg);
+
+      if (desc === 'Candle lighting') {
+        const eventTime: Date = (ev as any).eventTime || greg;
+        candlesByDate[dateKey] = fmtTime(eventTime);
+      }
+      if (desc.startsWith('Havdalah')) {
+        const eventTime: Date = (ev as any).eventTime || greg;
+        havdalahByDate[dateKey] = fmtTime(eventTime);
       }
     }
 
     // Group holidays
     const groups: Record<string, FestivalDay[]> = {};
     const singles: FestivalCard[] = [];
-    // Collect Rosh Chodesh by month name
     const roshChodeshMap: Record<string, { dates: string[]; hebrew: string }> = {};
 
-    for (const item of items) {
+    for (const ev of events) {
+      const f = ev.getFlags();
+      const desc = ev.getDesc();
+      const greg = ev.getDate().greg();
+      const dateStr = toIsoDate(greg);
+
+      // Skip candle/havdalah events
+      if (desc === 'Candle lighting' || desc.startsWith('Havdalah')) continue;
+
       // Process Rosh Chodesh
-      if (item.category === "roshchodesh") {
-        const dateStr = item.date?.substring(0, 10);
-        if (!dateStr) continue;
+      if (f & flags.ROSH_CHODESH) {
         const dt = new Date(dateStr + "T12:00:00");
         if (dt < now && (now.getTime() - dt.getTime()) > 2 * 86400000) continue;
-        const monthName = item.title.replace("Rosh Chodesh ", "");
-        if (!roshChodeshMap[monthName]) roshChodeshMap[monthName] = { dates: [], hebrew: item.hebrew || "" };
+        const monthName = desc.replace('Rosh Chodesh ', '');
+        if (!roshChodeshMap[monthName]) roshChodeshMap[monthName] = { dates: [], hebrew: ev.render('he') || '' };
         if (!roshChodeshMap[monthName].dates.includes(dateStr)) {
           roshChodeshMap[monthName].dates.push(dateStr);
         }
         continue;
       }
 
-      if (item.category !== "holiday") continue;
+      // Only process holiday-type events
+      if (!(f & (flags.CHAG | flags.CHOL_HAMOED | flags.EREV | flags.MAJOR_FAST | flags.MINOR_FAST | flags.MINOR_HOLIDAY))) continue;
 
-      const key = item.title.toLowerCase().trim();
-      const dateStr = item.date?.substring(0, 10);
-      if (!dateStr) continue;
-
+      const key = desc.toLowerCase().trim();
       const dt = new Date(dateStr + "T12:00:00");
       const dayOfWeek = dt.getDay();
       const isShabbat = dayOfWeek === 6;
@@ -201,22 +209,22 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
         if (!groups[groupInfo.group]) groups[groupInfo.group] = [];
 
         const dayTitle = key.includes("erev")
-          ? `Veille — Allumage des bougies`
+          ? "Veille — Allumage des bougies"
           : key.includes("ch''m") || key.includes("hoshana")
           ? `Hol HaMoèd — ${fmtDate(dateStr)}`
-          : item.title.replace(/^(Pesach|Sukkot|Shavuot)\s*/i, "").trim();
+          : desc.replace(/^(Pesach|Sukkot|Shavuot)\s*/i, "").trim();
 
         groups[groupInfo.group].push({
           date: dateStr,
           dateFr: fmtDate(dateStr),
           dayOfWeek,
           title: dayTitle,
-          hebrew: item.hebrew || "",
+          hebrew: ev.render('he') || '',
           type: groupInfo.type,
           candles: candlesByDate[dateStr],
           havdalah: havdalahByDate[dateStr],
           isShabbat,
-          memo: item.memo,
+          memo: ev.memo || undefined,
         });
         continue;
       }
@@ -227,31 +235,24 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
         const daysLeft = Math.ceil((dt.getTime() - now.getTime()) / 86400000);
         if (daysLeft < -1) continue;
 
-        // Deduplicate: keep only the nearest occurrence per holiday name
+        // Deduplicate: keep only nearest
         const existingIdx = singles.findIndex(s => s.name === singleInfo.name);
         if (existingIdx !== -1) {
-          // Keep the one closest to now (but still upcoming)
           const existing = singles[existingIdx];
           if (daysLeft >= 0 && (existing.daysLeft > daysLeft || existing.status === "termine")) {
-            singles.splice(existingIdx, 1); // Remove old, will add new below
+            singles.splice(existingIdx, 1);
           } else {
-            continue; // Skip this duplicate
+            continue;
           }
         }
 
-        // For fasts, include begin/end times in memo
         const isFast = singleInfo.category === "jeune";
-        const fastBegin = fastBeginByDate[dateStr];
-        const fastEnd = fastEndByDate[dateStr];
-        const memo = isFast
-          ? [fastBegin ? `Début: ${fastBegin}` : "", fastEnd ? `Fin: ${fastEnd}` : ""].filter(Boolean).join(" — ")
-          : undefined;
 
         singles.push({
           id: `${key}-${dateStr}`,
           name: singleInfo.name,
           emoji: singleInfo.emoji,
-          hebrew: item.hebrew || "",
+          hebrew: ev.render('he') || '',
           dateRange: fmtDateShort(dateStr),
           daysLeft: Math.max(0, daysLeft),
           status: daysLeft < 0 ? "termine" : daysLeft === 0 ? "encours" : "bientot",
@@ -261,54 +262,28 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
             dateFr: fmtDate(dateStr),
             dayOfWeek,
             title: singleInfo.name,
-            hebrew: item.hebrew || "",
+            hebrew: ev.render('he') || '',
             type: isFast ? "fast" : "single",
-            candles: fastBegin || candlesByDate[dateStr],
-            havdalah: fastEnd || havdalahByDate[dateStr],
+            candles: candlesByDate[dateStr],
+            havdalah: havdalahByDate[dateStr],
             isShabbat,
-            memo,
+            memo: ev.memo || undefined,
           }],
         });
       }
     }
 
-    // Convert groups to cards — deduplicate: keep only ONE occurrence per group
-    // (the nearest upcoming, or current if in progress)
+    // Convert groups to cards
     const cards: FestivalCard[] = [];
 
-    for (const [groupId, allDays] of Object.entries(groups)) {
+    for (const [groupId, days] of Object.entries(groups)) {
       const info = GROUP_NAMES[groupId];
-      if (!info || allDays.length === 0) continue;
+      if (!info || days.length === 0) continue;
 
-      allDays.sort((a, b) => a.date.localeCompare(b.date));
+      days.sort((a, b) => a.date.localeCompare(b.date));
 
-      // Split days by year to avoid mixing Pessah 2026 + 2027
-      const byYear: Record<number, FestivalDay[]> = {};
-      for (const day of allDays) {
-        const y = new Date(day.date + "T12:00:00").getFullYear();
-        if (!byYear[y]) byYear[y] = [];
-        byYear[y].push(day);
-      }
-
-      // Pick the best year: prefer current/upcoming over past
-      const nowStr = now.toISOString().split("T")[0];
-      let bestDays: FestivalDay[] | null = null;
-
-      for (const y of Object.keys(byYear).map(Number).sort()) {
-        const yearDays = byYear[y];
-        const lastDate = yearDays[yearDays.length - 1].date;
-        // Skip if entirely in the past (more than 2 days ago)
-        if (lastDate < nowStr && Math.ceil((now.getTime() - new Date(lastDate + "T23:59:59").getTime()) / 86400000) > 2) {
-          continue;
-        }
-        bestDays = yearDays;
-        break; // Take the first (nearest) valid year
-      }
-
-      if (!bestDays || bestDays.length === 0) continue;
-
-      const firstDate = bestDays[0].date;
-      const lastDate = bestDays[bestDays.length - 1].date;
+      const firstDate = days[0].date;
+      const lastDate = days[days.length - 1].date;
       const firstDt = new Date(firstDate + "T12:00:00");
       const daysLeft = Math.ceil((firstDt.getTime() - now.getTime()) / 86400000);
 
@@ -323,16 +298,16 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
         hebrew: info.hebrew,
         dateRange,
         daysLeft: Math.max(0, daysLeft),
-        status: getStatus(bestDays, now),
+        status: getStatus(days, now),
         category: "yomtov",
-        days: bestDays,
+        days,
       });
     }
 
-    // Build Rosh Chodesh cards — deduplicate by month name, keep nearest upcoming
+    // Build Rosh Chodesh cards — deduplicate by month name
     const roshChodeshCards: FestivalCard[] = [];
     const seenRCMonths = new Set<string>();
-    // Sort entries by earliest date to process nearest first
+
     const rcEntries = Object.entries(roshChodeshMap).sort((a, b) => {
       const dateA = a[1].dates.sort()[0] || "";
       const dateB = b[1].dates.sort()[0] || "";
@@ -340,7 +315,6 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
     });
 
     for (const [monthName, rc] of rcEntries) {
-      // Deduplicate: same Hebrew month name from different years
       if (seenRCMonths.has(monthName)) continue;
 
       rc.dates.sort();
@@ -379,7 +353,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       });
     }
 
-    // Merge and sort all — take only upcoming
+    // Merge and sort
     const all = [...cards, ...singles, ...roshChodeshCards.slice(0, 3)]
       .filter(c => c.status !== "termine")
       .sort((a, b) => {

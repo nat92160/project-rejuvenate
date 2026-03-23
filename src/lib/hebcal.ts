@@ -1,31 +1,14 @@
-import { CityConfig } from "./cities";
+import { HebrewCalendar, Location, Zmanim as HebcalZmanim, HDate, flags } from '@hebcal/core';
+import { CityConfig } from './cities';
 
-function hebcalGeoParam(city: CityConfig): string {
-  const gpsCity = city as CityConfig & { _gps?: boolean };
-  if (gpsCity._gps) {
-    return `geo=pos&latitude=${city.lat}&longitude=${city.lng}&tzid=${city.tz}`;
-  }
-  return `geo=geoname&geonameid=${city.geonameid}`;
+// ─── Helper ───
+
+export function cityToLocation(city: CityConfig): Location {
+  const isIsrael = city.country === 'IL';
+  return new Location(city.lat, city.lng, isIsrael, city.tz, city.name, city.country);
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Hebcal request failed: ${response.status}`);
-  return response.json();
-}
-
-async function fetchHebcalItems(city: CityConfig, years: number[], query: string): Promise<any[]> {
-  const geoP = hebcalGeoParam(city);
-  const payloads = await Promise.all(
-    years.map((year) =>
-      fetchJson<{ items?: any[] }>(
-        `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${year}&month=x&${query}&${geoP}`
-      )
-    )
-  );
-
-  return payloads.flatMap((payload) => payload.items || []);
-}
+// ─── Interfaces ───
 
 export interface ShabbatTimes {
   candleLighting: string;
@@ -63,7 +46,8 @@ export interface RoshHodeshInfo {
   hebrew: string;
 }
 
-// Translate Hebcal titles to French
+// ─── French translations ───
+
 const HOLIDAY_FR: Record<string, { fr: string; emoji: string }> = {
   "erev pesach": { fr: "Erev Pessa'h", emoji: "🫓" },
   "pesach i": { fr: "Pessa'h I", emoji: "🍷" },
@@ -89,6 +73,10 @@ const HOLIDAY_FR: Record<string, { fr: string; emoji: string }> = {
   "ta'anit bechorot": { fr: "Jeûne des premiers-nés", emoji: "🕯️" },
   "ta'anit esther": { fr: "Jeûne d'Esther", emoji: "🕯️" },
   "tzom tammuz": { fr: "17 Tamouz", emoji: "🕯️" },
+  "erev rosh hashana": { fr: "Erev Roch Hachana", emoji: "🍯" },
+  "erev yom kippur": { fr: "Erev Yom Kippour", emoji: "🕊️" },
+  "erev sukkot": { fr: "Erev Soukkot", emoji: "🌿" },
+  "erev shavuot": { fr: "Erev Chavouot", emoji: "📜" },
 };
 
 function translateHoliday(title: string): { fr: string; emoji: string } {
@@ -98,48 +86,79 @@ function translateHoliday(title: string): { fr: string; emoji: string } {
   return { fr: title, emoji: "🎉" };
 }
 
+// ─── Formatting helpers ───
+
+function fmtZmanTime(dt: Date | null | undefined): string {
+  if (!dt || isNaN(dt.getTime())) return '--:--';
+  return dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function toIsoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// ─── Hebrew date (offline) ───
+
 export async function fetchHebrewDate(): Promise<HebrewDateInfo | null> {
   try {
-    const now = new Date();
-    const d = await fetchJson<any>(
-      `https://www.hebcal.com/converter?cfg=json&g2h=1&gy=${now.getFullYear()}&gm=${now.getMonth() + 1}&gd=${now.getDate()}`
-    );
-
+    const hd = new HDate();
     return {
-      hebrew: d.hebrew || "",
-      heDateParts: { y: d.hy, m: d.hm, d: d.hd },
+      hebrew: hd.renderGematriya(),
+      heDateParts: { y: hd.getFullYear(), m: hd.getMonthName(), d: hd.getDate() },
     };
   } catch {
     return null;
   }
 }
 
+/** Get Hebrew date string for any given date */
+export function getHebrewDateString(date: Date): string {
+  try {
+    return new HDate(date).renderGematriya();
+  } catch {
+    return '';
+  }
+}
+
+// ─── Shabbat times (offline) ───
+
 export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes | null> {
   try {
-    const geoP = hebcalGeoParam(city);
-    const d = await fetchJson<any>(`https://www.hebcal.com/shabbat?cfg=json&${geoP}&M=on`);
-    const items = d.items || [];
+    const location = cityToLocation(city);
+    const now = new Date();
+    const nextWeek = new Date(now.getTime() + 8 * 86400000);
 
-    let candles = "";
-    let candlesDate = "";
-    let havdala = "";
-    let havdalaDate = "";
-    let parasha = "";
-    let parashaHe = "";
+    const events = HebrewCalendar.calendar({
+      start: now,
+      end: nextWeek,
+      candlelighting: true,
+      location,
+      sedrot: true,
+      il: city.country === 'IL',
+      candleLightingMins: city.candleOffset,
+    });
 
-    for (const item of items) {
-      if (item.category === "candles") {
-        candles = new Date(item.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-        candlesDate = new Date(item.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    let candles = '', candlesDate = '', havdala = '', havdalaDate = '', parasha = '', parashaHe = '';
+
+    for (const ev of events) {
+      const desc = ev.getDesc();
+      const greg = ev.getDate().greg();
+      const f = ev.getFlags();
+
+      if (desc === 'Candle lighting') {
+        const eventTime: Date = (ev as any).eventTime || greg;
+        candles = fmtZmanTime(eventTime);
+        candlesDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
       }
-      if (item.category === "havdalah") {
-        havdala = new Date(item.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-        havdalaDate = new Date(item.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+      if (desc.startsWith('Havdalah')) {
+        const eventTime: Date = (ev as any).eventTime || greg;
+        havdala = fmtZmanTime(eventTime);
+        havdalaDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
       }
-      if (item.category === "parashat") {
-        const t = translateHoliday(item.title);
+      if (f & flags.PARSHA_HASHAVUA) {
+        const t = translateHoliday(desc);
         parasha = t.fr;
-        parashaHe = item.hebrew || "";
+        parashaHe = ev.render('he') || '';
       }
     }
 
@@ -156,129 +175,128 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
   }
 }
 
+// ─── Zmanim (offline) ───
+
 export async function fetchZmanim(city: CityConfig, date?: Date): Promise<ZmanItem[]> {
   try {
     const d = date || new Date();
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const geoP = hebcalGeoParam(city);
-    const data = await fetchJson<any>(`https://www.hebcal.com/zmanim?cfg=json&${geoP}&date=${dateStr}`);
-    const times = data.times || {};
-
-    const fmt = (key: string) => {
-      const val = times[key];
-      return val ? new Date(val).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "--:--";
-    };
+    const location = cityToLocation(city);
+    const zman = new HebcalZmanim(location, d, false);
 
     return [
-      { label: "Alot haChah'ar", time: fmt("alotHaShachar"), icon: "🌑", description: "Aube — 72 min avant le lever" },
-      { label: "Nets (Lever du soleil)", time: fmt("sunrise"), icon: "🌅", description: "Lever du soleil" },
-      { label: "Chéma (MG\"A)", time: fmt("sofZmanShmaMGA"), icon: "📖", description: "Fin du Chéma (Magen Avraham)" },
-      { label: "Chéma (GR\"A)", time: fmt("sofZmanShma"), icon: "📖", description: "Fin du Chéma (Gaon de Vilna)" },
-      { label: "Téfila (GR\"A)", time: fmt("sofZmanTfilla"), icon: "🙏", description: "Fin de la Téfila" },
-      { label: "'Hatsot (Midi solaire)", time: fmt("chatzot"), icon: "🕐", description: "Midi solaire" },
-      { label: "Min'ha Guédola", time: fmt("minchaGedola"), icon: "🕐", description: "Début de Min'ha" },
-      { label: "Min'ha Qétana", time: fmt("minchaKetana"), icon: "🕐", description: "Min'ha tardive" },
-      { label: "Pélag haMin'ha", time: fmt("plagHaMincha"), icon: "🌤️", description: "Pélag haMin'ha" },
-      { label: "Chkia (Coucher du soleil)", time: fmt("sunset"), icon: "🌇", description: "Coucher du soleil" },
-      { label: "Tsét haKokhavim", time: fmt("tzeit"), icon: "⭐", description: "Sortie des étoiles" },
+      { label: "Alot haChah'ar", time: fmtZmanTime(zman.alotHaShachar()), icon: "🌑", description: "Aube — 72 min avant le lever" },
+      { label: "Nets (Lever du soleil)", time: fmtZmanTime(zman.sunrise()), icon: "🌅", description: "Lever du soleil" },
+      { label: "Chéma (MG\"A)", time: fmtZmanTime(zman.sofZmanShmaMGA()), icon: "📖", description: "Fin du Chéma (Magen Avraham)" },
+      { label: "Chéma (GR\"A)", time: fmtZmanTime(zman.sofZmanShma()), icon: "📖", description: "Fin du Chéma (Gaon de Vilna)" },
+      { label: "Téfila (GR\"A)", time: fmtZmanTime(zman.sofZmanTfilla()), icon: "🙏", description: "Fin de la Téfila" },
+      { label: "'Hatsot (Midi solaire)", time: fmtZmanTime(zman.chatzot()), icon: "🕐", description: "Midi solaire" },
+      { label: "Min'ha Guédola", time: fmtZmanTime(zman.minchaGedola()), icon: "🕐", description: "Début de Min'ha" },
+      { label: "Min'ha Qétana", time: fmtZmanTime(zman.minchaKetana()), icon: "🕐", description: "Min'ha tardive" },
+      { label: "Pélag haMin'ha", time: fmtZmanTime(zman.plagHaMincha()), icon: "🌤️", description: "Pélag haMin'ha" },
+      { label: "Chkia (Coucher du soleil)", time: fmtZmanTime(zman.sunset()), icon: "🌇", description: "Coucher du soleil" },
+      { label: "Tsét haKokhavim", time: fmtZmanTime(zman.tzeit()), icon: "⭐", description: "Sortie des étoiles" },
     ];
   } catch {
     return [];
   }
 }
 
-/** Calculate suggested Minha time: Minha Ketana or 15 min before sunset, whichever is earlier */
+// ─── Minha time (offline) ───
+
 export async function fetchMinhaTime(city: CityConfig, date?: Date): Promise<string | null> {
   try {
     const d = date || new Date();
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const geoP = hebcalGeoParam(city);
-    const data = await fetchJson<any>(`https://www.hebcal.com/zmanim?cfg=json&${geoP}&date=${dateStr}`);
-    const times = data.times || {};
+    const location = cityToLocation(city);
+    const zman = new HebcalZmanim(location, d, false);
 
-    const minchaKetana = times.minchaKetana ? new Date(times.minchaKetana) : null;
-    const sunset = times.sunset ? new Date(times.sunset) : null;
+    const mk = zman.minchaKetana();
+    const ss = zman.sunset();
+    if (!ss) return null;
 
-    if (!sunset) return null;
+    const fifteenBefore = new Date(ss.getTime() - 15 * 60 * 1000);
+    let minhaTime = fifteenBefore;
+    if (mk && mk < fifteenBefore) minhaTime = mk;
 
-    const fifteenBeforeSunset = new Date(sunset.getTime() - 15 * 60 * 1000);
-
-    // Use the earlier of the two
-    let minhaTime = fifteenBeforeSunset;
-    if (minchaKetana && minchaKetana < fifteenBeforeSunset) {
-      minhaTime = minchaKetana;
-    }
-
-    return minhaTime.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    return fmtZmanTime(minhaTime);
   } catch {
     return null;
   }
 }
 
+// ─── Holidays (offline) ───
+
 export async function fetchHolidays(city: CityConfig): Promise<HolidayItem[]> {
   try {
     const now = new Date();
-    const year = now.getFullYear();
-    const items = await fetchHebcalItems(
-      city,
-      [year, year + 1],
-      "maj=on&min=on&mod=on&nx=on&ss=off&mf=on&c=on&i=off&b=18"
-    );
+    const il = city.country === 'IL';
 
-    return items
-      .filter((item: any) => item.category === "holiday" && item.subcat === "major" && new Date(`${item.date}T23:59:59`) >= now)
-      .slice(0, 6)
-      .map((item: any) => {
-        const dt = new Date(`${item.date}T12:00:00`);
-        const daysLeft = Math.ceil((dt.getTime() - now.getTime()) / 86400000);
-        const t = translateHoliday(item.title);
-        return {
-          title: t.fr,
-          date: dt.toLocaleDateString("fr-FR", { day: "numeric", month: "long" }),
-          hebrew: item.hebrew || "",
-          category: item.subcat || "major",
-          emoji: t.emoji,
-          daysLeft,
-        };
+    const events = HebrewCalendar.calendar({
+      start: now,
+      end: new Date(now.getTime() + 365 * 86400000),
+      il,
+    });
+
+    const seen = new Set<string>();
+    const results: HolidayItem[] = [];
+
+    for (const ev of events) {
+      const f = ev.getFlags();
+      if (!(f & (flags.CHAG | flags.MAJOR_FAST | flags.MINOR_FAST | flags.MINOR_HOLIDAY))) continue;
+      if (f & (flags.OMER_COUNT | flags.DAF_YOMI | flags.DAILY_LEARNING | flags.SHABBAT_MEVARCHIM)) continue;
+
+      const desc = ev.getDesc();
+      if (seen.has(desc)) continue;
+      seen.add(desc);
+
+      const greg = ev.getDate().greg();
+      const daysLeft = Math.ceil((greg.getTime() - now.getTime()) / 86400000);
+      const t = translateHoliday(desc);
+
+      results.push({
+        title: t.fr,
+        date: greg.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }),
+        hebrew: ev.render('he') || '',
+        category: 'major',
+        emoji: t.emoji,
+        daysLeft,
       });
+
+      if (results.length >= 6) break;
+    }
+
+    return results;
   } catch {
     return [];
   }
 }
 
+// ─── Rosh Hodesh (offline) ───
+
 export async function fetchNextRoshHodesh(city: CityConfig): Promise<RoshHodeshInfo | null> {
   try {
     const now = new Date();
-    const year = now.getFullYear();
-    const items = await fetchHebcalItems(
-      city,
-      [year, year + 1],
-      "maj=off&min=off&mod=off&nx=on&ss=off&mf=off&c=off&D=on&i=off"
+    const il = city.country === 'IL';
+
+    const events = HebrewCalendar.calendar({
+      start: now,
+      end: new Date(now.getTime() + 60 * 86400000),
+      il,
+    }).filter(ev => ev.getFlags() & flags.ROSH_CHODESH);
+
+    if (events.length === 0) return null;
+
+    const first = events[0];
+    const monthName = first.getDesc().replace('Rosh Chodesh ', '');
+    const sameName = events.filter(ev => ev.getDesc() === first.getDesc());
+
+    const dates = sameName.map(ev =>
+      ev.getDate().greg().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
     );
-
-    const roshChodeshItems = items.filter(
-      (item: any) => item.category === "roshchodesh" && new Date(`${item.date}T23:59:59`) >= now
-    );
-
-    if (roshChodeshItems.length === 0) return null;
-
-    const first = roshChodeshItems[0];
-    const monthName = first.title.replace("Rosh Chodesh ", "");
-    const dates = roshChodeshItems
-      .filter((item: any) => item.title === first.title)
-      .sort((a: any, b: any) => a.date.localeCompare(b.date))
-      .map((item: any) =>
-        new Date(`${item.date}T12:00:00`).toLocaleDateString("fr-FR", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-        })
-      );
 
     return {
       month: monthName,
       dates,
-      hebrew: first.hebrew || "",
+      hebrew: first.render('he') || '',
     };
   } catch {
     return null;
