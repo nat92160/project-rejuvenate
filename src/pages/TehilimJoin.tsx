@@ -307,8 +307,8 @@ const TehilimJoinContent = () => {
               <motion.button
                 key={num}
                 onClick={() => {
-                  if (!claim) { claimPsalm(num); return; }
-                  if (isMine) { setSelectedClaim(claim); return; }
+                  if (!claim) { claimPsalm(num); setReadingChapter(num); return; }
+                  if (isMine) { setReadingChapter(num); return; }
                 }}
                 disabled={!!claim && !isMine}
                 className={`relative aspect-square rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer border overflow-hidden ${
