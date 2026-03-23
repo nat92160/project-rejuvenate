@@ -133,8 +133,8 @@ const SiddourWidget = ({ prayerMode = false }: SiddourWidgetProps) => {
             onClick={() => { setOffice(off.key); setActiveSection(null); }}
             className="shrink-0 flex items-center gap-1 rounded-xl border-none px-3 py-2 text-[10px] font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap"
             style={{
-              background: office === off.key ? "var(--gradient-gold)" : "hsl(var(--muted))",
-              color: office === off.key ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+              background: office === off.key ? "var(--gradient-gold)" : (prayerMode ? pmCard : "hsl(var(--muted))"),
+              color: office === off.key ? "hsl(var(--primary-foreground))" : (prayerMode ? pmMuted : "hsl(var(--muted-foreground))"),
               boxShadow: office === off.key ? "var(--shadow-gold)" : "none",
             }}
           >
