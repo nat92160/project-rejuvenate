@@ -6,8 +6,10 @@ import { motion } from "framer-motion";
 
 interface Suggestion {
   id: string;
-  synagogue_id: string;
+  synagogue_id: string | null;
   synagogue_name?: string;
+  place_id: string | null;
+  place_name: string | null;
   user_id: string;
   display_name: string;
   office_name: string;
