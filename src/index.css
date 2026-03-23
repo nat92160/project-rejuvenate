@@ -139,22 +139,48 @@
     font-weight: 700;
   }
 
-  /* Instruction-only paragraphs (pure <small>) — rendered as discrete blocks */
-  .hebrew-reading-block .verse-instruction {
+  .hebrew-reading-block .verse-instruction,
+  .hebrew-reading-block .verse-prelude,
+  .hebrew-reading-block .verse-secondary {
     display: block;
-    font-size: 0.58em;
-    color: #b0b0b0;
-    font-weight: 400;
-    font-style: italic;
-    margin-block: 0.6em 0.2em;
     text-align: right;
-    line-height: 1.5;
     padding-inline-end: 2px;
   }
 
-  .hebrew-reading-block .verse-instruction small {
+  .hebrew-reading-block .verse-instruction {
+    font-size: 0.58em;
+    color: hsl(var(--muted-foreground) / 0.68);
+    font-weight: 400;
+    font-style: italic;
+    margin-block: 0.6em 0.2em;
+    line-height: 1.5;
+  }
+
+  .hebrew-reading-block .verse-prelude {
+    font-size: 0.72em;
+    color: hsl(var(--muted-foreground) / 0.82);
+    font-weight: 500;
+    margin-block: 0.2em 0.25em;
+    line-height: 1.7;
+  }
+
+  .hebrew-reading-block .verse-secondary {
+    font-size: 0.64em;
+    color: hsl(var(--muted-foreground) / 0.78);
+    font-weight: 500;
+    margin-block: 0.08em 0.45em;
+    line-height: 1.55;
+  }
+
+  .hebrew-reading-block .prayer-opening {
+    font-weight: 800;
+  }
+
+  .hebrew-reading-block .verse-instruction small,
+  .hebrew-reading-block .verse-secondary small {
     font-size: inherit;
     color: inherit;
+    font-weight: inherit;
   }
 }
 

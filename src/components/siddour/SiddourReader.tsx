@@ -199,41 +199,50 @@ const SiddourReader = ({
               {(() => {
                 let verseNum = 0;
                 return content.hebrew.map((verse, i) => {
-                  if (isInstructionOnly(verse)) {
-                    return <span key={i} className="verse-instruction" dangerouslySetInnerHTML={{ __html: verse }} />;
-                  }
-                  verseNum++;
                   const isPrayerStart = i === prayerStartIdx;
+                  const isPrelude = i < prayerStartIdx;
+
+                  if (isInstructionOnly(verse)) {
+                    return (
+                      <span
+                        key={i}
+                        className={isShemaSecondaryLine(verse) ? "verse-secondary" : "verse-instruction"}
+                        dangerouslySetInnerHTML={{ __html: verse }}
+                      />
+                    );
+                  }
+
+                  if (isPrelude) {
+                    return (
+                      <span
+                        key={i}
+                        className="verse-prelude"
+                        dangerouslySetInnerHTML={{ __html: verse }}
+                      />
+                    );
+                  }
+
+                  verseNum++;
                   return (
                     <span key={i} ref={isPrayerStart ? prayerStartRef : undefined}>
-                      {isPrayerStart ? (
-                        /* Lettrine / Drop-cap style for the first verse */
-                        <span
-                          style={{
-                            fontSize: `${fontSize + 8}px`,
-                            marginInlineEnd: "4px",
-                            fontWeight: 800,
-                            color: prayerMode ? "#e8e0d0" : "hsl(var(--gold-matte))",
-                            verticalAlign: "baseline",
-                            lineHeight: 1,
-                          }}
-                        >
-                          {toHebrewLetter(verseNum)}
-                        </span>
-                      ) : (
-                        <span
-                          style={{
-                            fontSize: `${Math.max(fontSize - 3, 14)}px`,
-                            marginInlineEnd: "5px",
-                            fontWeight: 700,
-                            color: "#888",
-                            verticalAlign: "baseline",
-                          }}
-                        >
-                          {toHebrewLetter(verseNum)}
-                        </span>
-                      )}
-                      <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
+                      <span
+                        style={{
+                          fontSize: isPrayerStart ? `${fontSize + 8}px` : `${Math.max(fontSize - 3, 14)}px`,
+                          marginInlineEnd: isPrayerStart ? "4px" : "5px",
+                          fontWeight: isPrayerStart ? 800 : 700,
+                          color: isPrayerStart
+                            ? (prayerMode ? "#e8e0d0" : "hsl(var(--gold-matte))")
+                            : "#888",
+                          verticalAlign: "baseline",
+                          lineHeight: 1,
+                        }}
+                      >
+                        {toHebrewLetter(verseNum)}
+                      </span>
+                      <span
+                        className={isPrayerStart ? "prayer-opening" : undefined}
+                        dangerouslySetInnerHTML={{ __html: verse }}
+                      />{" "}
                       {viewMode === "bilingual" && transliterations[i] && (
                         <p
                           dir="ltr"
