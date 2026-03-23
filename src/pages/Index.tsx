@@ -56,7 +56,7 @@ const IndexContent = () => {
   const isPresident = dbRole === "president";
 
   // Auto-trigger geolocation on mount
-  useState(() => { triggerAutoGeo(); });
+  useEffect(() => { triggerAutoGeo(); }, []);
 
   const renderTabContent = () => {
     if (isPresident && activeTab === "dashboard") {
