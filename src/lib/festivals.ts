@@ -252,13 +252,20 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
 
         const isFast = singleInfo.category === "jeune";
 
-        // For fasts: compute end time (Tset HaKokhavim) if not already available
-        let fastHavdalah = havdalahByDate[dateStr];
-        if (isFast && !fastHavdalah) {
+        // For fasts: compute start (Alot HaShachar) and end (Tset HaKokhavim)
+        let fastStart = candlesByDate[dateStr];
+        let fastEnd = havdalahByDate[dateStr];
+        if (isFast) {
           try {
             const zman = new HebcalZmanim(location, dt, false);
-            const tzeit = zman.tzeit();
-            if (tzeit) fastHavdalah = fmtTime(tzeit);
+            if (!fastStart) {
+              const alot = zman.alotHaShachar();
+              if (alot) fastStart = fmtTime(alot);
+            }
+            if (!fastEnd) {
+              const tzeit = zman.tzeit();
+              if (tzeit) fastEnd = fmtTime(tzeit);
+            }
           } catch { /* silent */ }
         }
 
@@ -278,8 +285,8 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
             title: singleInfo.name,
             hebrew: ev.render('he') || '',
             type: isFast ? "fast" : "single",
-            candles: candlesByDate[dateStr],
-            havdalah: fastHavdalah,
+            candles: isFast ? fastStart : candlesByDate[dateStr],
+            havdalah: isFast ? fastEnd : havdalahByDate[dateStr],
             isShabbat,
             memo: ev.memo || undefined,
           }],
