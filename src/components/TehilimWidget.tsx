@@ -698,7 +698,7 @@ const TehilimWidget = () => {
       subIds = (mySubs || []).map((s: any) => s.synagogue_id);
     }
 
-    let query = supabase.from("tehilim_chains").select("*").eq("status", "active").order("created_at", { ascending: false });
+    let query = supabase.from("tehilim_chains").select("*").eq("status", "active").order("title", { ascending: true });
 
     if (user && subIds.length > 0) {
       query = query.or(`creator_id.eq.${user.id},synagogue_id.in.(${subIds.join(",")})`);
