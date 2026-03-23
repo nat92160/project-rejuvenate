@@ -166,6 +166,11 @@ const PrayerTimeSuggestionsAdmin = ({ synagogueId, mode = "admin" }: Props) => {
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-xs font-bold">{OFFICE_LABELS[s.office_name] || s.office_name}</span>
                     <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold uppercase">En attente</span>
+                    {s.display_name.includes("(invité)") && (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase" style={{ background: "hsl(var(--accent) / 0.15)", color: "hsl(var(--gold-matte))" }}>
+                        👤 Source: Invité
+                      </span>
+                    )}
                   </div>
                   {!synagogueId && (
                     <p className="text-[11px] text-muted-foreground">
