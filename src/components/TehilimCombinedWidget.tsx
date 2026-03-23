@@ -48,7 +48,7 @@ const TehilimCombinedWidget = ({ prayerMode = false }: TehilimCombinedWidgetProp
       </div>
 
       {/* Content */}
-      {tab === "livre" ? <TehilimLibreWidget /> : <TehilimWidget />}
+      {tab === "livre" ? <TehilimLibreWidget prayerMode={prayerMode} /> : <TehilimWidget />}
     </motion.div>
   );
 };
