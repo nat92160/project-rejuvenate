@@ -1,4 +1,4 @@
-import { HebrewCalendar, Location, flags } from '@hebcal/core';
+import { HebrewCalendar, Location, Zmanim as HebcalZmanim, flags } from '@hebcal/core';
 import { CityConfig } from "./cities";
 import { cityToLocation } from "./hebcal";
 
