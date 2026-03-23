@@ -29,7 +29,7 @@ type Claim = {
   completed: boolean;
 };
 
-// Psalm Reader Overlay with mark complete
+// Psalm Reader Overlay with mark complete + phonetic
 const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim }: {
   chapter: number;
   claim?: Claim;
@@ -41,11 +41,13 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
   const [heTitle, setHeTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [fontSize, setFontSize] = useState(24);
+  const [fontSize, setFontSize] = useState(22);
+  const [viewMode, setViewMode] = useState<ViewMode>("hebrew");
+  const { transliterations, loading: translitLoading, fetchTransliteration, clearTransliterations } = useTransliteration();
 
   useEffect(() => {
     (async () => {
-      setLoading(true); setError("");
+      setLoading(true); setError(""); clearTransliterations();
       try {
         const { data, error: fnError } = await supabase.functions.invoke("get-psalm", { body: { chapter } });
         if (fnError || !data?.success) { setError("Impossible de charger ce psaume."); return; }
@@ -53,21 +55,37 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
       } catch { setError("Erreur de connexion."); }
       finally { setLoading(false); }
     })();
-  }, [chapter]);
+  }, [chapter, clearTransliterations]);
+
+  useEffect(() => {
+    if ((viewMode === "phonetic" || viewMode === "bilingual") && verses.length > 0 && transliterations.length === 0) {
+      fetchTransliteration(verses, `psalm_${chapter}`);
+    }
+  }, [viewMode, verses, transliterations.length, chapter, fetchTransliteration]);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
       style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-lg max-h-[85vh] rounded-2xl bg-card border border-border overflow-hidden flex flex-col"
+      <motion.div initial={{ y: "100%", opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: "100%", opacity: 0 }}
+        transition={{ type: "spring", damping: 28, stiffness: 300 }}
+        className="w-full sm:max-w-lg max-h-[92vh] sm:max-h-[85vh] rounded-t-3xl sm:rounded-2xl bg-card border border-border overflow-hidden flex flex-col"
         style={{ boxShadow: "var(--shadow-card)" }} onClick={(e) => e.stopPropagation()}>
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <div>
-            <h3 className="font-display text-lg font-bold text-foreground">📖 Psaume {chapter}</h3>
-            {heTitle && <p className="text-sm text-muted-foreground font-hebrew" dir="rtl">{heTitle}</p>}
+        {/* Drag handle (mobile) */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-border" />
+        </div>
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <div className="min-w-0">
+            <h3 className="font-display text-base font-bold text-foreground truncate">📖 Psaume {chapter}</h3>
+            {heTitle && <p className="text-xs text-muted-foreground font-hebrew truncate" dir="rtl">{heTitle}</p>}
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 cursor-pointer border-none">✕</button>
+          <button onClick={onClose} className="shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 cursor-pointer border-none">✕</button>
+        </div>
+
+        {/* View mode selector */}
+        <div className="px-4 py-2 border-b border-border">
+          <ViewModeSelector mode={viewMode} onModeChange={setViewMode} loading={translitLoading} />
         </div>
 
         <div className="px-4 py-2 border-b border-border flex items-center gap-3">
@@ -76,23 +94,51 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
           <span className="text-sm font-bold text-muted-foreground">A+</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4" style={{ background: "#FEFEFE" }}>
+        <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4" style={{ background: "#FEFEFE" }}>
           {loading && <div className="text-center py-10"><div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" /><p className="text-sm text-muted-foreground mt-3">Chargement…</p></div>}
           {error && <div className="text-center py-10"><p className="text-sm text-destructive">{error}</p></div>}
           {!loading && !error && (
-            <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.4, textAlign: "justify", fontWeight: 600, color: "#111", wordSpacing: "0.06em" }}>
-              {verses.map((verse, i) => (
-                <span key={i}>
-                  <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
-                  <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
-                </span>
-              ))}
-            </div>
+            <>
+              {(viewMode === "hebrew" || viewMode === "bilingual") && (
+                <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.2, textAlign: "justify", fontWeight: 600, color: "#111", wordSpacing: "0.06em" }}>
+                  {verses.map((verse, i) => (
+                    <span key={i}>
+                      <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
+                      <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
+                      {viewMode === "bilingual" && transliterations[i] && (
+                        <p dir="ltr" className="my-1.5 leading-relaxed" style={{ fontSize: `${Math.max(fontSize - 4, 13)}px`, textAlign: "left", fontWeight: 400, color: "hsl(var(--gold-matte))", fontFamily: "'Lora', serif", fontStyle: "italic" }}>
+                          {transliterations[i]}
+                        </p>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {viewMode === "phonetic" && (
+                <div dir="ltr" style={{ fontFamily: "'Lora', serif", fontSize: `${fontSize}px`, lineHeight: 2, textAlign: "left", fontWeight: 500, color: "#222" }}>
+                  {translitLoading ? (
+                    <div className="text-center py-10">
+                      <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+                      <p className="text-sm text-muted-foreground mt-3">Génération de la phonétique…</p>
+                    </div>
+                  ) : transliterations.length > 0 ? (
+                    transliterations.map((line, i) => (
+                      <p key={i} className="mb-2.5">
+                        <span className="font-bold mr-2" style={{ color: "hsl(var(--gold-matte))", fontSize: `${Math.max(fontSize - 2, 14)}px` }}>{i + 1}.</span>
+                        {line}
+                      </p>
+                    ))
+                  ) : (
+                    <p className="text-center text-sm text-muted-foreground">La phonétique n'est pas encore disponible.</p>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
 
         {claim && (
-          <div className="p-4 border-t border-border space-y-2">
+          <div className="p-4 border-t border-border space-y-2" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))" }}>
             {!claim.completed ? (
               <>
                 <button onClick={() => onMarkComplete(claim)}

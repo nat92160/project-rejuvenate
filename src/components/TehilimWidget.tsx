@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 import HazakCelebration from "@/components/HazakCelebration";
 import { toHebrewLetter, isInstructionOnly } from "@/lib/utils";
+import ViewModeSelector from "@/components/ViewModeSelector";
+import { useTransliteration, type ViewMode } from "@/hooks/useTransliteration";
 
 const TEHILIM_DAILY = [
   { day: "Dimanche", chapters: "1 – 29", yom: "Yom Rishon" },
