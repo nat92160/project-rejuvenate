@@ -40,6 +40,7 @@ const TehilimJoinContent = () => {
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [showHazak, setShowHazak] = useState(false);
   const [prevCompletedCount, setPrevCompletedCount] = useState<number | null>(null);
+  const [readingChapter, setReadingChapter] = useState<number | null>(null);
 
   const fetchClaims = useCallback(async () => {
     if (!id) return;
