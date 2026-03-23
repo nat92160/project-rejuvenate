@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { fetchNearbySynagogues, formatDistance, type SynagogueResult } from "@/lib/synagogues";
 import SynagogueChat from "./SynagogueChat";
 import SynaInfoCard from "./SynaInfoCard";
+import PrayerTimeSuggestionForm from "./PrayerTimeSuggestionForm";
+import VerifiedSuggestionsDisplay from "./VerifiedSuggestionsDisplay";
 
 interface SynaDirectoryItem {
   id: string;
