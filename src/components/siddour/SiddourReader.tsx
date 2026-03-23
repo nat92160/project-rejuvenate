@@ -38,16 +38,26 @@ const SiddourReader = ({
   prayerMode = false,
 }: SiddourReaderProps) => {
   const topRef = useRef<HTMLDivElement>(null);
+  const firstVerseRef = useRef<HTMLSpanElement>(null);
 
   const pmText = prayerMode ? "#e8e0d0" : undefined;
   const pmMuted = prayerMode ? "#999" : undefined;
   const pmBorder = prayerMode ? "rgba(255,255,255,0.08)" : undefined;
 
-  // Scroll to top on content change
+  // Scroll to first actual prayer verse, skipping instructions
   useEffect(() => {
-    if (content && topRef.current) {
-      topRef.current.scrollIntoView({ behavior: "auto", block: "start" });
-    }
+    if (!content) return;
+    // Small delay for DOM to render
+    const timer = setTimeout(() => {
+      if (firstVerseRef.current) {
+        // Scroll so the first verse is visible with 20px comfort margin
+        const y = firstVerseRef.current.getBoundingClientRect().top + window.scrollY - 20;
+        window.scrollTo({ top: y, behavior: "auto" });
+      } else if (topRef.current) {
+        topRef.current.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+    }, 80);
+    return () => clearTimeout(timer);
   }, [content]);
 
   return (
@@ -100,8 +110,8 @@ const SiddourReader = ({
             borderColor: pmBorder || "hsl(var(--border) / 0.5)",
           }}
         >
-          {/* Title block - ornamental */}
-          <div className="text-center mb-6 pb-4" style={{ borderBottom: `1px solid ${pmBorder || "hsl(var(--gold) / 0.15)"}` }}>
+          {/* Title block - ornamental, 20px comfort margin top */}
+          <div className="text-center mb-6 pb-4 pt-5" style={{ borderBottom: `1px solid ${pmBorder || "hsl(var(--gold) / 0.15)"}` }}>
             <div className="flex items-center justify-center gap-3 mb-2">
               <span className="block h-[1px] w-8" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--gold) / 0.4))" }} />
               <span className="text-[10px]" style={{ color: "hsl(var(--gold) / 0.5)" }}>✦</span>
@@ -142,24 +152,43 @@ const SiddourReader = ({
             >
               {(() => {
                 let verseNum = 0;
+                let firstVerseFound = false;
                 return content.hebrew.map((verse, i) => {
                   if (isInstructionOnly(verse)) {
                     return <span key={i} className="verse-instruction" dangerouslySetInnerHTML={{ __html: verse }} />;
                   }
                   verseNum++;
+                  const isFirstVerse = !firstVerseFound;
+                  if (isFirstVerse) firstVerseFound = true;
                   return (
-                    <span key={i}>
-                      <span
-                        style={{
-                          fontSize: `${Math.max(fontSize - 3, 14)}px`,
-                          marginInlineEnd: "5px",
-                          fontWeight: 700,
-                          color: "#888",
-                          verticalAlign: "baseline",
-                        }}
-                      >
-                        {toHebrewLetter(verseNum)}
-                      </span>
+                    <span key={i} ref={isFirstVerse ? firstVerseRef : undefined}>
+                      {isFirstVerse ? (
+                        /* Lettrine / Drop-cap style for the first verse */
+                        <span
+                          style={{
+                            fontSize: `${fontSize + 8}px`,
+                            marginInlineEnd: "4px",
+                            fontWeight: 800,
+                            color: prayerMode ? "#e8e0d0" : "hsl(var(--gold-matte))",
+                            verticalAlign: "baseline",
+                            lineHeight: 1,
+                          }}
+                        >
+                          {toHebrewLetter(verseNum)}
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: `${Math.max(fontSize - 3, 14)}px`,
+                            marginInlineEnd: "5px",
+                            fontWeight: 700,
+                            color: "#888",
+                            verticalAlign: "baseline",
+                          }}
+                        >
+                          {toHebrewLetter(verseNum)}
+                        </span>
+                      )}
                       <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
                       {viewMode === "bilingual" && transliterations[i] && (
                         <p
@@ -220,17 +249,25 @@ const SiddourReader = ({
               ) : transliterations.length > 0 ? (
                 (() => {
                   let verseNum = 0;
+                  let firstFound = false;
                   return content.hebrew.map((verse, i) => {
                     if (isInstructionOnly(verse)) return null;
                     verseNum++;
                     if (!transliterations[i]) return null;
+                    const isFirst = !firstFound;
+                    if (isFirst) firstFound = true;
                     return (
                       <p key={i} className="mb-3">
                         <span
                           className="font-bold mr-2"
                           style={{
-                            color: prayerMode ? "#888" : "hsl(var(--gold-matte))",
-                            fontSize: `${Math.max(fontSize - 2, 14)}px`,
+                            color: isFirst
+                              ? (prayerMode ? "#e8e0d0" : "hsl(var(--gold-matte))")
+                              : (prayerMode ? "#888" : "hsl(var(--gold-matte))"),
+                            fontSize: isFirst
+                              ? `${fontSize + 6}px`
+                              : `${Math.max(fontSize - 2, 14)}px`,
+                            fontWeight: isFirst ? 800 : 700,
                           }}
                         >
                           {toHebrewLetter(verseNum)}
