@@ -1,9 +1,26 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { toHebrewLetter, isInstructionOnly } from "@/lib/utils";
 import ViewModeSelector from "@/components/ViewModeSelector";
 import type { ViewMode } from "@/hooks/useTransliteration";
+
+/**
+ * Detect the index of the "real start" of prayer text.
+ * Priority: first verse containing <b> tag (bold = liturgical start).
+ * Fallback: first non-instruction verse.
+ */
+function findPrayerStartIndex(hebrew: string[]): number {
+  let firstNonInstruction = -1;
+  for (let i = 0; i < hebrew.length; i++) {
+    if (isInstructionOnly(hebrew[i])) continue;
+    if (firstNonInstruction === -1) firstNonInstruction = i;
+    if (hebrew[i].includes("<b>")) return i;
+  }
+  return firstNonInstruction >= 0 ? firstNonInstruction : 0;
+}
+
+
 
 interface SectionContent {
   hebrew: string[];
@@ -38,7 +55,13 @@ const SiddourReader = ({
   prayerMode = false,
 }: SiddourReaderProps) => {
   const topRef = useRef<HTMLDivElement>(null);
-  const firstVerseRef = useRef<HTMLSpanElement>(null);
+  const prayerStartRef = useRef<HTMLSpanElement>(null);
+
+  // Detect the real prayer start index (first <b> verse, or first non-instruction)
+  const prayerStartIdx = useMemo(
+    () => content ? findPrayerStartIndex(content.hebrew) : 0,
+    [content]
+  );
 
   const pmText = prayerMode ? "#e8e0d0" : undefined;
   const pmMuted = prayerMode ? "#999" : undefined;
@@ -47,11 +70,9 @@ const SiddourReader = ({
   // Scroll to first actual prayer verse, skipping instructions
   useEffect(() => {
     if (!content) return;
-    // Small delay for DOM to render
     const timer = setTimeout(() => {
-      if (firstVerseRef.current) {
-        // Scroll so the first verse is visible with 20px comfort margin
-        const y = firstVerseRef.current.getBoundingClientRect().top + window.scrollY - 20;
+      if (prayerStartRef.current) {
+        const y = prayerStartRef.current.getBoundingClientRect().top + window.scrollY - 20;
         window.scrollTo({ top: y, behavior: "auto" });
       } else if (topRef.current) {
         topRef.current.scrollIntoView({ behavior: "auto", block: "start" });
@@ -152,17 +173,15 @@ const SiddourReader = ({
             >
               {(() => {
                 let verseNum = 0;
-                let firstVerseFound = false;
                 return content.hebrew.map((verse, i) => {
                   if (isInstructionOnly(verse)) {
                     return <span key={i} className="verse-instruction" dangerouslySetInnerHTML={{ __html: verse }} />;
                   }
                   verseNum++;
-                  const isFirstVerse = !firstVerseFound;
-                  if (isFirstVerse) firstVerseFound = true;
+                  const isPrayerStart = i === prayerStartIdx;
                   return (
-                    <span key={i} ref={isFirstVerse ? firstVerseRef : undefined}>
-                      {isFirstVerse ? (
+                    <span key={i} ref={isPrayerStart ? prayerStartRef : undefined}>
+                      {isPrayerStart ? (
                         /* Lettrine / Drop-cap style for the first verse */
                         <span
                           style={{
