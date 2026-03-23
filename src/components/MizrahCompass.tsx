@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 
@@ -22,10 +22,20 @@ function getDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number): 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/** Low-pass filter to smooth compass readings and prevent jitter */
+function smoothAngle(prev: number, next: number, factor: number): number {
+  // Handle angle wrapping (0/360 boundary)
+  let delta = next - prev;
+  if (delta > 180) delta -= 360;
+  if (delta < -180) delta += 360;
+  return (prev + delta * factor + 360) % 360;
+}
+
 const MizrahCompass = () => {
   const { city } = useCity();
   const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const smoothedHeading = useRef<number | null>(null);
 
   const bearing = calculateBearing(city.lat, city.lng, JERUSALEM.lat, JERUSALEM.lng);
   const distance = Math.round(getDistanceKm(city.lat, city.lng, JERUSALEM.lat, JERUSALEM.lng));
@@ -46,7 +56,15 @@ const MizrahCompass = () => {
   useEffect(() => {
     if (!permissionGranted) return;
     const handler = (e: DeviceOrientationEvent) => {
-      if (e.alpha !== null) setDeviceHeading(e.alpha);
+      if (e.alpha === null) return;
+      const raw = e.alpha;
+      if (smoothedHeading.current === null) {
+        smoothedHeading.current = raw;
+      } else {
+        // Low-pass filter: only take 15% of new value to smooth jitter
+        smoothedHeading.current = smoothAngle(smoothedHeading.current, raw, 0.15);
+      }
+      setDeviceHeading(smoothedHeading.current);
     };
     window.addEventListener("deviceorientation", handler);
     return () => window.removeEventListener("deviceorientation", handler);
@@ -94,11 +112,13 @@ const MizrahCompass = () => {
             </div>
           ))}
 
-          {/* Needle pointing to Jerusalem */}
-          <motion.div
+          {/* Needle pointing to Jerusalem — use CSS transition for smooth movement */}
+          <div
             className="absolute inset-0 flex items-center justify-center"
-            animate={{ rotate: needleRotation }}
-            transition={{ type: "spring", damping: 20, stiffness: 100 }}
+            style={{
+              transform: `rotate(${needleRotation}deg)`,
+              transition: "transform 0.3s ease-out",
+            }}
           >
             <div className="relative h-full flex flex-col items-center">
               {/* Arrow */}
@@ -121,7 +141,7 @@ const MizrahCompass = () => {
                 }}
               />
             </div>
-          </motion.div>
+          </div>
 
           {/* Center dot */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-card"
