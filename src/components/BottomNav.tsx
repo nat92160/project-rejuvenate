@@ -57,16 +57,14 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
         const shabbat = await fetchShabbatTimes(city);
         if (shabbat?.candleLighting) {
           info["chabbat"] = shabbat.candleLighting;
-          info["dashboard"] = `Chab. ${shabbat.candleLighting}`;
         }
 
-        // Real next zman
+        // Real next zman — used for both "zmanim" tab AND "dashboard" micro-widget
         const zmanim = await fetchZmanim(city);
         const now = new Date();
         const nowStr = now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
         const nextZman = zmanim.find((z) => z.time > nowStr && z.time !== "--:--");
         if (nextZman) {
-          // Short label for micro-widget
           const short = nextZman.label
             .replace("(GR\"A)", "")
             .replace("(MG\"A)", "")
@@ -76,8 +74,10 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
             .trim()
             .split(" ")[0];
           info["zmanim"] = `${short} ${nextZman.time}`;
+          info["dashboard"] = `${short} ${nextZman.time}`;
         } else {
           info["zmanim"] = "Terminé";
+          info["dashboard"] = shabbat?.candleLighting ? `Chab. ${shabbat.candleLighting}` : "";
         }
 
         setMicroInfo(info);
