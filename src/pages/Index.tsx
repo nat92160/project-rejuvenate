@@ -36,6 +36,7 @@ import AlerteCommunautaireWidget from "@/components/AlerteCommunautaireWidget";
 
 import BrakhotWidget from "@/components/BrakhotWidget";
 import ContextualHomeWidget from "@/components/ContextualHomeWidget";
+import OmerCounterWidget from "@/components/OmerCounterWidget";
 import PrayerModeOverlay from "@/components/PrayerModeOverlay";
 
 import BottomNav from "@/components/BottomNav";
@@ -78,6 +79,7 @@ const IndexContent = () => {
         return (
           <>
             <ContextualHomeWidget />
+            <OmerCounterWidget />
             <CountdownWidget />
             <ShabbatWidget />
             <ZmanimWidget />
