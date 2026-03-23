@@ -473,11 +473,28 @@ const TehilimJoinContent = () => {
               <div className="space-y-2.5">
                 {!selectedClaim.completed && (
                   <button
-                    onClick={() => toggleComplete(selectedClaim)}
+                    onClick={() => { setReadingChapter(selectedClaim.chapter_start); setSelectedClaim(null); }}
                     className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
                     style={{ background: "var(--gradient-gold)" }}
                   >
+                    📖 Lire maintenant
+                  </button>
+                )}
+                {!selectedClaim.completed && (
+                  <button
+                    onClick={() => toggleComplete(selectedClaim)}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold border border-border bg-card text-foreground cursor-pointer"
+                  >
                     ✅ Marquer comme lu
+                  </button>
+                )}
+                {selectedClaim.completed && (
+                  <button
+                    onClick={() => { setReadingChapter(selectedClaim.chapter_start); setSelectedClaim(null); }}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                    style={{ background: "var(--gradient-gold)" }}
+                  >
+                    📖 Relire
                   </button>
                 )}
                 {selectedClaim.completed && (
