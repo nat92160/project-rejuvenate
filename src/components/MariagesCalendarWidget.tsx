@@ -159,7 +159,7 @@ const MariagesCalendarWidget = () => {
           <input
             type="date"
             value={checkDate}
-            onChange={(e) => { setCheckDate(e.target.value); setCheckResult(null); }}
+            onChange={(e) => handleDateChange(e.target.value)}
             className="flex-1 px-3 py-2 rounded-lg text-sm bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
           />
           <button
