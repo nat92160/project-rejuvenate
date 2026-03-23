@@ -210,16 +210,16 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                 </motion.span>
 
                 <span
-                  className="max-w-full truncate px-1 text-[9px] uppercase tracking-wide"
+                  className="max-w-full truncate px-1 text-[10px] uppercase tracking-wide"
                   style={{
-                    fontWeight: isActive ? 700 : 500,
-                    letterSpacing: "0.4px",
+                    fontWeight: isActive ? 700 : 600,
+                    letterSpacing: "0.3px",
                   }}
                 >
                   {tab.label}
                 </span>
                 {microInfo[tab.id] && !isActive && (
-                  <span className="text-[7px] font-medium truncate max-w-full px-1" style={{ color: "hsl(var(--gold-matte))" }}>
+                  <span className="text-[9px] font-semibold truncate max-w-full px-0.5 leading-tight" style={{ color: "hsl(var(--gold-matte))" }}>
                     {microInfo[tab.id]}
                   </span>
                 )}
