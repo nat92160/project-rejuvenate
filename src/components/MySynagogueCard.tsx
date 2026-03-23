@@ -95,7 +95,7 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        onClick={() => onNavigate("synagogue")}
+        onClick={() => onNavigate("chooser")}
       >
         <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ background: "hsl(var(--gold) / 0.08)" }}>
           <MapPin className="w-7 h-7" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />

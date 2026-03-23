@@ -37,6 +37,7 @@ const MinyanLiveWidget = lazy(() => import("@/components/MinyanLiveWidget"));
 const EvenementsWidget = lazy(() => import("@/components/EvenementsWidget"));
 const CoursVirtuelWidget = lazy(() => import("@/components/CoursVirtuelWidget"));
 const FideleSynagogueView = lazy(() => import("@/components/FideleSynagogueView"));
+const SynagogueChooser = lazy(() => import("@/components/SynagogueChooser"));
 const SynaProfileManager = lazy(() => import("@/components/SynaProfileManager"));
 const PrayerTimesWidget = lazy(() => import("@/components/PrayerTimesWidget"));
 const SiddourWidget = lazy(() => import("@/components/SiddourWidget"));
@@ -300,6 +301,7 @@ const IndexContent = () => {
       case "tehilimlibre":
       case "tehilim": return <Lazy><TehilimCombinedWidget /></Lazy>;
       case "synagogue": return <Lazy><FideleSynagogueView /></Lazy>;
+      case "chooser": return <Lazy><SynagogueChooser onSelect={() => setActiveTab("dashboard")} /></Lazy>;
       case "fetes": return <Lazy><FestivalCalendar /></Lazy>;
       case "convertisseur": return <Lazy><DateConverterWidget /></Lazy>;
       case "mizrah": return <Lazy><MizrahCompass /></Lazy>;
