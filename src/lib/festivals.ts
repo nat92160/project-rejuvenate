@@ -139,11 +139,12 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
     const now = new Date();
     const location = cityToLocation(city);
     const il = city.country === 'IL';
+    const year = now.getFullYear();
 
-    // Generate events for a ~14-month window using SDK (no API calls)
-    const events = HebrewCalendar.calendar({
-      start: new Date(now.getTime() - 30 * 86400000),
-      end: new Date(now.getTime() + 400 * 86400000),
+    // Generate events strictly for the current year only
+    const allEvents = HebrewCalendar.calendar({
+      start: new Date(year, 0, 1),
+      end: new Date(year, 11, 31),
       candlelighting: true,
       location,
       il,
