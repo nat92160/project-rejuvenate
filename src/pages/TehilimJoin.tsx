@@ -433,7 +433,7 @@ const TehilimJoinContent = () => {
         )}
 
         {/* Psalms grid */}
-        <div className="grid grid-cols-6 gap-1.5">
+        <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5">
           {Array.from({ length: TOTAL_PSALMS }, (_, i) => i + 1).map((num) => {
             const claim = claims.find((c) => c.chapter_start === num && c.chapter_end === num);
             const isMine = claim ? isOwnClaim(claim) : false;
