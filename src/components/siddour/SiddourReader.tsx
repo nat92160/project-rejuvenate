@@ -152,24 +152,43 @@ const SiddourReader = ({
             >
               {(() => {
                 let verseNum = 0;
+                let firstVerseFound = false;
                 return content.hebrew.map((verse, i) => {
                   if (isInstructionOnly(verse)) {
                     return <span key={i} className="verse-instruction" dangerouslySetInnerHTML={{ __html: verse }} />;
                   }
                   verseNum++;
+                  const isFirstVerse = !firstVerseFound;
+                  if (isFirstVerse) firstVerseFound = true;
                   return (
-                    <span key={i}>
-                      <span
-                        style={{
-                          fontSize: `${Math.max(fontSize - 3, 14)}px`,
-                          marginInlineEnd: "5px",
-                          fontWeight: 700,
-                          color: "#888",
-                          verticalAlign: "baseline",
-                        }}
-                      >
-                        {toHebrewLetter(verseNum)}
-                      </span>
+                    <span key={i} ref={isFirstVerse ? firstVerseRef : undefined}>
+                      {isFirstVerse ? (
+                        /* Lettrine / Drop-cap style for the first verse */
+                        <span
+                          style={{
+                            fontSize: `${fontSize + 8}px`,
+                            marginInlineEnd: "4px",
+                            fontWeight: 800,
+                            color: prayerMode ? "#e8e0d0" : "hsl(var(--gold-matte))",
+                            verticalAlign: "baseline",
+                            lineHeight: 1,
+                          }}
+                        >
+                          {toHebrewLetter(verseNum)}
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: `${Math.max(fontSize - 3, 14)}px`,
+                            marginInlineEnd: "5px",
+                            fontWeight: 700,
+                            color: "#888",
+                            verticalAlign: "baseline",
+                          }}
+                        >
+                          {toHebrewLetter(verseNum)}
+                        </span>
+                      )}
                       <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
                       {viewMode === "bilingual" && transliterations[i] && (
                         <p
