@@ -415,6 +415,16 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
       <HazakCelebration show={showHazak} onDone={() => setShowHazak(false)} />
+      <AnimatePresence>
+        {readingChapter !== null && (
+          <ChainPsalmReader
+            chapter={readingChapter}
+            claim={claims.find(c => c.chapter_start === readingChapter && isOwnClaim(c))}
+            onClose={() => setReadingChapter(null)}
+            onMarkComplete={(claim) => { toggleComplete(claim); setReadingChapter(null); }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
