@@ -684,6 +684,7 @@ const TehilimWidget = () => {
   const [selectedChain, setSelectedChain] = useState<Chain | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loadingChains, setLoadingChains] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchChains = useCallback(async () => {
     setLoadingChains(true);
