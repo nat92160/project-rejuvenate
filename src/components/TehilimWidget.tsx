@@ -179,6 +179,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
   const [pendingPsalm, setPendingPsalm] = useState<number | null>(null);
   const [showHazak, setShowHazak] = useState(false);
   const [prevCompletedCount, setPrevCompletedCount] = useState<number | null>(null);
+  const [readingChapter, setReadingChapter] = useState<number | null>(null);
 
   const fetchClaims = useCallback(async () => {
     const { data } = await supabase.from("tehilim_claims").select("*").eq("chain_id", chain.id).order("chapter_start");
