@@ -5,8 +5,10 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
-  synagogueId: string;
+  synagogueId?: string;
   synagogueName: string;
+  placeId?: string;
+  placeName?: string;
   onClose: () => void;
   onSubmitted?: () => void;
 }
