@@ -392,9 +392,9 @@ const IndexContent = () => {
             <span className="text-xs font-bold">Accueil</span>
           </button>
         )}
-
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
+
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </>
