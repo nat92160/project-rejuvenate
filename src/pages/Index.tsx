@@ -52,11 +52,27 @@ const IndexContent = () => {
   const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
   const pendingCount = usePendingRequests();
   const { triggerAutoGeo } = useCity();
+  const [showHomeBtn, setShowHomeBtn] = useState(false);
 
   const isPresident = dbRole === "president";
 
   // Auto-trigger geolocation on mount
   useEffect(() => { triggerAutoGeo(); }, []);
+
+  // Show floating home button when scrolled and not on dashboard
+  useEffect(() => {
+    const onScroll = () => {
+      setShowHomeBtn(window.scrollY > 200 && activeTab !== "dashboard");
+    };
+    onScroll(); // check immediately on tab change
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [activeTab]);
+
+  const goHome = useCallback(() => {
+    setActiveTab("dashboard");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const renderTabContent = () => {
     if (isPresident && activeTab === "dashboard") {
