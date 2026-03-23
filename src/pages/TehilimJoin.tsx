@@ -445,84 +445,106 @@ const TehilimJoinContent = () => {
         </div>
       </div>
 
-      {/* Action menu for own claims */}
+      {/* Action menu for psalms */}
       <AnimatePresence>
-        {selectedClaim && isOwnClaim(selectedClaim) && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-[400]"
-              style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setSelectedClaim(null)}
-            />
-            <motion.div
-              className="fixed bottom-0 left-0 right-0 z-[410] rounded-t-3xl bg-card p-6 border-t border-border"
-              style={{ paddingBottom: "calc(24px + env(safe-area-inset-bottom, 0px))", boxShadow: "var(--shadow-elevated)" }}
-              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            >
-              <div className="flex justify-center mb-4">
-                <div className="w-10 h-1 rounded-full bg-border" />
-              </div>
-              <h3 className="font-display text-base font-bold text-foreground text-center mb-1">
-                Psaume {selectedClaim.chapter_start} — {toHebrewLetter(selectedClaim.chapter_start)}
-              </h3>
-              <p className="text-xs text-muted-foreground text-center mb-5">
-                {selectedClaim.completed ? "Ce psaume est marqué comme lu" : "Que souhaitez-vous faire ?"}
-              </p>
-              <div className="space-y-2.5">
-                {!selectedClaim.completed && (
+        {selectedClaim && (() => {
+          const isFree = selectedClaim.id === '';
+          const isOwn = !isFree && isOwnClaim(selectedClaim);
+          if (!isFree && !isOwn) return null;
+          return (
+            <>
+              <motion.div
+                className="fixed inset-0 z-[400]"
+                style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setSelectedClaim(null)}
+              />
+              <motion.div
+                className="fixed bottom-0 left-0 right-0 z-[410] rounded-t-3xl bg-card p-6 border-t border-border"
+                style={{ paddingBottom: "calc(24px + env(safe-area-inset-bottom, 0px))", boxShadow: "var(--shadow-elevated)" }}
+                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              >
+                <div className="flex justify-center mb-4">
+                  <div className="w-10 h-1 rounded-full bg-border" />
+                </div>
+                <h3 className="font-display text-base font-bold text-foreground text-center mb-1">
+                  Psaume {selectedClaim.chapter_start} — {toHebrewLetter(selectedClaim.chapter_start)}
+                </h3>
+                <p className="text-xs text-muted-foreground text-center mb-5">
+                  {isFree ? "Ce psaume est libre" : selectedClaim.completed ? "Ce psaume est marqué comme lu" : "Que souhaitez-vous faire ?"}
+                </p>
+                <div className="space-y-2.5">
+                  {isFree && (
+                    <>
+                      <button
+                        onClick={() => { claimPsalm(selectedClaim.chapter_start); setSelectedClaim(null); }}
+                        className="w-full py-3.5 rounded-xl text-sm font-bold border border-border bg-card text-foreground cursor-pointer"
+                      >
+                        📌 Réserver pour plus tard
+                      </button>
+                      <button
+                        onClick={() => { claimPsalm(selectedClaim.chapter_start); setSelectedClaim(null); setReadingChapter(selectedClaim.chapter_start); }}
+                        className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                        style={{ background: "var(--gradient-gold)" }}
+                      >
+                        📖 Réserver et lire maintenant
+                      </button>
+                    </>
+                  )}
+                  {isOwn && !selectedClaim.completed && (
+                    <button
+                      onClick={() => { setReadingChapter(selectedClaim.chapter_start); setSelectedClaim(null); }}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                      style={{ background: "var(--gradient-gold)" }}
+                    >
+                      📖 Lire maintenant
+                    </button>
+                  )}
+                  {isOwn && !selectedClaim.completed && (
+                    <button
+                      onClick={() => toggleComplete(selectedClaim)}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border border-border bg-card text-foreground cursor-pointer"
+                    >
+                      ✅ Marquer comme lu
+                    </button>
+                  )}
+                  {isOwn && selectedClaim.completed && (
+                    <button
+                      onClick={() => { setReadingChapter(selectedClaim.chapter_start); setSelectedClaim(null); }}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                      style={{ background: "var(--gradient-gold)" }}
+                    >
+                      📖 Relire
+                    </button>
+                  )}
+                  {isOwn && selectedClaim.completed && (
+                    <button
+                      onClick={() => toggleComplete(selectedClaim)}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border border-border bg-card text-foreground cursor-pointer"
+                    >
+                      ↩️ Marquer comme non lu
+                    </button>
+                  )}
+                  {isOwn && !selectedClaim.completed && (
+                    <button
+                      onClick={() => unclaimPsalm(selectedClaim)}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border border-destructive/30 bg-destructive/5 text-destructive cursor-pointer"
+                    >
+                      🗑️ Annuler ma réservation
+                    </button>
+                  )}
                   <button
-                    onClick={() => { setReadingChapter(selectedClaim.chapter_start); setSelectedClaim(null); }}
-                    className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
-                    style={{ background: "var(--gradient-gold)" }}
+                    onClick={() => setSelectedClaim(null)}
+                    className="w-full py-3 rounded-xl text-xs font-bold bg-muted text-muted-foreground border-none cursor-pointer"
                   >
-                    📖 Lire maintenant
+                    ✕ Fermer
                   </button>
-                )}
-                {!selectedClaim.completed && (
-                  <button
-                    onClick={() => toggleComplete(selectedClaim)}
-                    className="w-full py-3.5 rounded-xl text-sm font-bold border border-border bg-card text-foreground cursor-pointer"
-                  >
-                    ✅ Marquer comme lu
-                  </button>
-                )}
-                {selectedClaim.completed && (
-                  <button
-                    onClick={() => { setReadingChapter(selectedClaim.chapter_start); setSelectedClaim(null); }}
-                    className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
-                    style={{ background: "var(--gradient-gold)" }}
-                  >
-                    📖 Relire
-                  </button>
-                )}
-                {selectedClaim.completed && (
-                  <button
-                    onClick={() => toggleComplete(selectedClaim)}
-                    className="w-full py-3.5 rounded-xl text-sm font-bold border border-border bg-card text-foreground cursor-pointer"
-                  >
-                    ↩️ Marquer comme non lu
-                  </button>
-                )}
-                {!selectedClaim.completed && (
-                  <button
-                    onClick={() => unclaimPsalm(selectedClaim)}
-                    className="w-full py-3.5 rounded-xl text-sm font-bold border border-destructive/30 bg-destructive/5 text-destructive cursor-pointer"
-                  >
-                    🗑️ Annuler ma réservation
-                  </button>
-                )}
-                <button
-                  onClick={() => setSelectedClaim(null)}
-                  className="w-full py-3 rounded-xl text-xs font-bold bg-muted text-muted-foreground border-none cursor-pointer"
-                >
-                  ✕ Fermer
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
+                </div>
+              </motion.div>
+            </>
+          );
+        })()}
       </AnimatePresence>
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
