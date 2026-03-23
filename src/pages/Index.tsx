@@ -10,8 +10,9 @@ import { getCurrentPrayer } from "@/components/MySynagogueCard";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes } from "@/lib/hebcal";
-import { Book, Heart, MapPin } from "lucide-react";
+import { Book, Heart, MapPin, User } from "lucide-react";
 import StarOfDavid from "@/components/StarOfDavid";
+const SpiritualTimeline = lazy(() => import("@/components/SpiritualTimeline"));
 
 // Lazy-loaded modules
 const CountdownWidget = lazy(() => import("@/components/CountdownWidget"));
