@@ -349,6 +349,7 @@ const IndexContent = () => {
             isPresident={isPresident}
             pendingCount={pendingCount}
             signOut={signOut}
+            onLoginClick={() => setAuthOpen(true)}
           />
 
           {suspended && (
@@ -361,21 +362,13 @@ const IndexContent = () => {
 
           {renderTabContent()}
 
-          {/* Login CTA */}
-          {!user && (
-            <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-center pointer-events-none">
-              <button
-                onClick={() => setAuthOpen(true)}
-                className="pointer-events-auto px-8 py-3 rounded-full text-sm font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 text-primary-foreground border-none shadow-lg"
-                style={{ background: "var(--gradient-gold)", boxShadow: "0 6px 24px hsl(var(--gold) / 0.35)" }}
-              >
-                🔑 Se connecter
-              </button>
-            </div>
-          )}
-
-          <div className="text-center py-8 mt-16 text-[10px] text-muted-foreground/40 font-medium tracking-wider uppercase">
-            Chabbat Chalom © {new Date().getFullYear()}
+          <div className="text-center py-6 mt-12">
+            <p className="text-[10px] text-muted-foreground/50 font-medium tracking-wide">
+              Horaires vérifiés par la communauté à {city?.label || "votre ville"}
+            </p>
+            <p className="text-[10px] text-muted-foreground/30 font-medium tracking-wider uppercase mt-1">
+              Chabbat Chalom © {new Date().getFullYear()}
+            </p>
           </div>
         </div>
 
