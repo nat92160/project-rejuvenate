@@ -173,16 +173,14 @@ const SiddourReader = ({
             >
               {(() => {
                 let verseNum = 0;
-                let firstVerseFound = false;
                 return content.hebrew.map((verse, i) => {
                   if (isInstructionOnly(verse)) {
                     return <span key={i} className="verse-instruction" dangerouslySetInnerHTML={{ __html: verse }} />;
                   }
                   verseNum++;
-                  const isFirstVerse = !firstVerseFound;
-                  if (isFirstVerse) firstVerseFound = true;
+                  const isPrayerStart = i === prayerStartIdx;
                   return (
-                    <span key={i} ref={isFirstVerse ? firstVerseRef : undefined}>
+                    <span key={i} ref={isPrayerStart ? prayerStartRef : undefined}>
                       {isFirstVerse ? (
                         /* Lettrine / Drop-cap style for the first verse */
                         <span
