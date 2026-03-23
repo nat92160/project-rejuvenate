@@ -280,9 +280,10 @@ export async function fetchNextRoshHodesh(city: CityConfig): Promise<RoshHodeshI
 
     const events = HebrewCalendar.calendar({
       start: now,
-      end: new Date(now.getTime() + 60 * 86400000),
+      end: new Date(now.getFullYear(), 11, 31),
       il,
-    }).filter(ev => ev.getFlags() & flags.ROSH_CHODESH);
+    }).filter(ev => ev.getFlags() & flags.ROSH_CHODESH)
+     .filter(ev => ev.getDate().greg().getFullYear() === now.getFullYear());
 
     if (events.length === 0) return null;
 
