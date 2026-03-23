@@ -5,7 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCity } from "@/hooks/useCity";
 import { fetchNearbySynagogues, formatDistance, type SynagogueResult } from "@/lib/synagogues";
 import { toast } from "sonner";
-import { MapPin, Search, X, Navigation, CheckCircle2, Clock, Loader2, Pencil } from "lucide-react";
+import { MapPin, Search, X, Navigation, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import PrayerTimeSuggestionForm from "./PrayerTimeSuggestionForm";
 
 /* ── Types ── */
