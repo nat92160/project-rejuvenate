@@ -504,7 +504,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
         <div className="text-center py-8"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" /></div>
       ) : (
         <>
-          <div className="grid grid-cols-6 gap-1.5">
+          <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5">
             {Array.from({ length: TOTAL_PSALMS }, (_, i) => i + 1).map((num) => {
               const claim = claims.find(c => c.chapter_start === num && c.chapter_end === num);
               const isMine = claim ? isOwnClaim(claim) : false;
