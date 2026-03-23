@@ -249,17 +249,25 @@ const SiddourReader = ({
               ) : transliterations.length > 0 ? (
                 (() => {
                   let verseNum = 0;
+                  let firstFound = false;
                   return content.hebrew.map((verse, i) => {
                     if (isInstructionOnly(verse)) return null;
                     verseNum++;
                     if (!transliterations[i]) return null;
+                    const isFirst = !firstFound;
+                    if (isFirst) firstFound = true;
                     return (
                       <p key={i} className="mb-3">
                         <span
                           className="font-bold mr-2"
                           style={{
-                            color: prayerMode ? "#888" : "hsl(var(--gold-matte))",
-                            fontSize: `${Math.max(fontSize - 2, 14)}px`,
+                            color: isFirst
+                              ? (prayerMode ? "#e8e0d0" : "hsl(var(--gold-matte))")
+                              : (prayerMode ? "#888" : "hsl(var(--gold-matte))"),
+                            fontSize: isFirst
+                              ? `${fontSize + 6}px`
+                              : `${Math.max(fontSize - 2, 14)}px`,
+                            fontWeight: isFirst ? 800 : 700,
                           }}
                         >
                           {toHebrewLetter(verseNum)}
