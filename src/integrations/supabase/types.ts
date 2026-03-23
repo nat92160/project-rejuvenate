@@ -271,10 +271,12 @@ export type Database = {
           display_name: string
           id: string
           office_name: string
+          place_id: string | null
+          place_name: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
-          synagogue_id: string
+          synagogue_id: string | null
           time_rule: string | null
           time_value: string | null
           updated_at: string
@@ -286,10 +288,12 @@ export type Database = {
           display_name?: string
           id?: string
           office_name: string
+          place_id?: string | null
+          place_name?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
-          synagogue_id: string
+          synagogue_id?: string | null
           time_rule?: string | null
           time_value?: string | null
           updated_at?: string
@@ -301,10 +305,12 @@ export type Database = {
           display_name?: string
           id?: string
           office_name?: string
+          place_id?: string | null
+          place_name?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
-          synagogue_id?: string
+          synagogue_id?: string | null
           time_rule?: string | null
           time_value?: string | null
           updated_at?: string

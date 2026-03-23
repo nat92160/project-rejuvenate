@@ -6,8 +6,10 @@ import { motion } from "framer-motion";
 
 interface Suggestion {
   id: string;
-  synagogue_id: string;
+  synagogue_id: string | null;
   synagogue_name?: string;
+  place_id: string | null;
+  place_name: string | null;
   user_id: string;
   display_name: string;
   office_name: string;
@@ -58,7 +60,7 @@ const PrayerTimeSuggestionsAdmin = ({ synagogueId, mode = "admin" }: Props) => {
     }
 
     // Enrich with synagogue names
-    const synaIds = [...new Set((data || []).map((s: any) => s.synagogue_id))];
+    const synaIds = [...new Set((data || []).filter((s: any) => s.synagogue_id).map((s: any) => s.synagogue_id))];
     let synaNames: Record<string, string> = {};
 
     if (synaIds.length > 0) {
@@ -72,7 +74,7 @@ const PrayerTimeSuggestionsAdmin = ({ synagogueId, mode = "admin" }: Props) => {
     setSuggestions(
       (data || []).map((s: any) => ({
         ...s,
-        synagogue_name: synaNames[s.synagogue_id] || "Synagogue",
+        synagogue_name: s.synagogue_id ? (synaNames[s.synagogue_id] || "Synagogue") : (s.place_name || "Lieu Google Maps"),
       }))
     );
     setLoading(false);
@@ -166,7 +168,10 @@ const PrayerTimeSuggestionsAdmin = ({ synagogueId, mode = "admin" }: Props) => {
                     <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold uppercase">En attente</span>
                   </div>
                   {!synagogueId && (
-                    <p className="text-[11px] text-muted-foreground">🏛️ {s.synagogue_name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {s.place_id ? "🗺️" : "🏛️"} {s.synagogue_name}
+                      {s.place_id && <span className="ml-1 text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Google Maps</span>}
+                    </p>
                   )}
                   {s.time_value && (
                     <p className="text-sm font-bold text-foreground mt-1">🕐 {s.time_value}</p>

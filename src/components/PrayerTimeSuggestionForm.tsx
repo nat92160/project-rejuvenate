@@ -5,8 +5,10 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
-  synagogueId: string;
+  synagogueId?: string;
   synagogueName: string;
+  placeId?: string;
+  placeName?: string;
   onClose: () => void;
   onSubmitted?: () => void;
 }
@@ -23,7 +25,7 @@ function formatTimeDraft(raw: string) {
   return `${digits.slice(0, 2)}:${digits.slice(2)}`;
 }
 
-const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, onClose, onSubmitted }: Props) => {
+const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeName, onClose, onSubmitted }: Props) => {
   const { user } = useAuth();
   const [officeName, setOfficeName] = useState("shacharit");
   const [mode, setMode] = useState<"fixed" | "rule">("fixed");
@@ -49,7 +51,9 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, onClose, onSubmi
     const { error } = await (supabase as any)
       .from("prayer_time_suggestions")
       .insert({
-        synagogue_id: synagogueId,
+        synagogue_id: synagogueId || null,
+        place_id: placeId || null,
+        place_name: placeName || null,
         user_id: user.id,
         display_name: displayName,
         office_name: officeName,

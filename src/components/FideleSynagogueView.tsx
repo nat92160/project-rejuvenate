@@ -483,7 +483,8 @@ const FideleSynagogueView = () => {
                             ))}
                           </div>
                         )}
-                        <div className="mt-2 flex gap-2">
+                        <VerifiedSuggestionsDisplay synagogueId={syna.id} />
+                        <div className="mt-2 flex gap-2 flex-wrap">
                           {syna.latitude && syna.longitude && (
                             <a href={`https://www.google.com/maps/dir/?api=1&destination=${syna.latitude},${syna.longitude}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all hover:scale-105 active:scale-95">
                               🧭 Itinéraire
@@ -494,7 +495,24 @@ const FideleSynagogueView = () => {
                               📞 Appeler
                             </a>
                           )}
+                          {user && (
+                            <button
+                              onClick={() => setSuggestingSynaId(suggestingSynaId === syna.id ? null : syna.id)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary cursor-pointer transition-all active:scale-95 hover:bg-primary/10"
+                            >
+                              📝 Modifier les offices
+                            </button>
+                          )}
                         </div>
+                        {suggestingSynaId === syna.id && (
+                          <div className="mt-3">
+                            <PrayerTimeSuggestionForm
+                              synagogueId={syna.id}
+                              synagogueName={syna.name}
+                              onClose={() => setSuggestingSynaId(null)}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -536,7 +554,7 @@ const FideleSynagogueView = () => {
                           {gr.distanceSource === "road" ? "route" : "vol d'oiseau"}
                         </span>
                       </div>
-                      <div className="mt-2 flex gap-2">
+                      <div className="mt-2 flex gap-2 flex-wrap">
                         <a href={`https://www.google.com/maps/dir/?api=1&destination=${gr.lat},${gr.lon}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all hover:scale-105 active:scale-95">
                           🧭 Itinéraire
                         </a>
@@ -545,7 +563,25 @@ const FideleSynagogueView = () => {
                             📞 Appeler
                           </a>
                         )}
+                        {user && (
+                          <button
+                            onClick={() => setSuggestingSynaId(suggestingSynaId === `gm-${gr.id}` ? null : `gm-${gr.id}`)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary cursor-pointer transition-all active:scale-95 hover:bg-primary/10"
+                          >
+                            📝 Modifier les offices
+                          </button>
+                        )}
                       </div>
+                      {suggestingSynaId === `gm-${gr.id}` && (
+                        <div className="mt-3">
+                          <PrayerTimeSuggestionForm
+                            synagogueName={gr.name}
+                            placeId={gr.id}
+                            placeName={gr.name}
+                            onClose={() => setSuggestingSynaId(null)}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
