@@ -95,7 +95,7 @@ const IndexContent = () => {
             <p className="text-sm mt-2 text-muted-foreground">Bientôt disponible</p>
           </div>
         );
-      case "siddour": return <SiddourWidget />;
+      case "siddour": return <SiddourWidget prayerMode={prayerMode} />;
       case "tehilimlibre":
       case "tehilim": return <TehilimCombinedWidget />;
       case "synagogue": return <FideleSynagogueView />;
@@ -240,9 +240,9 @@ const IndexContent = () => {
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       <PrayerModeOverlay
-        active={prayerMode}
+        active={prayerMode && activeTab !== "siddour"}
         onClose={() => setPrayerMode(false)}
-        onOpenSiddur={() => setActiveTab("siddour")}
+        onOpenSiddur={() => { setActiveTab("siddour"); }}
       />
     </>
   );

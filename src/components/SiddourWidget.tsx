@@ -31,7 +31,11 @@ const OFFICES: { key: Office; label: string; icon: string }[] = [
 
 const CACHE_PREFIX = "siddour_v5_";
 
-const SiddourWidget = () => {
+interface SiddourWidgetProps {
+  prayerMode?: boolean;
+}
+
+const SiddourWidget = ({ prayerMode = false }: SiddourWidgetProps) => {
   const [office, setOffice] = useState<Office>("shacharit");
   const [sections, setSections] = useState<Section[]>([]);
   const [activeSection, setActiveSection] = useState<number | null>(null);
@@ -101,13 +105,24 @@ const SiddourWidget = () => {
   useEffect(() => { fetchToc(office); }, [office, fetchToc]);
   useEffect(() => { if (activeSection !== null) fetchSection(office, activeSection); }, [activeSection, office, fetchSection]);
 
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+    const pmBg = prayerMode ? "#000" : undefined;
+    const pmText = prayerMode ? "#e8e0d0" : undefined;
+    const pmMuted = prayerMode ? "#999" : undefined;
+    const pmCard = prayerMode ? "#111" : undefined;
+    const pmBorder = prayerMode ? "rgba(255,255,255,0.08)" : undefined;
+
+    return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4"
+      style={prayerMode ? { background: pmBg, margin: "-1rem", padding: "1rem", minHeight: "100vh" } : undefined}
+    >
       {/* Header */}
-      <div className="rounded-2xl border border-primary/15 p-5 text-center" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))" }}>
+      <div className="rounded-2xl border border-primary/15 p-5 text-center" style={{
+        background: prayerMode ? pmCard : "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))",
+        borderColor: pmBorder,
+      }}>
         <span className="text-3xl">📖</span>
-        <h3 className="mt-2 font-display text-lg font-bold text-foreground">Siddour Complet</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Navigation libre — Hébreu & Traduction</p>
+        <h3 className="mt-2 font-display text-lg font-bold" style={{ color: pmText }}>Siddour Complet</h3>
+        <p className="mt-1 text-xs" style={{ color: pmMuted }}>Navigation libre — Hébreu & Traduction</p>
       </div>
 
       {/* Office selector — scrollable row */}
@@ -118,8 +133,8 @@ const SiddourWidget = () => {
             onClick={() => { setOffice(off.key); setActiveSection(null); }}
             className="shrink-0 flex items-center gap-1 rounded-xl border-none px-3 py-2 text-[10px] font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap"
             style={{
-              background: office === off.key ? "var(--gradient-gold)" : "hsl(var(--muted))",
-              color: office === off.key ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+              background: office === off.key ? "var(--gradient-gold)" : (prayerMode ? pmCard : "hsl(var(--muted))"),
+              color: office === off.key ? "hsl(var(--primary-foreground))" : (prayerMode ? pmMuted : "hsl(var(--muted-foreground))"),
               boxShadow: office === off.key ? "var(--shadow-gold)" : "none",
             }}
           >
@@ -130,11 +145,11 @@ const SiddourWidget = () => {
       </div>
 
       {/* Font size slider + translation toggle */}
-      <div className="rounded-2xl border border-border bg-card p-3" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="rounded-2xl border p-3" style={{ boxShadow: prayerMode ? "none" : "var(--shadow-card)", background: prayerMode ? pmCard : "hsl(var(--card))", borderColor: pmBorder || "hsl(var(--border))" }}>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground font-bold">A-</span>
+          <span className="text-xs font-bold" style={{ color: pmMuted }}>A-</span>
           <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={36} step={1} className="flex-1" />
-          <span className="text-sm font-bold text-muted-foreground">A+</span>
+          <span className="text-sm font-bold" style={{ color: pmMuted }}>A+</span>
           <button
             onClick={() => setShowFrench(!showFrench)}
             className="ml-1 shrink-0 rounded-xl border px-3 py-1.5 text-[10px] font-bold cursor-pointer transition-all active:scale-95"
@@ -165,8 +180,8 @@ const SiddourWidget = () => {
                 <motion.button
                   key={sec.index}
                   onClick={() => setActiveSection(sec.index)}
-                  className="w-full flex items-center gap-4 rounded-2xl border border-border bg-card p-4 text-left cursor-pointer transition-all hover:border-primary/20 hover:-translate-y-0.5 active:scale-[0.98]"
-                  style={{ boxShadow: "var(--shadow-card)" }}
+                  className="w-full flex items-center gap-4 rounded-2xl border p-4 text-left cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+                  style={{ boxShadow: prayerMode ? "none" : "var(--shadow-card)", background: prayerMode ? pmCard : "hsl(var(--card))", borderColor: pmBorder || "hsl(var(--border))" }}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
@@ -175,8 +190,8 @@ const SiddourWidget = () => {
                     {i + 1}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-display text-sm font-bold text-foreground">{sec.title}</p>
-                    <p className="text-xs text-muted-foreground" style={{ fontFamily: "'Frank Ruhl Libre', serif" }}>{sec.heTitle}</p>
+                    <p className="font-display text-sm font-bold" style={{ color: pmText }}>{sec.title}</p>
+                    <p className="text-xs" style={{ fontFamily: "'Frank Ruhl Libre', serif", color: pmMuted }}>{sec.heTitle}</p>
                   </div>
                   <span className="text-muted-foreground/50">›</span>
                 </motion.button>
@@ -195,11 +210,11 @@ const SiddourWidget = () => {
             {loading ? (
               <div className="py-10 text-center text-sm text-muted-foreground">Chargement du texte…</div>
             ) : content ? (
-              <div className="rounded-2xl border border-border/50 px-5 py-6 sm:px-8" style={{ boxShadow: "var(--shadow-card)", background: "#FEFEFE" }}>
-                <h4 className="text-center font-display text-base font-bold text-foreground mb-0.5">{content.title}</h4>
-                <p className="text-center text-muted-foreground mb-6" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px` }}>{content.heTitle}</p>
+              <div className="rounded-2xl border px-5 py-6 sm:px-8" style={{ boxShadow: prayerMode ? "none" : "var(--shadow-card)", background: prayerMode ? "#0a0a0a" : "#FEFEFE", borderColor: pmBorder || "hsl(var(--border) / 0.5)" }}>
+                <h4 className="text-center font-display text-base font-bold mb-0.5" style={{ color: pmText }}>{content.title}</h4>
+                <p className="text-center mb-6" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, color: pmMuted }}>{content.heTitle}</p>
 
-                <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.4, textAlign: "justify", fontWeight: 600, color: "#111", wordSpacing: "0.06em" }}>
+                <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.4, textAlign: "justify", fontWeight: 600, color: prayerMode ? "#e8e0d0" : "#111", wordSpacing: "0.06em" }}>
                   {(() => {
                     let verseNum = 0;
                     return content.hebrew.map((verse, i) => {

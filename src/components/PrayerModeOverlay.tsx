@@ -28,7 +28,7 @@ const PrayerModeOverlay = ({ active, onClose, onOpenSiddur }: PrayerModeOverlayP
 
           {/* Central Siddur button */}
           <motion.button
-            onClick={() => { onOpenSiddur(); onClose(); }}
+            onClick={() => { onOpenSiddur(); }}
             className="flex flex-col items-center gap-4 cursor-pointer bg-transparent border-none"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
