@@ -478,6 +478,11 @@ const AdminDashboard = () => {
             )}
           </div>
         )}
+
+        {/* Horaires suggestions tab */}
+        {tab === "horaires" && (
+          <PrayerTimeSuggestionsAdmin mode="admin" />
+        )}
       </div>
 
       <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
