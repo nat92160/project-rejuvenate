@@ -162,7 +162,7 @@ const PowerButton = ({
 );
 
 /* ─── Ultra-thin Header Bar ─── */
-const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, signOut }: any) => (
+const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, signOut, onLoginClick }: any) => (
   <div className="flex items-center justify-between py-3">
     <button
       onClick={onLogoClick}
@@ -197,12 +197,20 @@ const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, sign
           Président
         </span>
       )}
-      {user && (
+      {user ? (
         <button
           onClick={signOut}
           className="px-3 py-1.5 rounded-full text-[11px] font-semibold cursor-pointer transition-all active:scale-95 bg-muted text-muted-foreground border-none hover:bg-muted/80"
         >
           Déconnexion
+        </button>
+      ) : (
+        <button
+          onClick={onLoginClick}
+          className="h-8 w-8 rounded-xl bg-card border border-border flex items-center justify-center cursor-pointer hover:bg-muted transition-all active:scale-95"
+          title="Se connecter"
+        >
+          <User className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
         </button>
       )}
     </div>
