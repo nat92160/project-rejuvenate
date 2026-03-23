@@ -45,16 +45,36 @@ const loadTabsForMode = (mode: BottomNavMode) => {
 
 const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
   const { dbRole } = useAuth();
+  const { city } = useCity();
   const mode: BottomNavMode = dbRole === "president" ? "president" : "fidele";
   const [showMore, setShowMore] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [selectedTabs, setSelectedTabs] = useState<string[]>(() => loadTabsForMode(mode));
+  const [microInfo, setMicroInfo] = useState<Record<string, string>>({});
 
   const availableTabs = useMemo(() => getAvailableTabs(mode), [mode]);
 
+  // Load micro-widget data
   useEffect(() => {
-    setSelectedTabs(loadTabsForMode(mode));
-  }, [mode]);
+    const loadMicro = async () => {
+      try {
+        const shabbat = await fetchShabbatTimes(city);
+        const info: Record<string, string> = {};
+        if (shabbat?.candleLighting) info["chabbat"] = shabbat.candleLighting;
+        if (shabbat?.havdalah) info["dashboard"] = `Chab. ${shabbat.candleLighting || ""}`;
+        
+        // Next zman simple
+        const now = new Date();
+        const h = now.getHours();
+        if (h < 12) info["zmanim"] = "Matin";
+        else if (h < 17) info["zmanim"] = "Après-midi";
+        else info["zmanim"] = "Soir";
+        
+        setMicroInfo(info);
+      } catch { /* silent */ }
+    };
+    loadMicro();
+  }, [city]);
 
   useEffect(() => {
     const sanitized = sanitizeBottomTabs(selectedTabs, mode);
