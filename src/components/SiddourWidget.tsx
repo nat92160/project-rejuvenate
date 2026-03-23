@@ -147,9 +147,9 @@ const SiddourWidget = ({ prayerMode = false }: SiddourWidgetProps) => {
       {/* Font size slider + translation toggle */}
       <div className="rounded-2xl border p-3" style={{ boxShadow: prayerMode ? "none" : "var(--shadow-card)", background: prayerMode ? pmCard : "hsl(var(--card))", borderColor: pmBorder || "hsl(var(--border))" }}>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground font-bold">A-</span>
+          <span className="text-xs font-bold" style={{ color: pmMuted }}>A-</span>
           <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={36} step={1} className="flex-1" />
-          <span className="text-sm font-bold text-muted-foreground">A+</span>
+          <span className="text-sm font-bold" style={{ color: pmMuted }}>A+</span>
           <button
             onClick={() => setShowFrench(!showFrench)}
             className="ml-1 shrink-0 rounded-xl border px-3 py-1.5 text-[10px] font-bold cursor-pointer transition-all active:scale-95"
