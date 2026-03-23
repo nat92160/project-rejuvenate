@@ -5,7 +5,11 @@ import TehilimWidget from "./TehilimWidget";
 
 type Tab = "livre" | "chaines";
 
-const TehilimCombinedWidget = () => {
+interface TehilimCombinedWidgetProps {
+  prayerMode?: boolean;
+}
+
+const TehilimCombinedWidget = ({ prayerMode = false }: TehilimCombinedWidgetProps) => {
   const [tab, setTab] = useState<Tab>("livre");
 
   return (
