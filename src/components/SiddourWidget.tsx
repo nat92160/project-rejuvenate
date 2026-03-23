@@ -56,21 +56,36 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
   // Wake lock while siddour is open
   useWakeLock(true);
 
-  // Restore bookmark on mount
+  // Track if we should auto-open the first section (deep-link from dashboard)
+  const [autoOpenDone, setAutoOpenDone] = useState(false);
+
+  // Restore bookmark on mount (only if no initialOffice deep-link)
   const [bookmarkRestored, setBookmarkRestored] = useState(false);
   useEffect(() => {
     if (bookmarkRestored) return;
+    if (initialOffice) {
+      // Deep-link: skip bookmark, will auto-open first section
+      setBookmarkRestored(true);
+      return;
+    }
     const bm = loadBookmark();
     if (bm) {
       setOffice(bm.office as Office);
       setActiveSection(bm.sectionIndex);
       setBookmarkRestored(true);
-      // Scroll will be restored after content loads
       setTimeout(() => restoreScroll(bm), 500);
     } else {
       setBookmarkRestored(true);
     }
-  }, [bookmarkRestored, loadBookmark, restoreScroll]);
+  }, [bookmarkRestored, loadBookmark, restoreScroll, initialOffice]);
+
+  // Auto-open first section when deep-linked from dashboard
+  useEffect(() => {
+    if (initialOffice && !autoOpenDone && sections.length > 0 && activeSection === null) {
+      setActiveSection(0);
+      setAutoOpenDone(true);
+    }
+  }, [initialOffice, autoOpenDone, sections, activeSection]);
 
   // Auto-save bookmark when reading
   useEffect(() => {
