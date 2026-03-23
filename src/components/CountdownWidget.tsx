@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes, type ShabbatTimes } from "@/lib/hebcal";
@@ -13,70 +13,54 @@ const CountdownWidget = () => {
 
   useEffect(() => {
     fetchShabbatTimes(city).then((data) => {
-      if (data) setShabbatData(data);
+      if (!data) return;
+      setShabbatData(data);
+
+      // Auto-select mode: if candle lighting is in the past, show havdalah
+      const now = Date.now();
+      if (data.candleLightingDateTime && data.candleLightingDateTime.getTime() <= now) {
+        if (data.havdalahDateTime && data.havdalahDateTime.getTime() > now) {
+          setMode("havdalah");
+        } else {
+          setMode("candles"); // both passed → next week's candles
+        }
+      } else {
+        setMode("candles");
+      }
     });
   }, [city]);
 
-  // Parse "HH:MM" time + date string into a Date
-  const parseTarget = useCallback((): Date | null => {
-    if (!shabbatData) return null;
-
-    const timeStr = mode === "candles" ? shabbatData.candleLighting : shabbatData.havdalah;
-    const dateStr = mode === "candles" ? shabbatData.candleLightingDate : shabbatData.havdalahDate;
-    if (!timeStr) return null;
-
-    // Try to build target from current week's Friday/Saturday
-    const now = new Date();
-    const day = now.getDay();
-    const [h, m] = timeStr.split(":").map(Number);
-
-    if (mode === "candles") {
-      const daysUntilFriday = (5 - day + 7) % 7 || 7;
-      const target = new Date(now);
-      target.setDate(now.getDate() + daysUntilFriday);
-      target.setHours(h, m, 0, 0);
-      // If it's Friday and the time already passed, next week
-      if (target.getTime() <= now.getTime()) {
-        target.setDate(target.getDate() + 7);
-      }
-      return target;
-    } else {
-      // Havdalah: next Saturday
-      const daysUntilSat = (6 - day + 7) % 7 || 7;
-      const target = new Date(now);
-      target.setDate(now.getDate() + daysUntilSat);
-      target.setHours(h, m, 0, 0);
-      if (target.getTime() <= now.getTime()) {
-        target.setDate(target.getDate() + 7);
-      }
-      return target;
-    }
-  }, [shabbatData, mode]);
-
   useEffect(() => {
+    const getTarget = (): Date | null => {
+      if (!shabbatData) return null;
+      if (mode === "candles") return shabbatData.candleLightingDateTime;
+      return shabbatData.havdalahDateTime;
+    };
+
     const update = () => {
       const now = Date.now();
-
-      // Auto-switch to Havdala if candles time has passed
-      if (mode === "candles" && shabbatData?.candleLighting) {
-        const candleTarget = parseTarget();
-        if (candleTarget && candleTarget.getTime() <= now) {
-          setMode("havdalah");
-          return;
-        }
-      }
-
-      // Auto-switch back to candles if Havdala has passed
-      if (mode === "havdalah" && shabbatData?.havdalah) {
-        const havTarget = parseTarget();
-        if (havTarget && havTarget.getTime() <= now) {
-          setMode("candles");
-          return;
-        }
-      }
-
-      const target = parseTarget();
+      const target = getTarget();
       if (!target) return;
+
+      // Auto-switch: candles passed → havdalah
+      if (mode === "candles" && shabbatData?.candleLightingDateTime) {
+        if (shabbatData.candleLightingDateTime.getTime() <= now) {
+          if (shabbatData.havdalahDateTime && shabbatData.havdalahDateTime.getTime() > now) {
+            setMode("havdalah");
+            return;
+          }
+        }
+      }
+
+      // Auto-switch: havdalah passed → candles (will refetch next week)
+      if (mode === "havdalah" && shabbatData?.havdalahDateTime) {
+        if (shabbatData.havdalahDateTime.getTime() <= now) {
+          setMode("candles");
+          // Refetch for next week
+          fetchShabbatTimes(city).then((d) => d && setShabbatData(d));
+          return;
+        }
+      }
 
       const diff = target.getTime() - now;
       if (diff <= 0) return;
@@ -92,7 +76,7 @@ const CountdownWidget = () => {
     update();
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
-  }, [mode, shabbatData, parseTarget]);
+  }, [mode, shabbatData, city]);
 
   const blocks = [
     { value: timeLeft.days, label: "jours" },
@@ -119,11 +103,11 @@ const CountdownWidget = () => {
   return (
     <motion.div
       className={`text-center p-5 rounded-2xl mb-4 border ${
-        isUrgent ? "border-red-500/40" : "border-primary/10"
+        isUrgent ? "border-destructive/40" : "border-primary/10"
       }`}
       style={{
         background: isUrgent
-          ? "linear-gradient(135deg, hsl(0 84% 60% / 0.12), hsl(0 84% 60% / 0.04))"
+          ? "linear-gradient(135deg, hsl(var(--destructive) / 0.12), hsl(var(--destructive) / 0.04))"
           : isClose
           ? "linear-gradient(135deg, hsl(var(--gold) / 0.1), hsl(var(--gold) / 0.04))"
           : "linear-gradient(135deg, hsl(var(--gold) / 0.05), hsl(var(--gold) / 0.02))",
@@ -136,13 +120,13 @@ const CountdownWidget = () => {
     >
       <div
         className={`text-[10px] uppercase tracking-[3px] mb-1 font-semibold ${
-          isUrgent ? "text-red-500" : "text-muted-foreground"
+          isUrgent ? "text-destructive" : "text-muted-foreground"
         }`}
       >
         {label}
       </div>
       {timeDisplay && (
-        <div className={`text-xs mb-2 ${isUrgent ? "text-red-400 font-bold" : "text-primary/70"}`}>
+        <div className={`text-xs mb-2 ${isUrgent ? "text-destructive font-bold" : "text-primary/70"}`}>
           {timeDisplay}
         </div>
       )}
@@ -175,10 +159,10 @@ const CountdownWidget = () => {
           >
             <div
               className={`text-2xl font-extrabold font-display tabular-nums px-3.5 py-2.5 rounded-xl border bg-card ${
-                isUrgent ? "border-red-500/30" : "border-primary/12"
+                isUrgent ? "border-destructive/30" : "border-primary/10"
               }`}
               style={{
-                color: isUrgent ? "hsl(0 84% 60%)" : "hsl(var(--gold-matte))",
+                color: isUrgent ? "hsl(var(--destructive))" : "hsl(var(--gold-matte))",
                 minWidth: "54px",
                 boxShadow: "var(--shadow-soft)",
               }}
@@ -194,8 +178,8 @@ const CountdownWidget = () => {
 
       {isUrgent && (
         <motion.p
-          className="text-xs mt-3 font-bold inline-block px-3 py-1 rounded-full"
-          style={{ color: "hsl(0 84% 60%)", background: "hsl(0 84% 60% / 0.1)" }}
+          className="text-xs mt-3 font-bold inline-block px-3 py-1 rounded-full text-destructive"
+          style={{ background: "hsl(var(--destructive) / 0.1)" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ repeat: Infinity, duration: 1.2 }}
