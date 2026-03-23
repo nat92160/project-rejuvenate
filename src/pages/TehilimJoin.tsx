@@ -339,7 +339,7 @@ const TehilimJoinContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-safe">
+    <div className="min-h-screen bg-background" style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}>
       <div className="max-w-[500px] mx-auto px-3 sm:px-4 py-6 sm:py-8">
         <div className="text-center mb-6">
           <h1 className="font-display text-2xl font-bold text-foreground">📖 Chaîne de Tehilim</h1>
