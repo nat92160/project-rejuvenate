@@ -222,7 +222,7 @@ const PsalmTile = ({
     <motion.button
       layout
       onClick={() => {
-        if (!claim) { onClaim(); return; }
+        if (!claim) { onSelect(); return; }
         if (isMine) { onSelect(); return; }
       }}
       onContextMenu={(e) => { e.preventDefault(); if (isMine && claim && !claim.completed) onUnclaim(); }}

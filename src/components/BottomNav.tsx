@@ -219,7 +219,7 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                   {tab.label}
                 </span>
                 {microInfo[tab.id] && !isActive && (
-                  <span className="text-[9px] font-semibold truncate max-w-full px-0.5 leading-tight" style={{ color: "hsl(var(--gold-matte))" }}>
+                  <span className="text-[9px] font-semibold truncate max-w-full px-0.5 leading-tight" style={{ color: "hsl(var(--foreground))", opacity: 0.85 }}>
                     {microInfo[tab.id]}
                   </span>
                 )}
