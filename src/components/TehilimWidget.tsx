@@ -699,15 +699,12 @@ const TehilimWidget = () => {
 
     let query = supabase.from("tehilim_chains").select("*").eq("status", "active").order("created_at", { ascending: false });
 
-    if (user) {
-      if (subIds.length > 0) {
-        query = query.or(`creator_id.eq.${user.id},synagogue_id.in.(${subIds.join(",")})`);
-      } else {
-        query = query.eq("creator_id", user.id);
-      }
-    } else {
-      setChains([]); setLoadingChains(false); return;
+    if (user && subIds.length > 0) {
+      query = query.or(`creator_id.eq.${user.id},synagogue_id.in.(${subIds.join(",")})`);
+    } else if (user) {
+      query = query.eq("creator_id", user.id);
     }
+    // For guests: fetch all active chains (no filter)
 
     const { data } = await query;
     setChains((data as Chain[]) || []); setLoadingChains(false);
