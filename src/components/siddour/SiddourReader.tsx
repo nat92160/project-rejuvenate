@@ -6,17 +6,38 @@ import ViewModeSelector from "@/components/ViewModeSelector";
 import type { ViewMode } from "@/hooks/useTransliteration";
 
 /**
+ * Known liturgical opening phrases that mark the real start of a prayer.
+ * These take priority over <b> detection.
+ */
+const KNOWN_OPENINGS = [
+  "שְׁמַע",        // Shema
+  "אֲדֹנָי שְׂפָתַי", // Amida opening
+];
+
+/**
  * Detect the index of the "real start" of prayer text.
- * Priority: first verse containing <b> tag (bold = liturgical start).
- * Fallback: first non-instruction verse.
+ * 1. Check for known liturgical openings (Shema, Amida).
+ * 2. Fallback: first verse containing <b> tag.
+ * 3. Fallback: first non-instruction verse.
  */
 function findPrayerStartIndex(hebrew: string[]): number {
   let firstNonInstruction = -1;
+  let firstBold = -1;
+
   for (let i = 0; i < hebrew.length; i++) {
     if (isInstructionOnly(hebrew[i])) continue;
     if (firstNonInstruction === -1) firstNonInstruction = i;
-    if (hebrew[i].includes("<b>")) return i;
+
+    // Check known openings
+    const plainText = hebrew[i].replace(/<[^>]+>/g, "");
+    for (const opening of KNOWN_OPENINGS) {
+      if (plainText.includes(opening)) return i;
+    }
+
+    if (firstBold === -1 && hebrew[i].includes("<b>")) firstBold = i;
   }
+
+  if (firstBold >= 0) return firstBold;
   return firstNonInstruction >= 0 ? firstNonInstruction : 0;
 }
 
