@@ -339,7 +339,7 @@ const TehilimJoinContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-safe">
+    <div className="min-h-screen bg-background" style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}>
       <div className="max-w-[500px] mx-auto px-3 sm:px-4 py-6 sm:py-8">
         <div className="text-center mb-6">
           <h1 className="font-display text-2xl font-bold text-foreground">📖 Chaîne de Tehilim</h1>
@@ -597,6 +597,30 @@ const TehilimJoinContent = () => {
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
       <HazakCelebration show={showHazak} onDone={() => setShowHazak(false)} />
+
+      {/* Sticky discover banner */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-3 border-t px-4"
+        style={{
+          background: "hsl(var(--card))",
+          borderColor: "hsl(var(--border))",
+          paddingTop: "12px",
+          paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
+          boxShadow: "0 -4px 20px hsl(var(--foreground) / 0.06)",
+        }}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold text-foreground truncate">✡️ Chabbat Chalom</p>
+          <p className="text-[10px] text-muted-foreground">Zmanim, Siddour, Tehilim & plus</p>
+        </div>
+        <button
+          onClick={() => navigate("/")}
+          className="shrink-0 rounded-xl border-none px-4 py-2.5 text-xs font-bold text-primary-foreground cursor-pointer transition-all active:scale-95"
+          style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+        >
+          Découvrir l'appli →
+        </button>
+      </div>
 
       {/* Psalm Reader */}
       <AnimatePresence>

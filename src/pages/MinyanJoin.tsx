@@ -249,11 +249,32 @@ const MinyanJoinContent = () => {
           </div>
         )}
 
-        <div className="text-center mt-8">
-          <button onClick={() => navigate("/")} className="text-xs text-muted-foreground bg-transparent border-none cursor-pointer hover:underline">
-            ← Retour à Chabbat Chalom
-          </button>
+        {/* Spacer for sticky bottom banner */}
+        <div className="h-20" />
+      </div>
+
+      {/* Sticky discover banner */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-3 border-t px-4"
+        style={{
+          background: "hsl(var(--card))",
+          borderColor: "hsl(var(--border))",
+          paddingTop: "12px",
+          paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
+          boxShadow: "0 -4px 20px hsl(var(--foreground) / 0.06)",
+        }}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold text-foreground truncate">✡️ Chabbat Chalom</p>
+          <p className="text-[10px] text-muted-foreground">Zmanim, Siddour, Tehilim & plus</p>
         </div>
+        <button
+          onClick={() => navigate("/")}
+          className="shrink-0 rounded-xl border-none px-4 py-2.5 text-xs font-bold text-primary-foreground cursor-pointer transition-all active:scale-95"
+          style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+        >
+          Découvrir l'appli →
+        </button>
       </div>
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={(name) => { setGuestPromptOpen(false); doRegister(name); }} onClose={() => setGuestPromptOpen(false)} />
