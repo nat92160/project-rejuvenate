@@ -118,6 +118,7 @@ interface Props {
 
 const SynagogueChooser = ({ onSelect }: Props) => {
   const { user } = useAuth();
+  const { city, geolocate, isGeolocating } = useCity();
   const { subIds } = useSubscribedSynaIds();
 
   const [search, setSearch] = useState("");
