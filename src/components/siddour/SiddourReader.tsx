@@ -1,7 +1,24 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { toHebrewLetter, isInstructionOnly } from "@/lib/utils";
+import ViewModeSelector from "@/components/ViewModeSelector";
+import type { ViewMode } from "@/hooks/useTransliteration";
+
+/**
+ * Detect the index of the "real start" of prayer text.
+ * Priority: first verse containing <b> tag (bold = liturgical start).
+ * Fallback: first non-instruction verse.
+ */
+function findPrayerStartIndex(hebrew: string[]): number {
+  let firstNonInstruction = -1;
+  for (let i = 0; i < hebrew.length; i++) {
+    if (isInstructionOnly(hebrew[i])) continue;
+    if (firstNonInstruction === -1) firstNonInstruction = i;
+    if (hebrew[i].includes("<b>")) return i;
+  }
+  return firstNonInstruction >= 0 ? firstNonInstruction : 0;
+}
 import ViewModeSelector from "@/components/ViewModeSelector";
 import type { ViewMode } from "@/hooks/useTransliteration";
 
