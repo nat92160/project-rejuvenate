@@ -47,7 +47,7 @@ import { useCity } from "@/hooks/useCity";
 const IndexContent = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
-  const [prayerMode, setPrayerMode] = useState(false);
+  
   const { role, setRole } = useRole();
   const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
   const pendingCount = usePendingRequests();
