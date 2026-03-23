@@ -55,7 +55,13 @@ const SiddourReader = ({
   prayerMode = false,
 }: SiddourReaderProps) => {
   const topRef = useRef<HTMLDivElement>(null);
-  const firstVerseRef = useRef<HTMLSpanElement>(null);
+  const prayerStartRef = useRef<HTMLSpanElement>(null);
+
+  // Detect the real prayer start index (first <b> verse, or first non-instruction)
+  const prayerStartIdx = useMemo(
+    () => content ? findPrayerStartIndex(content.hebrew) : 0,
+    [content]
+  );
 
   const pmText = prayerMode ? "#e8e0d0" : undefined;
   const pmMuted = prayerMode ? "#999" : undefined;
