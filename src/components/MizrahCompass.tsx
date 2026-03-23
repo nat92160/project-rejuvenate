@@ -56,18 +56,28 @@ const MizrahCompass = () => {
   useEffect(() => {
     if (!permissionGranted) return;
     const handler = (e: DeviceOrientationEvent) => {
-      if (e.alpha === null) return;
-      const raw = e.alpha;
-      if (smoothedHeading.current === null) {
-        smoothedHeading.current = raw;
+      // iOS provides webkitCompassHeading (clockwise from North)
+      // Standard alpha is counterclockwise, so we invert it
+      const iosHeading = (e as any).webkitCompassHeading;
+      let compassHeading: number;
+      if (typeof iosHeading === "number" && !isNaN(iosHeading)) {
+        compassHeading = iosHeading;
+      } else if (e.alpha !== null) {
+        // Standard: alpha is counterclockwise from North → invert
+        compassHeading = (360 - e.alpha) % 360;
       } else {
-        // Low-pass filter: only take 15% of new value to smooth jitter
-        smoothedHeading.current = smoothAngle(smoothedHeading.current, raw, 0.15);
+        return;
+      }
+
+      if (smoothedHeading.current === null) {
+        smoothedHeading.current = compassHeading;
+      } else {
+        smoothedHeading.current = smoothAngle(smoothedHeading.current, compassHeading, 0.15);
       }
       setDeviceHeading(smoothedHeading.current);
     };
-    window.addEventListener("deviceorientation", handler);
-    return () => window.removeEventListener("deviceorientation", handler);
+    window.addEventListener("deviceorientation", handler, true);
+    return () => window.removeEventListener("deviceorientation", handler, true);
   }, [permissionGranted]);
 
   const needleRotation = deviceHeading !== null ? bearing - deviceHeading : bearing;
