@@ -5,20 +5,28 @@ import { toHebrewLetter, isInstructionOnly } from "@/lib/utils";
 import ViewModeSelector from "@/components/ViewModeSelector";
 import type { ViewMode } from "@/hooks/useTransliteration";
 
-/**
- * Known liturgical opening phrases that mark the real start of a prayer.
- * These take priority over <b> detection.
- */
-const KNOWN_OPENINGS = [
-  "שְׁמַע",        // Shema
-  "אֲדֹנָי שְׂפָתַי", // Amida opening
-];
+/** Known liturgical openings matched without niqqud/html for robust detection. */
+const KNOWN_OPENINGS = ["שמע ישראל", "אדני שפתי תפתח"];
+const SHEMA_SECONDARY = "ברוך שם כבוד מלכותו לעולם ועד";
+
+function normalizeHebrewMatch(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[\u0591-\u05C7]/g, "")
+    .replace(/[׀־:.,;!?]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isShemaSecondaryLine(html: string): boolean {
+  return normalizeHebrewMatch(html).includes(SHEMA_SECONDARY);
+}
 
 /**
- * Detect the index of the "real start" of prayer text.
- * 1. Check for known liturgical openings (Shema, Amida).
- * 2. Fallback: first verse containing <b> tag.
- * 3. Fallback: first non-instruction verse.
+ * Detect the true liturgical start.
+ * 1. Explicit sacred openings (Shema / Amida)
+ * 2. First bold verse
+ * 3. First non-instruction verse
  */
 function findPrayerStartIndex(hebrew: string[]): number {
   let firstNonInstruction = -1;
@@ -28,12 +36,8 @@ function findPrayerStartIndex(hebrew: string[]): number {
     if (isInstructionOnly(hebrew[i])) continue;
     if (firstNonInstruction === -1) firstNonInstruction = i;
 
-    // Check known openings
-    const plainText = hebrew[i].replace(/<[^>]+>/g, "");
-    for (const opening of KNOWN_OPENINGS) {
-      if (plainText.includes(opening)) return i;
-    }
-
+    const normalized = normalizeHebrewMatch(hebrew[i]);
+    if (KNOWN_OPENINGS.some((opening) => normalized.includes(opening))) return i;
     if (firstBold === -1 && hebrew[i].includes("<b>")) firstBold = i;
   }
 
