@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
-import { CityConfig } from "@/lib/cities";
+import { HebrewCalendar, flags } from '@hebcal/core';
+import { cityToLocation } from "@/lib/hebcal";
 
 interface SpecialShabbat {
   title: string;
@@ -25,76 +26,60 @@ const SHABBAT_FR: Record<string, { name: string; emoji: string }> = {
   "shabbat shuva": { name: "Chabbat Chouva", emoji: "🕊️" },
 };
 
-function hebcalGeoParam(city: CityConfig): string {
-  const gpsCity = city as CityConfig & { _gps?: boolean };
-  if (gpsCity._gps) {
-    return `geo=pos&latitude=${city.lat}&longitude=${city.lng}&tzid=${city.tz}`;
-  }
-  return `geo=geoname&geonameid=${city.geonameid}`;
-}
-
 const ShabbatSpeciauxWidget = () => {
   const { city } = useCity();
   const [shabbatot, setShabbatot] = useState<SpecialShabbat[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
     setLoading(true);
 
-    const now = new Date();
-    const year = now.getFullYear();
-    const geoP = hebcalGeoParam(city);
+    try {
+      const now = new Date();
+      const il = city.country === 'IL';
+      const location = cityToLocation(city);
 
-    const fetchYear = (y: number) =>
-      fetch(
-        `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${y}&month=x&maj=on&min=on&mod=on&nx=off&ss=on&mf=off&c=off&${geoP}&i=off`,
-        { cache: "no-store" }
-      ).then((r) => r.json());
+      // Use SDK — fully offline, no API calls
+      const events = HebrewCalendar.calendar({
+        start: now,
+        end: new Date(now.getTime() + 365 * 86400000),
+        il,
+        location,
+      }).filter(ev => ev.getFlags() & flags.SPECIAL_SHABBAT);
 
-    Promise.all([fetchYear(year), fetchYear(year + 1)])
-      .then(([d1, d2]) => {
-        if (cancelled) return;
-        const items = [...(d1.items || []), ...(d2.items || [])];
+      const seen = new Set<string>();
+      const results: SpecialShabbat[] = [];
 
-        const allSpecial: SpecialShabbat[] = items
-          .filter((item: any) => item.category === "holiday" && item.subcat === "shabbat")
-          .map((item: any) => {
-            const key = item.title.toLowerCase().trim();
-            const info = SHABBAT_FR[key] || { name: item.title, emoji: "✡️" };
-            const dt = new Date(item.date + "T12:00:00");
-            const daysLeft = Math.ceil((dt.getTime() - now.getTime()) / 86400000);
-            return {
-              title: info.name,
-              hebrew: item.hebrew || "",
-              date: item.date,
-              dateFr: dt.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
-              memo: item.memo || "",
-              daysLeft,
-              emoji: info.emoji,
-            };
-          })
-          .filter((s: SpecialShabbat) => s.daysLeft >= -1)
-          .sort((a: SpecialShabbat, b: SpecialShabbat) => a.daysLeft - b.daysLeft);
+      for (const ev of events) {
+        const desc = ev.getDesc();
+        const key = desc.toLowerCase().trim();
+        const info = SHABBAT_FR[key] || { name: desc, emoji: "✡️" };
 
-        // Deduplicate: keep only the nearest occurrence per Shabbat name
-        const seen = new Set<string>();
-        const results: SpecialShabbat[] = [];
-        for (const s of allSpecial) {
-          if (seen.has(s.title)) continue;
-          seen.add(s.title);
-          results.push(s);
-          if (results.length >= 8) break;
-        }
+        if (seen.has(info.name)) continue;
+        seen.add(info.name);
 
-        setShabbatot(results);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!cancelled) setLoading(false);
-      });
+        const greg = ev.getDate().greg();
+        const daysLeft = Math.ceil((greg.getTime() - now.getTime()) / 86400000);
 
-    return () => { cancelled = true; };
+        results.push({
+          title: info.name,
+          hebrew: ev.render('he') || '',
+          date: `${greg.getFullYear()}-${String(greg.getMonth() + 1).padStart(2, '0')}-${String(greg.getDate()).padStart(2, '0')}`,
+          dateFr: greg.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
+          memo: ev.memo || '',
+          daysLeft,
+          emoji: info.emoji,
+        });
+
+        if (results.length >= 8) break;
+      }
+
+      setShabbatot(results);
+    } catch {
+      // silent
+    }
+
+    setLoading(false);
   }, [city]);
 
   return (

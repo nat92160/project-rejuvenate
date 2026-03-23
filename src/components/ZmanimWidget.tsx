@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
-import { fetchZmanim, ZmanItem } from "@/lib/hebcal";
+import { fetchZmanim, ZmanItem, getHebrewDateString } from "@/lib/hebcal";
 
 const ZmanimWidget = () => {
   const { city } = useCity();
