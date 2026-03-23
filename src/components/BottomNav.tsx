@@ -47,26 +47,47 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
 
   const availableTabs = useMemo(() => getAvailableTabs(mode), [mode]);
 
-  // Load micro-widget data
+  // Load micro-widget data with real next zman
   useEffect(() => {
     const loadMicro = async () => {
       try {
-        const shabbat = await fetchShabbatTimes(city);
         const info: Record<string, string> = {};
-        if (shabbat?.candleLighting) info["chabbat"] = shabbat.candleLighting;
-        if (shabbat?.havdalah) info["dashboard"] = `Chab. ${shabbat.candleLighting || ""}`;
-        
-        // Next zman simple
+
+        // Shabbat times
+        const shabbat = await fetchShabbatTimes(city);
+        if (shabbat?.candleLighting) {
+          info["chabbat"] = shabbat.candleLighting;
+          info["dashboard"] = `Chab. ${shabbat.candleLighting}`;
+        }
+
+        // Real next zman
+        const zmanim = await fetchZmanim(city);
         const now = new Date();
-        const h = now.getHours();
-        if (h < 12) info["zmanim"] = "Matin";
-        else if (h < 17) info["zmanim"] = "Après-midi";
-        else info["zmanim"] = "Soir";
-        
+        const nowStr = now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+        const nextZman = zmanim.find((z) => z.time > nowStr && z.time !== "--:--");
+        if (nextZman) {
+          // Short label for micro-widget
+          const short = nextZman.label
+            .replace("(GR\"A)", "")
+            .replace("(MG\"A)", "")
+            .replace("(Lever du soleil)", "")
+            .replace("(Coucher du soleil)", "")
+            .replace("(Midi solaire)", "")
+            .trim()
+            .split(" ")[0];
+          info["zmanim"] = `${short} ${nextZman.time}`;
+        } else {
+          info["zmanim"] = "Terminé";
+        }
+
         setMicroInfo(info);
       } catch { /* silent */ }
     };
     loadMicro();
+
+    // Refresh every 60s
+    const id = setInterval(loadMicro, 60000);
+    return () => clearInterval(id);
   }, [city]);
 
   useEffect(() => {
