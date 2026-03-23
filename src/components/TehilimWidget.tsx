@@ -771,11 +771,9 @@ const TehilimWidget = () => {
               </div>
             ) : (
               <div>
-                {isPresident && user && (
-                  <button onClick={() => setShowCreateForm(true)} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer mb-4" style={{ background: "var(--gradient-gold)" }}>
-                    ✨ Créer une chaîne de Tehilim
-                  </button>
-                )}
+                <button onClick={() => setShowCreateForm(true)} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer mb-4" style={{ background: "var(--gradient-gold)" }}>
+                  ✨ Créer une chaîne de Tehilim
+                </button>
                 {loadingChains ? (
                   <div className="text-center py-8"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" /></div>
                 ) : chains.length === 0 ? (
