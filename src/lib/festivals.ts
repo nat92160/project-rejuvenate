@@ -329,14 +329,27 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       });
     }
 
-    // Build Rosh Chodesh cards — take only the next 3
+    // Build Rosh Chodesh cards — deduplicate by month name, keep nearest upcoming
     const roshChodeshCards: FestivalCard[] = [];
-    for (const [monthName, rc] of Object.entries(roshChodeshMap)) {
+    const seenRCMonths = new Set<string>();
+    // Sort entries by earliest date to process nearest first
+    const rcEntries = Object.entries(roshChodeshMap).sort((a, b) => {
+      const dateA = a[1].dates.sort()[0] || "";
+      const dateB = b[1].dates.sort()[0] || "";
+      return dateA.localeCompare(dateB);
+    });
+
+    for (const [monthName, rc] of rcEntries) {
+      // Deduplicate: same Hebrew month name from different years
+      if (seenRCMonths.has(monthName)) continue;
+
       rc.dates.sort();
       const firstDate = rc.dates[0];
       const firstDt = new Date(firstDate + "T12:00:00");
       const daysLeft = Math.ceil((firstDt.getTime() - now.getTime()) / 86400000);
       if (daysLeft < -2) continue;
+
+      seenRCMonths.add(monthName);
 
       const days: FestivalDay[] = rc.dates.map(dateStr => {
         const dt = new Date(dateStr + "T12:00:00");
@@ -352,7 +365,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       });
 
       roshChodeshCards.push({
-        id: `roshchodesh-${monthName}`,
+        id: `roshchodesh-${monthName}-${firstDate}`,
         name: `Roch 'Hodech ${monthName}`,
         emoji: "🌙",
         hebrew: rc.hebrew,
