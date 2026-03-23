@@ -117,7 +117,7 @@ const IndexContent = () => {
       case "shabbatspec": return <ShabbatSpeciauxWidget />;
       case "perso": return <EspacePersonnelWidget />;
       case "alerte": return <AlerteCommunautaireWidget />;
-      case "calendrier-mariages": return <MariagesCalendarWidget />;
+      
       case "brakhot": return <BrakhotWidget />;
       case "communaute":
         return (
