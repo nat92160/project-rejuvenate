@@ -425,7 +425,7 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                         placeId={!isPartner ? item.id : undefined}
                         placeName={!isPartner ? item.name : undefined}
                         onClose={() => setEditingId(null)}
-                        onSubmitted={() => fetchData()}
+                        onSubmitted={() => { markConfirmed(editKey); fetchData(); }}
                       />
                     </motion.div>
                   )}
