@@ -465,7 +465,7 @@ const TehilimJoinContent = () => {
                 <div className="w-10 h-1 rounded-full bg-border" />
               </div>
               <h3 className="font-display text-base font-bold text-foreground text-center mb-1">
-                Psaume {selectedClaim.chapter_start}
+                Psaume {selectedClaim.chapter_start} — {toHebrewLetter(selectedClaim.chapter_start)}
               </h3>
               <p className="text-xs text-muted-foreground text-center mb-5">
                 {selectedClaim.completed ? "Ce psaume est marqué comme lu" : "Que souhaitez-vous faire ?"}
