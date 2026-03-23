@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 import HazakCelebration from "@/components/HazakCelebration";
+import { toHebrewLetter } from "@/lib/utils";
 
 const TOTAL_PSALMS = 150;
 
@@ -26,6 +27,94 @@ type Claim = {
   completed: boolean;
 };
 
+// Psalm Reader Overlay with mark complete
+const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim }: {
+  chapter: number;
+  claim?: Claim;
+  onClose: () => void;
+  onMarkComplete: (claim: Claim) => void;
+  onUnclaim: (claim: Claim) => void;
+}) => {
+  const [verses, setVerses] = useState<string[]>([]);
+  const [heTitle, setHeTitle] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [fontSize, setFontSize] = useState(24);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true); setError("");
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke("get-psalm", { body: { chapter } });
+        if (fnError || !data?.success) { setError("Impossible de charger ce psaume."); return; }
+        setVerses(data.verses); setHeTitle(data.heTitle);
+      } catch { setError("Erreur de connexion."); }
+      finally { setLoading(false); }
+    })();
+  }, [chapter]);
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-lg max-h-[85vh] rounded-2xl bg-card border border-border overflow-hidden flex flex-col"
+        style={{ boxShadow: "var(--shadow-card)" }} onClick={(e) => e.stopPropagation()}>
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <div>
+            <h3 className="font-display text-lg font-bold text-foreground">📖 Psaume {chapter}</h3>
+            {heTitle && <p className="text-sm text-muted-foreground font-hebrew" dir="rtl">{heTitle}</p>}
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 cursor-pointer border-none">✕</button>
+        </div>
+
+        <div className="px-4 py-2 border-b border-border flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">A-</span>
+          <input type="range" min={16} max={36} value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="flex-1 accent-primary" />
+          <span className="text-sm font-bold text-muted-foreground">A+</span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4" style={{ background: "#FEFEFE" }}>
+          {loading && <div className="text-center py-10"><div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" /><p className="text-sm text-muted-foreground mt-3">Chargement…</p></div>}
+          {error && <div className="text-center py-10"><p className="text-sm text-destructive">{error}</p></div>}
+          {!loading && !error && (
+            <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.4, textAlign: "justify", fontWeight: 600, color: "#111", wordSpacing: "0.06em" }}>
+              {verses.map((verse, i) => (
+                <span key={i}>
+                  <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
+                  <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {claim && (
+          <div className="p-4 border-t border-border space-y-2">
+            {!claim.completed ? (
+              <>
+                <button onClick={() => onMarkComplete(claim)}
+                  className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer transition-all active:scale-[0.98]"
+                  style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", boxShadow: "0 4px 12px rgba(34,197,94,0.3)" }}>
+                  ✅ Marquer comme lu
+                </button>
+                <button onClick={() => onUnclaim(claim)}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold border border-destructive/30 bg-destructive/5 text-destructive cursor-pointer">
+                  🗑️ Annuler ma réservation
+                </button>
+              </>
+            ) : (
+              <div className="text-center py-2">
+                <span className="text-xs font-bold text-green-600">✅ Psaume déjà lu</span>
+              </div>
+            )}
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const TehilimJoinContent = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -39,6 +128,7 @@ const TehilimJoinContent = () => {
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [showHazak, setShowHazak] = useState(false);
   const [prevCompletedCount, setPrevCompletedCount] = useState<number | null>(null);
+  const [readingChapter, setReadingChapter] = useState<number | null>(null);
 
   const fetchClaims = useCallback(async () => {
     if (!id) return;
@@ -305,8 +395,8 @@ const TehilimJoinContent = () => {
               <motion.button
                 key={num}
                 onClick={() => {
-                  if (!claim) { claimPsalm(num); return; }
-                  if (isMine) { setSelectedClaim(claim); return; }
+                  if (!claim) { claimPsalm(num); setReadingChapter(num); return; }
+                  if (isMine) { setReadingChapter(num); return; }
                 }}
                 disabled={!!claim && !isMine}
                 className={`relative aspect-square rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer border overflow-hidden ${
@@ -419,6 +509,22 @@ const TehilimJoinContent = () => {
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
       <HazakCelebration show={showHazak} onDone={() => setShowHazak(false)} />
+
+      {/* Psalm Reader */}
+      <AnimatePresence>
+        {readingChapter !== null && (() => {
+          const myClaim = claims.find(c => c.chapter_start === readingChapter && isOwnClaim(c));
+          return (
+            <PsalmReaderOverlay
+              chapter={readingChapter}
+              claim={myClaim}
+              onClose={() => setReadingChapter(null)}
+              onMarkComplete={(claim) => { toggleComplete(claim); setReadingChapter(null); }}
+              onUnclaim={(claim) => { unclaimPsalm(claim); setReadingChapter(null); }}
+            />
+          );
+        })()}
+      </AnimatePresence>
     </div>
   );
 };
