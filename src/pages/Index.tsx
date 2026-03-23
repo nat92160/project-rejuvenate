@@ -279,7 +279,10 @@ const IndexContent = () => {
               />
             </div>
 
-            {/* 4. Omer if applicable */}
+            {/* 4. Spiritual Timeline */}
+            <Lazy><SpiritualTimeline /></Lazy>
+
+            {/* 5. Omer if applicable */}
             <Lazy><OmerCounterWidget /></Lazy>
           </>
         );
