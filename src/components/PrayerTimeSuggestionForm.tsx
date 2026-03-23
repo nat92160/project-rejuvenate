@@ -198,7 +198,7 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
       style={{ boxShadow: "var(--shadow-elevated)" }}
     >
       <div className="flex items-center justify-between">
-        <h4 className="font-display text-sm font-bold text-foreground">📝 Proposer des horaires</h4>
+        <h4 className="font-display text-sm font-bold text-foreground">🤝 Aidez la communauté de {synagogueName} à être à l'heure</h4>
         <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground cursor-pointer bg-transparent border-none">✕</button>
       </div>
 

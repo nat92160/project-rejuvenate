@@ -5,7 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCity } from "@/hooks/useCity";
 import { fetchNearbySynagogues, formatDistance, type SynagogueResult } from "@/lib/synagogues";
 import { toast } from "sonner";
-import { MapPin, Search, X, Navigation, CheckCircle2, Clock, Loader2, Pencil } from "lucide-react";
+import { MapPin, Search, X, Navigation, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import PrayerTimeSuggestionForm from "./PrayerTimeSuggestionForm";
 
 /* ── Types ── */
@@ -118,6 +119,7 @@ interface Props {
 const SynagogueChooser = ({ onSelect }: Props) => {
   const { user } = useAuth();
   const { city, geolocate, isGeolocating } = useCity();
+  const { subIds } = useSubscribedSynaIds();
 
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterChip[]>([]);
@@ -284,6 +286,12 @@ const SynagogueChooser = ({ onSelect }: Props) => {
             const isSelected = selectedId === item.id;
             const isEditing = editingId === item.id || editingId === `gm-${item.id}`;
             const editKey = isPartner ? item.id : `gm-${item.id}`;
+            const isMySyna = subIds.includes(item.id);
+
+            // Check if stale (>7 days)
+            const isStale = isPartner && item.updated_at
+              ? (Date.now() - new Date(item.updated_at).getTime()) > 7 * 86400000
+              : !isPartner;
 
             return (
               <motion.div
@@ -317,19 +325,6 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                       </div>
                     )}
                   </div>
-
-                  {/* Edit button */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setEditingId(isEditing ? null : editKey); }}
-                    className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center border cursor-pointer transition-all active:scale-95"
-                    style={{
-                      background: isEditing ? "hsl(var(--gold) / 0.12)" : "hsl(var(--muted) / 0.5)",
-                      borderColor: isEditing ? "hsl(var(--gold) / 0.3)" : "hsl(var(--border))",
-                    }}
-                    title="Modifier les horaires"
-                  >
-                    <Pencil className="w-3.5 h-3.5" style={{ color: isEditing ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))" }} />
-                  </button>
                 </div>
 
                 {/* Next office + Subscribe */}
@@ -353,6 +348,37 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                     </button>
                   )}
                 </div>
+
+                {/* Edit horaires button — prominent textual CTA */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditingId(isEditing ? null : editKey); }}
+                  className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold border cursor-pointer transition-all active:scale-[0.98] hover:shadow-md"
+                  style={
+                    isMySyna
+                      ? {
+                          background: "hsl(var(--gold) / 0.1)",
+                          borderColor: "hsl(var(--gold) / 0.3)",
+                          color: "hsl(var(--gold-matte))",
+                        }
+                      : isStale
+                        ? {
+                            background: "hsl(25 95% 53% / 0.08)",
+                            borderColor: "hsl(25 95% 53% / 0.3)",
+                            color: "hsl(25 95% 53%)",
+                          }
+                        : {
+                            background: "transparent",
+                            borderColor: "hsl(var(--border))",
+                            color: "hsl(var(--muted-foreground))",
+                          }
+                  }
+                >
+                  {isMySyna
+                    ? "🏛️ Mettre à jour ma synagogue"
+                    : isStale
+                      ? "⚠️ Vérifier cet horaire"
+                      : "🕒 Modifier les horaires"}
+                </button>
 
                 {/* Inline suggestion form */}
                 <AnimatePresence>
