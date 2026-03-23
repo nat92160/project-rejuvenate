@@ -100,14 +100,14 @@ const MapView = ({ items, selectedId, onSelect, userLat, userLng }: {
   userLng: number;
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
-  const infoRef = useRef<google.maps.InfoWindow | null>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+  const infoRef = useRef<any>(null);
   const [mapReady, setMapReady] = useState(false);
 
   // Load Google Maps script
   useEffect(() => {
-    if (window.google?.maps) { setMapReady(true); return; }
+    if ((window as any).google?.maps) { setMapReady(true); return; }
     const key = import.meta.env.VITE_GOOGLE_MAPS_KEY;
     if (!key) return;
     const script = document.createElement("script");
@@ -119,8 +119,9 @@ const MapView = ({ items, selectedId, onSelect, userLat, userLng }: {
 
   // Initialize map
   useEffect(() => {
-    if (!mapReady || !mapRef.current || mapInstanceRef.current) return;
-    mapInstanceRef.current = new google.maps.Map(mapRef.current, {
+    const g = (window as any).google;
+    if (!mapReady || !mapRef.current || mapInstanceRef.current || !g) return;
+    mapInstanceRef.current = new g.maps.Map(mapRef.current, {
       center: { lat: userLat, lng: userLng },
       zoom: 14,
       disableDefaultUI: true,
@@ -135,13 +136,14 @@ const MapView = ({ items, selectedId, onSelect, userLat, userLng }: {
 
   // Place markers
   useEffect(() => {
+    const g = (window as any).google;
     const map = mapInstanceRef.current;
-    if (!map || !mapReady) return;
+    if (!map || !mapReady || !g) return;
 
     // Clear old markers
     markersRef.current.forEach(m => m.map = null);
     markersRef.current = [];
-    if (!infoRef.current) infoRef.current = new google.maps.InfoWindow();
+    if (!infoRef.current) infoRef.current = new g.maps.InfoWindow();
 
     items.forEach(item => {
       const lat = item.source === "partner" ? item.latitude! : item.lat;
@@ -151,7 +153,7 @@ const MapView = ({ items, selectedId, onSelect, userLat, userLng }: {
       const pin = document.createElement("div");
       pin.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:hsl(40 80% 42%);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;cursor:pointer;"><span style="font-size:14px;">🕍</span></div>`;
 
-      const marker = new google.maps.marker.AdvancedMarkerElement({
+      const marker = new g.maps.marker.AdvancedMarkerElement({
         map,
         position: { lat, lng },
         content: pin.firstElementChild as HTMLElement,
@@ -176,7 +178,7 @@ const MapView = ({ items, selectedId, onSelect, userLat, userLng }: {
     // User position marker
     const userPin = document.createElement("div");
     userPin.innerHTML = `<div style="width:16px;height:16px;border-radius:50%;background:#4285F4;border:3px solid white;box-shadow:0 0 0 2px rgba(66,133,244,0.3);"></div>`;
-    new google.maps.marker.AdvancedMarkerElement({
+    new g.maps.marker.AdvancedMarkerElement({
       map,
       position: { lat: userLat, lng: userLng },
       content: userPin.firstElementChild as HTMLElement,
