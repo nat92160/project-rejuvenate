@@ -224,7 +224,6 @@ const IndexContent = () => {
 
           <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
-      )}
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       <PrayerModeOverlay
