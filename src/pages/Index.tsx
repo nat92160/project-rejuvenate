@@ -225,6 +225,25 @@ const IndexContent = () => {
             </div>
           </div>
 
+          {/* Floating home button */}
+          {showHomeBtn && (
+            <button
+              onClick={goHome}
+              className="fixed z-40 flex items-center gap-1.5 rounded-full border border-border shadow-lg cursor-pointer transition-all active:scale-95 hover:-translate-y-0.5"
+              style={{
+                bottom: "calc(84px + env(safe-area-inset-bottom, 0px))",
+                left: "16px",
+                background: "hsl(var(--card))",
+                color: "hsl(var(--foreground))",
+                padding: "10px 16px",
+                boxShadow: "var(--shadow-elevated)",
+              }}
+            >
+              <span className="text-base">🏠</span>
+              <span className="text-xs font-bold">Accueil</span>
+            </button>
+          )}
+
           <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
 
