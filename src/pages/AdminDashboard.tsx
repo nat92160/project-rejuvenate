@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import PrayerTimeSuggestionsAdmin from "@/components/PrayerTimeSuggestionsAdmin";
 
 interface PresidentRequest {
   id: string;
@@ -49,7 +50,7 @@ interface SynaItem {
 const AdminDashboard = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"requests" | "users" | "synagogues">("requests");
+  const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires">("requests");
   const [requests, setRequests] = useState<PresidentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -241,6 +242,7 @@ const AdminDashboard = () => {
             { id: "requests" as const, icon: "📋", label: "Demandes", count: pending.length },
             { id: "users" as const, icon: "👥", label: "Utilisateurs", count: users.length },
             { id: "synagogues" as const, icon: "🏛️", label: "Synagogues", count: synas.length },
+            { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
           ].map((t) => (
             <button
               key={t.id}
@@ -475,6 +477,11 @@ const AdminDashboard = () => {
               </div>
             )}
           </div>
+        )}
+
+        {/* Horaires suggestions tab */}
+        {tab === "horaires" && (
+          <PrayerTimeSuggestionsAdmin mode="admin" />
         )}
       </div>
 
