@@ -276,7 +276,6 @@ const MinyanJoinContent = () => {
           Découvrir l'appli →
         </button>
       </div>
-      </div>
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={(name) => { setGuestPromptOpen(false); doRegister(name); }} onClose={() => setGuestPromptOpen(false)} />
     </div>
