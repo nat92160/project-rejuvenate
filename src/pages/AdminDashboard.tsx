@@ -242,6 +242,7 @@ const AdminDashboard = () => {
             { id: "requests" as const, icon: "📋", label: "Demandes", count: pending.length },
             { id: "users" as const, icon: "👥", label: "Utilisateurs", count: users.length },
             { id: "synagogues" as const, icon: "🏛️", label: "Synagogues", count: synas.length },
+            { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
           ].map((t) => (
             <button
               key={t.id}
