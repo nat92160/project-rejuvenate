@@ -682,7 +682,12 @@ const FideleSynagogueView = () => {
                     {syna.name.charAt(0)}
                   </div>
                 )}
-                <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
+                  {syna.verified && (
+                    <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">✅ Vérifiée</span>
+                  )}
+                </div>
               </div>
               {(syna.shacharit_time || syna.minha_time || syna.arvit_time) ? (
                 <div className="space-y-2">
@@ -713,6 +718,30 @@ const FideleSynagogueView = () => {
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground text-center py-2">Aucun horaire renseigné par le président.</p>
+              )}
+
+              {/* Verified community suggestions */}
+              <VerifiedSuggestionsDisplay synagogueId={syna.id} />
+
+              {/* Suggest button */}
+              {user && (
+                <div className="mt-3">
+                  {suggestingSynaId === syna.id ? (
+                    <PrayerTimeSuggestionForm
+                      synagogueId={syna.id}
+                      synagogueName={syna.name}
+                      onClose={() => setSuggestingSynaId(null)}
+                      onSubmitted={() => setSuggestingSynaId(null)}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => setSuggestingSynaId(syna.id)}
+                      className="w-full py-2.5 rounded-xl text-xs font-bold border border-border bg-muted/30 text-foreground cursor-pointer transition-all hover:bg-muted active:scale-[0.98]"
+                    >
+                      ✏️ Proposer un horaire
+                    </button>
+                  )}
+                </div>
               )}
             </motion.div>
           ))}
