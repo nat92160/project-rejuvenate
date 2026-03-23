@@ -70,11 +70,9 @@ const SiddourReader = ({
   // Scroll to first actual prayer verse, skipping instructions
   useEffect(() => {
     if (!content) return;
-    // Small delay for DOM to render
     const timer = setTimeout(() => {
-      if (firstVerseRef.current) {
-        // Scroll so the first verse is visible with 20px comfort margin
-        const y = firstVerseRef.current.getBoundingClientRect().top + window.scrollY - 20;
+      if (prayerStartRef.current) {
+        const y = prayerStartRef.current.getBoundingClientRect().top + window.scrollY - 20;
         window.scrollTo({ top: y, behavior: "auto" });
       } else if (topRef.current) {
         topRef.current.scrollIntoView({ behavior: "auto", block: "start" });
