@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { HebrewCalendar, HDate, Location, flags } from "@hebcal/core";
 
 // Compute forbidden marriage periods dynamically for any year
@@ -28,16 +28,16 @@ function computeForbiddenPeriods(year: number) {
     if (desc === "tish'a b'av") tishaBeav = iso;
   }
 
-  const periods: { name: string; start: string; end: string; color: string }[] = [];
+  const periods: { name: string; start: string; end: string; color: string; reason: string }[] = [];
 
   if (pessachEnd && lagBaomer) {
-    periods.push({ name: "Omer (Séfarade)", start: pessachEnd, end: lagBaomer, color: "#F97316" });
+    periods.push({ name: "Omer (Séfarade)", start: pessachEnd, end: lagBaomer, color: "#F97316", reason: "Période du Omer (coutume séfarade)" });
   }
   if (pessachEnd && shavuotErev) {
-    periods.push({ name: "Omer (Ashkénaze)", start: pessachEnd, end: shavuotErev, color: "#EF4444" });
+    periods.push({ name: "Omer (Ashkénaze)", start: pessachEnd, end: shavuotErev, color: "#EF4444", reason: "Période du Omer (coutume ashkénaze)" });
   }
   if (tammuz17 && tishaBeav) {
-    periods.push({ name: "3 Semaines", start: tammuz17, end: tishaBeav, color: "#DC2626" });
+    periods.push({ name: "Bein HaMetsarim", start: tammuz17, end: tishaBeav, color: "#DC2626", reason: "Période de Bein HaMetsarim (3 Semaines)" });
   }
 
   return periods;
@@ -66,6 +66,8 @@ const MariagesCalendarWidget = () => {
   const currentYear = now.getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [viewMonth, setViewMonth] = useState(now.getMonth());
+  const [checkDate, setCheckDate] = useState("");
+  const [checkResult, setCheckResult] = useState<{ allowed: boolean; reason?: string } | null>(null);
 
   const forbiddenPeriods = useMemo(() => computeForbiddenPeriods(selectedYear), [selectedYear]);
 
@@ -100,19 +102,82 @@ const MariagesCalendarWidget = () => {
 
   const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear + i);
 
+  const handleCheckDate = () => {
+    if (!checkDate) return;
+    // Compute for the year of the checked date
+    const checkYear = parseInt(checkDate.split("-")[0]);
+    const periods = computeForbiddenPeriods(checkYear);
+    const period = periods.find((p) => checkDate >= p.start && checkDate <= p.end);
+    if (period) {
+      setCheckResult({ allowed: false, reason: period.reason });
+    } else {
+      setCheckResult({ allowed: true });
+    }
+  };
+
+  const handleDayClick = (dateStr: string) => {
+    setCheckDate(dateStr);
+    const period = getForbiddenPeriod(dateStr);
+    if (period) {
+      setCheckResult({ allowed: false, reason: period.reason });
+    } else {
+      // Check across all years
+      const year = parseInt(dateStr.split("-")[0]);
+      const periods = computeForbiddenPeriods(year);
+      const p = periods.find((p) => dateStr >= p.start && dateStr <= p.end);
+      setCheckResult(p ? { allowed: false, reason: p.reason } : { allowed: true });
+    }
+  };
+
   return (
     <motion.div className="rounded-2xl bg-card p-5 mb-4 border border-border" style={{ boxShadow: "var(--shadow-card)" }}
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <h3 className="font-display text-base font-bold flex items-center gap-2 text-foreground mb-4">
-        📅 Calendrier Mariages
+        💍 Calendrier Mariages
       </h3>
+
+      {/* Date checker */}
+      <div className="p-4 rounded-xl mb-4 border border-border" style={{ background: "hsl(var(--muted))" }}>
+        <div className="text-xs font-bold text-foreground mb-2">🔍 Vérifier ma date</div>
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={checkDate}
+            onChange={(e) => { setCheckDate(e.target.value); setCheckResult(null); }}
+            className="flex-1 px-3 py-2 rounded-lg text-sm bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
+          />
+          <button
+            onClick={handleCheckDate}
+            className="px-4 py-2 rounded-lg text-xs font-bold border-none cursor-pointer transition-all active:scale-95"
+            style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}
+          >
+            Vérifier
+          </button>
+        </div>
+        <AnimatePresence>
+          {checkResult && (
+            <motion.div
+              className="mt-3 p-3 rounded-lg text-sm font-bold text-center"
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              style={{
+                background: checkResult.allowed ? "hsl(120 60% 45% / 0.1)" : "hsl(0 70% 50% / 0.1)",
+                color: checkResult.allowed ? "hsl(120 50% 35%)" : "hsl(0 70% 45%)",
+              }}
+            >
+              {checkResult.allowed ? "✅ Autorisé — Mazal Tov ! 💍" : `❌ Interdit — ${checkResult.reason}`}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Year selector */}
       <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1 scrollbar-none">
         {yearOptions.map((y) => (
           <button
             key={y}
-            onClick={() => { setSelectedYear(y); setViewMonth(0); }}
+            onClick={() => { setSelectedYear(y); setViewMonth(0); setCheckResult(null); }}
             className="px-3.5 py-1.5 rounded-full text-xs font-bold border cursor-pointer transition-all"
             style={selectedYear === y
               ? { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", border: "none" }
@@ -145,14 +210,18 @@ const MariagesCalendarWidget = () => {
           const forbidden = isDateForbidden(dateStr);
           const period = getForbiddenPeriod(dateStr);
           const isToday = dateStr === todayStr;
+          const isSelected = dateStr === checkDate;
 
           return (
-            <div
+            <button
               key={day}
-              className="relative flex items-center justify-center rounded-lg text-xs font-bold transition-all"
+              onClick={() => handleDayClick(dateStr)}
+              className="relative flex items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer border-none"
               style={{
                 height: "36px",
-                background: forbidden
+                background: isSelected
+                  ? "hsl(var(--primary) / 0.15)"
+                  : forbidden
                   ? `${period?.color || "#EF4444"}18`
                   : isToday
                   ? "hsl(var(--gold) / 0.12)"
@@ -162,7 +231,11 @@ const MariagesCalendarWidget = () => {
                   : isToday
                   ? "hsl(var(--gold-matte))"
                   : "hsl(var(--foreground))",
-                border: isToday ? "2px solid hsl(var(--gold))" : "1px solid transparent",
+                border: isSelected
+                  ? "2px solid hsl(var(--primary))"
+                  : isToday
+                  ? "2px solid hsl(var(--gold))"
+                  : "1px solid transparent",
               }}
               title={forbidden ? `🚫 ${period?.name}` : "✅ Autorisé"}
             >
@@ -170,22 +243,27 @@ const MariagesCalendarWidget = () => {
               {forbidden && (
                 <span className="absolute -top-0.5 -right-0.5 text-[7px]">🚫</span>
               )}
-            </div>
+              {!forbidden && !isToday && (
+                <span className="absolute -bottom-0.5 text-[6px]">💚</span>
+              )}
+            </button>
           );
         })}
       </div>
 
       {/* Legend */}
-      {activePeriods.length > 0 && (
-        <div className="mt-4 space-y-1.5">
-          {activePeriods.map((p) => (
-            <div key={p.name} className="flex items-center gap-2 text-[11px]">
-              <span className="w-3 h-3 rounded-full shrink-0" style={{ background: p.color }} />
-              <span className="text-foreground font-medium">{p.name}</span>
-            </div>
-          ))}
+      <div className="mt-4 space-y-1.5">
+        <div className="flex items-center gap-2 text-[11px]">
+          <span className="w-3 h-3 rounded-full shrink-0" style={{ background: "hsl(120 60% 45%)" }} />
+          <span className="text-foreground font-medium">Autorisé</span>
         </div>
-      )}
+        {activePeriods.map((p) => (
+          <div key={p.name} className="flex items-center gap-2 text-[11px]">
+            <span className="w-3 h-3 rounded-full shrink-0" style={{ background: p.color }} />
+            <span className="text-foreground font-medium">{p.name}</span>
+          </div>
+        ))}
+      </div>
     </motion.div>
   );
 };

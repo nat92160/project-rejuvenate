@@ -19,6 +19,12 @@ const STATUS_BADGES: Record<string, { label: string; bg: string; text: string }>
   termine: { label: "Terminé", bg: "hsl(var(--muted))", text: "hsl(var(--muted-foreground))" },
 };
 
+const CATEGORY_COLORS: Record<string, string> = {
+  yomtov: "hsl(var(--gold))",
+  jeune: "hsl(0 70% 50%)",
+  minor: "hsl(210 60% 55%)",
+};
+
 const FILTER_OPTIONS: { key: FilterType; label: string }[] = [
   { key: "all", label: "Tout" },
   { key: "yomtov", label: "Yom Tov" },
@@ -157,7 +163,7 @@ const FestivalCalendar = () => {
   );
 };
 
-// ─── Accordion Card ───
+// ─── Accordion Card with color bar ───
 
 interface AccordionProps {
   card: FestivalCard;
@@ -169,6 +175,8 @@ interface AccordionProps {
 const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: AccordionProps) => {
   const badge = STATUS_BADGES[card.status];
   const isMultiDay = card.days.length > 1;
+  const isFast = card.category === "jeune";
+  const barColor = CATEGORY_COLORS[card.category] || CATEGORY_COLORS.minor;
 
   return (
     <motion.div
@@ -176,6 +184,8 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
       style={{
         borderColor: card.category === "yomtov"
           ? "hsl(var(--gold) / 0.2)"
+          : card.category === "jeune"
+          ? "hsl(0 70% 50% / 0.15)"
           : "hsl(var(--border))",
         boxShadow: isExpanded ? "var(--shadow-elevated)" : "var(--shadow-card)",
       }}
@@ -184,6 +194,7 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-4 p-5 bg-card text-left cursor-pointer border-none transition-colors hover:bg-muted/30"
+        style={{ borderLeft: `4px solid ${barColor}` }}
       >
         <span className="text-3xl flex-shrink-0">{card.emoji}</span>
         <div className="flex-1 min-w-0">
@@ -202,6 +213,26 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
             {card.hebrew}
           </p>
           <p className="text-xs text-muted-foreground mt-1">{card.dateRange}</p>
+
+          {/* Inline fast times directly on card */}
+          {isFast && !isMultiDay && card.days[0] && (
+            <div className="flex items-center gap-4 mt-2">
+              {card.days[0].candles && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs">⏰</span>
+                  <span className="text-[10px] font-medium text-muted-foreground">Début</span>
+                  <span className="text-sm font-bold" style={{ color: "hsl(0 70% 45%)" }}>{card.days[0].candles}</span>
+                </div>
+              )}
+              {card.days[0].havdalah && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs">✅</span>
+                  <span className="text-[10px] font-medium text-muted-foreground">Fin</span>
+                  <span className="text-sm font-bold" style={{ color: "hsl(120 50% 35%)" }}>{card.days[0].havdalah}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-end flex-shrink-0">
           {card.daysLeft > 0 && (
@@ -224,7 +255,7 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
         </div>
       </button>
 
-      {!isMultiDay && card.days[0] && (
+      {!isMultiDay && !isFast && card.days[0] && (
         <div className="px-5 pb-4 bg-card border-t border-border">
           <DayTimeline day={card.days[0]} festivalName={card.name} onCalendarClick={onCalendarClick} />
         </div>
@@ -248,6 +279,7 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
                     isLast={idx === card.days.length - 1}
                     festivalName={card.name}
                     onCalendarClick={onCalendarClick}
+                    categoryColor={barColor}
                   />
                 ))}
               </div>
@@ -266,9 +298,10 @@ interface DayRowProps {
   isLast: boolean;
   festivalName: string;
   onCalendarClick: (day: FestivalDay) => void;
+  categoryColor: string;
 }
 
-const DayRow = ({ day, isLast, festivalName, onCalendarClick }: DayRowProps) => {
+const DayRow = ({ day, isLast, festivalName, onCalendarClick, categoryColor }: DayRowProps) => {
   const isYomTov = day.type === "yomtov" || day.type === "erev";
   const isHolHaMoed = day.type === "holhamoed";
 
@@ -282,11 +315,7 @@ const DayRow = ({ day, isLast, festivalName, onCalendarClick }: DayRowProps) => 
           ? "hsl(var(--gold) / 0.03)"
           : "hsl(var(--card))",
         borderBottom: isLast ? "none" : "1px solid hsl(var(--border))",
-        borderLeft: isYomTov
-          ? "3px solid hsl(var(--gold))"
-          : isHolHaMoed
-          ? "3px solid hsl(var(--border))"
-          : "3px solid transparent",
+        borderLeft: `3px solid ${isYomTov ? categoryColor : isHolHaMoed ? "hsl(var(--border))" : "transparent"}`,
       }}
     >
       <div className="flex flex-col items-center flex-shrink-0 pt-1">
@@ -294,11 +323,11 @@ const DayRow = ({ day, isLast, festivalName, onCalendarClick }: DayRowProps) => 
           className="w-3 h-3 rounded-full flex-shrink-0"
           style={{
             background: isYomTov
-              ? "hsl(var(--gold))"
+              ? categoryColor
               : isHolHaMoed
               ? "hsl(var(--border))"
               : "hsl(var(--muted-foreground) / 0.3)",
-            border: isYomTov ? "2px solid hsl(var(--gold) / 0.3)" : "none",
+            border: isYomTov ? `2px solid ${categoryColor}40` : "none",
           }}
         />
         {!isLast && (
@@ -349,7 +378,9 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelin
   const isYomTovOrShabbat = day.type === "yomtov" || day.isShabbat;
   const showCandles = day.candles && (isErev || (isYomTovOrShabbat && day.isShabbat) || isFast);
   const showHavdalah = day.havdalah && (isYomTovOrShabbat || isErev || isFast);
-  const hasTime = showCandles || showHavdalah || day.memo;
+  // For Yom Tov days with ✨ suffix (2nd+ night candles via tzeit)
+  const showYomTovCandles = day.candles && day.type === "yomtov" && !day.isShabbat;
+  const hasTime = showCandles || showHavdalah || showYomTovCandles || day.memo;
   if (!hasTime && compact) return null;
 
   return (
@@ -358,17 +389,24 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelin
         <div className="flex items-center gap-1.5">
           <span className="text-xs">⏰</span>
           <span className="text-xs font-medium text-muted-foreground">Début</span>
-          <span className="text-sm font-bold text-primary">{day.candles}</span>
+          <span className="text-sm font-bold" style={{ color: "hsl(0 70% 45%)" }}>{day.candles}</span>
         </div>
       )}
       {isFast && day.havdalah && (
         <div className="flex items-center gap-1.5">
           <span className="text-xs">✅</span>
           <span className="text-xs font-medium text-muted-foreground">Fin</span>
-          <span className="text-sm font-bold text-primary">{day.havdalah}</span>
+          <span className="text-sm font-bold" style={{ color: "hsl(120 50% 35%)" }}>{day.havdalah}</span>
         </div>
       )}
-      {!isFast && showCandles && (
+      {!isFast && showYomTovCandles && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs">🕯️</span>
+          <span className="text-xs font-medium text-muted-foreground">Allumage (après ⭐)</span>
+          <span className="text-sm font-bold text-primary">{day.candles}</span>
+        </div>
+      )}
+      {!isFast && !showYomTovCandles && showCandles && (
         <div className="flex items-center gap-1.5">
           <span className="text-xs">🕯️</span>
           <span className="text-xs font-medium text-muted-foreground">Allumage</span>
@@ -382,7 +420,7 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelin
           <span className="text-sm font-bold text-primary">{day.havdalah}</span>
         </div>
       )}
-      {(showCandles || showHavdalah) && (
+      {(showCandles || showHavdalah || showYomTovCandles) && (
         <button
           onClick={(e) => { e.stopPropagation(); onCalendarClick(day); }}
           className="ml-auto text-[10px] font-bold text-primary/60 hover:text-primary cursor-pointer bg-transparent border-none transition-colors px-2 py-1 rounded-lg hover:bg-primary/5"
