@@ -126,6 +126,22 @@ const SynagogueChooser = ({ onSelect }: Props) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmedIds, setConfirmedIds] = useState<Set<string>>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("confirmed_synas_today") || "{}");
+      if (stored.date === new Date().toDateString()) return new Set(stored.ids || []);
+    } catch {}
+    return new Set();
+  });
+
+  const markConfirmed = (id: string) => {
+    setConfirmedIds(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      localStorage.setItem("confirmed_synas_today", JSON.stringify({ date: new Date().toDateString(), ids: [...next] }));
+      return next;
+    });
+  };
 
   // Data
   const [partners, setPartners] = useState<PartnerSyna[]>([]);
