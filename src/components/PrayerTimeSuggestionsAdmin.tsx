@@ -60,7 +60,7 @@ const PrayerTimeSuggestionsAdmin = ({ synagogueId, mode = "admin" }: Props) => {
     }
 
     // Enrich with synagogue names
-    const synaIds = [...new Set((data || []).map((s: any) => s.synagogue_id))];
+    const synaIds = [...new Set((data || []).filter((s: any) => s.synagogue_id).map((s: any) => s.synagogue_id))];
     let synaNames: Record<string, string> = {};
 
     if (synaIds.length > 0) {
@@ -74,7 +74,7 @@ const PrayerTimeSuggestionsAdmin = ({ synagogueId, mode = "admin" }: Props) => {
     setSuggestions(
       (data || []).map((s: any) => ({
         ...s,
-        synagogue_name: synaNames[s.synagogue_id] || "Synagogue",
+        synagogue_name: s.synagogue_id ? (synaNames[s.synagogue_id] || "Synagogue") : (s.place_name || "Lieu Google Maps"),
       }))
     );
     setLoading(false);
