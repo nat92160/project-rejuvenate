@@ -86,9 +86,9 @@ const IndexContent = () => {
             <p className="text-sm mt-2 text-muted-foreground">Bientôt disponible</p>
           </div>
         );
-      case "siddour": return <SiddourWidget prayerMode={prayerMode} />;
+      case "siddour": return <SiddourWidget />;
       case "tehilimlibre":
-      case "tehilim": return <TehilimCombinedWidget prayerMode={prayerMode} />;
+      case "tehilim": return <TehilimCombinedWidget />;
       case "synagogue": return <FideleSynagogueView />;
       case "fetes": return <FestivalCalendar />;
       case "convertisseur": return <DateConverterWidget />;
