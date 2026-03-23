@@ -145,7 +145,7 @@ const SiddourWidget = ({ prayerMode = false }: SiddourWidgetProps) => {
       </div>
 
       {/* Font size slider + translation toggle */}
-      <div className="rounded-2xl border border-border bg-card p-3" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="rounded-2xl border p-3" style={{ boxShadow: prayerMode ? "none" : "var(--shadow-card)", background: prayerMode ? pmCard : "hsl(var(--card))", borderColor: pmBorder || "hsl(var(--border))" }}>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground font-bold">A-</span>
           <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={36} step={1} className="flex-1" />
