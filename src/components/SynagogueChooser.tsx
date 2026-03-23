@@ -6,9 +6,6 @@ import { useCity } from "@/hooks/useCity";
 import { fetchNearbySynagogues, formatDistance, type SynagogueResult } from "@/lib/synagogues";
 import { toast } from "sonner";
 import { MapPin, Search, X, Navigation, CheckCircle2, Clock, Loader2, Pencil } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import PrayerTimeSuggestionForm from "./PrayerTimeSuggestionForm";
 
 /* ── Types ── */
@@ -80,14 +77,6 @@ function freshnessBadge(updatedAt?: string): { text: string; color: string } {
   return { text: `Mis à jour il y a ${days}j`, color: "hsl(var(--muted-foreground) / 0.5)" };
 }
 
-/* ── Custom marker icon ── */
-const synagogueIcon = L.divIcon({
-  html: `<div style="width:32px;height:32px;border-radius:50%;background:hsl(40,80%,42%);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;">🕍</span></div>`,
-  className: "",
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
-});
-
 /* ── Skeleton ── */
 const CardSkeleton = () => (
   <div className="rounded-2xl border border-border bg-card p-4 animate-pulse">
@@ -102,53 +91,24 @@ const CardSkeleton = () => (
   </div>
 );
 
-/* ── Map recenter helper ── */
-const RecenterMap = ({ lat, lng }: { lat: number; lng: number }) => {
-  const map = useMap();
-  useEffect(() => { map.setView([lat, lng], 14); }, [lat, lng, map]);
-  return null;
-};
-
-/* ── Map Component (Leaflet/OSM) ── */
-const MapView = ({ items, onSelect, userLat, userLng }: {
+const MapView = ({ userLat, userLng }: {
   items: SynaItem[];
   onSelect: (id: string) => void;
   userLat: number;
   userLng: number;
-}) => (
-  <MapContainer
-    center={[userLat, userLng]}
-    zoom={14}
-    className="h-full w-full rounded-2xl overflow-hidden"
-    style={{ minHeight: "250px" }}
-    zoomControl={false}
-    attributionControl={false}
-  >
-    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-    <RecenterMap lat={userLat} lng={userLng} />
-
-    {/* User position */}
-    <CircleMarker center={[userLat, userLng]} radius={8} pathOptions={{ color: "#4285F4", fillColor: "#4285F4", fillOpacity: 1, weight: 3 }} />
-
-    {/* Synagogue markers */}
-    {items.map(item => {
-      const lat = item.source === "partner" ? item.latitude! : item.lat;
-      const lng = item.source === "partner" ? item.longitude! : item.lon;
-      if (!lat || !lng) return null;
-      const next = item.source === "partner" ? getNextOffice(item) : null;
-      return (
-        <Marker key={item.id} position={[lat, lng]} icon={synagogueIcon} eventHandlers={{ click: () => onSelect(item.id) }}>
-          <Popup>
-            <div style={{ fontFamily: "system-ui", padding: "2px 0" }}>
-              <div style={{ fontWeight: 700, fontSize: "13px" }}>{item.name}</div>
-              {next && <div style={{ fontSize: "11px", color: "#666", marginTop: "2px" }}>{next.label} · {next.time}</div>}
-            </div>
-          </Popup>
-        </Marker>
-      );
-    })}
-  </MapContainer>
-);
+}) => {
+  const bbox = 0.015;
+  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${userLng - bbox},${userLat - bbox},${userLng + bbox},${userLat + bbox}&layer=mapnik&marker=${userLat},${userLng}`;
+  return (
+    <iframe
+      src={src}
+      className="h-full w-full rounded-2xl border-0"
+      style={{ minHeight: "250px" }}
+      loading="lazy"
+      title="Carte"
+    />
+  );
+};
 
 /* ── Main Component ── */
 interface Props {
