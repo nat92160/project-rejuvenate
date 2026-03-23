@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface Props {
   synagogueId?: string;
@@ -13,11 +13,8 @@ interface Props {
   onSubmitted?: () => void;
 }
 
-const OFFICES = [
-  { value: "shacharit", label: "🌅 Cha'harit", desc: "Office du matin" },
-  { value: "minha", label: "🌇 Min'ha", desc: "Office de l'après-midi" },
-  { value: "arvit", label: "🌙 Arvit", desc: "Office du soir" },
-];
+const RATE_LIMIT_KEY = "guest_suggestion_timestamps";
+const MAX_PER_DAY = 2;
 
 function formatTimeDraft(raw: string) {
   const digits = raw.replace(/\D/g, "").slice(0, 4);
@@ -25,18 +22,62 @@ function formatTimeDraft(raw: string) {
   return `${digits.slice(0, 2)}:${digits.slice(2)}`;
 }
 
+function checkGuestRateLimit(): boolean {
+  try {
+    const stored = JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || "[]") as number[];
+    const today = new Date().toDateString();
+    const todayTimestamps = stored.filter((ts) => new Date(ts).toDateString() === today);
+    return todayTimestamps.length < MAX_PER_DAY;
+  } catch {
+    return true;
+  }
+}
+
+function recordGuestSuggestion() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || "[]") as number[];
+    stored.push(Date.now());
+    // Keep only last 30 entries
+    localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(stored.slice(-30)));
+  } catch { /* ignore */ }
+}
+
+function getRemainingToday(): number {
+  try {
+    const stored = JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || "[]") as number[];
+    const today = new Date().toDateString();
+    const todayCount = stored.filter((ts) => new Date(ts).toDateString() === today).length;
+    return Math.max(0, MAX_PER_DAY - todayCount);
+  } catch {
+    return MAX_PER_DAY;
+  }
+}
+
 const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeName, onClose, onSubmitted }: Props) => {
   const { user } = useAuth();
-  const [officeName, setOfficeName] = useState("shacharit");
-  const [mode, setMode] = useState<"fixed" | "rule">("fixed");
-  const [timeValue, setTimeValue] = useState("");
-  const [timeRule, setTimeRule] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [shacharit, setShacharit] = useState("");
+  const [minha, setMinha] = useState("");
+  const [arvit, setArvit] = useState("");
   const [guestName, setGuestName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const isGuest = !user;
+
   const handleSubmit = async () => {
-    if (mode === "fixed" && !timeValue) { toast.error("Saisissez une heure"); return; }
-    if (mode === "rule" && !timeRule.trim()) { toast.error("Décrivez la règle horaire"); return; }
-    if (!user && !guestName.trim()) { toast.error("Saisissez votre nom"); return; }
+    if (!shacharit && !minha && !arvit) {
+      toast.error("Saisissez au moins un horaire");
+      return;
+    }
+    if (isGuest && !guestName.trim()) {
+      toast.error("Saisissez votre nom");
+      return;
+    }
+
+    // Rate limit for guests
+    if (isGuest && !checkGuestRateLimit()) {
+      toast.error(`Limite atteinte : ${MAX_PER_DAY} suggestions par jour maximum`);
+      return;
+    }
 
     setSubmitting(true);
 
@@ -52,19 +93,28 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
       displayName = guestName.trim();
     }
 
+    const suffix = isGuest ? " (invité)" : "";
+    const offices = [
+      { name: "shacharit", value: shacharit },
+      { name: "minha", value: minha },
+      { name: "arvit", value: arvit },
+    ].filter((o) => o.value.trim());
+
+    const rows = offices.map((o) => ({
+      synagogue_id: synagogueId || null,
+      place_id: placeId || null,
+      place_name: placeName || null,
+      user_id: user?.id || null,
+      display_name: `${displayName}${suffix}`,
+      office_name: o.name,
+      time_value: o.value,
+      time_rule: null,
+      status: "pending",
+    }));
+
     const { error } = await (supabase as any)
       .from("prayer_time_suggestions")
-      .insert({
-        synagogue_id: synagogueId || null,
-        place_id: placeId || null,
-        place_name: placeName || null,
-        user_id: user?.id || null,
-        display_name: `${displayName}${!user ? " (invité)" : ""}`,
-        office_name: officeName,
-        time_value: mode === "fixed" ? timeValue : null,
-        time_rule: mode === "rule" ? timeRule.trim() : null,
-        status: "pending",
-      });
+      .insert(rows);
 
     setSubmitting(false);
 
@@ -74,10 +124,17 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
       return;
     }
 
-    toast.success("✅ Horaire proposé ! Il sera vérifié par le président ou l'administrateur.");
+    if (isGuest) {
+      // Record each office as one suggestion for rate limiting
+      offices.forEach(() => recordGuestSuggestion());
+    }
+
+    toast.success("✅ Horaires proposés ! Ils seront vérifiés par l'administrateur.");
     onSubmitted?.();
     onClose();
   };
+
+  const remaining = isGuest ? getRemainingToday() : Infinity;
 
   return (
     <motion.div
@@ -88,14 +145,21 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
       style={{ boxShadow: "var(--shadow-elevated)" }}
     >
       <div className="flex items-center justify-between">
-        <h4 className="font-display text-sm font-bold text-foreground">📝 Proposer un horaire</h4>
+        <h4 className="font-display text-sm font-bold text-foreground">📝 Proposer des horaires</h4>
         <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground cursor-pointer bg-transparent border-none">✕</button>
       </div>
 
-      <p className="text-[11px] text-muted-foreground">Pour <strong>{synagogueName}</strong></p>
+      <p className="text-[11px] text-muted-foreground">
+        Pour <strong>{synagogueName}</strong>
+        {isGuest && (
+          <span className="ml-2 text-[9px] px-2 py-0.5 rounded-full bg-accent/10 text-accent font-bold">
+            Invité • {remaining} restante{remaining > 1 ? "s" : ""} aujourd'hui
+          </span>
+        )}
+      </p>
 
-      {/* Guest name input */}
-      {!user && (
+      {/* Guest name */}
+      {isGuest && (
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Votre nom</label>
           <input
@@ -108,87 +172,39 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
         </div>
       )}
 
-      {/* Office selection */}
-      <div className="space-y-2">
-        <label className="text-xs font-medium text-muted-foreground">Nom de l'office</label>
-        <div className="flex gap-2">
-          {OFFICES.map((o) => (
-            <button
-              key={o.value}
-              onClick={() => setOfficeName(o.value)}
-              className="flex-1 py-2.5 rounded-xl text-xs font-bold border cursor-pointer transition-all active:scale-95"
-              style={officeName === o.value
-                ? { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", border: "none" }
-                : { background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
-              }
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
+      {/* 3 time fields */}
+      <div className="space-y-3">
+        {[
+          { label: "🌅 Cha'harit", value: shacharit, set: setShacharit },
+          { label: "🌇 Min'ha", value: minha, set: setMinha },
+          { label: "🌙 Arvit", value: arvit, set: setArvit },
+        ].map((field) => (
+          <div key={field.label} className="flex items-center gap-3">
+            <span className="text-xs font-bold w-28 shrink-0">{field.label}</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="HH:MM"
+              value={field.value}
+              onChange={(e) => field.set(formatTimeDraft(e.target.value))}
+              className="block h-11 flex-1 rounded-xl border border-border bg-background px-3 text-sm text-center text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10 placeholder:text-muted-foreground/40"
+            />
+          </div>
+        ))}
       </div>
 
-      {/* Mode toggle */}
-      <div className="space-y-2">
-        <label className="text-xs font-medium text-muted-foreground">Type d'horaire</label>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setMode("fixed")}
-            className="flex-1 py-2.5 rounded-xl text-xs font-bold border cursor-pointer transition-all"
-            style={mode === "fixed"
-              ? { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", border: "none" }
-              : { background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
-            }
-          >
-            🕐 Heure fixe
-          </button>
-          <button
-            onClick={() => setMode("rule")}
-            className="flex-1 py-2.5 rounded-xl text-xs font-bold border cursor-pointer transition-all"
-            style={mode === "rule"
-              ? { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", border: "none" }
-              : { background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
-            }
-          >
-            📐 Règle
-          </button>
-        </div>
-      </div>
-
-      {/* Input */}
-      {mode === "fixed" ? (
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">Heure (ex: 07:30)</label>
-          <input
-            type="text"
-            inputMode="numeric"
-            autoComplete="off"
-            placeholder="HH:MM"
-            value={timeValue}
-            onChange={(e) => setTimeValue(formatTimeDraft(e.target.value))}
-            className="block h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-center text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10 placeholder:text-muted-foreground/40"
-          />
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">Règle (ex: "15 min avant le coucher du soleil")</label>
-          <textarea
-            value={timeRule}
-            onChange={(e) => setTimeRule(e.target.value)}
-            placeholder="Décrivez la règle horaire…"
-            rows={2}
-            className="block w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10 placeholder:text-muted-foreground/40 resize-none"
-          />
-        </div>
-      )}
+      <p className="text-[10px] text-muted-foreground text-center">
+        Remplissez uniquement les horaires que vous connaissez
+      </p>
 
       <button
         onClick={handleSubmit}
-        disabled={submitting}
+        disabled={submitting || (isGuest && remaining <= 0)}
         className="w-full py-3 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
         style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
       >
-        {submitting ? "Envoi…" : "📤 Envoyer la proposition"}
+        {submitting ? "Envoi…" : "📤 Envoyer la suggestion"}
       </button>
     </motion.div>
   );
