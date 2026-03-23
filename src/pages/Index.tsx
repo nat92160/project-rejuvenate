@@ -1,19 +1,17 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
-import { motion } from "framer-motion";
 import { CityProvider } from "@/hooks/useCity";
 import { RoleProvider, useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 
-import AppHeader from "@/components/AppHeader";
-import DateHeader from "@/components/DateHeader";
-import CitySelector from "@/components/CitySelector";
-import MySynagogueCard from "@/components/MySynagogueCard";
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
+import MySynagogueCard from "@/components/MySynagogueCard";
+import { getCurrentPrayer } from "@/components/MySynagogueCard";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
 import { useCity } from "@/hooks/useCity";
-import { fetchShabbatTimes, type ShabbatTimes } from "@/lib/hebcal";
+import { fetchShabbatTimes } from "@/lib/hebcal";
 import { Book, Heart, MapPin } from "lucide-react";
+import StarOfDavid from "@/components/StarOfDavid";
 
 // Lazy-loaded modules
 const CountdownWidget = lazy(() => import("@/components/CountdownWidget"));
@@ -52,42 +50,162 @@ const Lazy = ({ children }: { children: React.ReactNode }) => (
   </Suspense>
 );
 
-/* ─── Shabbat mini-indicator (shown outside Friday) ─── */
-const ShabbatMiniIndicator = () => {
+/* ─── Shabbat countdown (J-1 only, relative format) ─── */
+const ShabbatCountdownBanner = () => {
   const { city } = useCity();
-  const [candles, setCandles] = useState<string | null>(null);
-  const now = new Date();
-  const isFriday = now.getDay() === 5;
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
+  const [candleTime, setCandleTime] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchShabbatTimes(city).then((d) => d && setCandles(d.candleLighting));
+    fetchShabbatTimes(city).then((data) => {
+      if (!data?.candleLightingDateTime) return;
+      setCandleTime(data.candleLighting);
+
+      const update = () => {
+        const now = Date.now();
+        const target = data.candleLightingDateTime!.getTime();
+        const diff = target - now;
+        if (diff <= 0) { setTimeLeft(null); return; }
+
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+
+        // Only show if less than ~30h away (J-1)
+        if (h > 30) { setTimeLeft(null); return; }
+
+        if (h > 0) setTimeLeft(`${h}h ${String(m).padStart(2, "0")}min`);
+        else setTimeLeft(`${m} min`);
+      };
+
+      update();
+      const id = setInterval(update, 30000);
+      return () => clearInterval(id);
+    });
   }, [city]);
 
-  if (!candles) return null;
+  if (!timeLeft) return null;
 
-  // Friday → full countdown shown elsewhere
-  if (isFriday) return null;
+  const isUrgent = timeLeft.includes("min") && !timeLeft.includes("h");
 
   return (
-    <div className="flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground">
-      <span>🕯️</span>
-      <span>Allumage vendredi à <strong className="text-foreground">{candles}</strong></span>
+    <div
+      className={`rounded-2xl p-4 mb-6 flex items-center justify-between border ${
+        isUrgent ? "border-destructive/30" : "border-border"
+      }`}
+      style={{
+        background: isUrgent
+          ? "linear-gradient(135deg, hsl(var(--destructive) / 0.06), hsl(var(--destructive) / 0.02))"
+          : "hsl(var(--gold) / 0.04)",
+        boxShadow: "var(--shadow-soft)",
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-xl">🕯️</span>
+        <div>
+          <div className="text-[10px] uppercase tracking-[2px] font-semibold text-muted-foreground">
+            {isUrgent ? "Allumez les bougies !" : "Chabbat"}
+          </div>
+          {candleTime && (
+            <div className="text-xs text-muted-foreground mt-0.5">
+              Allumage à {candleTime}
+            </div>
+          )}
+        </div>
+      </div>
+      <div
+        className={`text-xl font-extrabold font-display tabular-nums ${isUrgent ? "text-destructive" : ""}`}
+        style={isUrgent ? {} : { color: "hsl(var(--gold-matte))" }}
+      >
+        {timeLeft}
+      </div>
     </div>
   );
 };
 
-/* ─── Quick Action Button ─── */
-const QuickAction = ({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) => (
+/* ─── Power Button (large tile with optional badge) ─── */
+const PowerButton = ({
+  icon,
+  label,
+  badge,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  badge?: string;
+  onClick: () => void;
+}) => (
   <button
     onClick={onClick}
-    className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl border border-border bg-card cursor-pointer transition-all active:scale-[0.96] hover:bg-muted"
-    style={{ boxShadow: "var(--shadow-soft)" }}
+    className="relative flex-1 flex flex-col items-center gap-3 py-6 rounded-3xl border border-border bg-card cursor-pointer transition-all active:scale-[0.96] hover:bg-muted/50 hover:-translate-y-0.5"
+    style={{ boxShadow: "var(--shadow-card)" }}
   >
-    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--gold) / 0.08)" }}>
+    <div
+      className="w-14 h-14 rounded-2xl flex items-center justify-center"
+      style={{ background: "hsl(var(--gold) / 0.06)" }}
+    >
       {icon}
     </div>
-    <span className="text-xs font-semibold text-foreground">{label}</span>
+    <span className="text-xs font-bold text-foreground tracking-wide">{label}</span>
+    {badge && (
+      <span
+        className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+        style={{
+          background: "hsl(var(--gold) / 0.12)",
+          color: "hsl(var(--gold-matte))",
+        }}
+      >
+        {badge}
+      </span>
+    )}
   </button>
+);
+
+/* ─── Ultra-thin Header Bar ─── */
+const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, signOut }: any) => (
+  <div className="flex items-center justify-between py-3">
+    <button
+      onClick={onLogoClick}
+      className="inline-flex items-center gap-2 bg-transparent border-none cursor-pointer p-1 -m-1 active:scale-95 transition-transform"
+    >
+      <StarOfDavid size={22} />
+      <span className="font-display text-base font-bold tracking-tight text-foreground">
+        Chabbat <span className="text-primary">Chalom</span>
+      </span>
+    </button>
+
+    <div className="flex items-center gap-2">
+      {isAdmin && (
+        <button
+          onClick={() => window.location.assign("/admin")}
+          className="relative h-8 w-8 rounded-xl bg-card border border-border flex items-center justify-center text-sm cursor-pointer hover:bg-muted transition-all active:scale-95"
+          title="Admin"
+        >
+          🔔
+          {pendingCount > 0 && (
+            <span className="absolute -top-1 -right-1 h-4 min-w-[16px] flex items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground px-0.5">
+              {pendingCount}
+            </span>
+          )}
+        </button>
+      )}
+      {isPresident && (
+        <span
+          className="text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+          style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}
+        >
+          Président
+        </span>
+      )}
+      {user && (
+        <button
+          onClick={signOut}
+          className="px-3 py-1.5 rounded-full text-[11px] font-semibold cursor-pointer transition-all active:scale-95 bg-muted text-muted-foreground border-none hover:bg-muted/80"
+        >
+          Déconnexion
+        </button>
+      )}
+    </div>
+  </div>
 );
 
 const IndexContent = () => {
@@ -101,6 +219,7 @@ const IndexContent = () => {
   const [showHomeBtn, setShowHomeBtn] = useState(false);
 
   const isPresident = dbRole === "president";
+  const currentPrayer = getCurrentPrayer();
 
   useEffect(() => { triggerAutoGeo(); }, []);
 
@@ -125,37 +244,33 @@ const IndexContent = () => {
       case "dashboard":
         return (
           <>
-            {/* 1. Ma Synagogue — hero card */}
+            {/* 1. Engagement card — Ma Synagogue */}
             <MySynagogueCard onNavigate={setActiveTab} />
 
-            {/* 2. Shabbat indicator (discreet, non-Friday) */}
-            <ShabbatMiniIndicator />
+            {/* 2. Shabbat countdown — J-1 only, relative format */}
+            <ShabbatCountdownBanner />
 
-            {/* 3. Friday → full countdown */}
-            {new Date().getDay() === 5 && (
-              <Lazy><CountdownWidget /></Lazy>
-            )}
-
-            {/* 4. Quick actions */}
-            <div className="flex gap-3 mb-6">
-              <QuickAction
-                icon={<Book className="w-5 h-5" style={{ color: "hsl(var(--gold-matte))" }} />}
+            {/* 3. Power Buttons */}
+            <div className="flex gap-3 mb-8">
+              <PowerButton
+                icon={<Book className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
                 label="Siddour"
+                badge={currentPrayer}
                 onClick={() => setActiveTab("siddour")}
               />
-              <QuickAction
-                icon={<Heart className="w-5 h-5" style={{ color: "hsl(var(--gold-matte))" }} />}
+              <PowerButton
+                icon={<Heart className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
                 label="Tehilim"
                 onClick={() => setActiveTab("tehilim")}
               />
-              <QuickAction
-                icon={<MapPin className="w-5 h-5" style={{ color: "hsl(var(--gold-matte))" }} />}
+              <PowerButton
+                icon={<MapPin className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
                 label="Synagogues"
                 onClick={() => setActiveTab("synagogue")}
               />
             </div>
 
-            {/* 5. Omer if applicable */}
+            {/* 4. Omer if applicable */}
             <Lazy><OmerCounterWidget /></Lazy>
           </>
         );
@@ -213,47 +328,16 @@ const IndexContent = () => {
   return (
     <>
       <div className="relative min-h-screen bg-background" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-        <div className="max-w-[600px] mx-auto px-4 pb-24">
-          {/* Top bar */}
-          <div className="flex justify-end items-center py-2.5">
-            <div className="flex items-center gap-2">
-              {isAdmin && (
-                <button
-                  onClick={() => window.location.assign("/admin")}
-                  className="relative h-9 w-9 rounded-xl bg-card border border-border flex items-center justify-center text-base cursor-pointer hover:bg-muted transition-all active:scale-95"
-                  title="Demandes en attente"
-                >
-                  🔔
-                  {pendingCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1 animate-pulse">
-                      {pendingCount}
-                    </span>
-                  )}
-                </button>
-              )}
-              {isPresident && (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full"
-                  style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}>
-                  🏛️ Président
-                </span>
-              )}
-              {user && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground truncate max-w-[120px]">
-                    {user.user_metadata?.full_name || user.email?.split("@")[0]}
-                  </span>
-                  <button
-                    onClick={signOut}
-                    className="px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 bg-muted text-muted-foreground border-none"
-                  >
-                    Déconnexion
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <AppHeader onLogoClick={() => { setActiveTab("dashboard"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+        <div className="max-w-[600px] mx-auto px-5 pb-24">
+          {/* Ultra-thin header bar */}
+          <HeaderBar
+            onLogoClick={goHome}
+            user={user}
+            isAdmin={isAdmin}
+            isPresident={isPresident}
+            pendingCount={pendingCount}
+            signOut={signOut}
+          />
 
           {suspended && (
             <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 mb-4 text-center">
@@ -262,12 +346,6 @@ const IndexContent = () => {
               <p className="text-xs text-muted-foreground mt-1">Contactez l'administrateur.</p>
             </div>
           )}
-
-          {/* Date header — compact */}
-          <DateHeader />
-
-          {/* City selector — only when on dashboard */}
-          {activeTab === "dashboard" && <CitySelector />}
 
           {renderTabContent()}
 
@@ -284,7 +362,7 @@ const IndexContent = () => {
             </div>
           )}
 
-          <div className="text-center py-6 mt-12 text-[11px] text-muted-foreground/60">
+          <div className="text-center py-8 mt-16 text-[10px] text-muted-foreground/40 font-medium tracking-wider uppercase">
             Chabbat Chalom © {new Date().getFullYear()}
           </div>
         </div>
