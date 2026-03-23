@@ -51,7 +51,9 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
     const { error } = await (supabase as any)
       .from("prayer_time_suggestions")
       .insert({
-        synagogue_id: synagogueId,
+        synagogue_id: synagogueId || null,
+        place_id: placeId || null,
+        place_name: placeName || null,
         user_id: user.id,
         display_name: displayName,
         office_name: officeName,
