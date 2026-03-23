@@ -3,6 +3,31 @@ import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchHolidays, HolidayItem } from "@/lib/hebcal";
 
+const CATEGORY_BAR: Record<string, string> = {
+  "🕯️": "hsl(0 70% 50%)",    // Fasts - red
+  "😢": "hsl(0 70% 50%)",    // Tisha Beav
+  "🍯": "hsl(45 80% 50%)",   // Yom Tov - gold
+  "🍷": "hsl(45 80% 50%)",
+  "🍎": "hsl(45 80% 50%)",
+  "🕊️": "hsl(45 80% 50%)",
+  "📜": "hsl(45 80% 50%)",
+  "🌾": "hsl(45 80% 50%)",
+  "🌿": "hsl(45 80% 50%)",
+  "🏕️": "hsl(45 80% 50%)",
+  "🌊": "hsl(45 80% 50%)",
+  "🎉": "hsl(45 80% 50%)",
+  "🫓": "hsl(45 80% 50%)",
+  "🌙": "hsl(210 60% 55%)",  // Rosh Hodesh - blue
+  "🌳": "hsl(120 50% 45%)",  // Minor
+  "🎭": "hsl(300 50% 55%)",  // Purim
+  "🕎": "hsl(210 60% 55%)",  // Hanukkah
+  "🔥": "hsl(30 80% 50%)",   // Lag BaOmer
+};
+
+function getBarColor(emoji: string): string {
+  return CATEGORY_BAR[emoji] || "hsl(var(--gold))";
+}
+
 const HolidaysWidget = () => {
   const { city } = useCity();
   const [holidays, setHolidays] = useState<HolidayItem[]>([]);
@@ -40,7 +65,7 @@ const HolidaysWidget = () => {
             <div
               key={h.title + h.date}
               className="flex items-center gap-4 p-4 rounded-xl transition-all duration-200 bg-card border border-border hover:border-primary/15 hover:bg-muted/30"
-              style={{ borderLeft: "3px solid hsl(var(--gold))" }}
+              style={{ borderLeft: `4px solid ${getBarColor(h.emoji)}` }}
             >
               <span className="text-2xl flex-shrink-0">{h.emoji}</span>
               <div className="flex-1">
