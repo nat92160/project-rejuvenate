@@ -32,7 +32,7 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
   const [timeValue, setTimeValue] = useState("");
   const [timeRule, setTimeRule] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
+  const [guestName, setGuestName] = useState("");
   const handleSubmit = async () => {
     if (mode === "fixed" && !timeValue) { toast.error("Saisissez une heure"); return; }
     if (mode === "rule" && !timeRule.trim()) { toast.error("Décrivez la règle horaire"); return; }
