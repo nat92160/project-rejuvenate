@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
+import { useCity } from "@/hooks/useCity";
 import { MapPin } from "lucide-react";
 
 interface SynaInfo {
@@ -53,7 +54,9 @@ interface Props {
 const MySynagogueCard = ({ onNavigate }: Props) => {
   const { user } = useAuth();
   const { subIds, loading } = useSubscribedSynaIds();
+  const { city } = useCity();
   const [syna, setSyna] = useState<SynaInfo | null>(null);
+  const [nearbyCount, setNearbyCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (loading || subIds.length === 0) return;
@@ -66,6 +69,20 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
       if (data) setSyna(data as SynaInfo);
     })();
   }, [subIds, loading]);
+
+  // Fetch nearby synagogue count when no subscription
+  useEffect(() => {
+    if (loading || subIds.length > 0) return;
+    if (!city?.lat || !city?.lng) return;
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("nearby-synagogues", {
+          body: { lat: city.lat, lon: city.lng },
+        });
+        if (data?.results) setNearbyCount(data.results.length);
+      } catch { /* ignore */ }
+    })();
+  }, [loading, subIds, city?.lat, city?.lng]);
 
   if (loading) return null;
 
@@ -86,12 +103,14 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
           Ne manquez plus aucun office
         </h2>
         <p className="text-sm text-muted-foreground mb-6 max-w-[260px] mx-auto leading-relaxed">
-          Recevez les horaires en temps réel de votre communauté.
+          {nearbyCount && nearbyCount > 0
+            ? `📍 ${nearbyCount} synagogues proches de vous attendent vos horaires.`
+            : "Recevez les horaires en temps réel de votre communauté."}
         </p>
         <button
           onClick={() => onNavigate("synagogue")}
-          className="px-8 py-3.5 rounded-2xl text-sm font-bold cursor-pointer transition-all active:scale-[0.97] hover:-translate-y-0.5 border-none text-primary-foreground"
-          style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+          className="px-8 py-3.5 rounded-2xl text-sm font-bold cursor-pointer transition-all active:scale-[0.97] hover:-translate-y-0.5 border-none text-primary-foreground animate-pulse"
+          style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)", animationDuration: "2.5s" }}
         >
           Choisir ma Synagogue
         </button>

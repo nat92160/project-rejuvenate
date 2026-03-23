@@ -10,8 +10,9 @@ import { getCurrentPrayer } from "@/components/MySynagogueCard";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes } from "@/lib/hebcal";
-import { Book, Heart, MapPin } from "lucide-react";
+import { Book, Heart, MapPin, User } from "lucide-react";
 import StarOfDavid from "@/components/StarOfDavid";
+const SpiritualTimeline = lazy(() => import("@/components/SpiritualTimeline"));
 
 // Lazy-loaded modules
 const CountdownWidget = lazy(() => import("@/components/CountdownWidget"));
@@ -161,7 +162,7 @@ const PowerButton = ({
 );
 
 /* ─── Ultra-thin Header Bar ─── */
-const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, signOut }: any) => (
+const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, signOut, onLoginClick }: any) => (
   <div className="flex items-center justify-between py-3">
     <button
       onClick={onLogoClick}
@@ -196,12 +197,20 @@ const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, sign
           Président
         </span>
       )}
-      {user && (
+      {user ? (
         <button
           onClick={signOut}
           className="px-3 py-1.5 rounded-full text-[11px] font-semibold cursor-pointer transition-all active:scale-95 bg-muted text-muted-foreground border-none hover:bg-muted/80"
         >
           Déconnexion
+        </button>
+      ) : (
+        <button
+          onClick={onLoginClick}
+          className="h-8 w-8 rounded-xl bg-card border border-border flex items-center justify-center cursor-pointer hover:bg-muted transition-all active:scale-95"
+          title="Se connecter"
+        >
+          <User className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
         </button>
       )}
     </div>
@@ -215,7 +224,7 @@ const IndexContent = () => {
   const { role, setRole } = useRole();
   const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
   const pendingCount = usePendingRequests();
-  const { triggerAutoGeo } = useCity();
+  const { triggerAutoGeo, city } = useCity();
   const [showHomeBtn, setShowHomeBtn] = useState(false);
 
   const isPresident = dbRole === "president";
@@ -270,7 +279,10 @@ const IndexContent = () => {
               />
             </div>
 
-            {/* 4. Omer if applicable */}
+            {/* 4. Spiritual Timeline */}
+            <Lazy><SpiritualTimeline /></Lazy>
+
+            {/* 5. Omer if applicable */}
             <Lazy><OmerCounterWidget /></Lazy>
           </>
         );
@@ -284,7 +296,7 @@ const IndexContent = () => {
             <p className="text-sm mt-2 text-muted-foreground">Bientôt disponible</p>
           </div>
         );
-      case "siddour": return <Lazy><SiddourWidget /></Lazy>;
+      case "siddour": return <Lazy><SiddourWidget initialOffice={currentPrayer === "Cha'harit" ? "shacharit" : currentPrayer === "Min'ha" ? "minha" : "arvit"} /></Lazy>;
       case "tehilimlibre":
       case "tehilim": return <Lazy><TehilimCombinedWidget /></Lazy>;
       case "synagogue": return <Lazy><FideleSynagogueView /></Lazy>;
@@ -337,6 +349,7 @@ const IndexContent = () => {
             isPresident={isPresident}
             pendingCount={pendingCount}
             signOut={signOut}
+            onLoginClick={() => setAuthOpen(true)}
           />
 
           {suspended && (
@@ -349,21 +362,13 @@ const IndexContent = () => {
 
           {renderTabContent()}
 
-          {/* Login CTA */}
-          {!user && (
-            <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-center pointer-events-none">
-              <button
-                onClick={() => setAuthOpen(true)}
-                className="pointer-events-auto px-8 py-3 rounded-full text-sm font-bold cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 text-primary-foreground border-none shadow-lg"
-                style={{ background: "var(--gradient-gold)", boxShadow: "0 6px 24px hsl(var(--gold) / 0.35)" }}
-              >
-                🔑 Se connecter
-              </button>
-            </div>
-          )}
-
-          <div className="text-center py-8 mt-16 text-[10px] text-muted-foreground/40 font-medium tracking-wider uppercase">
-            Chabbat Chalom © {new Date().getFullYear()}
+          <div className="text-center py-6 mt-12">
+            <p className="text-[10px] text-muted-foreground/50 font-medium tracking-wide">
+              Horaires vérifiés par la communauté à {city?.name || "votre ville"}
+            </p>
+            <p className="text-[10px] text-muted-foreground/30 font-medium tracking-wider uppercase mt-1">
+              Chabbat Chalom © {new Date().getFullYear()}
+            </p>
           </div>
         </div>
 
