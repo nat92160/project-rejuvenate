@@ -499,6 +499,75 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
       <HazakCelebration show={showHazak} onDone={() => setShowHazak(false)} />
+
+      {/* Action bottom sheet for own psalms */}
+      <AnimatePresence>
+        {selectedPsalm !== null && (() => {
+          const claim = claims.find(c => c.chapter_start === selectedPsalm && isOwnClaim(c));
+          if (!claim) { return null; }
+          return (
+            <>
+              <motion.div
+                className="fixed inset-0 z-[400]"
+                style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setSelectedPsalm(null)}
+              />
+              <motion.div
+                className="fixed bottom-0 left-0 right-0 z-[410] rounded-t-3xl bg-card p-6 border-t border-border"
+                style={{ paddingBottom: "calc(24px + env(safe-area-inset-bottom, 0px))", boxShadow: "var(--shadow-elevated)" }}
+                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              >
+                <div className="flex justify-center mb-4">
+                  <div className="w-10 h-1 rounded-full bg-border" />
+                </div>
+                <h3 className="font-display text-base font-bold text-foreground text-center mb-1">
+                  Psaume {selectedPsalm} — {toHebrewLetter(selectedPsalm)}
+                </h3>
+                <p className="text-xs text-muted-foreground text-center mb-5">
+                  {claim.completed ? "Ce psaume est marqué comme lu" : "Que souhaitez-vous faire ?"}
+                </p>
+                <div className="space-y-2.5">
+                  {!claim.completed && (
+                    <button
+                      onClick={() => { setSelectedPsalm(null); setReadingChapter(selectedPsalm); }}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                      style={{ background: "var(--gradient-gold)" }}
+                    >
+                      📖 Lire maintenant
+                    </button>
+                  )}
+                  {!claim.completed && (
+                    <button
+                      onClick={() => { unclaimPsalm(claim); setSelectedPsalm(null); }}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border border-destructive/30 bg-destructive/5 text-destructive cursor-pointer"
+                    >
+                      🗑️ Annuler ma réservation
+                    </button>
+                  )}
+                  {claim.completed && (
+                    <button
+                      onClick={() => { setSelectedPsalm(null); setReadingChapter(selectedPsalm); }}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                      style={{ background: "var(--gradient-gold)" }}
+                    >
+                      📖 Relire
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedPsalm(null)}
+                    className="w-full py-3 rounded-xl text-xs font-bold bg-muted text-muted-foreground border-none cursor-pointer"
+                  >
+                    ✕ Fermer
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          );
+        })()}
+      </AnimatePresence>
+
       <AnimatePresence>
         {readingChapter !== null && (
           <ChainPsalmReader
