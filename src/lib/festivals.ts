@@ -227,6 +227,18 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
         const daysLeft = Math.ceil((dt.getTime() - now.getTime()) / 86400000);
         if (daysLeft < -1) continue;
 
+        // Deduplicate: keep only the nearest occurrence per holiday name
+        const existingIdx = singles.findIndex(s => s.name === singleInfo.name);
+        if (existingIdx !== -1) {
+          // Keep the one closest to now (but still upcoming)
+          const existing = singles[existingIdx];
+          if (daysLeft >= 0 && (existing.daysLeft > daysLeft || existing.status === "termine")) {
+            singles.splice(existingIdx, 1); // Remove old, will add new below
+          } else {
+            continue; // Skip this duplicate
+          }
+        }
+
         // For fasts, include begin/end times in memo
         const isFast = singleInfo.category === "jeune";
         const fastBegin = fastBeginByDate[dateStr];
