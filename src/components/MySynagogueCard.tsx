@@ -3,9 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
-import { Zmanim as HebcalZmanim } from "@hebcal/core";
-import { useCity } from "@/hooks/useCity";
-import { cityToLocation } from "@/lib/hebcal";
+import { MapPin } from "lucide-react";
 
 interface SynaInfo {
   id: string;
@@ -13,34 +11,39 @@ interface SynaInfo {
   shacharit_time: string | null;
   minha_time: string | null;
   arvit_time: string | null;
-  logo_url: string | null;
 }
 
-type NextOffice = { label: string; time: string; siddourTab: string };
+type NextOffice = { label: string; time: string };
 
 function getNextOffice(syna: SynaInfo): NextOffice | null {
   const now = new Date();
   const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  const offices: { key: keyof SynaInfo; label: string; tab: string }[] = [
-    { key: "shacharit_time", label: "Cha'harit", tab: "siddour" },
-    { key: "minha_time", label: "Min'ha", tab: "siddour" },
-    { key: "arvit_time", label: "Arvit", tab: "siddour" },
+  const offices: { key: keyof SynaInfo; label: string }[] = [
+    { key: "shacharit_time", label: "Cha'harit" },
+    { key: "minha_time", label: "Min'ha" },
+    { key: "arvit_time", label: "Arvit" },
   ];
 
-  // Find the next office whose time hasn't passed
   for (const o of offices) {
     const t = syna[o.key] as string | null;
-    if (t && t > hhmm) return { label: o.label, time: t, siddourTab: o.tab };
+    if (t && t > hhmm) return { label: o.label, time: t };
   }
 
-  // All passed → show tomorrow's first
   for (const o of offices) {
     const t = syna[o.key] as string | null;
-    if (t) return { label: `${o.label} (demain)`, time: t, siddourTab: o.tab };
+    if (t) return { label: `${o.label} (demain)`, time: t };
   }
 
   return null;
+}
+
+/** Returns the current prayer name based on time of day */
+export function getCurrentPrayer(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "Cha'harit";
+  if (hour >= 12 && hour < 18) return "Min'ha";
+  return "Arvit";
 }
 
 interface Props {
@@ -57,7 +60,7 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
     (async () => {
       const { data } = await supabase
         .from("synagogue_profiles")
-        .select("id, name, shacharit_time, minha_time, arvit_time, logo_url")
+        .select("id, name, shacharit_time, minha_time, arvit_time")
         .eq("id", subIds[0])
         .single();
       if (data) setSyna(data as SynaInfo);
@@ -66,24 +69,31 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
 
   if (loading) return null;
 
-  // No synagogue → show CTA
+  // No synagogue → engagement CTA
   if (!syna) {
     return (
       <motion.div
-        className="rounded-2xl p-6 mb-5 border border-border bg-card text-center"
-        style={{ boxShadow: "var(--shadow-card)" }}
-        initial={{ opacity: 0, y: 12 }}
+        className="rounded-3xl p-8 mb-6 border border-border bg-card text-center"
+        style={{ boxShadow: "var(--shadow-elevated)" }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
       >
-        <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-          Horaires, siddour et communauté — tout en un.
+        <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ background: "hsl(var(--gold) / 0.08)" }}>
+          <MapPin className="w-7 h-7" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />
+        </div>
+        <h2 className="text-lg font-bold text-foreground mb-2">
+          Ne manquez plus aucun office
+        </h2>
+        <p className="text-sm text-muted-foreground mb-6 max-w-[260px] mx-auto leading-relaxed">
+          Recevez les horaires en temps réel de votre communauté.
         </p>
         <button
           onClick={() => onNavigate("synagogue")}
-          className="px-6 py-3 rounded-xl text-sm font-semibold cursor-pointer transition-all active:scale-[0.97] border-none text-primary-foreground"
-          style={{ background: "var(--gradient-gold)" }}
+          className="px-8 py-3.5 rounded-2xl text-sm font-bold cursor-pointer transition-all active:scale-[0.97] hover:-translate-y-0.5 border-none text-primary-foreground"
+          style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
         >
-          Trouver une synagogue
+          Choisir ma Synagogue
         </button>
       </motion.div>
     );
@@ -93,48 +103,39 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
 
   return (
     <motion.div
-      className="rounded-2xl p-5 mb-5 border border-border bg-card"
-      style={{ boxShadow: "var(--shadow-card)" }}
-      initial={{ opacity: 0, y: 12 }}
+      className="rounded-3xl p-6 mb-6 border border-border bg-card"
+      style={{ boxShadow: "var(--shadow-elevated)" }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
     >
-      {/* Synagogue name */}
+      {/* Synagogue identity */}
       <button
         onClick={() => onNavigate("synagogue")}
-        className="w-full flex items-center gap-3 bg-transparent border-none cursor-pointer p-0 text-left"
+        className="w-full flex items-center gap-4 bg-transparent border-none cursor-pointer p-0 text-left group"
       >
-        {syna.logo_url ? (
-          <img src={syna.logo_url} alt="" className="w-10 h-10 rounded-xl object-cover" />
-        ) : (
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ background: "hsl(var(--gold) / 0.08)" }}>🏛️</div>
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="text-[10px] uppercase tracking-[2px] text-muted-foreground font-medium">Ma synagogue</div>
-          <div className="text-base font-bold text-foreground truncate">{syna.name}</div>
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg shrink-0" style={{ background: "hsl(var(--gold) / 0.08)" }}>
+          🏛️
         </div>
-        <span className="text-muted-foreground text-sm">›</span>
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] uppercase tracking-[2.5px] text-muted-foreground font-medium mb-0.5">Ma synagogue</div>
+          <div className="text-base font-bold text-foreground truncate group-hover:text-primary transition-colors">{syna.name}</div>
+        </div>
+        <span className="text-muted-foreground/40 text-lg group-hover:text-muted-foreground transition-colors">›</span>
       </button>
 
-      {/* Next office */}
+      {/* Next office — hero display */}
       {next && (
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-5 p-4 rounded-2xl flex items-center justify-between" style={{ background: "hsl(var(--gold) / 0.04)" }}>
           <div>
             <div className="text-[10px] uppercase tracking-[2px] text-muted-foreground font-medium">Prochain office</div>
-            <div className="text-sm font-semibold text-foreground mt-0.5">{next.label}</div>
+            <div className="text-sm font-semibold text-foreground mt-1">{next.label}</div>
           </div>
-          <div className="text-2xl font-extrabold font-display tabular-nums" style={{ color: "hsl(var(--gold-matte))" }}>
+          <div className="text-3xl font-extrabold font-display tabular-nums" style={{ color: "hsl(var(--gold-matte))" }}>
             {next.time}
           </div>
         </div>
       )}
-
-      {/* Siddour button */}
-      <button
-        onClick={() => onNavigate("siddour")}
-        className="w-full mt-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all active:scale-[0.97] border border-border bg-card text-foreground hover:bg-muted"
-      >
-        📖 Ouvrir le Siddour
-      </button>
     </motion.div>
   );
 };
