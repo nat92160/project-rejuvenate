@@ -8,8 +8,6 @@ function computeForbiddenPeriods(year: number) {
     start: new Date(year, 0, 1),
     end: new Date(year, 11, 31),
     il: false,
-    noMinorFast: false,
-    noModern: true,
   });
 
   let pessachEnd: string | null = null;
@@ -21,18 +19,19 @@ function computeForbiddenPeriods(year: number) {
   for (const ev of events) {
     const desc = ev.getDesc().toLowerCase();
     const d = ev.getDate().greg();
+    if (d.getFullYear() !== year) continue;
     const iso = toIso(d);
 
-    // Match multiple possible descriptions
-    if (!pessachEnd && (desc === "pesach ii" || desc === "pesach ii (ch''m)")) pessachEnd = iso;
-    if (desc.includes("pesach") && desc.includes("ii") && !desc.includes("ch''m")) pessachEnd = iso;
-    if (desc === "pesach vii" || desc === "pesach viii") pessachEnd = iso; // last day
-    if (desc === "lag baomer" || desc === "lag b'omer") lagBaomer = iso;
-    if (desc === "erev shavuot") shavuotErev = iso;
-    if (desc === "tzom tammuz" || desc === "shiva asar b'tammuz") tammuz17 = iso;
-    if (desc === "tish'a b'av" || desc === "erev tish'a b'av") {
-      if (desc === "tish'a b'av") tishaBeav = iso;
-    }
+    // Pesach last day (VIII for diaspora)
+    if (desc.includes("pesach") && (desc.includes("viii") || desc.includes("vii"))) pessachEnd = iso;
+    // Lag BaOmer
+    if (desc.includes("lag b")) lagBaomer = iso;
+    // Erev Shavuot
+    if (desc.includes("erev shavuot")) shavuotErev = iso;
+    // 17 Tammuz
+    if (desc.includes("tammuz") || desc.includes("17 of tammuz")) tammuz17 = iso;
+    // Tisha B'Av
+    if (desc.includes("tish") && desc.includes("av") && !desc.includes("erev")) tishaBeav = iso;
   }
 
   const periods: { name: string; start: string; end: string; color: string; reason: string }[] = [];
