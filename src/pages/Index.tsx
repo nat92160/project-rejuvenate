@@ -55,18 +55,8 @@ const IndexContent = () => {
 
   const isPresident = dbRole === "president";
 
-  const handleContinue = (selectedRole?: string) => {
-    if (selectedRole === "admin") {
-      setRole("guest");
-      setShowDashboard(true);
-      if (!user && !authLoading) setAuthOpen(true);
-      triggerAutoGeo();
-      return;
-    }
-    setRole(selectedRole === "fidele" ? "fidele" : "guest");
-    setShowDashboard(true);
-    triggerAutoGeo();
-  };
+  // Auto-trigger geolocation on mount
+  useState(() => { triggerAutoGeo(); });
 
   const renderTabContent = () => {
     if (isPresident && activeTab === "dashboard") {
