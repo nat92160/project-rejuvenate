@@ -210,11 +210,11 @@ const SiddourWidget = ({ prayerMode = false }: SiddourWidgetProps) => {
             {loading ? (
               <div className="py-10 text-center text-sm text-muted-foreground">Chargement du texte…</div>
             ) : content ? (
-              <div className="rounded-2xl border border-border/50 px-5 py-6 sm:px-8" style={{ boxShadow: "var(--shadow-card)", background: "#FEFEFE" }}>
-                <h4 className="text-center font-display text-base font-bold text-foreground mb-0.5">{content.title}</h4>
-                <p className="text-center text-muted-foreground mb-6" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px` }}>{content.heTitle}</p>
+              <div className="rounded-2xl border px-5 py-6 sm:px-8" style={{ boxShadow: prayerMode ? "none" : "var(--shadow-card)", background: prayerMode ? "#0a0a0a" : "#FEFEFE", borderColor: pmBorder || "hsl(var(--border) / 0.5)" }}>
+                <h4 className="text-center font-display text-base font-bold mb-0.5" style={{ color: pmText }}>{content.title}</h4>
+                <p className="text-center mb-6" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, color: pmMuted }}>{content.heTitle}</p>
 
-                <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.4, textAlign: "justify", fontWeight: 600, color: "#111", wordSpacing: "0.06em" }}>
+                <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.4, textAlign: "justify", fontWeight: 600, color: prayerMode ? "#e8e0d0" : "#111", wordSpacing: "0.06em" }}>
                   {(() => {
                     let verseNum = 0;
                     return content.hebrew.map((verse, i) => {

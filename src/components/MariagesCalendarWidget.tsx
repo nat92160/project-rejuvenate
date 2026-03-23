@@ -8,7 +8,9 @@ function computeForbiddenPeriods(year: number) {
     start: new Date(year, 0, 1),
     end: new Date(year, 11, 31),
     il: false,
-  }).filter(ev => ev.getDate().greg().getFullYear() === year);
+    noMinorFast: false,
+    noModern: true,
+  });
 
   let pessachEnd: string | null = null;
   let lagBaomer: string | null = null;
@@ -21,11 +23,16 @@ function computeForbiddenPeriods(year: number) {
     const d = ev.getDate().greg();
     const iso = toIso(d);
 
-    if (desc === "pesach ii") pessachEnd = iso;
-    if (desc === "lag baomer") lagBaomer = iso;
+    // Match multiple possible descriptions
+    if (!pessachEnd && (desc === "pesach ii" || desc === "pesach ii (ch''m)")) pessachEnd = iso;
+    if (desc.includes("pesach") && desc.includes("ii") && !desc.includes("ch''m")) pessachEnd = iso;
+    if (desc === "pesach vii" || desc === "pesach viii") pessachEnd = iso; // last day
+    if (desc === "lag baomer" || desc === "lag b'omer") lagBaomer = iso;
     if (desc === "erev shavuot") shavuotErev = iso;
-    if (desc === "tzom tammuz") tammuz17 = iso;
-    if (desc === "tish'a b'av") tishaBeav = iso;
+    if (desc === "tzom tammuz" || desc === "shiva asar b'tammuz") tammuz17 = iso;
+    if (desc === "tish'a b'av" || desc === "erev tish'a b'av") {
+      if (desc === "tish'a b'av") tishaBeav = iso;
+    }
   }
 
   const periods: { name: string; start: string; end: string; color: string; reason: string }[] = [];
