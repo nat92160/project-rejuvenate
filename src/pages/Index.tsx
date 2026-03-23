@@ -163,7 +163,7 @@ const PowerButton = ({
 
 /* ─── Ultra-thin Header Bar ─── */
 const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, signOut, onLoginClick }: any) => (
-  <div className="flex items-center justify-between py-3">
+  <div className="flex items-center justify-between py-4 mb-2">
     <button
       onClick={onLogoClick}
       className="inline-flex items-center gap-2 bg-transparent border-none cursor-pointer p-1 -m-1 active:scale-95 transition-transform"
