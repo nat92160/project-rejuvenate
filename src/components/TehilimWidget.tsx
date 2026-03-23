@@ -140,9 +140,8 @@ const PsalmTile = ({
     <motion.button
       layout
       onClick={() => {
-        if (claim?.completed) return;
-        if (isMine && claim) { onToggle(); return; }
-        if (!claim) onClaim();
+        if (!claim) { onClaim(); return; }
+        if (isMine) { onRead(); return; }
       }}
       onContextMenu={(e) => { e.preventDefault(); if (isMine && claim && !claim.completed) onUnclaim(); }}
       disabled={!!claim && !isMine}
@@ -152,7 +151,7 @@ const PsalmTile = ({
         : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-primary/5"
       }`}
       style={isMine && claim && !claim.completed ? { background: "hsl(var(--gold) / 0.1)" } : {}}
-      title={claim ? `${claim.display_name}${claim.completed ? " ✅" : isMine ? " — clic long pour annuler" : ""}` : `Psaume ${num}`}
+      title={claim ? `${claim.display_name}${claim.completed ? " ✅" : isMine ? " — clic pour lire" : ""}` : `Psaume ${num}`}
       whileTap={{ scale: 0.92 }}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
