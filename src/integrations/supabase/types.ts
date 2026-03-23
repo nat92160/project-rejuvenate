@@ -265,6 +265,62 @@ export type Database = {
         }
         Relationships: []
       }
+      prayer_time_suggestions: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          office_name: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          synagogue_id: string
+          time_rule: string | null
+          time_value: string | null
+          updated_at: string
+          user_id: string
+          verified: boolean
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          office_name: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          synagogue_id: string
+          time_rule?: string | null
+          time_value?: string | null
+          updated_at?: string
+          user_id: string
+          verified?: boolean
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          office_name?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          synagogue_id?: string
+          time_rule?: string | null
+          time_value?: string | null
+          updated_at?: string
+          user_id?: string
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prayer_time_suggestions_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       president_requests: {
         Row: {
           city: string
