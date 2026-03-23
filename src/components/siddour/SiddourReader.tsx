@@ -38,16 +38,26 @@ const SiddourReader = ({
   prayerMode = false,
 }: SiddourReaderProps) => {
   const topRef = useRef<HTMLDivElement>(null);
+  const firstVerseRef = useRef<HTMLSpanElement>(null);
 
   const pmText = prayerMode ? "#e8e0d0" : undefined;
   const pmMuted = prayerMode ? "#999" : undefined;
   const pmBorder = prayerMode ? "rgba(255,255,255,0.08)" : undefined;
 
-  // Scroll to top on content change
+  // Scroll to first actual prayer verse, skipping instructions
   useEffect(() => {
-    if (content && topRef.current) {
-      topRef.current.scrollIntoView({ behavior: "auto", block: "start" });
-    }
+    if (!content) return;
+    // Small delay for DOM to render
+    const timer = setTimeout(() => {
+      if (firstVerseRef.current) {
+        // Scroll so the first verse is visible with 20px comfort margin
+        const y = firstVerseRef.current.getBoundingClientRect().top + window.scrollY - 20;
+        window.scrollTo({ top: y, behavior: "auto" });
+      } else if (topRef.current) {
+        topRef.current.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+    }, 80);
+    return () => clearTimeout(timer);
   }, [content]);
 
   return (
