@@ -77,6 +77,10 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
   }, [city]);
 
   useEffect(() => {
+    setSelectedTabs(loadTabsForMode(mode));
+  }, [mode]);
+
+  useEffect(() => {
     const sanitized = sanitizeBottomTabs(selectedTabs, mode);
 
     if (JSON.stringify(sanitized) !== JSON.stringify(selectedTabs)) {
