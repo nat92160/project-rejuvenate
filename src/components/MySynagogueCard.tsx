@@ -90,11 +90,12 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
   if (!syna) {
     return (
       <motion.div
-        className="rounded-3xl p-8 mb-6 border border-border bg-card text-center"
+        className="rounded-3xl p-8 mb-6 border border-border bg-card text-center cursor-pointer"
         style={{ boxShadow: "var(--shadow-elevated)" }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        onClick={() => onNavigate("synagogue")}
       >
         <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ background: "hsl(var(--gold) / 0.08)" }}>
           <MapPin className="w-7 h-7" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />
@@ -107,13 +108,12 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
             ? `📍 ${nearbyCount} synagogues proches de vous attendent vos horaires.`
             : "Recevez les horaires en temps réel de votre communauté."}
         </p>
-        <button
-          onClick={() => onNavigate("synagogue")}
-          className="px-8 py-3.5 rounded-2xl text-sm font-bold cursor-pointer transition-all active:scale-[0.97] hover:-translate-y-0.5 border-none text-primary-foreground animate-pulse"
+        <div
+          className="inline-block px-8 py-3.5 rounded-2xl text-sm font-bold text-primary-foreground animate-pulse"
           style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)", animationDuration: "2.5s" }}
         >
           Choisir ma Synagogue
-        </button>
+        </div>
       </motion.div>
     );
   }
