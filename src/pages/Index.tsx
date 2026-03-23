@@ -88,7 +88,7 @@ const IndexContent = () => {
         );
       case "siddour": return <SiddourWidget prayerMode={prayerMode} />;
       case "tehilimlibre":
-      case "tehilim": return <TehilimCombinedWidget />;
+      case "tehilim": return <TehilimCombinedWidget prayerMode={prayerMode} />;
       case "synagogue": return <FideleSynagogueView />;
       case "fetes": return <FestivalCalendar />;
       case "convertisseur": return <DateConverterWidget />;
