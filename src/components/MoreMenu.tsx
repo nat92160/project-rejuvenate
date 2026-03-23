@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
 import { getAvailableTabs, type BottomNavMode } from "@/lib/navigation";
+import { clearAllCaches } from "@/lib/cacheUtils";
+import { toast } from "sonner";
 import AuthModal from "@/components/AuthModal";
 
 interface MoreMenuProps {
@@ -118,6 +120,27 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
 
               {/* Account switch */}
               <div className="mt-5 space-y-3 border-t border-border pt-4">
+                {/* Clear cache button */}
+                <button
+                  onClick={async () => {
+                    try {
+                      await clearAllCaches();
+                      toast.success("✅ Cache vidé avec succès !");
+                      setTimeout(() => window.location.reload(), 800);
+                    } catch {
+                      toast.error("Erreur lors du vidage du cache");
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-3 text-left cursor-pointer transition-all hover:border-primary/20"
+                >
+                  <span className="text-sm">🗑️</span>
+                  <div>
+                    <div className="text-xs font-bold text-foreground">Vider le cache</div>
+                    <div className="text-[10px] text-muted-foreground">Forcer le rechargement des données</div>
+                  </div>
+                </button>
+
+                {/* Account toggle */}
                 <div className="rounded-xl border border-border bg-muted/50 p-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0">
