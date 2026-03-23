@@ -190,25 +190,26 @@ const MariagesWidget = () => {
 
       {/* Periods */}
       <div className="space-y-3">
-        {filteredPeriods.length === 0 && (
+        {filteredEntries.length === 0 && (
           <div className="text-center py-6 text-sm text-muted-foreground">
-            {filter === "autorise"
-              ? "✅ Toutes les périodes non-interdites sont autorisées pour le mariage."
-              : "Aucun résultat pour cette recherche."}
+            Aucun résultat pour cette recherche.
           </div>
         )}
-        {filteredPeriods.map((p) => {
+        {filteredEntries.map((p) => {
           const active = isInPeriod(p.start, p.end);
+          const isAllowed = p.status === "autorise";
           return (
             <div
               key={p.name}
               className="flex items-start gap-3.5 p-4 rounded-xl border transition-all"
               style={{
-                borderColor: active
+                borderColor: active && !isAllowed
                   ? "hsl(0 84% 60% / 0.3)"
                   : "hsl(var(--border))",
-                borderLeft: "3px solid hsl(0 84% 60%)",
-                background: active
+                borderLeft: isAllowed
+                  ? "3px solid hsl(142 76% 36%)"
+                  : "3px solid hsl(0 84% 60%)",
+                background: active && !isAllowed
                   ? "hsl(0 84% 60% / 0.04)"
                   : "hsl(var(--card))",
               }}
@@ -216,20 +217,22 @@ const MariagesWidget = () => {
               <span className="text-xl flex-shrink-0 mt-0.5">{p.icon}</span>
               <div className="flex-1">
                 <p className="text-sm font-bold text-foreground">
-                  🚫 {p.name}
-                  {active && (
+                  {isAllowed ? "✅" : "🚫"} {p.name}
+                  {active && !isAllowed && (
                     <span className="ml-2 text-xs" style={{ color: "hsl(0 84% 60%)" }}>
                       (EN COURS)
                     </span>
                   )}
                 </p>
-                <p className="text-[11px] text-muted-foreground mt-1 capitalize">
-                  Du {fmtDate(p.start)} au {fmtDate(p.end)}
-                </p>
+                {!isAllowed && (
+                  <p className="text-[11px] text-muted-foreground mt-1 capitalize">
+                    Du {fmtDate(p.start)} au {fmtDate(p.end)}
+                  </p>
+                )}
                 <p className="text-[11px] text-muted-foreground/80 mt-1 italic">
                   {p.detail}
                 </p>
-                {"rite" in p && p.rite && (
+                {p.rite && (
                   <span
                     className="inline-block mt-2 text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border"
                     style={{
