@@ -94,6 +94,20 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
 
       <p className="text-[11px] text-muted-foreground">Pour <strong>{synagogueName}</strong></p>
 
+      {/* Guest name input */}
+      {!user && (
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">Votre nom</label>
+          <input
+            type="text"
+            placeholder="Entrez votre nom…"
+            value={guestName}
+            onChange={(e) => setGuestName(e.target.value)}
+            className="block h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10 placeholder:text-muted-foreground/40"
+          />
+        </div>
+      )}
+
       {/* Office selection */}
       <div className="space-y-2">
         <label className="text-xs font-medium text-muted-foreground">Nom de l'office</label>
