@@ -125,7 +125,7 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
 
 // Psalm tile with name tooltip
 const PsalmTile = ({
-  num, claim, isMine, onClaim, onToggle, onUnclaim
+  num, claim, isMine, onClaim, onToggle, onUnclaim, onRead
 }: {
   num: number;
   claim: Claim | undefined;
@@ -133,6 +133,7 @@ const PsalmTile = ({
   onClaim: () => void;
   onToggle: () => void;
   onUnclaim: () => void;
+  onRead: () => void;
 }) => {
   const firstName = claim?.display_name?.split(" ")[0] || "";
 
