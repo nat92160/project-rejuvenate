@@ -105,10 +105,21 @@ const SiddourWidget = ({ prayerMode = false }: SiddourWidgetProps) => {
   useEffect(() => { fetchToc(office); }, [office, fetchToc]);
   useEffect(() => { if (activeSection !== null) fetchSection(office, activeSection); }, [activeSection, office, fetchSection]);
 
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+    const pmBg = prayerMode ? "#000" : undefined;
+    const pmText = prayerMode ? "#e8e0d0" : undefined;
+    const pmMuted = prayerMode ? "#999" : undefined;
+    const pmCard = prayerMode ? "#111" : undefined;
+    const pmBorder = prayerMode ? "rgba(255,255,255,0.08)" : undefined;
+
+    return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4"
+      style={prayerMode ? { background: pmBg, margin: "-1rem", padding: "1rem", minHeight: "100vh" } : undefined}
+    >
       {/* Header */}
-      <div className="rounded-2xl border border-primary/15 p-5 text-center" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))" }}>
+      <div className="rounded-2xl border border-primary/15 p-5 text-center" style={{
+        background: prayerMode ? pmCard : "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))",
+        borderColor: pmBorder,
+      }}>
         <span className="text-3xl">📖</span>
         <h3 className="mt-2 font-display text-lg font-bold text-foreground">Siddour Complet</h3>
         <p className="mt-1 text-xs text-muted-foreground">Navigation libre — Hébreu & Traduction</p>
