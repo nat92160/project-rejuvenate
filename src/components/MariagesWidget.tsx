@@ -31,6 +31,44 @@ const FORBIDDEN_PERIODS = [
   },
 ];
 
+// Generate all months as "allowed" or "forbidden" entries for searchability
+function generateAllMonths() {
+  const months = [
+    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+  ];
+  const entries: { name: string; start: string; end: string; icon: string; detail: string; rite?: string; month: string; status: "interdit" | "autorise" }[] = [];
+
+  // Add forbidden periods
+  for (const p of FORBIDDEN_PERIODS) {
+    entries.push({ ...p, status: "interdit" });
+  }
+
+  // Add allowed months (months with no overlap with forbidden periods)
+  for (let m = 0; m < 12; m++) {
+    const mStr = String(m + 1).padStart(2, "0");
+    const mStart = `2026-${mStr}-01`;
+    const daysInMonth = new Date(2026, m + 1, 0).getDate();
+    const mEnd = `2026-${mStr}-${daysInMonth}`;
+    const overlapping = FORBIDDEN_PERIODS.filter((p) => p.start <= mEnd && p.end >= mStart);
+    if (overlapping.length === 0) {
+      entries.push({
+        name: `${months[m]} 2026`,
+        start: mStart,
+        end: mEnd,
+        icon: "💚",
+        detail: `Mariages autorisés tout le mois de ${months[m].toLowerCase()}.`,
+        month: months[m].toLowerCase(),
+        status: "autorise",
+      });
+    }
+  }
+
+  return entries;
+}
+
+const ALL_ENTRIES = generateAllMonths();
+
 const FILTER_OPTIONS = [
   { value: "all", label: "Tout" },
   { value: "interdit", label: "🚫 Interdit" },
@@ -48,10 +86,6 @@ const MariagesWidget = () => {
     return now >= s && now <= e;
   };
 
-  const isPast = (end: string) => {
-    return new Date(end + "T23:59:59") < now;
-  };
-
   const fmtDate = (d: string) =>
     new Date(d + "T12:00:00").toLocaleDateString("fr-FR", {
       weekday: "long",
@@ -61,16 +95,13 @@ const MariagesWidget = () => {
     });
 
   const todayForbidden = FORBIDDEN_PERIODS.some(
-    (p) => !isPast(p.end) && isInPeriod(p.start, p.end)
+    (p) => isInPeriod(p.start, p.end)
   );
 
-  // Fixed filtering: search works across ALL fields including when filter is active
-  const filteredPeriods = FORBIDDEN_PERIODS.filter((p) => {
-    if (isPast(p.end)) return false;
-
+  const filteredEntries = ALL_ENTRIES.filter((p) => {
     // Status filter
-    if (filter === "autorise") return false; // All shown periods are forbidden
-    // filter === "interdit" or "all" → show forbidden periods
+    if (filter === "interdit" && p.status !== "interdit") return false;
+    if (filter === "autorise" && p.status !== "autorise") return false;
 
     // Text search
     if (searchText.trim()) {
@@ -78,7 +109,7 @@ const MariagesWidget = () => {
       return (
         p.name.toLowerCase().includes(q) ||
         (p.rite?.toLowerCase().includes(q) ?? false) ||
-        (p.month?.toLowerCase().includes(q) ?? false) ||
+        p.month.toLowerCase().includes(q) ||
         p.detail.toLowerCase().includes(q) ||
         fmtDate(p.start).toLowerCase().includes(q) ||
         fmtDate(p.end).toLowerCase().includes(q)
