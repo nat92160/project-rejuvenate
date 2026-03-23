@@ -108,17 +108,27 @@ const MariagesCalendarWidget = () => {
 
   const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear + i);
 
+  // Auto-check when date changes
+  const handleDateChange = (value: string) => {
+    setCheckDate(value);
+    if (!value) {
+      setCheckResult(null);
+      return;
+    }
+    const checkYear = parseInt(value.split("-")[0]);
+    if (isNaN(checkYear)) { setCheckResult(null); return; }
+    const periods = computeForbiddenPeriods(checkYear);
+    const period = periods.find((p) => value >= p.start && value <= p.end);
+    setCheckResult(period ? { allowed: false, reason: period.reason } : { allowed: true });
+    // Navigate calendar to that month
+    const month = parseInt(value.split("-")[1]) - 1;
+    setSelectedYear(checkYear);
+    setViewMonth(month);
+  };
+
   const handleCheckDate = () => {
     if (!checkDate) return;
-    // Compute for the year of the checked date
-    const checkYear = parseInt(checkDate.split("-")[0]);
-    const periods = computeForbiddenPeriods(checkYear);
-    const period = periods.find((p) => checkDate >= p.start && checkDate <= p.end);
-    if (period) {
-      setCheckResult({ allowed: false, reason: period.reason });
-    } else {
-      setCheckResult({ allowed: true });
-    }
+    handleDateChange(checkDate);
   };
 
   const handleDayClick = (dateStr: string) => {
