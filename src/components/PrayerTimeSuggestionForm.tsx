@@ -25,7 +25,7 @@ function formatTimeDraft(raw: string) {
   return `${digits.slice(0, 2)}:${digits.slice(2)}`;
 }
 
-const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, onClose, onSubmitted }: Props) => {
+const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeName, onClose, onSubmitted }: Props) => {
   const { user } = useAuth();
   const [officeName, setOfficeName] = useState("shacharit");
   const [mode, setMode] = useState<"fixed" | "rule">("fixed");
