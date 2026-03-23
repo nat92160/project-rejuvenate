@@ -68,6 +68,7 @@ const FideleSynagogueView = () => {
   const { city, geolocate, isGeolocating, locationError } = useCity();
   const [tab, setTab] = useState<"annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat" | "horaires" | "tehilim" | "minyan">("annuaire");
   const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
+  const [suggestingSynaId, setSuggestingSynaId] = useState<string | null>(null);
 
   // Directory state
   const [directory, setDirectory] = useState<SynaDirectoryItem[]>([]);
