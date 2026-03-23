@@ -151,6 +151,9 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       candleLightingMins: city.candleOffset,
     });
 
+    // Strict year filter — prevent any events from next year
+    const events = allEvents.filter(ev => ev.getDate().greg().getFullYear() === year);
+
     // Build candle/havdalah time maps by date
     const candlesByDate: Record<string, string> = {};
     const havdalahByDate: Record<string, string> = {};
