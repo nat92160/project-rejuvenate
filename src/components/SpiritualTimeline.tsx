@@ -26,7 +26,7 @@ const SpiritualTimeline = () => {
   const progress = Math.max(0, Math.min(100, ((currentDecimal - dayStart) / range) * 100));
 
   return (
-    <div className="mb-8 px-1">
+    <div className="mb-8 px-1 py-3">
       <div className="text-[9px] uppercase tracking-[2.5px] text-muted-foreground/50 font-medium mb-3">
         Journée spirituelle
       </div>
@@ -43,16 +43,30 @@ const SpiritualTimeline = () => {
         </div>
 
         {/* Zmanim dots */}
-        {zmanim.map((z) => {
+        {zmanim.map((z, i) => {
           const left = ((z.hour - dayStart) / range) * 100;
           if (left < 0 || left > 100) return null;
           const isPast = currentDecimal >= z.hour;
+          // Alternate labels above/below to avoid overlap on close points
+          const above = i % 2 === 1;
           return (
             <div
               key={z.label}
-              className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center"
-              style={{ left: `${left}%`, transform: `translateX(-50%) translateY(-50%)` }}
+              className="absolute flex flex-col items-center"
+              style={{
+                left: `${left}%`,
+                top: "50%",
+                transform: "translateX(-50%) translateY(-50%)",
+              }}
             >
+              {above && (
+                <span
+                  className="text-[8px] sm:text-[9px] mb-1 font-medium whitespace-nowrap"
+                  style={{ color: isPast ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground) / 0.4)" }}
+                >
+                  {z.label}
+                </span>
+              )}
               <div
                 className="w-3 h-3 rounded-full border-2 transition-colors"
                 style={{
@@ -60,12 +74,14 @@ const SpiritualTimeline = () => {
                   background: isPast ? "hsl(var(--gold-matte))" : "hsl(var(--background))",
                 }}
               />
-              <span
-                className="text-[9px] mt-2 font-medium whitespace-nowrap"
-                style={{ color: isPast ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground) / 0.4)" }}
-              >
-                {z.label}
-              </span>
+              {!above && (
+                <span
+                  className="text-[8px] sm:text-[9px] mt-1 font-medium whitespace-nowrap"
+                  style={{ color: isPast ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground) / 0.4)" }}
+                >
+                  {z.label}
+                </span>
+              )}
             </div>
           );
         })}
