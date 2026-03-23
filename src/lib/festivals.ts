@@ -218,6 +218,17 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
           ? `Hol HaMoèd — ${fmtDate(dateStr)}`
           : desc.replace(/^(Pesach|Sukkot|Shavuot)\s*/i, "").trim();
 
+        // For Yom Tov days without standard candle lighting (2nd+ nights),
+        // compute Tset HaKokhavim as candle lighting time
+        let dayCandles = candlesByDate[dateStr];
+        if (!dayCandles && groupInfo.type === "yomtov") {
+          try {
+            const zman = new HebcalZmanim(location, dt, false);
+            const tzeit = zman.tzeit();
+            if (tzeit) dayCandles = fmtTime(tzeit) + " ✨";
+          } catch { /* silent */ }
+        }
+
         groups[groupInfo.group].push({
           date: dateStr,
           dateFr: fmtDate(dateStr),
@@ -225,7 +236,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
           title: dayTitle,
           hebrew: ev.render('he') || '',
           type: groupInfo.type,
-          candles: candlesByDate[dateStr],
+          candles: dayCandles,
           havdalah: havdalahByDate[dateStr],
           isShabbat,
           memo: ev.memo || undefined,
