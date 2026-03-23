@@ -395,7 +395,7 @@ const TehilimJoinContent = () => {
               <motion.button
                 key={num}
                 onClick={() => {
-                  if (!claim) { claimPsalm(num); return; }
+                  if (!claim) { setSelectedClaim({ id: '', chain_id: id!, user_id: null, display_name: '', chapter_start: num, chapter_end: num, completed: false } as any); return; }
                   if (isMine) { setSelectedClaim(claim); return; }
                 }}
                 disabled={!!claim && !isMine}
