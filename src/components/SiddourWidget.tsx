@@ -31,7 +31,11 @@ const OFFICES: { key: Office; label: string; icon: string }[] = [
 
 const CACHE_PREFIX = "siddour_v5_";
 
-const SiddourWidget = () => {
+interface SiddourWidgetProps {
+  prayerMode?: boolean;
+}
+
+const SiddourWidget = ({ prayerMode = false }: SiddourWidgetProps) => {
   const [office, setOffice] = useState<Office>("shacharit");
   const [sections, setSections] = useState<Section[]>([]);
   const [activeSection, setActiveSection] = useState<number | null>(null);
