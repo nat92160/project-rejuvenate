@@ -37,7 +37,7 @@ import AlerteCommunautaireWidget from "@/components/AlerteCommunautaireWidget";
 import BrakhotWidget from "@/components/BrakhotWidget";
 import ContextualHomeWidget from "@/components/ContextualHomeWidget";
 import OmerCounterWidget from "@/components/OmerCounterWidget";
-import PrayerModeOverlay from "@/components/PrayerModeOverlay";
+
 
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
@@ -47,7 +47,7 @@ import { useCity } from "@/hooks/useCity";
 const IndexContent = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
-  const [prayerMode, setPrayerMode] = useState(false);
+  
   const { role, setRole } = useRole();
   const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
   const pendingCount = usePendingRequests();
@@ -86,9 +86,9 @@ const IndexContent = () => {
             <p className="text-sm mt-2 text-muted-foreground">Bientôt disponible</p>
           </div>
         );
-      case "siddour": return <SiddourWidget prayerMode={prayerMode} />;
+      case "siddour": return <SiddourWidget />;
       case "tehilimlibre":
-      case "tehilim": return <TehilimCombinedWidget prayerMode={prayerMode} />;
+      case "tehilim": return <TehilimCombinedWidget />;
       case "synagogue": return <FideleSynagogueView />;
       case "fetes": return <FestivalCalendar />;
       case "convertisseur": return <DateConverterWidget />;
@@ -186,19 +186,6 @@ const IndexContent = () => {
             <InfoCarousel />
             <CitySelector />
 
-            {/* Prayer mode button */}
-            <button
-              onClick={() => setPrayerMode(true)}
-              className="w-full mb-4 py-3 rounded-xl text-sm font-bold border cursor-pointer transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-              style={{
-                background: "hsl(var(--card))",
-                borderColor: "hsl(var(--border))",
-                color: "hsl(var(--foreground))",
-              }}
-            >
-              🙏 Mode Prière
-            </button>
-
             {renderTabContent()}
 
             {/* Connexion button — only for non-logged users, not labeled "admin" */}
@@ -226,11 +213,6 @@ const IndexContent = () => {
         </div>
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
-      <PrayerModeOverlay
-        active={prayerMode && activeTab !== "siddour"}
-        onClose={() => setPrayerMode(false)}
-        onOpenSiddur={() => { setActiveTab("siddour"); }}
-      />
     </>
   );
 };
