@@ -50,18 +50,18 @@ const SpiritualTimeline = () => {
           return (
             <div
               key={z.label}
-              className="absolute -top-1 flex flex-col items-center"
-              style={{ left: `${left}%`, transform: "translateX(-50%)" }}
+              className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center"
+              style={{ left: `${left}%`, transform: `translateX(-50%) translateY(-50%)` }}
             >
               <div
-                className="w-2.5 h-2.5 rounded-full border-2 transition-colors"
+                className="w-3 h-3 rounded-full border-2 transition-colors"
                 style={{
                   borderColor: isPast ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground) / 0.25)",
                   background: isPast ? "hsl(var(--gold-matte))" : "hsl(var(--background))",
                 }}
               />
               <span
-                className="text-[8px] mt-1.5 font-medium whitespace-nowrap"
+                className="text-[9px] mt-2 font-medium whitespace-nowrap"
                 style={{ color: isPast ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground) / 0.4)" }}
               >
                 {z.label}
