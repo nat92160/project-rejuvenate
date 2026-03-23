@@ -18,15 +18,7 @@ const ZmanimWidget = () => {
     setDateLabel(
       d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     );
-    try {
-      const r = await fetch(
-        `https://www.hebcal.com/converter?cfg=json&g2h=1&gy=${d.getFullYear()}&gm=${d.getMonth() + 1}&gd=${d.getDate()}`
-      );
-      const hd = await r.json();
-      setHebrewForDate(hd.hebrew || "");
-    } catch {
-      setHebrewForDate("");
-    }
+    setHebrewForDate(getHebrewDateString(d));
     const data = await fetchZmanim(city, d);
     setZmanim(data);
     setLoading(false);
