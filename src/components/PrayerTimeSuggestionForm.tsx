@@ -34,19 +34,23 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!user) { toast.error("Connectez-vous pour proposer un horaire"); return; }
     if (mode === "fixed" && !timeValue) { toast.error("Saisissez une heure"); return; }
     if (mode === "rule" && !timeRule.trim()) { toast.error("Décrivez la règle horaire"); return; }
+    if (!user && !guestName.trim()) { toast.error("Saisissez votre nom"); return; }
 
     setSubmitting(true);
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name, first_name, last_name")
-      .eq("user_id", user.id)
-      .single();
-
-    const displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.display_name || "Utilisateur";
+    let displayName = "Invité";
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name, first_name, last_name")
+        .eq("user_id", user.id)
+        .single();
+      displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.display_name || "Utilisateur";
+    } else {
+      displayName = guestName.trim();
+    }
 
     const { error } = await (supabase as any)
       .from("prayer_time_suggestions")
@@ -54,8 +58,8 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
         synagogue_id: synagogueId || null,
         place_id: placeId || null,
         place_name: placeName || null,
-        user_id: user.id,
-        display_name: displayName,
+        user_id: user?.id || null,
+        display_name: `${displayName}${!user ? " (invité)" : ""}`,
         office_name: officeName,
         time_value: mode === "fixed" ? timeValue : null,
         time_rule: mode === "rule" ? timeRule.trim() : null,
