@@ -364,7 +364,7 @@ const IndexContent = () => {
 
           <div className="text-center py-6 mt-12">
             <p className="text-[10px] text-muted-foreground/50 font-medium tracking-wide">
-              Horaires vérifiés par la communauté à {city?.label || "votre ville"}
+              Horaires vérifiés par la communauté à {city?.name || "votre ville"}
             </p>
             <p className="text-[10px] text-muted-foreground/30 font-medium tracking-wider uppercase mt-1">
               Chabbat Chalom © {new Date().getFullYear()}
