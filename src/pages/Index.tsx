@@ -77,6 +77,7 @@ const IndexContent = () => {
       case "dashboard":
         return (
           <>
+            <ContextualHomeWidget />
             <CountdownWidget />
             <ShabbatWidget />
             <ZmanimWidget />
