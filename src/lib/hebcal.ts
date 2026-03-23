@@ -13,8 +13,10 @@ export function cityToLocation(city: CityConfig): Location {
 export interface ShabbatTimes {
   candleLighting: string;
   candleLightingDate: string;
+  candleLightingDateTime: Date | null;
   havdalah: string;
   havdalahDate: string;
+  havdalahDateTime: Date | null;
   parasha: string;
   parashaHebrew: string;
 }
