@@ -110,8 +110,8 @@ const SiddourReader = ({
             borderColor: pmBorder || "hsl(var(--border) / 0.5)",
           }}
         >
-          {/* Title block - ornamental */}
-          <div className="text-center mb-6 pb-4" style={{ borderBottom: `1px solid ${pmBorder || "hsl(var(--gold) / 0.15)"}` }}>
+          {/* Title block - ornamental, 20px comfort margin top */}
+          <div className="text-center mb-6 pb-4 pt-5" style={{ borderBottom: `1px solid ${pmBorder || "hsl(var(--gold) / 0.15)"}` }}>
             <div className="flex items-center justify-center gap-3 mb-2">
               <span className="block h-[1px] w-8" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--gold) / 0.4))" }} />
               <span className="text-[10px]" style={{ color: "hsl(var(--gold) / 0.5)" }}>✦</span>
