@@ -240,9 +240,9 @@ const IndexContent = () => {
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       <PrayerModeOverlay
-        active={prayerMode}
+        active={prayerMode && activeTab !== "siddour"}
         onClose={() => setPrayerMode(false)}
-        onOpenSiddur={() => setActiveTab("siddour")}
+        onOpenSiddur={() => { setActiveTab("siddour"); }}
       />
     </>
   );
