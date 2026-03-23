@@ -381,9 +381,10 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
                   num={num}
                   claim={claim}
                   isMine={isMine}
-                  onClaim={() => claimPsalm(num)}
+                  onClaim={() => { claimPsalm(num); setReadingChapter(num); }}
                   onToggle={() => claim && toggleComplete(claim)}
                   onUnclaim={() => claim && unclaimPsalm(claim)}
+                  onRead={() => setReadingChapter(num)}
                 />
               );
             })}
