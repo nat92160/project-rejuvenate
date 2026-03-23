@@ -38,10 +38,10 @@ function detectOffice(): Office {
   return "arvit";
 }
 
-interface SiddourWidgetProps { prayerMode?: boolean; }
+interface SiddourWidgetProps { prayerMode?: boolean; initialOffice?: Office; }
 
-const SiddourWidget = ({ prayerMode = false }: SiddourWidgetProps) => {
-  const [office, setOffice] = useState<Office>(detectOffice);
+const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps) => {
+  const [office, setOffice] = useState<Office>(initialOffice || detectOffice);
   const [sections, setSections] = useState<Section[]>([]);
   const [activeSection, setActiveSection] = useState<number | null>(null);
   const [content, setContent] = useState<SectionContent | null>(null);

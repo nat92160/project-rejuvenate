@@ -224,7 +224,7 @@ const IndexContent = () => {
   const { role, setRole } = useRole();
   const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
   const pendingCount = usePendingRequests();
-  const { triggerAutoGeo } = useCity();
+  const { triggerAutoGeo, city } = useCity();
   const [showHomeBtn, setShowHomeBtn] = useState(false);
 
   const isPresident = dbRole === "president";
