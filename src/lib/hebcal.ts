@@ -229,12 +229,13 @@ export async function fetchHolidays(city: CityConfig): Promise<HolidayItem[]> {
   try {
     const now = new Date();
     const il = city.country === 'IL';
+    const year = now.getFullYear();
 
     const events = HebrewCalendar.calendar({
-      start: now,
-      end: new Date(now.getTime() + 365 * 86400000),
+      start: new Date(year, 0, 1),
+      end: new Date(year, 11, 31),
       il,
-    });
+    }).filter(ev => ev.getDate().greg().getFullYear() === year);
 
     const seen = new Set<string>();
     const results: HolidayItem[] = [];
@@ -279,9 +280,10 @@ export async function fetchNextRoshHodesh(city: CityConfig): Promise<RoshHodeshI
 
     const events = HebrewCalendar.calendar({
       start: now,
-      end: new Date(now.getTime() + 60 * 86400000),
+      end: new Date(now.getFullYear(), 11, 31),
       il,
-    }).filter(ev => ev.getFlags() & flags.ROSH_CHODESH);
+    }).filter(ev => ev.getFlags() & flags.ROSH_CHODESH)
+     .filter(ev => ev.getDate().greg().getFullYear() === now.getFullYear());
 
     if (events.length === 0) return null;
 

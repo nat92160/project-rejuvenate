@@ -39,13 +39,15 @@ const ShabbatSpeciauxWidget = () => {
       const il = city.country === 'IL';
       const location = cityToLocation(city);
 
-      // Use SDK — fully offline, no API calls
+      const year = now.getFullYear();
+
+      // Use SDK — strictly current year only
       const events = HebrewCalendar.calendar({
-        start: now,
-        end: new Date(now.getTime() + 365 * 86400000),
+        start: new Date(year, 0, 1),
+        end: new Date(year, 11, 31),
         il,
         location,
-      }).filter(ev => ev.getFlags() & flags.SPECIAL_SHABBAT);
+      }).filter(ev => (ev.getFlags() & flags.SPECIAL_SHABBAT) && ev.getDate().greg().getFullYear() === year);
 
       const seen = new Set<string>();
       const results: SpecialShabbat[] = [];
