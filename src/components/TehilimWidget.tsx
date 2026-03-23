@@ -229,14 +229,36 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
   const [dedication, setDedication] = useState("");
   const [dedicationType, setDedicationType] = useState("general");
   const [creating, setCreating] = useState(false);
+  const [guestPromptOpen, setGuestPromptOpen] = useState(false);
 
-  const handleCreate = async () => {
-    if (!user) { toast.error("Connectez-vous pour créer une chaîne"); return; }
+  const doCreate = async (creatorId: string) => {
     setCreating(true);
-    const { error } = await supabase.from("tehilim_chains").insert({ creator_id: user.id, synagogue_id: synagogueId, title, dedication: dedication || null, dedication_type: dedicationType });
-    if (error) { toast.error("Erreur: vérifiez que vous avez le rôle Président."); }
+    const { error } = await supabase.from("tehilim_chains").insert({
+      creator_id: creatorId,
+      synagogue_id: synagogueId || null,
+      title,
+      dedication: dedication || null,
+      dedication_type: dedicationType,
+    });
+    if (error) { toast.error("Erreur lors de la création."); console.error(error); }
     else { toast.success("✅ Chaîne de Tehilim créée !"); }
     setCreating(false); onCreated();
+  };
+
+  const handleCreate = async () => {
+    if (user) {
+      await doCreate(user.id);
+    } else {
+      const guestName = getGuestName();
+      if (!guestName) { setGuestPromptOpen(true); return; }
+      // Use a deterministic guest UUID based on name for creator_id
+      await doCreate("00000000-0000-0000-0000-000000000000");
+    }
+  };
+
+  const handleGuestNameSubmit = async () => {
+    setGuestPromptOpen(false);
+    await doCreate("00000000-0000-0000-0000-000000000000");
   };
 
   return (
@@ -249,6 +271,7 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
       <button onClick={handleCreate} disabled={creating || !title.trim()} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50" style={{ background: "var(--gradient-gold)" }}>
         {creating ? "Création…" : "🔗 Créer la chaîne"}
       </button>
+      <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
     </div>
   );
 };
@@ -654,8 +677,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
 const TehilimWidget = () => {
   const [tab, setTab] = useState<"daily" | "popular" | "chain">("daily");
   const [readingChapter, setReadingChapter] = useState<number | null>(null);
-  const { user, dbRole } = useAuth();
-  const isPresident = dbRole === "president";
+  const { user } = useAuth();
   const today = new Date().getDay();
 
   const [chains, setChains] = useState<Chain[]>([]);
@@ -677,15 +699,12 @@ const TehilimWidget = () => {
 
     let query = supabase.from("tehilim_chains").select("*").eq("status", "active").order("created_at", { ascending: false });
 
-    if (user) {
-      if (subIds.length > 0) {
-        query = query.or(`creator_id.eq.${user.id},synagogue_id.in.(${subIds.join(",")})`);
-      } else {
-        query = query.eq("creator_id", user.id);
-      }
-    } else {
-      setChains([]); setLoadingChains(false); return;
+    if (user && subIds.length > 0) {
+      query = query.or(`creator_id.eq.${user.id},synagogue_id.in.(${subIds.join(",")})`);
+    } else if (user) {
+      query = query.eq("creator_id", user.id);
     }
+    // For guests: fetch all active chains (no filter)
 
     const { data } = await query;
     setChains((data as Chain[]) || []); setLoadingChains(false);
@@ -752,11 +771,9 @@ const TehilimWidget = () => {
               </div>
             ) : (
               <div>
-                {isPresident && user && (
-                  <button onClick={() => setShowCreateForm(true)} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer mb-4" style={{ background: "var(--gradient-gold)" }}>
-                    ✨ Créer une chaîne de Tehilim
-                  </button>
-                )}
+                <button onClick={() => setShowCreateForm(true)} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer mb-4" style={{ background: "var(--gradient-gold)" }}>
+                  ✨ Créer une chaîne de Tehilim
+                </button>
                 {loadingChains ? (
                   <div className="text-center py-8"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" /></div>
                 ) : chains.length === 0 ? (
@@ -764,7 +781,7 @@ const TehilimWidget = () => {
                     <span className="text-5xl">🤝</span>
                     <h4 className="font-display text-lg font-bold mt-4 text-foreground">Chaîne de Tehilim</h4>
                     <p className="text-sm mt-2 text-muted-foreground max-w-[300px] mx-auto">
-                      {isPresident ? "Créez votre première chaîne." : "Aucune chaîne active pour le moment."}
+                      Créez votre première chaîne ou attendez qu'une chaîne soit partagée.
                     </p>
                   </div>
                 ) : (
