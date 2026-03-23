@@ -5,7 +5,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCity } from "@/hooks/useCity";
 import { fetchNearbySynagogues, formatDistance, type SynagogueResult } from "@/lib/synagogues";
 import { toast } from "sonner";
-import { MapPin, Search, X, Navigation, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { MapPin, Search, X, Navigation, CheckCircle2, Clock, Loader2, Pencil } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import PrayerTimeSuggestionForm from "./PrayerTimeSuggestionForm";
 
 /* ── Types ── */
 interface PartnerSyna {
@@ -36,7 +40,6 @@ interface ExternalSyna {
 }
 
 type SynaItem = PartnerSyna | ExternalSyna;
-
 type FilterChip = "proche" | "verifie" | "ouvert";
 
 /* ── Helpers ── */
@@ -77,6 +80,14 @@ function freshnessBadge(updatedAt?: string): { text: string; color: string } {
   return { text: `Mis à jour il y a ${days}j`, color: "hsl(var(--muted-foreground) / 0.5)" };
 }
 
+/* ── Custom marker icon ── */
+const synagogueIcon = L.divIcon({
+  html: `<div style="width:32px;height:32px;border-radius:50%;background:hsl(40,80%,42%);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;">🕍</span></div>`,
+  className: "",
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+});
+
 /* ── Skeleton ── */
 const CardSkeleton = () => (
   <div className="rounded-2xl border border-border bg-card p-4 animate-pulse">
@@ -91,122 +102,53 @@ const CardSkeleton = () => (
   </div>
 );
 
-/* ── Map Component ── */
-const MapView = ({ items, selectedId, onSelect, userLat, userLng }: {
+/* ── Map recenter helper ── */
+const RecenterMap = ({ lat, lng }: { lat: number; lng: number }) => {
+  const map = useMap();
+  useEffect(() => { map.setView([lat, lng], 14); }, [lat, lng, map]);
+  return null;
+};
+
+/* ── Map Component (Leaflet/OSM) ── */
+const MapView = ({ items, onSelect, userLat, userLng }: {
   items: SynaItem[];
-  selectedId: string | null;
   onSelect: (id: string) => void;
   userLat: number;
   userLng: number;
-}) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
-  const infoRef = useRef<any>(null);
-  const [mapReady, setMapReady] = useState(false);
+}) => (
+  <MapContainer
+    center={[userLat, userLng]}
+    zoom={14}
+    className="h-full w-full rounded-2xl overflow-hidden"
+    style={{ minHeight: "250px" }}
+    zoomControl={false}
+    attributionControl={false}
+  >
+    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+    <RecenterMap lat={userLat} lng={userLng} />
 
-  // Load Google Maps script
-  useEffect(() => {
-    if ((window as any).google?.maps) { setMapReady(true); return; }
-    const key = import.meta.env.VITE_GOOGLE_MAPS_KEY;
-    if (!key) return;
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=marker&v=weekly`;
-    script.async = true;
-    script.onload = () => setMapReady(true);
-    document.head.appendChild(script);
-  }, []);
+    {/* User position */}
+    <CircleMarker center={[userLat, userLng]} radius={8} pathOptions={{ color: "#4285F4", fillColor: "#4285F4", fillOpacity: 1, weight: 3 }} />
 
-  // Initialize map
-  useEffect(() => {
-    const g = (window as any).google;
-    if (!mapReady || !mapRef.current || mapInstanceRef.current || !g) return;
-    mapInstanceRef.current = new g.maps.Map(mapRef.current, {
-      center: { lat: userLat, lng: userLng },
-      zoom: 14,
-      disableDefaultUI: true,
-      zoomControl: true,
-      mapId: "synagogue-chooser",
-      styles: [
-        { featureType: "poi", stylers: [{ visibility: "off" }] },
-        { featureType: "transit", stylers: [{ visibility: "off" }] },
-      ],
-    });
-  }, [mapReady, userLat, userLng]);
-
-  // Place markers
-  useEffect(() => {
-    const g = (window as any).google;
-    const map = mapInstanceRef.current;
-    if (!map || !mapReady || !g) return;
-
-    // Clear old markers
-    markersRef.current.forEach(m => m.map = null);
-    markersRef.current = [];
-    if (!infoRef.current) infoRef.current = new g.maps.InfoWindow();
-
-    items.forEach(item => {
+    {/* Synagogue markers */}
+    {items.map(item => {
       const lat = item.source === "partner" ? item.latitude! : item.lat;
       const lng = item.source === "partner" ? item.longitude! : item.lon;
-      if (!lat || !lng) return;
-
-      const pin = document.createElement("div");
-      pin.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:hsl(40 80% 42%);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;cursor:pointer;"><span style="font-size:14px;">🕍</span></div>`;
-
-      const marker = new g.maps.marker.AdvancedMarkerElement({
-        map,
-        position: { lat, lng },
-        content: pin.firstElementChild as HTMLElement,
-        title: item.name,
-      });
-
-      marker.addListener("click", () => {
-        onSelect(item.id);
-        const next = item.source === "partner" ? getNextOffice(item) : null;
-        infoRef.current!.setContent(
-          `<div style="font-family:system-ui;padding:4px 0;">
-            <div style="font-weight:700;font-size:13px;">${item.name}</div>
-            ${next ? `<div style="font-size:11px;color:#666;margin-top:2px;">${next.label} · ${next.time}</div>` : ""}
-          </div>`
-        );
-        infoRef.current!.open(map, marker);
-      });
-
-      markersRef.current.push(marker);
-    });
-
-    // User position marker
-    const userPin = document.createElement("div");
-    userPin.innerHTML = `<div style="width:16px;height:16px;border-radius:50%;background:#4285F4;border:3px solid white;box-shadow:0 0 0 2px rgba(66,133,244,0.3);"></div>`;
-    new g.maps.marker.AdvancedMarkerElement({
-      map,
-      position: { lat: userLat, lng: userLng },
-      content: userPin.firstElementChild as HTMLElement,
-    });
-  }, [items, mapReady, userLat, userLng, onSelect]);
-
-  if (!import.meta.env.VITE_GOOGLE_MAPS_KEY) {
-    // Fallback: no map key
-    return (
-      <div className="h-full rounded-2xl bg-muted/40 flex items-center justify-center border border-border">
-        <div className="text-center p-6">
-          <MapPin className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
-          <p className="text-xs text-muted-foreground">Carte indisponible</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div ref={mapRef} className="h-full w-full rounded-2xl overflow-hidden border border-border" style={{ minHeight: "250px" }}>
-      {!mapReady && (
-        <div className="h-full flex items-center justify-center bg-muted/30">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
-      )}
-    </div>
-  );
-};
+      if (!lat || !lng) return null;
+      const next = item.source === "partner" ? getNextOffice(item) : null;
+      return (
+        <Marker key={item.id} position={[lat, lng]} icon={synagogueIcon} eventHandlers={{ click: () => onSelect(item.id) }}>
+          <Popup>
+            <div style={{ fontFamily: "system-ui", padding: "2px 0" }}>
+              <div style={{ fontWeight: 700, fontSize: "13px" }}>{item.name}</div>
+              {next && <div style={{ fontSize: "11px", color: "#666", marginTop: "2px" }}>{next.label} · {next.time}</div>}
+            </div>
+          </Popup>
+        </Marker>
+      );
+    })}
+  </MapContainer>
+);
 
 /* ── Main Component ── */
 interface Props {
@@ -221,12 +163,12 @@ const SynagogueChooser = ({ onSelect }: Props) => {
   const [filters, setFilters] = useState<FilterChip[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Data
   const [partners, setPartners] = useState<PartnerSyna[]>([]);
   const [externals, setExternals] = useState<ExternalSyna[]>([]);
   const [loading, setLoading] = useState(true);
-  const listRef = useRef<HTMLDivElement>(null);
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -234,7 +176,6 @@ const SynagogueChooser = ({ onSelect }: Props) => {
     const lat = city.lat;
     const lng = city.lng;
 
-    // Fetch DB partners
     const { data: allSynas } = await supabase
       .from("synagogue_profiles")
       .select("id, name, shacharit_time, minha_time, arvit_time, address, latitude, longitude, verified, updated_at")
@@ -242,17 +183,12 @@ const SynagogueChooser = ({ onSelect }: Props) => {
 
     const dbPartners: PartnerSyna[] = (allSynas || [])
       .filter((s: any) => s.latitude && s.longitude)
-      .map((s: any) => ({
-        ...s,
-        dist: haversine(lat, lng, s.latitude, s.longitude),
-        source: "partner" as const,
-      }))
+      .map((s: any) => ({ ...s, dist: haversine(lat, lng, s.latitude, s.longitude), source: "partner" as const }))
       .filter((s) => s.dist <= 15000)
       .sort((a, b) => a.dist - b.dist);
 
     setPartners(dbPartners);
 
-    // Fetch Google nearby
     try {
       const results = await fetchNearbySynagogues(lat, lng);
       const deduped = results
@@ -267,52 +203,25 @@ const SynagogueChooser = ({ onSelect }: Props) => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Combined + filtered list
   const allItems: SynaItem[] = useMemo(() => {
     let list: SynaItem[] = [...partners, ...externals];
-
-    // Search filter
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(s => s.name.toLowerCase().includes(q) || (s.address && s.address.toLowerCase().includes(q)));
     }
-
-    // Chip filters
-    if (filters.includes("proche")) {
-      list = list.filter(s => {
-        const d = s.source === "partner" ? s.dist : s.distance;
-        return d <= 2000;
-      });
-    }
-    if (filters.includes("verifie")) {
-      list = list.filter(s => s.source === "partner" && s.verified);
-    }
-    if (filters.includes("ouvert")) {
-      list = list.filter(s => s.source === "partner" && getNextOffice(s) !== null);
-    }
-
-    // Sort by distance
-    list.sort((a, b) => {
-      const da = a.source === "partner" ? a.dist : a.distance;
-      const db = b.source === "partner" ? b.dist : b.distance;
-      return da - db;
-    });
-
+    if (filters.includes("proche")) list = list.filter(s => (s.source === "partner" ? s.dist : s.distance) <= 2000);
+    if (filters.includes("verifie")) list = list.filter(s => s.source === "partner" && s.verified);
+    if (filters.includes("ouvert")) list = list.filter(s => s.source === "partner" && getNextOffice(s) !== null);
+    list.sort((a, b) => (a.source === "partner" ? a.dist : a.distance) - (b.source === "partner" ? b.dist : b.distance));
     return list;
   }, [partners, externals, search, filters]);
 
-  const toggleFilter = (f: FilterChip) => {
-    setFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
-  };
+  const toggleFilter = (f: FilterChip) => setFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
 
   const handleSubscribe = async (synaId: string) => {
     if (!user) { toast.error("Connectez-vous pour choisir une synagogue"); return; }
     setSubscribing(synaId);
-
-    // Unsubscribe from all first
     await supabase.from("synagogue_subscriptions").delete().eq("user_id", user.id);
-
-    // Subscribe to the new one
     await supabase.from("synagogue_subscriptions").insert({ user_id: user.id, synagogue_id: synaId } as any);
     toast.success("🏛️ Synagogue définie ! Bienvenue dans votre communauté.");
     setSubscribing(null);
@@ -333,7 +242,7 @@ const SynagogueChooser = ({ onSelect }: Props) => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-      {/* Search bar — sticky */}
+      {/* Search bar */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm pb-3 -mx-5 px-5 pt-1">
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
@@ -350,8 +259,6 @@ const SynagogueChooser = ({ onSelect }: Props) => {
             </button>
           )}
         </div>
-
-        {/* Filter chips */}
         <div className="flex gap-2 mt-2.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {chipData.map(c => (
             <button
@@ -379,20 +286,14 @@ const SynagogueChooser = ({ onSelect }: Props) => {
         </div>
       </div>
 
-      {/* Map — top half */}
-      <div className="h-[280px] rounded-2xl overflow-hidden">
+      {/* Map */}
+      <div className="h-[280px] rounded-2xl overflow-hidden border border-border">
         {loading ? (
           <div className="h-full rounded-2xl bg-muted/30 animate-pulse flex items-center justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground/40" />
           </div>
         ) : (
-          <MapView
-            items={allItems}
-            selectedId={selectedId}
-            onSelect={scrollToCard}
-            userLat={city.lat}
-            userLng={city.lng}
-          />
+          <MapView items={allItems} onSelect={scrollToCard} userLat={city.lat} userLng={city.lng} />
         )}
       </div>
 
@@ -401,13 +302,11 @@ const SynagogueChooser = ({ onSelect }: Props) => {
         <p className="text-xs text-muted-foreground">
           {loading ? "Recherche en cours..." : `${allItems.length} synagogue${allItems.length > 1 ? "s" : ""} trouvée${allItems.length > 1 ? "s" : ""}`}
         </p>
-        {city.name && (
-          <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">{city.name}</span>
-        )}
+        {city.name && <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">{city.name}</span>}
       </div>
 
-      {/* List — bottom half */}
-      <div ref={listRef} className="space-y-3 pb-4">
+      {/* List */}
+      <div className="space-y-3 pb-4">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
         ) : allItems.length === 0 ? (
@@ -423,6 +322,8 @@ const SynagogueChooser = ({ onSelect }: Props) => {
             const next = isPartner ? getNextOffice(item) : null;
             const fresh = isPartner ? freshnessBadge(item.updated_at) : null;
             const isSelected = selectedId === item.id;
+            const isEditing = editingId === item.id || editingId === `gm-${item.id}`;
+            const editKey = isPartner ? item.id : `gm-${item.id}`;
 
             return (
               <motion.div
@@ -431,44 +332,24 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                 layout
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`rounded-2xl border bg-card p-4 transition-all ${
-                  isSelected ? "border-primary/40 ring-2 ring-primary/10" : "border-border"
-                }`}
+                className={`rounded-2xl border bg-card p-4 transition-all ${isSelected ? "border-primary/40 ring-2 ring-primary/10" : "border-border"}`}
                 style={{ boxShadow: "var(--shadow-card)" }}
                 onClick={() => setSelectedId(item.id)}
               >
                 <div className="flex items-start gap-3">
-                  {/* Icon */}
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-base"
-                    style={{ background: "hsl(var(--gold) / 0.08)" }}
-                  >
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-base" style={{ background: "hsl(var(--gold) / 0.08)" }}>
                     🕍
                   </div>
-
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-bold text-foreground truncate">{item.name}</h4>
-                      {isPartner && item.verified && (
-                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "hsl(142 70% 45%)" }} />
-                      )}
-                      {isPartner && !item.verified && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">Non vérifié</span>
-                      )}
+                      {isPartner && item.verified && <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "hsl(142 70% 45%)" }} />}
+                      {isPartner && !item.verified && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">Non vérifié</span>}
                     </div>
-
-                    {/* Distance + address */}
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs font-semibold" style={{ color: "hsl(var(--gold-matte))" }}>
-                        {formatDistance(dist)}
-                      </span>
-                      {item.address && (
-                        <span className="text-[11px] text-muted-foreground truncate">· {item.address}</span>
-                      )}
+                      <span className="text-xs font-semibold" style={{ color: "hsl(var(--gold-matte))" }}>{formatDistance(dist)}</span>
+                      {item.address && <span className="text-[11px] text-muted-foreground truncate">· {item.address}</span>}
                     </div>
-
-                    {/* Freshness badge */}
                     {fresh && (
                       <div className="flex items-center gap-1 mt-1.5">
                         <div className="w-1.5 h-1.5 rounded-full" style={{ background: fresh.color }} />
@@ -476,9 +357,22 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                       </div>
                     )}
                   </div>
+
+                  {/* Edit button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setEditingId(isEditing ? null : editKey); }}
+                    className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center border cursor-pointer transition-all active:scale-95"
+                    style={{
+                      background: isEditing ? "hsl(var(--gold) / 0.12)" : "hsl(var(--muted) / 0.5)",
+                      borderColor: isEditing ? "hsl(var(--gold) / 0.3)" : "hsl(var(--border))",
+                    }}
+                    title="Modifier les horaires"
+                  >
+                    <Pencil className="w-3.5 h-3.5" style={{ color: isEditing ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))" }} />
+                  </button>
                 </div>
 
-                {/* Next office + Subscribe button */}
+                {/* Next office + Subscribe */}
                 <div className="mt-3 flex items-center justify-between gap-3">
                   {next ? (
                     <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: "hsl(var(--gold) / 0.04)" }}>
@@ -486,9 +380,7 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                       <span className="text-xs font-semibold text-foreground">{next.label}</span>
                       <span className="text-sm font-extrabold tabular-nums" style={{ color: "hsl(var(--gold-matte))" }}>{next.time}</span>
                     </div>
-                  ) : (
-                    <div />
-                  )}
+                  ) : <div />}
 
                   {isPartner && (
                     <button
@@ -497,14 +389,31 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                       className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all active:scale-95 text-primary-foreground shrink-0 disabled:opacity-50"
                       style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
                     >
-                      {subscribing === item.id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        "Ma Synagogue"
-                      )}
+                      {subscribing === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Ma Synagogue"}
                     </button>
                   )}
                 </div>
+
+                {/* Inline suggestion form */}
+                <AnimatePresence>
+                  {isEditing && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-3 overflow-hidden"
+                    >
+                      <PrayerTimeSuggestionForm
+                        synagogueId={isPartner ? item.id : undefined}
+                        synagogueName={item.name}
+                        placeId={!isPartner ? item.id : undefined}
+                        placeName={!isPartner ? item.name : undefined}
+                        onClose={() => setEditingId(null)}
+                        onSubmitted={() => fetchData()}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             );
           })
