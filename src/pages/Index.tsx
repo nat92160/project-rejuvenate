@@ -301,6 +301,7 @@ const IndexContent = () => {
       case "tehilimlibre":
       case "tehilim": return <Lazy><TehilimCombinedWidget /></Lazy>;
       case "synagogue": return <Lazy><FideleSynagogueView /></Lazy>;
+      case "chooser": return <Lazy><SynagogueChooser onSelect={() => setActiveTab("dashboard")} /></Lazy>;
       case "fetes": return <Lazy><FestivalCalendar /></Lazy>;
       case "convertisseur": return <Lazy><DateConverterWidget /></Lazy>;
       case "mizrah": return <Lazy><MizrahCompass /></Lazy>;
