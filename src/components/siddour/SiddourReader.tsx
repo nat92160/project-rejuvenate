@@ -181,7 +181,7 @@ const SiddourReader = ({
                   const isPrayerStart = i === prayerStartIdx;
                   return (
                     <span key={i} ref={isPrayerStart ? prayerStartRef : undefined}>
-                      {isFirstVerse ? (
+                      {isPrayerStart ? (
                         /* Lettrine / Drop-cap style for the first verse */
                         <span
                           style={{
