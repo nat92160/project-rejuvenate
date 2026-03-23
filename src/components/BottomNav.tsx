@@ -12,13 +12,6 @@ import {
   NAV_ITEMS,
   type BottomNavMode,
 } from "@/lib/navigation";
-  DEFAULT_BOTTOM_TABS_BY_MODE,
-  getAvailableTabs,
-  getBottomNavStorageKey,
-  sanitizeBottomTabs,
-  NAV_ITEMS,
-  type BottomNavMode,
-} from "@/lib/navigation";
 
 function isFridayOrShabbat(): boolean {
   const now = new Date();
