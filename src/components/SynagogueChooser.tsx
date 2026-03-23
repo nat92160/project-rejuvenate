@@ -6,9 +6,6 @@ import { useCity } from "@/hooks/useCity";
 import { fetchNearbySynagogues, formatDistance, type SynagogueResult } from "@/lib/synagogues";
 import { toast } from "sonner";
 import { MapPin, Search, X, Navigation, CheckCircle2, Clock, Loader2, Pencil } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import PrayerTimeSuggestionForm from "./PrayerTimeSuggestionForm";
 
 /* ── Types ── */
