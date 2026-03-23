@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 import HazakCelebration from "@/components/HazakCelebration";
 import { toHebrewLetter } from "@/lib/utils";
+import ViewModeSelector from "@/components/ViewModeSelector";
+import { useTransliteration, type ViewMode } from "@/hooks/useTransliteration";
 
 const TOTAL_PSALMS = 150;
 
