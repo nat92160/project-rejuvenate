@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
+import { useCity } from "@/hooks/useCity";
 import { MapPin } from "lucide-react";
 
 interface SynaInfo {
