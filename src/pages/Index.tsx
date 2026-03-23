@@ -79,6 +79,7 @@ const IndexContent = () => {
         return (
           <>
             <ContextualHomeWidget />
+            <OmerCounterWidget />
             <CountdownWidget />
             <ShabbatWidget />
             <ZmanimWidget />
