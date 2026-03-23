@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import MoreMenu from "./MoreMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { useCity } from "@/hooks/useCity";
-import { fetchShabbatTimes } from "@/lib/hebcal";
+import { fetchShabbatTimes, fetchZmanim } from "@/lib/hebcal";
 import {
   DEFAULT_BOTTOM_TABS_BY_MODE,
   getAvailableTabs,
