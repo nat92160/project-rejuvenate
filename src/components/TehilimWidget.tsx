@@ -775,6 +775,17 @@ const TehilimWidget = () => {
                 <button onClick={() => setShowCreateForm(true)} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer mb-4" style={{ background: "var(--gradient-gold)" }}>
                   ✨ Créer une chaîne de Tehilim
                 </button>
+
+                {/* Search bar */}
+                {chains.length > 0 && (
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="🔍 Rechercher une chaîne…"
+                    className="w-full px-4 py-2.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3"
+                  />
+                )}
+
                 {loadingChains ? (
                   <div className="text-center py-8"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" /></div>
                 ) : chains.length === 0 ? (
@@ -785,18 +796,32 @@ const TehilimWidget = () => {
                       Créez votre première chaîne ou attendez qu'une chaîne soit partagée.
                     </p>
                   </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    {chains.map(c => (
-                      <button key={c.id} onClick={() => setSelectedChain(c)} className="w-full p-4 rounded-xl border border-border bg-card hover:bg-muted/30 hover:border-primary/15 transition-all cursor-pointer text-left">
-                        <div className="flex items-center justify-between">
-                          <div><p className="text-sm font-bold text-foreground">{c.title}</p>{c.dedication && <p className="text-[11px] text-muted-foreground mt-0.5">{c.dedication}</p>}</div>
-                          <span className="text-xs text-muted-foreground">→</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                ) : (() => {
+                  const filtered = chains.filter(c =>
+                    c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (c.dedication && c.dedication.toLowerCase().includes(searchQuery.toLowerCase()))
+                  );
+                  return filtered.length === 0 ? (
+                    <p className="text-center text-sm text-muted-foreground py-6">Aucune chaîne trouvée pour « {searchQuery} »</p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {filtered.map(c => (
+                        <button key={c.id} onClick={() => setSelectedChain(c)} className="w-full p-4 rounded-xl border border-border bg-card hover:bg-muted/30 hover:border-primary/15 transition-all cursor-pointer text-left">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-bold text-foreground">{c.title}</p>
+                              {c.dedication && <p className="text-[11px] text-muted-foreground mt-0.5">{c.dedication}</p>}
+                              {c.dedication_type && DEDICATION_LABELS[c.dedication_type] && (
+                                <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{DEDICATION_LABELS[c.dedication_type]}</span>
+                              )}
+                            </div>
+                            <span className="text-xs text-muted-foreground">→</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </motion.div>
