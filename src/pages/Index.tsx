@@ -296,7 +296,7 @@ const IndexContent = () => {
             <p className="text-sm mt-2 text-muted-foreground">Bientôt disponible</p>
           </div>
         );
-      case "siddour": return <Lazy><SiddourWidget /></Lazy>;
+      case "siddour": return <Lazy><SiddourWidget initialOffice={currentPrayer === "Cha'harit" ? "shacharit" : currentPrayer === "Min'ha" ? "minha" : "arvit"} /></Lazy>;
       case "tehilimlibre":
       case "tehilim": return <Lazy><TehilimCombinedWidget /></Lazy>;
       case "synagogue": return <Lazy><FideleSynagogueView /></Lazy>;
