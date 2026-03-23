@@ -227,6 +227,18 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
         const daysLeft = Math.ceil((dt.getTime() - now.getTime()) / 86400000);
         if (daysLeft < -1) continue;
 
+        // Deduplicate: keep only the nearest occurrence per holiday name
+        const existingIdx = singles.findIndex(s => s.name === singleInfo.name);
+        if (existingIdx !== -1) {
+          // Keep the one closest to now (but still upcoming)
+          const existing = singles[existingIdx];
+          if (daysLeft >= 0 && (existing.daysLeft > daysLeft || existing.status === "termine")) {
+            singles.splice(existingIdx, 1); // Remove old, will add new below
+          } else {
+            continue; // Skip this duplicate
+          }
+        }
+
         // For fasts, include begin/end times in memo
         const isFast = singleInfo.category === "jeune";
         const fastBegin = fastBeginByDate[dateStr];
@@ -317,14 +329,27 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       });
     }
 
-    // Build Rosh Chodesh cards — take only the next 3
+    // Build Rosh Chodesh cards — deduplicate by month name, keep nearest upcoming
     const roshChodeshCards: FestivalCard[] = [];
-    for (const [monthName, rc] of Object.entries(roshChodeshMap)) {
+    const seenRCMonths = new Set<string>();
+    // Sort entries by earliest date to process nearest first
+    const rcEntries = Object.entries(roshChodeshMap).sort((a, b) => {
+      const dateA = a[1].dates.sort()[0] || "";
+      const dateB = b[1].dates.sort()[0] || "";
+      return dateA.localeCompare(dateB);
+    });
+
+    for (const [monthName, rc] of rcEntries) {
+      // Deduplicate: same Hebrew month name from different years
+      if (seenRCMonths.has(monthName)) continue;
+
       rc.dates.sort();
       const firstDate = rc.dates[0];
       const firstDt = new Date(firstDate + "T12:00:00");
       const daysLeft = Math.ceil((firstDt.getTime() - now.getTime()) / 86400000);
       if (daysLeft < -2) continue;
+
+      seenRCMonths.add(monthName);
 
       const days: FestivalDay[] = rc.dates.map(dateStr => {
         const dt = new Date(dateStr + "T12:00:00");
@@ -340,7 +365,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       });
 
       roshChodeshCards.push({
-        id: `roshchodesh-${monthName}`,
+        id: `roshchodesh-${monthName}-${firstDate}`,
         name: `Roch 'Hodech ${monthName}`,
         emoji: "🌙",
         hebrew: rc.hebrew,

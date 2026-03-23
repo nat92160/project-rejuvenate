@@ -57,7 +57,7 @@ const ShabbatSpeciauxWidget = () => {
         if (cancelled) return;
         const items = [...(d1.items || []), ...(d2.items || [])];
 
-        const results: SpecialShabbat[] = items
+        const allSpecial: SpecialShabbat[] = items
           .filter((item: any) => item.category === "holiday" && item.subcat === "shabbat")
           .map((item: any) => {
             const key = item.title.toLowerCase().trim();
@@ -75,8 +75,17 @@ const ShabbatSpeciauxWidget = () => {
             };
           })
           .filter((s: SpecialShabbat) => s.daysLeft >= -1)
-          .sort((a: SpecialShabbat, b: SpecialShabbat) => a.daysLeft - b.daysLeft)
-          .slice(0, 8);
+          .sort((a: SpecialShabbat, b: SpecialShabbat) => a.daysLeft - b.daysLeft);
+
+        // Deduplicate: keep only the nearest occurrence per Shabbat name
+        const seen = new Set<string>();
+        const results: SpecialShabbat[] = [];
+        for (const s of allSpecial) {
+          if (seen.has(s.title)) continue;
+          seen.add(s.title);
+          results.push(s);
+          if (results.length >= 8) break;
+        }
 
         setShabbatot(results);
         setLoading(false);
