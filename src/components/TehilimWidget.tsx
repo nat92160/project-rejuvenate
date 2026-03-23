@@ -222,7 +222,7 @@ const PsalmTile = ({
     <motion.button
       layout
       onClick={() => {
-        if (!claim) { onClaim(); return; }
+        if (!claim) { onSelect(); return; }
         if (isMine) { onSelect(); return; }
       }}
       onContextMenu={(e) => { e.preventDefault(); if (isMine && claim && !claim.completed) onUnclaim(); }}
@@ -500,11 +500,12 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
       <HazakCelebration show={showHazak} onDone={() => setShowHazak(false)} />
 
-      {/* Action bottom sheet for own psalms */}
+      {/* Action bottom sheet for psalms */}
       <AnimatePresence>
         {selectedPsalm !== null && (() => {
           const claim = claims.find(c => c.chapter_start === selectedPsalm && isOwnClaim(c));
-          if (!claim) { return null; }
+          const anyoneClaimed = claims.find(c => c.chapter_start === selectedPsalm);
+          const isFree = !anyoneClaimed;
           return (
             <>
               <motion.div
@@ -526,10 +527,27 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
                   Psaume {selectedPsalm} — {toHebrewLetter(selectedPsalm)}
                 </h3>
                 <p className="text-xs text-muted-foreground text-center mb-5">
-                  {claim.completed ? "Ce psaume est marqué comme lu" : "Que souhaitez-vous faire ?"}
+                  {isFree ? "Ce psaume est libre" : claim?.completed ? "Ce psaume est marqué comme lu" : "Que souhaitez-vous faire ?"}
                 </p>
                 <div className="space-y-2.5">
-                  {!claim.completed && (
+                  {isFree && (
+                    <>
+                      <button
+                        onClick={() => { claimPsalm(selectedPsalm); setSelectedPsalm(null); }}
+                        className="w-full py-3.5 rounded-xl text-sm font-bold border border-border bg-card text-foreground cursor-pointer"
+                      >
+                        📌 Réserver pour plus tard
+                      </button>
+                      <button
+                        onClick={() => { claimPsalm(selectedPsalm); setSelectedPsalm(null); setReadingChapter(selectedPsalm); }}
+                        className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                        style={{ background: "var(--gradient-gold)" }}
+                      >
+                        📖 Réserver et lire maintenant
+                      </button>
+                    </>
+                  )}
+                  {claim && !claim.completed && (
                     <button
                       onClick={() => { setSelectedPsalm(null); setReadingChapter(selectedPsalm); }}
                       className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
@@ -538,7 +556,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
                       📖 Lire maintenant
                     </button>
                   )}
-                  {!claim.completed && (
+                  {claim && !claim.completed && (
                     <button
                       onClick={() => { unclaimPsalm(claim); setSelectedPsalm(null); }}
                       className="w-full py-3.5 rounded-xl text-sm font-bold border border-destructive/30 bg-destructive/5 text-destructive cursor-pointer"
@@ -546,7 +564,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
                       🗑️ Annuler ma réservation
                     </button>
                   )}
-                  {claim.completed && (
+                  {claim?.completed && (
                     <button
                       onClick={() => { setSelectedPsalm(null); setReadingChapter(selectedPsalm); }}
                       className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
