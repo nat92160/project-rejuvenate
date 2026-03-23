@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CityProvider } from "@/hooks/useCity";
 import { RoleProvider, useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
-import HeroSection from "@/components/HeroSection";
+
 import AppHeader from "@/components/AppHeader";
 import DateHeader from "@/components/DateHeader";
 import InfoCarousel from "@/components/InfoCarousel";
@@ -45,7 +45,6 @@ import { usePendingRequests } from "@/hooks/usePendingRequests";
 import { useCity } from "@/hooks/useCity";
 
 const IndexContent = () => {
-  const [showDashboard, setShowDashboard] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
   const [prayerMode, setPrayerMode] = useState(false);
@@ -56,18 +55,8 @@ const IndexContent = () => {
 
   const isPresident = dbRole === "president";
 
-  const handleContinue = (selectedRole?: string) => {
-    if (selectedRole === "admin") {
-      setRole("guest");
-      setShowDashboard(true);
-      if (!user && !authLoading) setAuthOpen(true);
-      triggerAutoGeo();
-      return;
-    }
-    setRole(selectedRole === "fidele" ? "fidele" : "guest");
-    setShowDashboard(true);
-    triggerAutoGeo();
-  };
+  // Auto-trigger geolocation on mount
+  useEffect(() => { triggerAutoGeo(); }, []);
 
   const renderTabContent = () => {
     if (isPresident && activeTab === "dashboard") {
@@ -141,10 +130,7 @@ const IndexContent = () => {
 
   return (
     <>
-      {!showDashboard ? (
-        <HeroSection onContinue={handleContinue} />
-      ) : (
-        <div className="relative min-h-screen bg-background" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+      <div className="relative min-h-screen bg-background" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div className="max-w-[600px] mx-auto px-4 pb-24">
             {/* Top bar — no dark mode toggle */}
             <div className="flex justify-end items-center py-2.5">
@@ -238,7 +224,6 @@ const IndexContent = () => {
 
           <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
-      )}
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       <PrayerModeOverlay

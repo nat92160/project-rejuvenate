@@ -32,21 +32,25 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
   const [timeValue, setTimeValue] = useState("");
   const [timeRule, setTimeRule] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
+  const [guestName, setGuestName] = useState("");
   const handleSubmit = async () => {
-    if (!user) { toast.error("Connectez-vous pour proposer un horaire"); return; }
     if (mode === "fixed" && !timeValue) { toast.error("Saisissez une heure"); return; }
     if (mode === "rule" && !timeRule.trim()) { toast.error("Décrivez la règle horaire"); return; }
+    if (!user && !guestName.trim()) { toast.error("Saisissez votre nom"); return; }
 
     setSubmitting(true);
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name, first_name, last_name")
-      .eq("user_id", user.id)
-      .single();
-
-    const displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.display_name || "Utilisateur";
+    let displayName = "Invité";
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name, first_name, last_name")
+        .eq("user_id", user.id)
+        .single();
+      displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.display_name || "Utilisateur";
+    } else {
+      displayName = guestName.trim();
+    }
 
     const { error } = await (supabase as any)
       .from("prayer_time_suggestions")
@@ -54,8 +58,8 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
         synagogue_id: synagogueId || null,
         place_id: placeId || null,
         place_name: placeName || null,
-        user_id: user.id,
-        display_name: displayName,
+        user_id: user?.id || null,
+        display_name: `${displayName}${!user ? " (invité)" : ""}`,
         office_name: officeName,
         time_value: mode === "fixed" ? timeValue : null,
         time_rule: mode === "rule" ? timeRule.trim() : null,
@@ -89,6 +93,20 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
       </div>
 
       <p className="text-[11px] text-muted-foreground">Pour <strong>{synagogueName}</strong></p>
+
+      {/* Guest name input */}
+      {!user && (
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">Votre nom</label>
+          <input
+            type="text"
+            placeholder="Entrez votre nom…"
+            value={guestName}
+            onChange={(e) => setGuestName(e.target.value)}
+            className="block h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10 placeholder:text-muted-foreground/40"
+          />
+        </div>
+      )}
 
       {/* Office selection */}
       <div className="space-y-2">
