@@ -91,6 +91,86 @@ const PsalmReader = ({ chapter, onClose }: { chapter: number; onClose: () => voi
   );
 };
 
+// Chain Psalm Reader — opens psalm + mark as complete button
+const ChainPsalmReader = ({ chapter, claim, onClose, onMarkComplete }: {
+  chapter: number;
+  claim?: Claim;
+  onClose: () => void;
+  onMarkComplete: (claim: Claim) => void;
+}) => {
+  const [verses, setVerses] = useState<string[]>([]);
+  const [heTitle, setHeTitle] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [fontSize, setFontSize] = useState(24);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true); setError("");
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke("get-psalm", { body: { chapter } });
+        if (fnError || !data?.success) { setError("Impossible de charger ce psaume."); return; }
+        setVerses(data.verses); setHeTitle(data.heTitle);
+      } catch { setError("Erreur de connexion."); }
+      finally { setLoading(false); }
+    })();
+  }, [chapter]);
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-lg max-h-[85vh] rounded-2xl bg-card border border-border overflow-hidden flex flex-col"
+        style={{ boxShadow: "var(--shadow-card)" }} onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <div>
+            <h3 className="font-display text-lg font-bold text-foreground">📖 Psaume {chapter}</h3>
+            {heTitle && <p className="text-sm text-muted-foreground font-hebrew" dir="rtl">{heTitle}</p>}
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 cursor-pointer border-none">✕</button>
+        </div>
+
+        {/* Font size slider */}
+        <div className="px-4 py-2 border-b border-border flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">A-</span>
+          <input type="range" min={16} max={36} value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="flex-1 accent-primary" />
+          <span className="text-sm font-bold text-muted-foreground">A+</span>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-5 py-4" style={{ background: "#FEFEFE" }}>
+          {loading && <div className="text-center py-10"><div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" /><p className="text-sm text-muted-foreground mt-3">Chargement…</p></div>}
+          {error && <div className="text-center py-10"><p className="text-sm text-destructive">{error}</p></div>}
+          {!loading && !error && (
+            <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.4, textAlign: "justify", fontWeight: 600, color: "#111", wordSpacing: "0.06em" }}>
+              {verses.map((verse, i) => (
+                <span key={i}>
+                  <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
+                  <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Action bar */}
+        {claim && !claim.completed && (
+          <div className="p-4 border-t border-border">
+            <button
+              onClick={() => onMarkComplete(claim)}
+              className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer transition-all active:scale-[0.98]"
+              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", boxShadow: "0 4px 12px rgba(34,197,94,0.3)" }}
+            >
+              ✅ Marquer comme lu
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+};
 // Chain Create Form
 const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
   const { user } = useAuth();
@@ -125,7 +205,7 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
 
 // Psalm tile with name tooltip
 const PsalmTile = ({
-  num, claim, isMine, onClaim, onToggle, onUnclaim
+  num, claim, isMine, onClaim, onToggle, onUnclaim, onRead
 }: {
   num: number;
   claim: Claim | undefined;
@@ -133,6 +213,7 @@ const PsalmTile = ({
   onClaim: () => void;
   onToggle: () => void;
   onUnclaim: () => void;
+  onRead: () => void;
 }) => {
   const firstName = claim?.display_name?.split(" ")[0] || "";
 
@@ -140,9 +221,8 @@ const PsalmTile = ({
     <motion.button
       layout
       onClick={() => {
-        if (claim?.completed) return;
-        if (isMine && claim) { onToggle(); return; }
-        if (!claim) onClaim();
+        if (!claim) { onClaim(); return; }
+        if (isMine) { onRead(); return; }
       }}
       onContextMenu={(e) => { e.preventDefault(); if (isMine && claim && !claim.completed) onUnclaim(); }}
       disabled={!!claim && !isMine}
@@ -152,7 +232,7 @@ const PsalmTile = ({
         : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-primary/5"
       }`}
       style={isMine && claim && !claim.completed ? { background: "hsl(var(--gold) / 0.1)" } : {}}
-      title={claim ? `${claim.display_name}${claim.completed ? " ✅" : isMine ? " — clic long pour annuler" : ""}` : `Psaume ${num}`}
+      title={claim ? `${claim.display_name}${claim.completed ? " ✅" : isMine ? " — clic pour lire" : ""}` : `Psaume ${num}`}
       whileTap={{ scale: 0.92 }}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -179,6 +259,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
   const [pendingPsalm, setPendingPsalm] = useState<number | null>(null);
   const [showHazak, setShowHazak] = useState(false);
   const [prevCompletedCount, setPrevCompletedCount] = useState<number | null>(null);
+  const [readingChapter, setReadingChapter] = useState<number | null>(null);
 
   const fetchClaims = useCallback(async () => {
     const { data } = await supabase.from("tehilim_claims").select("*").eq("chain_id", chain.id).order("chapter_start");
@@ -380,9 +461,10 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
                   num={num}
                   claim={claim}
                   isMine={isMine}
-                  onClaim={() => claimPsalm(num)}
+                  onClaim={() => { claimPsalm(num); setReadingChapter(num); }}
                   onToggle={() => claim && toggleComplete(claim)}
                   onUnclaim={() => claim && unclaimPsalm(claim)}
+                  onRead={() => setReadingChapter(num)}
                 />
               );
             })}
@@ -413,6 +495,16 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
       <HazakCelebration show={showHazak} onDone={() => setShowHazak(false)} />
+      <AnimatePresence>
+        {readingChapter !== null && (
+          <ChainPsalmReader
+            chapter={readingChapter}
+            claim={claims.find(c => c.chapter_start === readingChapter && isOwnClaim(c))}
+            onClose={() => setReadingChapter(null)}
+            onMarkComplete={(claim) => { toggleComplete(claim); setReadingChapter(null); }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
