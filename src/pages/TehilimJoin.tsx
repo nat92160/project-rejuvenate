@@ -395,8 +395,8 @@ const TehilimJoinContent = () => {
               <motion.button
                 key={num}
                 onClick={() => {
-                  if (!claim) { claimPsalm(num); setReadingChapter(num); return; }
-                  if (isMine) { setReadingChapter(num); return; }
+                  if (!claim) { claimPsalm(num); return; }
+                  if (isMine) { setSelectedClaim(claim); return; }
                 }}
                 disabled={!!claim && !isMine}
                 className={`relative aspect-square rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer border overflow-hidden ${
@@ -415,7 +415,8 @@ const TehilimJoinContent = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.15, delay: num * 0.003 }}
               >
-                <span className="text-sm font-bold">{num}</span>
+                <span className="text-[11px] font-bold leading-none">{num}</span>
+                <span className="text-[8px] leading-none mt-0.5 font-hebrew text-muted-foreground" dir="rtl">{toHebrewLetter(num)}</span>
                 {claim && (
                   <span className="text-[6px] leading-tight truncate w-full text-center px-0.5 mt-0.5 font-medium" style={{ color: claim.completed ? "hsl(142 76% 36%)" : "hsl(var(--gold-matte))" }}>
                     {firstName}
@@ -434,7 +435,7 @@ const TehilimJoinContent = () => {
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500/15 inline-block" /> Terminé</span>
         </div>
         <p className="text-center text-[10px] text-muted-foreground mt-2">
-          💡 Cliquez sur un psaume libre pour le réserver, cliquez sur votre psaume pour le gérer
+          💡 Cliquez sur un psaume libre pour le réserver
         </p>
 
         <div className="text-center mt-8">
@@ -464,7 +465,7 @@ const TehilimJoinContent = () => {
                 <div className="w-10 h-1 rounded-full bg-border" />
               </div>
               <h3 className="font-display text-base font-bold text-foreground text-center mb-1">
-                Psaume {selectedClaim.chapter_start}
+                Psaume {selectedClaim.chapter_start} — {toHebrewLetter(selectedClaim.chapter_start)}
               </h3>
               <p className="text-xs text-muted-foreground text-center mb-5">
                 {selectedClaim.completed ? "Ce psaume est marqué comme lu" : "Que souhaitez-vous faire ?"}
@@ -472,11 +473,28 @@ const TehilimJoinContent = () => {
               <div className="space-y-2.5">
                 {!selectedClaim.completed && (
                   <button
-                    onClick={() => toggleComplete(selectedClaim)}
+                    onClick={() => { setReadingChapter(selectedClaim.chapter_start); setSelectedClaim(null); }}
                     className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
                     style={{ background: "var(--gradient-gold)" }}
                   >
+                    📖 Lire maintenant
+                  </button>
+                )}
+                {!selectedClaim.completed && (
+                  <button
+                    onClick={() => toggleComplete(selectedClaim)}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold border border-border bg-card text-foreground cursor-pointer"
+                  >
                     ✅ Marquer comme lu
+                  </button>
+                )}
+                {selectedClaim.completed && (
+                  <button
+                    onClick={() => { setReadingChapter(selectedClaim.chapter_start); setSelectedClaim(null); }}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                    style={{ background: "var(--gradient-gold)" }}
+                  >
+                    📖 Relire
                   </button>
                 )}
                 {selectedClaim.completed && (

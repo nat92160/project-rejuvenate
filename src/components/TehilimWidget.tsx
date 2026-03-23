@@ -205,7 +205,7 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
 
 // Psalm tile with name tooltip
 const PsalmTile = ({
-  num, claim, isMine, onClaim, onToggle, onUnclaim, onRead
+  num, claim, isMine, onClaim, onToggle, onUnclaim, onRead, onSelect
 }: {
   num: number;
   claim: Claim | undefined;
@@ -214,6 +214,7 @@ const PsalmTile = ({
   onToggle: () => void;
   onUnclaim: () => void;
   onRead: () => void;
+  onSelect: () => void;
 }) => {
   const firstName = claim?.display_name?.split(" ")[0] || "";
 
@@ -222,7 +223,7 @@ const PsalmTile = ({
       layout
       onClick={() => {
         if (!claim) { onClaim(); return; }
-        if (isMine) { onRead(); return; }
+        if (isMine) { onSelect(); return; }
       }}
       onContextMenu={(e) => { e.preventDefault(); if (isMine && claim && !claim.completed) onUnclaim(); }}
       disabled={!!claim && !isMine}
@@ -232,13 +233,14 @@ const PsalmTile = ({
         : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-primary/5"
       }`}
       style={isMine && claim && !claim.completed ? { background: "hsl(var(--gold) / 0.1)" } : {}}
-      title={claim ? `${claim.display_name}${claim.completed ? " ✅" : isMine ? " — clic pour lire" : ""}` : `Psaume ${num}`}
+      title={claim ? `${claim.display_name}${claim.completed ? " ✅" : isMine ? " — clic pour gérer" : ""}` : `Psaume ${num}`}
       whileTap={{ scale: 0.92 }}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.15, delay: num * 0.003 }}
     >
-      <span className="text-sm font-bold">{num}</span>
+      <span className="text-[11px] font-bold leading-none">{num}</span>
+      <span className="text-[8px] leading-none mt-0.5 font-hebrew text-muted-foreground" dir="rtl">{toHebrewLetter(num)}</span>
       {claim && (
         <span className="text-[6px] leading-tight truncate w-full text-center px-0.5 mt-0.5 font-medium" style={{ color: claim.completed ? "hsl(142 76% 36%)" : "hsl(var(--gold-matte))" }}>
           {firstName}
@@ -260,6 +262,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
   const [showHazak, setShowHazak] = useState(false);
   const [prevCompletedCount, setPrevCompletedCount] = useState<number | null>(null);
   const [readingChapter, setReadingChapter] = useState<number | null>(null);
+  const [selectedPsalm, setSelectedPsalm] = useState<number | null>(null);
 
   const fetchClaims = useCallback(async () => {
     const { data } = await supabase.from("tehilim_claims").select("*").eq("chain_id", chain.id).order("chapter_start");
@@ -461,10 +464,11 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
                   num={num}
                   claim={claim}
                   isMine={isMine}
-                  onClaim={() => { claimPsalm(num); setReadingChapter(num); }}
+                  onClaim={() => claimPsalm(num)}
                   onToggle={() => claim && toggleComplete(claim)}
                   onUnclaim={() => claim && unclaimPsalm(claim)}
                   onRead={() => setReadingChapter(num)}
+                  onSelect={() => setSelectedPsalm(num)}
                 />
               );
             })}
@@ -495,6 +499,75 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
 
       <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
       <HazakCelebration show={showHazak} onDone={() => setShowHazak(false)} />
+
+      {/* Action bottom sheet for own psalms */}
+      <AnimatePresence>
+        {selectedPsalm !== null && (() => {
+          const claim = claims.find(c => c.chapter_start === selectedPsalm && isOwnClaim(c));
+          if (!claim) { return null; }
+          return (
+            <>
+              <motion.div
+                className="fixed inset-0 z-[400]"
+                style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setSelectedPsalm(null)}
+              />
+              <motion.div
+                className="fixed bottom-0 left-0 right-0 z-[410] rounded-t-3xl bg-card p-6 border-t border-border"
+                style={{ paddingBottom: "calc(24px + env(safe-area-inset-bottom, 0px))", boxShadow: "var(--shadow-elevated)" }}
+                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              >
+                <div className="flex justify-center mb-4">
+                  <div className="w-10 h-1 rounded-full bg-border" />
+                </div>
+                <h3 className="font-display text-base font-bold text-foreground text-center mb-1">
+                  Psaume {selectedPsalm} — {toHebrewLetter(selectedPsalm)}
+                </h3>
+                <p className="text-xs text-muted-foreground text-center mb-5">
+                  {claim.completed ? "Ce psaume est marqué comme lu" : "Que souhaitez-vous faire ?"}
+                </p>
+                <div className="space-y-2.5">
+                  {!claim.completed && (
+                    <button
+                      onClick={() => { setSelectedPsalm(null); setReadingChapter(selectedPsalm); }}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                      style={{ background: "var(--gradient-gold)" }}
+                    >
+                      📖 Lire maintenant
+                    </button>
+                  )}
+                  {!claim.completed && (
+                    <button
+                      onClick={() => { unclaimPsalm(claim); setSelectedPsalm(null); }}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border border-destructive/30 bg-destructive/5 text-destructive cursor-pointer"
+                    >
+                      🗑️ Annuler ma réservation
+                    </button>
+                  )}
+                  {claim.completed && (
+                    <button
+                      onClick={() => { setSelectedPsalm(null); setReadingChapter(selectedPsalm); }}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                      style={{ background: "var(--gradient-gold)" }}
+                    >
+                      📖 Relire
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedPsalm(null)}
+                    className="w-full py-3 rounded-xl text-xs font-bold bg-muted text-muted-foreground border-none cursor-pointer"
+                  >
+                    ✕ Fermer
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          );
+        })()}
+      </AnimatePresence>
+
       <AnimatePresence>
         {readingChapter !== null && (
           <ChainPsalmReader
