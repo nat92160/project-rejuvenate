@@ -121,8 +121,8 @@ const SiddourWidget = ({ prayerMode = false }: SiddourWidgetProps) => {
         borderColor: pmBorder,
       }}>
         <span className="text-3xl">📖</span>
-        <h3 className="mt-2 font-display text-lg font-bold text-foreground">Siddour Complet</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Navigation libre — Hébreu & Traduction</p>
+        <h3 className="mt-2 font-display text-lg font-bold" style={{ color: pmText }}>Siddour Complet</h3>
+        <p className="mt-1 text-xs" style={{ color: pmMuted }}>Navigation libre — Hébreu & Traduction</p>
       </div>
 
       {/* Office selector — scrollable row */}
