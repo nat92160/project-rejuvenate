@@ -190,8 +190,8 @@ const SiddourWidget = ({ prayerMode = false }: SiddourWidgetProps) => {
                     {i + 1}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-display text-sm font-bold text-foreground">{sec.title}</p>
-                    <p className="text-xs text-muted-foreground" style={{ fontFamily: "'Frank Ruhl Libre', serif" }}>{sec.heTitle}</p>
+                    <p className="font-display text-sm font-bold" style={{ color: pmText }}>{sec.title}</p>
+                    <p className="text-xs" style={{ fontFamily: "'Frank Ruhl Libre', serif", color: pmMuted }}>{sec.heTitle}</p>
                   </div>
                   <span className="text-muted-foreground/50">›</span>
                 </motion.button>
