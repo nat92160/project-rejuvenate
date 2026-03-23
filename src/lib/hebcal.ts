@@ -141,6 +141,8 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
     });
 
     let candles = '', candlesDate = '', havdala = '', havdalaDate = '', parasha = '', parashaHe = '';
+    let candlesDateTime: Date | null = null;
+    let havdalaDateTime: Date | null = null;
 
     for (const ev of events) {
       const desc = ev.getDesc();
@@ -151,11 +153,13 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
         const eventTime: Date = (ev as any).eventTime || greg;
         candles = fmtZmanTime(eventTime);
         candlesDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+        candlesDateTime = eventTime;
       }
       if (desc.startsWith('Havdalah')) {
         const eventTime: Date = (ev as any).eventTime || greg;
         havdala = fmtZmanTime(eventTime);
         havdalaDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+        havdalaDateTime = eventTime;
       }
       if (f & flags.PARSHA_HASHAVUA) {
         const t = translateHoliday(desc);
@@ -167,8 +171,10 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
     return {
       candleLighting: candles,
       candleLightingDate: candlesDate,
+      candleLightingDateTime: candlesDateTime,
       havdalah: havdala,
       havdalahDate: havdalaDate,
+      havdalahDateTime: havdalaDateTime,
       parasha,
       parashaHebrew: parashaHe,
     };
