@@ -260,17 +260,43 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       }
     }
 
-    // Convert groups to cards
+    // Convert groups to cards — deduplicate: keep only ONE occurrence per group
+    // (the nearest upcoming, or current if in progress)
     const cards: FestivalCard[] = [];
 
-    for (const [groupId, days] of Object.entries(groups)) {
+    for (const [groupId, allDays] of Object.entries(groups)) {
       const info = GROUP_NAMES[groupId];
-      if (!info || days.length === 0) continue;
+      if (!info || allDays.length === 0) continue;
 
-      days.sort((a, b) => a.date.localeCompare(b.date));
+      allDays.sort((a, b) => a.date.localeCompare(b.date));
 
-      const firstDate = days[0].date;
-      const lastDate = days[days.length - 1].date;
+      // Split days by year to avoid mixing Pessah 2026 + 2027
+      const byYear: Record<number, FestivalDay[]> = {};
+      for (const day of allDays) {
+        const y = new Date(day.date + "T12:00:00").getFullYear();
+        if (!byYear[y]) byYear[y] = [];
+        byYear[y].push(day);
+      }
+
+      // Pick the best year: prefer current/upcoming over past
+      const nowStr = now.toISOString().split("T")[0];
+      let bestDays: FestivalDay[] | null = null;
+
+      for (const y of Object.keys(byYear).map(Number).sort()) {
+        const yearDays = byYear[y];
+        const lastDate = yearDays[yearDays.length - 1].date;
+        // Skip if entirely in the past (more than 2 days ago)
+        if (lastDate < nowStr && Math.ceil((now.getTime() - new Date(lastDate + "T23:59:59").getTime()) / 86400000) > 2) {
+          continue;
+        }
+        bestDays = yearDays;
+        break; // Take the first (nearest) valid year
+      }
+
+      if (!bestDays || bestDays.length === 0) continue;
+
+      const firstDate = bestDays[0].date;
+      const lastDate = bestDays[bestDays.length - 1].date;
       const firstDt = new Date(firstDate + "T12:00:00");
       const daysLeft = Math.ceil((firstDt.getTime() - now.getTime()) / 86400000);
 
@@ -285,9 +311,9 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
         hebrew: info.hebrew,
         dateRange,
         daysLeft: Math.max(0, daysLeft),
-        status: getStatus(days, now),
+        status: getStatus(bestDays, now),
         category: "yomtov",
-        days,
+        days: bestDays,
       });
     }
 
