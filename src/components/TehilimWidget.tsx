@@ -464,10 +464,11 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
                   num={num}
                   claim={claim}
                   isMine={isMine}
-                  onClaim={() => { claimPsalm(num); setReadingChapter(num); }}
+                  onClaim={() => claimPsalm(num)}
                   onToggle={() => claim && toggleComplete(claim)}
                   onUnclaim={() => claim && unclaimPsalm(claim)}
                   onRead={() => setReadingChapter(num)}
+                  onSelect={() => setSelectedPsalm(num)}
                 />
               );
             })}
