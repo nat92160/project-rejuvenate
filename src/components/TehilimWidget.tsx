@@ -229,14 +229,36 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
   const [dedication, setDedication] = useState("");
   const [dedicationType, setDedicationType] = useState("general");
   const [creating, setCreating] = useState(false);
+  const [guestPromptOpen, setGuestPromptOpen] = useState(false);
 
-  const handleCreate = async () => {
-    if (!user) { toast.error("Connectez-vous pour créer une chaîne"); return; }
+  const doCreate = async (creatorId: string) => {
     setCreating(true);
-    const { error } = await supabase.from("tehilim_chains").insert({ creator_id: user.id, synagogue_id: synagogueId, title, dedication: dedication || null, dedication_type: dedicationType });
-    if (error) { toast.error("Erreur: vérifiez que vous avez le rôle Président."); }
+    const { error } = await supabase.from("tehilim_chains").insert({
+      creator_id: creatorId,
+      synagogue_id: synagogueId || null,
+      title,
+      dedication: dedication || null,
+      dedication_type: dedicationType,
+    });
+    if (error) { toast.error("Erreur lors de la création."); console.error(error); }
     else { toast.success("✅ Chaîne de Tehilim créée !"); }
     setCreating(false); onCreated();
+  };
+
+  const handleCreate = async () => {
+    if (user) {
+      await doCreate(user.id);
+    } else {
+      const guestName = getGuestName();
+      if (!guestName) { setGuestPromptOpen(true); return; }
+      // Use a deterministic guest UUID based on name for creator_id
+      await doCreate("00000000-0000-0000-0000-000000000000");
+    }
+  };
+
+  const handleGuestNameSubmit = async () => {
+    setGuestPromptOpen(false);
+    await doCreate("00000000-0000-0000-0000-000000000000");
   };
 
   return (
@@ -249,6 +271,7 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
       <button onClick={handleCreate} disabled={creating || !title.trim()} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50" style={{ background: "var(--gradient-gold)" }}>
         {creating ? "Création…" : "🔗 Créer la chaîne"}
       </button>
+      <GuestNamePrompt open={guestPromptOpen} onSubmit={handleGuestNameSubmit} onClose={() => setGuestPromptOpen(false)} />
     </div>
   );
 };
