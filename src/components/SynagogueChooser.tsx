@@ -365,36 +365,50 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                   )}
                 </div>
 
-                {/* Edit horaires button — prominent textual CTA */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); setEditingId(isEditing ? null : editKey); }}
-                  className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold border cursor-pointer transition-all active:scale-[0.98] hover:shadow-md"
-                  style={
-                    isMySyna
-                      ? {
-                          background: "hsl(var(--gold) / 0.1)",
-                          borderColor: "hsl(var(--gold) / 0.3)",
-                          color: "hsl(var(--gold-matte))",
-                        }
-                      : isStale
-                        ? {
-                            background: "hsl(25 95% 53% / 0.08)",
-                            borderColor: "hsl(25 95% 53% / 0.3)",
-                            color: "hsl(25 95% 53%)",
-                          }
-                        : {
-                            background: "transparent",
-                            borderColor: "hsl(var(--border))",
-                            color: "hsl(var(--muted-foreground))",
-                          }
-                  }
-                >
-                  {isMySyna
-                    ? "🏛️ Mettre à jour ma synagogue"
-                    : isStale
-                      ? "⚠️ Vérifier cet horaire"
-                      : "🕒 Modifier les horaires"}
-                </button>
+                {/* Edit horaires button */}
+                {confirmedIds.has(editKey) ? (
+                  <div className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold"
+                    style={{ background: "hsl(142 70% 45% / 0.08)", color: "hsl(142 70% 40%)", border: "1px solid hsl(142 70% 45% / 0.2)" }}>
+                    ✅ Confirmé par vous aujourd'hui ✨
+                  </div>
+                ) : (
+                  <div className="mt-3 space-y-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingId(isEditing ? null : editKey); }}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold border cursor-pointer transition-all active:scale-[0.98] hover:shadow-md"
+                      style={
+                        isMySyna
+                          ? {
+                              background: "hsl(var(--gold) / 0.1)",
+                              borderColor: "hsl(var(--gold) / 0.3)",
+                              color: "hsl(var(--gold-matte))",
+                            }
+                          : isStale
+                            ? {
+                                background: "hsl(var(--gold) / 0.06)",
+                                borderColor: "hsl(var(--gold) / 0.2)",
+                                color: "hsl(var(--gold-matte))",
+                              }
+                            : {
+                                background: "transparent",
+                                borderColor: "hsl(var(--border))",
+                                color: "hsl(var(--muted-foreground))",
+                              }
+                      }
+                    >
+                      {isMySyna
+                        ? "🏛️ Mettre à jour ma synagogue"
+                        : isStale && next
+                          ? `👥 Est-ce toujours à ${next.time} ?`
+                          : isStale
+                            ? "👥 Confirmer l'horaire pour la communauté"
+                            : "🤍 Aider à mettre à jour"}
+                    </button>
+                    {isStale && (
+                      <p className="text-[9px] text-center text-muted-foreground/60">⭐ Gagnez des points contributeur en confirmant</p>
+                    )}
+                  </div>
+                )}
 
                 {/* Inline suggestion form */}
                 <AnimatePresence>
