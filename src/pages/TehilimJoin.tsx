@@ -339,8 +339,8 @@ const TehilimJoinContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-[500px] mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background pb-safe">
+      <div className="max-w-[500px] mx-auto px-3 sm:px-4 py-6 sm:py-8">
         <div className="text-center mb-6">
           <h1 className="font-display text-2xl font-bold text-foreground">📖 Chaîne de Tehilim</h1>
           <p className="text-sm text-muted-foreground mt-1">Choisissez un ou plusieurs psaumes à lire</p>
