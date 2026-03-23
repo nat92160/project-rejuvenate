@@ -13,7 +13,7 @@ import SynaProfileManager from "./SynaProfileManager";
 import ChatManagement from "./ChatManagement";
 import AdjointManager from "./AdjointManager";
 import AlerteCommunautaireWidget from "./AlerteCommunautaireWidget";
-import MariagesCalendarWidget from "./MariagesCalendarWidget";
+import MariagesWidget from "./MariagesWidget";
 
 
 const features = [
@@ -159,7 +159,7 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
       case "minyan": return <MinyanLiveWidget />;
       case "evenements": return <EvenementsWidget />;
       case "cours": return <CoursVirtuelWidget />;
-      case "calendrier-mariages": return <MariagesCalendarWidget />;
+      case "calendrier-mariages": return <MariagesWidget />;
       case "stats": return <StatsDashboard />;
       default: return null;
     }

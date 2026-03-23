@@ -33,7 +33,7 @@ import PrayerTimesWidget from "@/components/PrayerTimesWidget";
 import SiddourWidget from "@/components/SiddourWidget";
 import EspacePersonnelWidget from "@/components/EspacePersonnelWidget";
 import AlerteCommunautaireWidget from "@/components/AlerteCommunautaireWidget";
-import MariagesCalendarWidget from "@/components/MariagesCalendarWidget";
+
 import BrakhotWidget from "@/components/BrakhotWidget";
 import ContextualHomeWidget from "@/components/ContextualHomeWidget";
 import PrayerModeOverlay from "@/components/PrayerModeOverlay";
@@ -117,7 +117,7 @@ const IndexContent = () => {
       case "shabbatspec": return <ShabbatSpeciauxWidget />;
       case "perso": return <EspacePersonnelWidget />;
       case "alerte": return <AlerteCommunautaireWidget />;
-      case "calendrier-mariages": return <MariagesCalendarWidget />;
+      
       case "brakhot": return <BrakhotWidget />;
       case "communaute":
         return (
