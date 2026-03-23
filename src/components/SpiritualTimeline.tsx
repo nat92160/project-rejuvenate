@@ -26,7 +26,7 @@ const SpiritualTimeline = () => {
   const progress = Math.max(0, Math.min(100, ((currentDecimal - dayStart) / range) * 100));
 
   return (
-    <div className="mb-8 px-1">
+    <div className="mb-8 px-1 py-3">
       <div className="text-[9px] uppercase tracking-[2.5px] text-muted-foreground/50 font-medium mb-3">
         Journée spirituelle
       </div>
