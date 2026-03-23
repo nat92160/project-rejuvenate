@@ -280,11 +280,11 @@ const FideleSynagogueView = () => {
   const subscribedSynas = directory.filter(d => d.isSubscribed);
 
   const tabs = [
-    { id: "annuaire" as const, icon: "📋", label: "Annuaire", count: directory.length },
-    { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
     { id: "synagogues" as const, icon: "🕍", label: "Proches", count: totalNearbyCount },
+    { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
     { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
     { id: "tehilim" as const, icon: "📜", label: "Tehilim", count: tehilimChains.length },
+    { id: "annuaire" as const, icon: "📋", label: "Annuaire", count: directory.length },
     { id: "minyan" as const, icon: "🚨", label: "Urgence", count: minyans.length },
     { id: "events" as const, icon: "📅", label: "Événements", count: events.length },
     { id: "annonces" as const, icon: "📢", label: "Annonces", count: annonces.length },
