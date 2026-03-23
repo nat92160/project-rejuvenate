@@ -198,6 +198,19 @@ const IndexContent = () => {
             <InfoCarousel />
             <CitySelector />
 
+            {/* Prayer mode button */}
+            <button
+              onClick={() => setPrayerMode(true)}
+              className="w-full mb-4 py-3 rounded-xl text-sm font-bold border cursor-pointer transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              style={{
+                background: "hsl(var(--card))",
+                borderColor: "hsl(var(--border))",
+                color: "hsl(var(--foreground))",
+              }}
+            >
+              🙏 Mode Prière
+            </button>
+
             {renderTabContent()}
 
             {/* Connexion button — only for non-logged users, not labeled "admin" */}
