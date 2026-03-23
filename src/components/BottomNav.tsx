@@ -200,6 +200,11 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                 >
                   {tab.label}
                 </span>
+                {microInfo[tab.id] && !isActive && (
+                  <span className="text-[7px] font-medium truncate max-w-full px-1" style={{ color: "hsl(var(--gold-matte))" }}>
+                    {microInfo[tab.id]}
+                  </span>
+                )}
               </button>
             );
           })}
