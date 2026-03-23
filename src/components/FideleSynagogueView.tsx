@@ -495,14 +495,12 @@ const FideleSynagogueView = () => {
                               📞 Appeler
                             </a>
                           )}
-                          {user && (
-                            <button
-                              onClick={() => setSuggestingSynaId(suggestingSynaId === syna.id ? null : syna.id)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary cursor-pointer transition-all active:scale-95 hover:bg-primary/10"
-                            >
-                              📝 Modifier les offices
-                            </button>
-                          )}
+                          <button
+                            onClick={() => setSuggestingSynaId(suggestingSynaId === syna.id ? null : syna.id)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary cursor-pointer transition-all active:scale-95 hover:bg-primary/10"
+                          >
+                            📝 Proposer des horaires
+                          </button>
                         </div>
                         {suggestingSynaId === syna.id && (
                           <div className="mt-3">
@@ -563,14 +561,12 @@ const FideleSynagogueView = () => {
                             📞 Appeler
                           </a>
                         )}
-                        {user && (
-                          <button
-                            onClick={() => setSuggestingSynaId(suggestingSynaId === `gm-${gr.id}` ? null : `gm-${gr.id}`)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary cursor-pointer transition-all active:scale-95 hover:bg-primary/10"
-                          >
-                            📝 Modifier les offices
-                          </button>
-                        )}
+                        <button
+                          onClick={() => setSuggestingSynaId(suggestingSynaId === `gm-${gr.id}` ? null : `gm-${gr.id}`)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary cursor-pointer transition-all active:scale-95 hover:bg-primary/10"
+                        >
+                          📝 Proposer des horaires
+                        </button>
                       </div>
                       {suggestingSynaId === `gm-${gr.id}` && (
                         <div className="mt-3">
