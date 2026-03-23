@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
 import { getAvailableTabs, type BottomNavMode } from "@/lib/navigation";
+import { clearAllCaches } from "@/lib/cacheUtils";
+import { toast } from "sonner";
 import AuthModal from "@/components/AuthModal";
 
 interface MoreMenuProps {
