@@ -33,7 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "horaires", icon: "🕐", label: "Horaires", modes: ["president"] },
   { id: "infosyna", icon: "🏛️", label: "Infos Syna", modes: ["president"] },
   { id: "alerte", icon: "📡", label: "Alerte", modes: ["president"] },
-  { id: "calendrier-mariages", icon: "📅", label: "Cal. Mariages", modes: ["president"] },
+  { id: "calendrier-mariages", icon: "📅", label: "Cal. Mariages", modes: ["fidele", "president"] },
 ];
 
 export const DEFAULT_BOTTOM_TABS_BY_MODE: Record<BottomNavMode, string[]> = {
