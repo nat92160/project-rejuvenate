@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import PrayerTimeSuggestionsAdmin from "@/components/PrayerTimeSuggestionsAdmin";
 
 interface PresidentRequest {
   id: string;
