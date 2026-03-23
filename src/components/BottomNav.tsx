@@ -158,7 +158,7 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 flex items-stretch glass"
         style={{
-          height: "72px",
+          height: "76px",
           borderTop: "1px solid hsl(var(--border))",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
