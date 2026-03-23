@@ -45,7 +45,6 @@ import { usePendingRequests } from "@/hooks/usePendingRequests";
 import { useCity } from "@/hooks/useCity";
 
 const IndexContent = () => {
-  const [showDashboard, setShowDashboard] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
   const [prayerMode, setPrayerMode] = useState(false);
