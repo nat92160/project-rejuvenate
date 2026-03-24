@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Megaphone, Bell, Users, BarChart3,
   Settings, MessageSquare, Award, Building2, Calendar,
   BookOpen, Image, Heart as HeartIcon, Droplets, ChevronLeft,
-  Menu, X, GraduationCap, Gem
+  Menu, X, GraduationCap, Gem, Home
 } from "lucide-react";
 
 // Lazy components
@@ -24,6 +24,7 @@ const AlerteCommunautaireWidget = lazy(() => import("./AlerteCommunautaireWidget
 const MariagesWidget = lazy(() => import("./MariagesWidget"));
 const MikveManager = lazy(() => import("./president/MikveManager"));
 const DonsManager = lazy(() => import("./president/DonsManager"));
+const TehilimCombinedWidget = lazy(() => import("./TehilimCombinedWidget"));
 
 const Lazy = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<div className="flex justify-center py-8"><div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}>
@@ -37,6 +38,7 @@ const pilotageItems = [
   { id: "annonces", icon: Megaphone, label: "Annonces" },
   { id: "alerte", icon: Bell, label: "Alerte Push" },
   { id: "minyan", icon: Users, label: "Urgence Minyan" },
+  { id: "tehilim", icon: BookOpen, label: "Tehilim" },
 ];
 
 const servicesItems = [
@@ -119,9 +121,10 @@ const SidebarItem = ({ item, active, onClick, badge }: { item: typeof pilotageIt
 /* ─── Main Dashboard ─── */
 interface PresidentDashboardProps {
   onLoginClick?: () => void;
+  onSwitchToFidele?: () => void;
 }
 
-const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
+const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboardProps) => {
   const { user, dbRole } = useAuth();
   const [activeFeature, setActiveFeature] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -157,6 +160,7 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
       case "calendrier-mariages": return <Lazy><MariagesWidget /></Lazy>;
       case "mikve": return <Lazy><MikveManager /></Lazy>;
       case "dons": return <Lazy><DonsManager /></Lazy>;
+      case "tehilim": return <Lazy><TehilimCombinedWidget /></Lazy>;
       case "stats": return <StatsDashboard />;
       default: return <StatsDashboard />;
     }
@@ -187,6 +191,17 @@ const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
 
   const sidebarContent = (
     <nav className="space-y-5 p-4">
+      {/* Return to Fidele view */}
+      {onSwitchToFidele && (
+        <button
+          onClick={() => { onSwitchToFidele(); setSidebarOpen(false); }}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-primary cursor-pointer border-none transition-all hover:bg-primary/5"
+          style={{ background: "hsl(var(--primary) / 0.04)" }}
+        >
+          <Home className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+          <span>Retour vue Fidèle</span>
+        </button>
+      )}
       <div>
         <p className="text-[10px] uppercase tracking-[2px] font-semibold text-muted-foreground mb-2 px-3">Actions urgentes</p>
         {pilotageItems.map(item => (

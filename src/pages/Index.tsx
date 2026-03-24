@@ -48,6 +48,7 @@ const AlerteCommunautaireWidget = lazy(() => import("@/components/AlerteCommunau
 const BrakhotWidget = lazy(() => import("@/components/BrakhotWidget"));
 const InfoCarousel = lazy(() => import("@/components/InfoCarousel"));
 const MikveInfoView = lazy(() => import("@/components/MikveInfoView"));
+const CitySelector = lazy(() => import("@/components/CitySelector"));
 
 const Lazy = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<div className="flex justify-center py-12"><div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}>
@@ -228,6 +229,7 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
 
   return (
     <>
+      <Lazy><CitySelector /></Lazy>
       <MySynagogueCard onNavigate={setActiveTab} />
       <ShabbatCountdownBanner />
 
@@ -312,12 +314,15 @@ const IndexContent = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const isPresidentDashboard = isPresident && activeTab === "dashboard";
+
   const renderTabContent = () => {
-    if (isPresident && activeTab === "dashboard") {
-      return <Lazy><PresidentDashboard onLoginClick={() => setAuthOpen(true)} /></Lazy>;
+    if (isPresidentDashboard) {
+      return <Lazy><PresidentDashboard onLoginClick={() => setAuthOpen(true)} onSwitchToFidele={() => setActiveTab("fidele-home")} /></Lazy>;
     }
 
     switch (activeTab) {
+      case "fidele-home":
       case "dashboard":
         return (
           <DashboardHome setActiveTab={setActiveTab} />
@@ -378,7 +383,7 @@ const IndexContent = () => {
   return (
     <>
       <div className="relative min-h-screen bg-background" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-        <div className="max-w-[600px] mx-auto px-5 pb-24">
+        <div className={`max-w-[600px] mx-auto px-5 ${isPresidentDashboard ? "pb-6" : "pb-24"}`}>
           {/* Ultra-thin header bar */}
           <HeaderBar
             onLogoClick={goHome}
@@ -430,7 +435,7 @@ const IndexContent = () => {
         )}
       </div>
 
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      {!isPresidentDashboard && <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />}
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </>
