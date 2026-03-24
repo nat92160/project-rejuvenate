@@ -355,6 +355,7 @@ const IndexContent = () => {
       case "perso": return <Lazy><EspacePersonnelWidget /></Lazy>;
       case "alerte": return <Lazy><AlerteCommunautaireWidget /></Lazy>;
       case "brakhot": return <Lazy><BrakhotWidget /></Lazy>;
+      case "mikve-info": return <Lazy><MikveInfoView /></Lazy>;
       case "communaute":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
