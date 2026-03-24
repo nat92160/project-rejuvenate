@@ -112,8 +112,10 @@ export type Database = {
         Row: {
           amount: number
           cerfa_generated: boolean
+          cerfa_token: string | null
           cerfa_url: string | null
           created_at: string
+          donor_address: string
           donor_email: string
           donor_name: string
           id: string
@@ -124,8 +126,10 @@ export type Database = {
         Insert: {
           amount: number
           cerfa_generated?: boolean
+          cerfa_token?: string | null
           cerfa_url?: string | null
           created_at?: string
+          donor_address?: string
           donor_email: string
           donor_name?: string
           id?: string
@@ -136,8 +140,10 @@ export type Database = {
         Update: {
           amount?: number
           cerfa_generated?: boolean
+          cerfa_token?: string | null
           cerfa_url?: string | null
           created_at?: string
+          donor_address?: string
           donor_email?: string
           donor_name?: string
           id?: string

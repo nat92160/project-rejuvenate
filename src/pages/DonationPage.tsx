@@ -25,6 +25,9 @@ const DonationPage = () => {
   const [isCustom, setIsCustom] = useState(false);
   const [donorName, setDonorName] = useState("");
   const [donorEmail, setDonorEmail] = useState("");
+  const [donorAddress, setDonorAddress] = useState("");
+  const [donorCity, setDonorCity] = useState("");
+  const [donorPostal, setDonorPostal] = useState("");
 
   useEffect(() => {
     if (!slug) return;
@@ -67,10 +70,14 @@ const DonationPage = () => {
       toast.error("Veuillez renseigner votre email");
       return;
     }
+    if (!donorAddress || !donorCity || !donorPostal) {
+      toast.error("L'adresse complète est obligatoire pour le reçu fiscal");
+      return;
+    }
 
     setSubmitting(true);
     const { data, error } = await supabase.functions.invoke("create-donation-checkout", {
-      body: { slug, amount, donor_name: donorName, donor_email: donorEmail },
+      body: { slug, amount, donor_name: donorName, donor_email: donorEmail, donor_address: `${donorAddress}, ${donorPostal} ${donorCity}` },
     });
 
     if (error || data?.error) {
@@ -214,6 +221,35 @@ const DonationPage = () => {
                 <p className="text-[10px] text-muted-foreground mt-1">
                   Pour recevoir votre reçu fiscal (CERFA)
                 </p>
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Adresse postale *</Label>
+                <Input
+                  placeholder="12 rue de la Paix"
+                  value={donorAddress}
+                  onChange={(e) => setDonorAddress(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs font-semibold">Code postal *</Label>
+                  <Input
+                    placeholder="75001"
+                    value={donorPostal}
+                    onChange={(e) => setDonorPostal(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Ville *</Label>
+                  <Input
+                    placeholder="Paris"
+                    value={donorCity}
+                    onChange={(e) => setDonorCity(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
             </div>
 

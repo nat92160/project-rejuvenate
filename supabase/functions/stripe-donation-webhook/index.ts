@@ -37,6 +37,7 @@ serve(async (req) => {
       const synagogueId = session.metadata?.synagogue_id;
       const donorName = session.metadata?.donor_name || "";
       const donorEmail = session.metadata?.donor_email || session.customer_email || "";
+      const donorAddress = session.metadata?.donor_address || "";
       const amount = session.amount_total || 0;
 
       if (!synagogueId) {
@@ -51,22 +52,64 @@ serve(async (req) => {
       );
 
       // Store the donation
-      const { error: insertError } = await supabaseAdmin
+      const { data: insertedDonation, error: insertError } = await supabaseAdmin
         .from("donations")
         .insert({
           synagogue_id: synagogueId,
           amount,
           donor_email: donorEmail,
           donor_name: donorName,
+          donor_address: donorAddress,
           stripe_payment_id: session.payment_intent as string || null,
           stripe_checkout_session_id: session.id,
           cerfa_generated: false,
-        });
+        })
+        .select("id, cerfa_token")
+        .single();
 
       if (insertError) {
         console.error("Error inserting donation:", insertError);
       } else {
         console.log(`Donation recorded: ${amount / 100}€ for synagogue ${synagogueId}`);
+        
+        // Get synagogue info for CERFA
+        const { data: synaInfo } = await supabaseAdmin
+          .from("synagogue_profiles")
+          .select("name, address, president_first_name, president_last_name, logo_url, signature")
+          .eq("id", synagogueId)
+          .single();
+        
+        // Generate CERFA PDF link (accessible via token)
+        if (insertedDonation) {
+          const cerfaUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-cerfa?token=${insertedDonation.cerfa_token}`;
+          
+          // Update donation with cerfa URL
+          await supabaseAdmin
+            .from("donations")
+            .update({ cerfa_url: cerfaUrl, cerfa_generated: true })
+            .eq("id", insertedDonation.id);
+
+          // Send CERFA email via send-cerfa-email function
+          try {
+            const emailRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-cerfa-email`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({
+                donor_email: donorEmail,
+                donor_name: donorName,
+                amount,
+                synagogue_name: synaInfo?.name || "la synagogue",
+                cerfa_url: cerfaUrl,
+              }),
+            });
+            console.log("CERFA email sent:", emailRes.status);
+          } catch (emailErr) {
+            console.error("Failed to send CERFA email:", emailErr);
+          }
+        }
       }
     }
 
