@@ -284,7 +284,7 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
   );
 };
 
-
+const IndexContent = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
 
