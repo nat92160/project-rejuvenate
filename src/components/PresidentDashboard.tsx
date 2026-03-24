@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Megaphone, Bell, Users, BarChart3,
   Settings, MessageSquare, Award, Building2, Calendar,
   BookOpen, Image, Heart as HeartIcon, Droplets, ChevronLeft,
-  Menu, X, GraduationCap, Gem
+  Menu, X, GraduationCap, Gem, Home
 } from "lucide-react";
 
 // Lazy components
@@ -24,6 +24,7 @@ const AlerteCommunautaireWidget = lazy(() => import("./AlerteCommunautaireWidget
 const MariagesWidget = lazy(() => import("./MariagesWidget"));
 const MikveManager = lazy(() => import("./president/MikveManager"));
 const DonsManager = lazy(() => import("./president/DonsManager"));
+const TehilimCombinedWidget = lazy(() => import("./TehilimCombinedWidget"));
 
 const Lazy = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<div className="flex justify-center py-8"><div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}>
@@ -37,6 +38,7 @@ const pilotageItems = [
   { id: "annonces", icon: Megaphone, label: "Annonces" },
   { id: "alerte", icon: Bell, label: "Alerte Push" },
   { id: "minyan", icon: Users, label: "Urgence Minyan" },
+  { id: "tehilim", icon: BookOpen, label: "Tehilim" },
 ];
 
 const servicesItems = [
@@ -119,9 +121,10 @@ const SidebarItem = ({ item, active, onClick, badge }: { item: typeof pilotageIt
 /* ─── Main Dashboard ─── */
 interface PresidentDashboardProps {
   onLoginClick?: () => void;
+  onSwitchToFidele?: () => void;
 }
 
-const PresidentDashboard = ({ onLoginClick }: PresidentDashboardProps) => {
+const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboardProps) => {
   const { user, dbRole } = useAuth();
   const [activeFeature, setActiveFeature] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
