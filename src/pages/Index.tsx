@@ -12,6 +12,8 @@ import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes } from "@/lib/hebcal";
 import { Book, Heart, MapPin, User } from "lucide-react";
 import StarOfDavid from "@/components/StarOfDavid";
+import { useSynaServices } from "@/hooks/useSynaServices";
+import { Droplets, ExternalLink } from "lucide-react";
 const SpiritualTimeline = lazy(() => import("@/components/SpiritualTimeline"));
 
 // Lazy-loaded modules
