@@ -226,7 +226,52 @@ const DonsManager = () => {
         )}
       </div>
 
-      {/* Donation Link */}
+      {/* Donation Link - Create or Display */}
+      {stripeOnboarded && !donationSlug && (
+        <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Link2 className="w-4 h-4 text-primary" />
+            <Label className="text-xs font-semibold">Créer votre lien de don</Label>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Choisissez un identifiant court pour votre page de don (ex: beth-yaakov, synagogue-paris).
+            Il sera utilisé dans l'URL : {window.location.origin}/don/<strong>votre-slug</strong>
+          </p>
+          <div className="flex items-center gap-2">
+            <Input
+              value={newSlug}
+              onChange={(e) => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-"))}
+              placeholder="mon-synagogue"
+              className="text-xs"
+            />
+            <Button
+              size="sm"
+              onClick={async () => {
+                if (!newSlug.trim() || newSlug.length < 3) {
+                  toast.error("Le slug doit faire au moins 3 caractères");
+                  return;
+                }
+                setSavingSlug(true);
+                const { error } = await (supabase
+                  .from("synagogue_stripe_accounts" as any)
+                  .update({ custom_donation_slug: newSlug.trim() }) as any)
+                  .eq("synagogue_id", profileId);
+                setSavingSlug(false);
+                if (error) {
+                  toast.error("Erreur : ce slug est peut-être déjà pris");
+                } else {
+                  setDonationSlug(newSlug.trim());
+                  toast.success("Lien de don créé !");
+                }
+              }}
+              disabled={savingSlug || !newSlug.trim()}
+            >
+              {savingSlug ? <Loader2 className="w-4 h-4 animate-spin" /> : "Créer"}
+            </Button>
+          </div>
+        </div>
+      )}
+
       {donationSlug && (
         <div className="rounded-xl border border-border bg-card p-4 space-y-3">
           <div className="flex items-center gap-2">
@@ -239,9 +284,20 @@ const DonsManager = () => {
               <Copy className="w-4 h-4" />
             </Button>
           </div>
-          <a href={donationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-            <ExternalLink className="w-3 h-3" /> Voir la page de don
-          </a>
+          <div className="flex items-center gap-2 flex-wrap">
+            <a href={donationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+              <ExternalLink className="w-3 h-3" /> Voir la page
+            </a>
+            <button
+              onClick={() => {
+                const text = `🕍 ${synagogueName} — Faire un don\n\n💛 Soutenez notre communauté en faisant un don sécurisé :\n${donationUrl}\n\nMerci pour votre générosité !`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+              }}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-green-600 hover:underline bg-transparent border-none cursor-pointer"
+            >
+              📱 Partager sur WhatsApp
+            </button>
+          </div>
         </div>
       )}
 
