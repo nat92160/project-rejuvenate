@@ -220,7 +220,71 @@ const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, sign
   </div>
 );
 
-const IndexContent = () => {
+/* ─── Dashboard Home with conditional services ─── */
+const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }) => {
+  const currentPrayer = getCurrentPrayer();
+  const { services } = useSynaServices();
+
+  return (
+    <>
+      <MySynagogueCard onNavigate={setActiveTab} />
+      <ShabbatCountdownBanner />
+
+      <div className="flex gap-3 mb-6">
+        <PowerButton
+          icon={<Book className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
+          label="Siddour"
+          badge={currentPrayer}
+          onClick={() => setActiveTab("siddour")}
+        />
+        <PowerButton
+          icon={<Heart className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
+          label="Tehilim"
+          onClick={() => setActiveTab("tehilim")}
+        />
+        <PowerButton
+          icon={<MapPin className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
+          label="Synagogues"
+          onClick={() => setActiveTab("synagogue")}
+        />
+      </div>
+
+      {/* Conditional services from subscribed synagogue */}
+      {(services?.mikveEnabled || services?.donationLink) && (
+        <div className="flex gap-3 mb-6">
+          {services.mikveEnabled && (
+            <button
+              onClick={() => setActiveTab("mikve-info")}
+              className="flex-1 flex items-center gap-2.5 p-3.5 rounded-2xl border border-border bg-card cursor-pointer transition-all active:scale-[0.97] hover:bg-muted/50"
+              style={{ boxShadow: "var(--shadow-card)" }}
+            >
+              <Droplets className="w-5 h-5 text-primary" strokeWidth={1.5} />
+              <span className="text-xs font-bold text-foreground">Mikvé</span>
+            </button>
+          )}
+          {services.donationLink && (
+            <a
+              href={services.donationLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 p-3.5 rounded-2xl border-none cursor-pointer transition-all active:scale-[0.97] hover:-translate-y-0.5 no-underline"
+              style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)", color: "hsl(var(--primary-foreground))" }}
+            >
+              <span className="text-sm">💛</span>
+              <span className="text-xs font-bold">Faire un don</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
+        </div>
+      )}
+
+      <Lazy><SpiritualTimeline /></Lazy>
+      <Lazy><OmerCounterWidget /></Lazy>
+    </>
+  );
+};
+
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
 
