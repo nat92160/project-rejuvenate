@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -11,6 +12,8 @@ import MinyanJoin from "./pages/MinyanJoin.tsx";
 import TehilimJoin from "./pages/TehilimJoin.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import Install from "./pages/Install.tsx";
+
+const DonationPage = lazy(() => import("./pages/DonationPage.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +40,7 @@ function AppInner() {
           <Route path="/tehilim/:id" element={<TehilimJoin />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/install" element={<Install />} />
+          <Route path="/don/:slug" element={<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}><DonationPage /></Suspense>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
