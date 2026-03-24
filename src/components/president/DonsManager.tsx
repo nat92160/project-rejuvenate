@@ -27,6 +27,8 @@ const DonsManager = () => {
   // Stripe Connect state
   const [stripeOnboarded, setStripeOnboarded] = useState(false);
   const [stripeExists, setStripeExists] = useState(false);
+  const [newSlug, setNewSlug] = useState("");
+  const [savingSlug, setSavingSlug] = useState(false);
   const [onboarding, setOnboarding] = useState(false);
   const [donationSlug, setDonationSlug] = useState("");
 
