@@ -160,6 +160,7 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
       case "calendrier-mariages": return <Lazy><MariagesWidget /></Lazy>;
       case "mikve": return <Lazy><MikveManager /></Lazy>;
       case "dons": return <Lazy><DonsManager /></Lazy>;
+      case "tehilim": return <Lazy><TehilimCombinedWidget /></Lazy>;
       case "stats": return <StatsDashboard />;
       default: return <StatsDashboard />;
     }
@@ -190,6 +191,17 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
 
   const sidebarContent = (
     <nav className="space-y-5 p-4">
+      {/* Return to Fidele view */}
+      {onSwitchToFidele && (
+        <button
+          onClick={() => { onSwitchToFidele(); setSidebarOpen(false); }}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-primary cursor-pointer border-none transition-all hover:bg-primary/5"
+          style={{ background: "hsl(var(--primary) / 0.04)" }}
+        >
+          <Home className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+          <span>Retour vue Fidèle</span>
+        </button>
+      )}
       <div>
         <p className="text-[10px] uppercase tracking-[2px] font-semibold text-muted-foreground mb-2 px-3">Actions urgentes</p>
         {pilotageItems.map(item => (
