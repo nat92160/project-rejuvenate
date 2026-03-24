@@ -5,3 +5,15 @@ verify_jwt = false
 
 [functions.shabbat-reminder]
 verify_jwt = false
+
+[functions.create-donation-checkout]
+verify_jwt = false
+
+[functions.stripe-donation-webhook]
+verify_jwt = false
+
+[functions.stripe-connect-onboard]
+verify_jwt = false
+
+[functions.check-stripe-onboard]
+verify_jwt = false
