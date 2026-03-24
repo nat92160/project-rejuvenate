@@ -108,6 +108,53 @@ export type Database = {
           },
         ]
       }
+      donations: {
+        Row: {
+          amount: number
+          cerfa_generated: boolean
+          cerfa_url: string | null
+          created_at: string
+          donor_email: string
+          donor_name: string
+          id: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_id: string | null
+          synagogue_id: string
+        }
+        Insert: {
+          amount: number
+          cerfa_generated?: boolean
+          cerfa_url?: string | null
+          created_at?: string
+          donor_email: string
+          donor_name?: string
+          id?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_id?: string | null
+          synagogue_id: string
+        }
+        Update: {
+          amount?: number
+          cerfa_generated?: boolean
+          cerfa_url?: string | null
+          created_at?: string
+          donor_email?: string
+          donor_name?: string
+          id?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_id?: string | null
+          synagogue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donations_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evenements: {
         Row: {
           created_at: string
@@ -692,6 +739,44 @@ export type Database = {
           verified?: boolean
         }
         Relationships: []
+      }
+      synagogue_stripe_accounts: {
+        Row: {
+          created_at: string
+          custom_donation_slug: string | null
+          id: string
+          is_onboarded: boolean
+          stripe_account_id: string
+          synagogue_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_donation_slug?: string | null
+          id?: string
+          is_onboarded?: boolean
+          stripe_account_id: string
+          synagogue_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_donation_slug?: string | null
+          id?: string
+          is_onboarded?: boolean
+          stripe_account_id?: string
+          synagogue_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "synagogue_stripe_accounts_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: true
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       synagogue_subscriptions: {
         Row: {
