@@ -255,39 +255,7 @@ const IndexContent = () => {
     switch (activeTab) {
       case "dashboard":
         return (
-          <>
-            {/* 1. Engagement card — Ma Synagogue */}
-            <MySynagogueCard onNavigate={setActiveTab} />
-
-            {/* 2. Shabbat countdown — J-1 only, relative format */}
-            <ShabbatCountdownBanner />
-
-            {/* 3. Power Buttons */}
-            <div className="flex gap-3 mb-8">
-              <PowerButton
-                icon={<Book className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
-                label="Siddour"
-                badge={currentPrayer}
-                onClick={() => setActiveTab("siddour")}
-              />
-              <PowerButton
-                icon={<Heart className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
-                label="Tehilim"
-                onClick={() => setActiveTab("tehilim")}
-              />
-              <PowerButton
-                icon={<MapPin className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
-                label="Synagogues"
-                onClick={() => setActiveTab("synagogue")}
-              />
-            </div>
-
-            {/* 4. Spiritual Timeline */}
-            <Lazy><SpiritualTimeline /></Lazy>
-
-            {/* 5. Omer if applicable */}
-            <Lazy><OmerCounterWidget /></Lazy>
-          </>
+          <DashboardHome setActiveTab={setActiveTab} />
         );
       case "zmanim": return <Lazy><ZmanimWidget /></Lazy>;
       case "chabbat": return <Lazy><><CountdownWidget /><ShabbatWidget /></></Lazy>;
