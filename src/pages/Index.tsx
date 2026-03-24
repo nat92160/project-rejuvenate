@@ -48,6 +48,7 @@ const AlerteCommunautaireWidget = lazy(() => import("@/components/AlerteCommunau
 const BrakhotWidget = lazy(() => import("@/components/BrakhotWidget"));
 const InfoCarousel = lazy(() => import("@/components/InfoCarousel"));
 const MikveInfoView = lazy(() => import("@/components/MikveInfoView"));
+const CitySelector = lazy(() => import("@/components/CitySelector"));
 
 const Lazy = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<div className="flex justify-center py-12"><div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}>
@@ -228,6 +229,7 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
 
   return (
     <>
+      <Lazy><CitySelector /></Lazy>
       <MySynagogueCard onNavigate={setActiveTab} />
       <ShabbatCountdownBanner />
 
