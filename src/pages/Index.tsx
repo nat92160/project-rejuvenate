@@ -12,6 +12,8 @@ import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes } from "@/lib/hebcal";
 import { Book, Heart, MapPin, User } from "lucide-react";
 import StarOfDavid from "@/components/StarOfDavid";
+import { useSynaServices } from "@/hooks/useSynaServices";
+import { Droplets, ExternalLink } from "lucide-react";
 const SpiritualTimeline = lazy(() => import("@/components/SpiritualTimeline"));
 
 // Lazy-loaded modules
@@ -45,6 +47,7 @@ const EspacePersonnelWidget = lazy(() => import("@/components/EspacePersonnelWid
 const AlerteCommunautaireWidget = lazy(() => import("@/components/AlerteCommunautaireWidget"));
 const BrakhotWidget = lazy(() => import("@/components/BrakhotWidget"));
 const InfoCarousel = lazy(() => import("@/components/InfoCarousel"));
+const MikveInfoView = lazy(() => import("@/components/MikveInfoView"));
 
 const Lazy = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<div className="flex justify-center py-12"><div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}>
@@ -218,6 +221,70 @@ const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, sign
   </div>
 );
 
+/* ─── Dashboard Home with conditional services ─── */
+const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }) => {
+  const currentPrayer = getCurrentPrayer();
+  const { services } = useSynaServices();
+
+  return (
+    <>
+      <MySynagogueCard onNavigate={setActiveTab} />
+      <ShabbatCountdownBanner />
+
+      <div className="flex gap-3 mb-6">
+        <PowerButton
+          icon={<Book className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
+          label="Siddour"
+          badge={currentPrayer}
+          onClick={() => setActiveTab("siddour")}
+        />
+        <PowerButton
+          icon={<Heart className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
+          label="Tehilim"
+          onClick={() => setActiveTab("tehilim")}
+        />
+        <PowerButton
+          icon={<MapPin className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
+          label="Synagogues"
+          onClick={() => setActiveTab("synagogue")}
+        />
+      </div>
+
+      {/* Conditional services from subscribed synagogue */}
+      {(services?.mikveEnabled || services?.donationLink) && (
+        <div className="flex gap-3 mb-6">
+          {services.mikveEnabled && (
+            <button
+              onClick={() => setActiveTab("mikve-info")}
+              className="flex-1 flex items-center gap-2.5 p-3.5 rounded-2xl border border-border bg-card cursor-pointer transition-all active:scale-[0.97] hover:bg-muted/50"
+              style={{ boxShadow: "var(--shadow-card)" }}
+            >
+              <Droplets className="w-5 h-5 text-primary" strokeWidth={1.5} />
+              <span className="text-xs font-bold text-foreground">Mikvé</span>
+            </button>
+          )}
+          {services.donationLink && (
+            <a
+              href={services.donationLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 p-3.5 rounded-2xl border-none cursor-pointer transition-all active:scale-[0.97] hover:-translate-y-0.5 no-underline"
+              style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)", color: "hsl(var(--primary-foreground))" }}
+            >
+              <span className="text-sm">💛</span>
+              <span className="text-xs font-bold">Faire un don</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
+        </div>
+      )}
+
+      <Lazy><SpiritualTimeline /></Lazy>
+      <Lazy><OmerCounterWidget /></Lazy>
+    </>
+  );
+};
+
 const IndexContent = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
@@ -253,39 +320,7 @@ const IndexContent = () => {
     switch (activeTab) {
       case "dashboard":
         return (
-          <>
-            {/* 1. Engagement card — Ma Synagogue */}
-            <MySynagogueCard onNavigate={setActiveTab} />
-
-            {/* 2. Shabbat countdown — J-1 only, relative format */}
-            <ShabbatCountdownBanner />
-
-            {/* 3. Power Buttons */}
-            <div className="flex gap-3 mb-8">
-              <PowerButton
-                icon={<Book className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
-                label="Siddour"
-                badge={currentPrayer}
-                onClick={() => setActiveTab("siddour")}
-              />
-              <PowerButton
-                icon={<Heart className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
-                label="Tehilim"
-                onClick={() => setActiveTab("tehilim")}
-              />
-              <PowerButton
-                icon={<MapPin className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
-                label="Synagogues"
-                onClick={() => setActiveTab("synagogue")}
-              />
-            </div>
-
-            {/* 4. Spiritual Timeline */}
-            <Lazy><SpiritualTimeline /></Lazy>
-
-            {/* 5. Omer if applicable */}
-            <Lazy><OmerCounterWidget /></Lazy>
-          </>
+          <DashboardHome setActiveTab={setActiveTab} />
         );
       case "zmanim": return <Lazy><ZmanimWidget /></Lazy>;
       case "chabbat": return <Lazy><><CountdownWidget /><ShabbatWidget /></></Lazy>;
@@ -321,6 +356,7 @@ const IndexContent = () => {
       case "perso": return <Lazy><EspacePersonnelWidget /></Lazy>;
       case "alerte": return <Lazy><AlerteCommunautaireWidget /></Lazy>;
       case "brakhot": return <Lazy><BrakhotWidget /></Lazy>;
+      case "mikve-info": return <Lazy><MikveInfoView /></Lazy>;
       case "communaute":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>

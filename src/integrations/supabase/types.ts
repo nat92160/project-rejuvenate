@@ -593,12 +593,18 @@ export type Database = {
           arvit_time_2: string | null
           chat_enabled: boolean
           created_at: string
+          donation_link: string | null
           email: string | null
           font_family: string | null
           id: string
           latitude: number | null
           logo_url: string | null
           longitude: number | null
+          mikve_enabled: boolean
+          mikve_maps_link: string | null
+          mikve_phone: string | null
+          mikve_summer_hours: string | null
+          mikve_winter_hours: string | null
           minha_time: string | null
           minha_time_2: string | null
           name: string
@@ -622,12 +628,18 @@ export type Database = {
           arvit_time_2?: string | null
           chat_enabled?: boolean
           created_at?: string
+          donation_link?: string | null
           email?: string | null
           font_family?: string | null
           id?: string
           latitude?: number | null
           logo_url?: string | null
           longitude?: number | null
+          mikve_enabled?: boolean
+          mikve_maps_link?: string | null
+          mikve_phone?: string | null
+          mikve_summer_hours?: string | null
+          mikve_winter_hours?: string | null
           minha_time?: string | null
           minha_time_2?: string | null
           name?: string
@@ -651,12 +663,18 @@ export type Database = {
           arvit_time_2?: string | null
           chat_enabled?: boolean
           created_at?: string
+          donation_link?: string | null
           email?: string | null
           font_family?: string | null
           id?: string
           latitude?: number | null
           logo_url?: string | null
           longitude?: number | null
+          mikve_enabled?: boolean
+          mikve_maps_link?: string | null
+          mikve_phone?: string | null
+          mikve_summer_hours?: string | null
+          mikve_winter_hours?: string | null
           minha_time?: string | null
           minha_time_2?: string | null
           name?: string
