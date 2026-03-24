@@ -47,6 +47,7 @@ const EspacePersonnelWidget = lazy(() => import("@/components/EspacePersonnelWid
 const AlerteCommunautaireWidget = lazy(() => import("@/components/AlerteCommunautaireWidget"));
 const BrakhotWidget = lazy(() => import("@/components/BrakhotWidget"));
 const InfoCarousel = lazy(() => import("@/components/InfoCarousel"));
+const MikveInfoView = lazy(() => import("@/components/MikveInfoView"));
 
 const Lazy = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<div className="flex justify-center py-12"><div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}>
