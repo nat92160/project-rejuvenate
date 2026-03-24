@@ -5,7 +5,7 @@ import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 interface SynaServices {
   mikveEnabled: boolean;
   mikveWinterHours: string | null;
-  mikve SummerHours: string | null;
+  mikveSummerHours: string | null;
   mikvePhone: string | null;
   mikveMapsLink: string | null;
   donationLink: string | null;
