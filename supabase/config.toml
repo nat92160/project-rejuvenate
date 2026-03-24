@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.check-stripe-onboard]
 verify_jwt = false
+
+[functions.generate-cerfa]
+verify_jwt = false
+
+[functions.send-cerfa-email]
+verify_jwt = false
