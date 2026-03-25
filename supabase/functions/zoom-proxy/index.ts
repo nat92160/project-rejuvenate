@@ -134,8 +134,10 @@ serve(async (req) => {
       });
 
       if (!resp.ok) {
-        return new Response(JSON.stringify({ success: false, error: "Cannot fetch user info" }), {
-          status: resp.status,
+        const errBody = await resp.text();
+        console.error("Zoom get-pmi error:", resp.status, errBody);
+        return new Response(JSON.stringify({ success: false, error: `Zoom API error ${resp.status}: ${errBody}` }), {
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
