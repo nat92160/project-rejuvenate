@@ -22,6 +22,7 @@ interface CoursCardProps {
   index: number;
   synaProfile: SynaProfile;
   onDelete: (id: string) => void;
+  specific_date?: string | null;
 }
 
 const dayColors: Record<string, string> = {
