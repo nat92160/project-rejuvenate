@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -22,10 +22,19 @@ const inputClass =
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Dimanche"];
 
+interface PmiInfo {
+  pmi: number | null;
+  personalMeetingUrl: string | null;
+  displayName: string;
+}
+
 const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType = "zoom" }: CoursFormProps) => {
   const [courseType, setCourseType] = useState<"zoom" | "presentiel">(initialCourseType);
   const [zoomMode, setZoomMode] = useState<"instant" | "scheduled">("scheduled");
-  const [zoomSource, setZoomSource] = useState<"auto" | "manual" | "personal">("auto");
+  const [zoomSource, setZoomSource] = useState<"auto" | "manual">("auto");
+  const [usePmi, setUsePmi] = useState(false);
+  const [pmiInfo, setPmiInfo] = useState<PmiInfo | null>(null);
+  const [loadingPmi, setLoadingPmi] = useState(false);
   const [dateMode, setDateMode] = useState<"recurring" | "specific">("recurring");
   const [title, setTitle] = useState("");
   const [teacher, setTeacher] = useState("");
@@ -34,13 +43,31 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
   const [specificDate, setSpecificDate] = useState<Date | undefined>();
   const [address, setAddress] = useState("");
   const [manualZoomLink, setManualZoomLink] = useState("");
-  const [personalZoomLink, setPersonalZoomLink] = useState("");
   const [desc, setDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     setCourseType(initialCourseType);
   }, [initialCourseType]);
+
+  // Fetch PMI when switching to auto zoom source
+  useEffect(() => {
+    if (courseType === "zoom" && zoomSource === "auto" && !pmiInfo && !loadingPmi) {
+      setLoadingPmi(true);
+      supabase.functions.invoke("zoom-proxy", { body: { action: "get-pmi" } })
+        .then(({ data }) => {
+          if (data?.success && data.pmi) {
+            setPmiInfo({
+              pmi: data.pmi,
+              personalMeetingUrl: data.personalMeetingUrl,
+              displayName: data.displayName,
+            });
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoadingPmi(false));
+    }
+  }, [courseType, zoomSource, pmiInfo, loadingPmi]);
 
   const createZoomMeeting = async (meetingTitle: string, courseTime: string): Promise<string | null> => {
     try {
@@ -93,9 +120,6 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
     if (courseType === "zoom" && zoomSource === "manual" && !manualZoomLink.trim()) {
       toast.error("Lien Zoom requis"); return;
     }
-    if (courseType === "zoom" && zoomSource === "personal" && !personalZoomLink.trim()) {
-      toast.error("Lien de salle personnelle requis"); return;
-    }
     if (dateMode === "specific" && !specificDate) {
       toast.error("Veuillez choisir une date"); return;
     }
@@ -106,8 +130,8 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
     if (courseType === "zoom") {
       if (zoomSource === "manual") {
         zoomLink = manualZoomLink.trim();
-      } else if (zoomSource === "personal") {
-        zoomLink = personalZoomLink.trim();
+      } else if (usePmi && pmiInfo?.personalMeetingUrl) {
+        zoomLink = pmiInfo.personalMeetingUrl;
       } else {
         toast.info(zoomMode === "instant"
           ? "Création de la réunion Zoom instantanée..."
@@ -149,11 +173,13 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
       onCreated(data as Record<string, unknown>);
       onClose();
       toast.success(courseType === "zoom"
-        ? zoomSource === "manual" || zoomSource === "personal"
+        ? zoomSource === "manual"
           ? "✅ Cours Zoom publié avec votre lien !"
-          : zoomMode === "instant"
-            ? "✅ Réunion Zoom instantanée créée !"
-            : "✅ Réunion Zoom programmée avec succès !"
+          : usePmi
+            ? "✅ Cours publié avec votre salle personnelle !"
+            : zoomMode === "instant"
+              ? "✅ Réunion Zoom instantanée créée !"
+              : "✅ Réunion Zoom programmée avec succès !"
         : "Cours publié !");
     }
     setSubmitting(false);
@@ -214,7 +240,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
         </div>
 
         {dateMode === "recurring" ? (
-          <div className="grid grid-cols-1 gap-3">
+          <div className="space-y-3">
             <select value={day} onChange={(e) => setDay(e.target.value)} className={inputClass}>
               {DAYS.map((d) => <option key={d}>{d}</option>)}
             </select>
@@ -252,69 +278,110 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
 
         {courseType === "zoom" ? (
           <>
-            {/* Zoom source: auto / manual / personal */}
-            <div className="grid grid-cols-3 rounded-xl overflow-hidden border border-[#2D8CFF]/30">
+            {/* Zoom source: auto / manual */}
+            <div className="flex rounded-xl overflow-hidden border border-[#2D8CFF]/30">
               <button
                 onClick={() => setZoomSource("auto")}
-                className={`py-2.5 text-[10px] sm:text-[11px] font-bold border-none cursor-pointer transition-all leading-tight ${
+                className={`flex-1 py-2.5 text-[11px] font-bold border-none cursor-pointer transition-all ${
                   zoomSource === "auto" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
                 }`}
               >
-                🤖 Auto
+                🤖 Automatique
               </button>
               <button
-                onClick={() => setZoomSource("manual")}
-                className={`py-2.5 text-[10px] sm:text-[11px] font-bold border-none cursor-pointer transition-all leading-tight ${
+                onClick={() => { setZoomSource("manual"); setUsePmi(false); }}
+                className={`flex-1 py-2.5 text-[11px] font-bold border-none cursor-pointer transition-all ${
                   zoomSource === "manual" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
                 }`}
               >
-                🔗 Lien
-              </button>
-              <button
-                onClick={() => setZoomSource("personal")}
-                className={`py-2.5 text-[10px] sm:text-[11px] font-bold border-none cursor-pointer transition-all leading-tight ${
-                  zoomSource === "personal" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
-                }`}
-              >
-                🏠 Salle perso
+                🔗 Lien manuel
               </button>
             </div>
 
             {zoomSource === "auto" ? (
-              <>
-                {/* Zoom mode: instant vs scheduled */}
-                <div className="flex rounded-lg overflow-hidden border border-[#2D8CFF]/20">
+              <div className="space-y-3">
+                {/* PMI option */}
+                {loadingPmi ? (
+                  <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3 flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-[#2D8CFF]" />
+                    <span className="text-xs text-muted-foreground">Chargement des salles personnelles…</span>
+                  </div>
+                ) : pmiInfo?.pmi ? (
                   <button
-                    onClick={() => setZoomMode("instant")}
-                    className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
-                      zoomMode === "instant" ? "bg-[#2D8CFF]/80 text-white" : "bg-card text-muted-foreground"
-                    }`}
+                    type="button"
+                    onClick={() => setUsePmi(!usePmi)}
+                    className={cn(
+                      "w-full rounded-xl border p-3 text-left transition-all cursor-pointer",
+                      usePmi
+                        ? "border-[#2D8CFF] bg-[#2D8CFF]/10"
+                        : "border-border bg-card hover:border-[#2D8CFF]/40"
+                    )}
                   >
-                    ⚡ En direct
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all",
+                        usePmi ? "border-[#2D8CFF] bg-[#2D8CFF]" : "border-muted-foreground/40"
+                      )}>
+                        {usePmi && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-foreground">🏠 Salle personnelle (PMI)</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                          ID : {pmiInfo.pmi} — {pmiInfo.displayName}
+                        </p>
+                      </div>
+                    </div>
                   </button>
-                  <button
-                    onClick={() => setZoomMode("scheduled")}
-                    className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
-                      zoomMode === "scheduled" ? "bg-[#2D8CFF]/80 text-white" : "bg-card text-muted-foreground"
-                    }`}
-                  >
-                    📅 Programmée
-                  </button>
-                </div>
+                ) : null}
 
-                <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
-                  <p className="text-xs text-muted-foreground flex items-center gap-2">
-                    <span className="text-base flex-shrink-0">{zoomMode === "instant" ? "⚡" : "📅"}</span>
-                    <span>
-                      {zoomMode === "instant"
-                        ? <>La réunion sera <strong className="text-foreground">lancée immédiatement</strong> depuis le compte principal.</>
-                        : <>La réunion sera <strong className="text-foreground">programmée</strong> depuis le compte principal.</>
-                      }
-                    </span>
-                  </p>
-                </div>
-              </>
-            ) : zoomSource === "manual" ? (
+                {!usePmi && (
+                  <>
+                    {/* Zoom mode: instant vs scheduled */}
+                    <div className="flex rounded-lg overflow-hidden border border-[#2D8CFF]/20">
+                      <button
+                        onClick={() => setZoomMode("instant")}
+                        className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
+                          zoomMode === "instant" ? "bg-[#2D8CFF]/80 text-white" : "bg-card text-muted-foreground"
+                        }`}
+                      >
+                        ⚡ En direct
+                      </button>
+                      <button
+                        onClick={() => setZoomMode("scheduled")}
+                        className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
+                          zoomMode === "scheduled" ? "bg-[#2D8CFF]/80 text-white" : "bg-card text-muted-foreground"
+                        }`}
+                      >
+                        📅 Programmée
+                      </button>
+                    </div>
+
+                    <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
+                      <p className="text-xs text-muted-foreground flex items-center gap-2">
+                        <span className="text-base flex-shrink-0">{zoomMode === "instant" ? "⚡" : "📅"}</span>
+                        <span>
+                          {zoomMode === "instant"
+                            ? <>La réunion sera <strong className="text-foreground">lancée immédiatement</strong>.</>
+                            : <>La réunion sera <strong className="text-foreground">programmée</strong> automatiquement.</>
+                          }
+                        </span>
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                {usePmi && (
+                  <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
+                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span className="text-base flex-shrink-0">🏠</span>
+                      <span>
+                        Le cours utilisera votre <strong className="text-foreground">salle personnelle Zoom</strong>. Même lien chaque semaine.
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
               <>
                 <input
                   value={manualZoomLink}
@@ -327,23 +394,6 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                     <span className="text-base flex-shrink-0">💡</span>
                     <span>
                       Collez le lien depuis <strong className="text-foreground">n'importe quel compte Zoom</strong>.
-                    </span>
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <input
-                  value={personalZoomLink}
-                  onChange={(e) => setPersonalZoomLink(e.target.value)}
-                  placeholder="https://zoom.us/j/1234567890 (votre ID personnel)"
-                  className={inputClass}
-                />
-                <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
-                  <p className="text-xs text-muted-foreground flex items-center gap-2">
-                    <span className="text-base flex-shrink-0">🏠</span>
-                    <span>
-                      Votre <strong className="text-foreground">salle personnelle Zoom</strong> (PMI). Le même lien chaque semaine.
                     </span>
                   </p>
                 </div>
@@ -365,9 +415,11 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
           {submitting
             ? "⏳ Publication..."
             : courseType === "zoom"
-              ? zoomSource === "manual" || zoomSource === "personal"
+              ? zoomSource === "manual"
                 ? "🔗 Publier avec le lien Zoom"
-                : zoomMode === "instant" ? "⚡ Lancer en direct & Publier" : "📅 Programmer & Publier"
+                : usePmi
+                  ? "🏠 Publier avec la salle perso"
+                  : zoomMode === "instant" ? "⚡ Lancer en direct & Publier" : "📅 Programmer & Publier"
               : "Publier le cours"}
         </button>
       </div>
