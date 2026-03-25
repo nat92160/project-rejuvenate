@@ -20,6 +20,7 @@ interface CoursItem {
   creator_id: string;
   course_type: string;
   address: string;
+  specific_date: string | null;
 }
 
 const CoursVirtuelWidget = () => {

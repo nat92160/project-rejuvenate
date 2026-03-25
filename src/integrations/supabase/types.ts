@@ -66,6 +66,7 @@ export type Database = {
           description: string
           id: string
           rav: string
+          specific_date: string | null
           synagogue_id: string | null
           title: string
           zoom_link: string
@@ -80,6 +81,7 @@ export type Database = {
           description?: string
           id?: string
           rav?: string
+          specific_date?: string | null
           synagogue_id?: string | null
           title: string
           zoom_link?: string
@@ -94,6 +96,7 @@ export type Database = {
           description?: string
           id?: string
           rav?: string
+          specific_date?: string | null
           synagogue_id?: string | null
           title?: string
           zoom_link?: string

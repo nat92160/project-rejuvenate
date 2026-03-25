@@ -22,6 +22,7 @@ interface CoursCardProps {
   index: number;
   synaProfile: SynaProfile;
   onDelete: (id: string) => void;
+  specific_date?: string | null;
 }
 
 const dayColors: Record<string, string> = {
@@ -31,12 +32,16 @@ const dayColors: Record<string, string> = {
 
 const CoursCard = ({
   id, title, rav, day_of_week, course_time, zoom_link, description,
-  course_type, address, cityName, isOwner, index, synaProfile, onDelete,
+  course_type, address, cityName, isOwner, index, synaProfile, onDelete, specific_date,
 }: CoursCardProps) => {
   const posterRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
   const isZoom = normalizeCourseType(course_type, zoom_link, address) === "zoom";
   const dotColor = dayColors[day_of_week] || "#94a3b8";
+
+  const displayDate = specific_date
+    ? new Date(specific_date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
+    : day_of_week;
 
   const posterContent: CardPosterContent = {
     topEmoji: isZoom ? "🎥" : "📍",
@@ -44,7 +49,7 @@ const CoursCard = ({
     badgeColor: isZoom ? "#2D8CFF" : "#16a34a",
     title: title,
     description: rav || undefined,
-    date: `${day_of_week} à ${course_time?.slice(0, 5)}`,
+    date: `${displayDate} à ${course_time?.slice(0, 5)}`,
     dateEmoji: "📅",
     details: [
       ...(isZoom && zoom_link ? [{ icon: "🎥", text: "Lien Zoom disponible" }] : []),
@@ -64,7 +69,7 @@ const CoursCard = ({
   const handleShare = async () => {
     let text = `📚 ${title}\n`;
     if (rav) text += `👨‍🏫 ${rav}\n`;
-    text += `📅 ${day_of_week} à ${course_time?.slice(0, 5)}\n`;
+    text += `📅 ${displayDate} à ${course_time?.slice(0, 5)}\n`;
     if (isZoom && zoom_link) text += `\n🎥 Rejoindre : ${zoom_link}\n`;
     if (!isZoom && address) text += `\n📍 ${address}\n`;
     if (description) text += `\n${description}\n`;
@@ -117,7 +122,7 @@ const CoursCard = ({
             className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
             style={{ background: `${dotColor}15`, color: dotColor }}
           >
-            {day_of_week}
+            {specific_date ? displayDate : day_of_week}
           </span>
           <span className="text-xs font-bold text-foreground">{course_time?.slice(0, 5)}</span>
         </div>
