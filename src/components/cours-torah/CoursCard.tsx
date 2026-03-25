@@ -49,7 +49,7 @@ const CoursCard = ({
     badgeColor: isZoom ? "#2D8CFF" : "#16a34a",
     title: title,
     description: rav || undefined,
-    date: `${day_of_week} à ${course_time?.slice(0, 5)}`,
+    date: `${displayDate} à ${course_time?.slice(0, 5)}`,
     dateEmoji: "📅",
     details: [
       ...(isZoom && zoom_link ? [{ icon: "🎥", text: "Lien Zoom disponible" }] : []),
@@ -69,7 +69,7 @@ const CoursCard = ({
   const handleShare = async () => {
     let text = `📚 ${title}\n`;
     if (rav) text += `👨‍🏫 ${rav}\n`;
-    text += `📅 ${day_of_week} à ${course_time?.slice(0, 5)}\n`;
+    text += `📅 ${displayDate} à ${course_time?.slice(0, 5)}\n`;
     if (isZoom && zoom_link) text += `\n🎥 Rejoindre : ${zoom_link}\n`;
     if (!isZoom && address) text += `\n📍 ${address}\n`;
     if (description) text += `\n${description}\n`;
