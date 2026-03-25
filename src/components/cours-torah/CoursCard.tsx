@@ -32,12 +32,16 @@ const dayColors: Record<string, string> = {
 
 const CoursCard = ({
   id, title, rav, day_of_week, course_time, zoom_link, description,
-  course_type, address, cityName, isOwner, index, synaProfile, onDelete,
+  course_type, address, cityName, isOwner, index, synaProfile, onDelete, specific_date,
 }: CoursCardProps) => {
   const posterRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
   const isZoom = normalizeCourseType(course_type, zoom_link, address) === "zoom";
   const dotColor = dayColors[day_of_week] || "#94a3b8";
+
+  const displayDate = specific_date
+    ? new Date(specific_date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
+    : day_of_week;
 
   const posterContent: CardPosterContent = {
     topEmoji: isZoom ? "🎥" : "📍",
