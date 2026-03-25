@@ -122,7 +122,7 @@ const CoursCard = ({
             className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
             style={{ background: `${dotColor}15`, color: dotColor }}
           >
-            {day_of_week}
+            {specific_date ? displayDate : day_of_week}
           </span>
           <span className="text-xs font-bold text-foreground">{course_time?.slice(0, 5)}</span>
         </div>
