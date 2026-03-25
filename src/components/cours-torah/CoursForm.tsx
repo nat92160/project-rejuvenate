@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface CoursFormProps {
   userId: string;
@@ -12,21 +18,23 @@ interface CoursFormProps {
 }
 
 const inputClass =
-  "w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
+  "w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-[48px]";
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Dimanche"];
 
 const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType = "zoom" }: CoursFormProps) => {
   const [courseType, setCourseType] = useState<"zoom" | "presentiel">(initialCourseType);
   const [zoomMode, setZoomMode] = useState<"instant" | "scheduled">("scheduled");
-  const [zoomSource, setZoomSource] = useState<"auto" | "manual">("auto");
+  const [zoomSource, setZoomSource] = useState<"auto" | "manual" | "personal">("auto");
+  const [dateMode, setDateMode] = useState<"recurring" | "specific">("recurring");
   const [title, setTitle] = useState("");
   const [teacher, setTeacher] = useState("");
   const [day, setDay] = useState("Lundi");
   const [time, setTime] = useState("");
-  const [scheduledDate, setScheduledDate] = useState("");
+  const [specificDate, setSpecificDate] = useState<Date | undefined>();
   const [address, setAddress] = useState("");
   const [manualZoomLink, setManualZoomLink] = useState("");
+  const [personalZoomLink, setPersonalZoomLink] = useState("");
   const [desc, setDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -44,7 +52,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
       };
 
       if (zoomMode === "scheduled") {
-        let dateStr = scheduledDate;
+        let dateStr = specificDate ? format(specificDate, "yyyy-MM-dd") : "";
         if (!dateStr) {
           const dayIndex = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"].indexOf(day);
           const now = new Date();
@@ -85,6 +93,12 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
     if (courseType === "zoom" && zoomSource === "manual" && !manualZoomLink.trim()) {
       toast.error("Lien Zoom requis"); return;
     }
+    if (courseType === "zoom" && zoomSource === "personal" && !personalZoomLink.trim()) {
+      toast.error("Lien de salle personnelle requis"); return;
+    }
+    if (dateMode === "specific" && !specificDate) {
+      toast.error("Veuillez choisir une date"); return;
+    }
 
     setSubmitting(true);
 
@@ -92,6 +106,8 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
     if (courseType === "zoom") {
       if (zoomSource === "manual") {
         zoomLink = manualZoomLink.trim();
+      } else if (zoomSource === "personal") {
+        zoomLink = personalZoomLink.trim();
       } else {
         toast.info(zoomMode === "instant"
           ? "Création de la réunion Zoom instantanée..."
@@ -105,16 +121,21 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
       }
     }
 
+    const dayOfWeek = dateMode === "specific" && specificDate
+      ? ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"][specificDate.getDay()]
+      : day;
+
     const insertPayload = {
       creator_id: userId,
       title: title.trim(),
       rav: teacher.trim(),
-      day_of_week: day,
+      day_of_week: dayOfWeek,
       course_time: time || "20:00",
       course_type: courseType,
       zoom_link: zoomLink,
       address: courseType === "presentiel" ? address.trim() : "",
       description: desc.trim(),
+      specific_date: dateMode === "specific" && specificDate ? format(specificDate, "yyyy-MM-dd") : null,
       ...(synagogueId ? { synagogue_id: synagogueId } : {}),
     };
     const { data, error } = await supabase
@@ -128,7 +149,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
       onCreated(data as Record<string, unknown>);
       onClose();
       toast.success(courseType === "zoom"
-        ? zoomSource === "manual"
+        ? zoomSource === "manual" || zoomSource === "personal"
           ? "✅ Cours Zoom publié avec votre lien !"
           : zoomMode === "instant"
             ? "✅ Réunion Zoom instantanée créée !"
@@ -140,7 +161,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
 
   return (
     <motion.div
-      className="rounded-2xl bg-card p-5 mb-4 border border-border"
+      className="rounded-2xl bg-card p-4 sm:p-5 mb-4 border border-border"
       style={{ boxShadow: "var(--shadow-card)" }}
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: "auto" }}
@@ -171,32 +192,91 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
       <div className="space-y-3">
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre du cours" className={inputClass} />
         <input value={teacher} onChange={(e) => setTeacher(e.target.value)} placeholder="Nom du Rav" className={inputClass} />
-        <div className="grid grid-cols-2 gap-3">
-          <select value={day} onChange={(e) => setDay(e.target.value)} className={inputClass}>
-            {DAYS.map((d) => <option key={d}>{d}</option>)}
-          </select>
-          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} />
+
+        {/* Date mode toggle */}
+        <div className="flex rounded-xl overflow-hidden border border-border">
+          <button
+            onClick={() => setDateMode("recurring")}
+            className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
+              dateMode === "recurring" ? "bg-foreground text-background" : "bg-card text-muted-foreground"
+            }`}
+          >
+            🔁 Récurrent
+          </button>
+          <button
+            onClick={() => setDateMode("specific")}
+            className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
+              dateMode === "specific" ? "bg-foreground text-background" : "bg-card text-muted-foreground"
+            }`}
+          >
+            📅 Date précise
+          </button>
         </div>
+
+        {dateMode === "recurring" ? (
+          <div className="grid grid-cols-1 gap-3">
+            <select value={day} onChange={(e) => setDay(e.target.value)} className={inputClass}>
+              {DAYS.map((d) => <option key={d}>{d}</option>)}
+            </select>
+            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} placeholder="Heure" className={inputClass} />
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className={cn(
+                    inputClass,
+                    "flex items-center justify-between text-left",
+                    !specificDate && "text-muted-foreground"
+                  )}
+                >
+                  {specificDate ? format(specificDate, "EEEE d MMMM yyyy", { locale: fr }) : "Choisir une date"}
+                  <CalendarIcon className="h-4 w-4 opacity-50 flex-shrink-0" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 z-50" align="start">
+                <Calendar
+                  mode="single"
+                  selected={specificDate}
+                  onSelect={setSpecificDate}
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} placeholder="Heure" className={inputClass} />
+          </div>
+        )}
 
         {courseType === "zoom" ? (
           <>
-            {/* Zoom source: auto vs manual link */}
-            <div className="flex rounded-xl overflow-hidden border border-[#2D8CFF]/30">
+            {/* Zoom source: auto / manual / personal */}
+            <div className="grid grid-cols-3 rounded-xl overflow-hidden border border-[#2D8CFF]/30">
               <button
                 onClick={() => setZoomSource("auto")}
-                className={`flex-1 py-2.5 text-[11px] font-bold border-none cursor-pointer transition-all ${
+                className={`py-2.5 text-[10px] sm:text-[11px] font-bold border-none cursor-pointer transition-all leading-tight ${
                   zoomSource === "auto" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
                 }`}
               >
-                🤖 Créer automatiquement
+                🤖 Auto
               </button>
               <button
                 onClick={() => setZoomSource("manual")}
-                className={`flex-1 py-2.5 text-[11px] font-bold border-none cursor-pointer transition-all ${
+                className={`py-2.5 text-[10px] sm:text-[11px] font-bold border-none cursor-pointer transition-all leading-tight ${
                   zoomSource === "manual" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
                 }`}
               >
-                🔗 Coller un lien
+                🔗 Lien
+              </button>
+              <button
+                onClick={() => setZoomSource("personal")}
+                className={`py-2.5 text-[10px] sm:text-[11px] font-bold border-none cursor-pointer transition-all leading-tight ${
+                  zoomSource === "personal" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
+                }`}
+              >
+                🏠 Salle perso
               </button>
             </div>
 
@@ -222,19 +302,9 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                   </button>
                 </div>
 
-                {zoomMode === "scheduled" && (
-                  <input
-                    type="date"
-                    value={scheduledDate}
-                    onChange={(e) => setScheduledDate(e.target.value)}
-                    className={inputClass}
-                    min={new Date().toISOString().split("T")[0]}
-                  />
-                )}
-
                 <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
                   <p className="text-xs text-muted-foreground flex items-center gap-2">
-                    <span className="text-base">{zoomMode === "instant" ? "⚡" : "📅"}</span>
+                    <span className="text-base flex-shrink-0">{zoomMode === "instant" ? "⚡" : "📅"}</span>
                     <span>
                       {zoomMode === "instant"
                         ? <>La réunion sera <strong className="text-foreground">lancée immédiatement</strong> depuis le compte principal.</>
@@ -244,7 +314,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                   </p>
                 </div>
               </>
-            ) : (
+            ) : zoomSource === "manual" ? (
               <>
                 <input
                   value={manualZoomLink}
@@ -254,9 +324,26 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                 />
                 <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
                   <p className="text-xs text-muted-foreground flex items-center gap-2">
-                    <span className="text-base">💡</span>
+                    <span className="text-base flex-shrink-0">💡</span>
                     <span>
-                      Collez le lien depuis <strong className="text-foreground">n'importe quel compte Zoom</strong>. Idéal si vous avez plusieurs comptes.
+                      Collez le lien depuis <strong className="text-foreground">n'importe quel compte Zoom</strong>.
+                    </span>
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <input
+                  value={personalZoomLink}
+                  onChange={(e) => setPersonalZoomLink(e.target.value)}
+                  placeholder="https://zoom.us/j/1234567890 (votre ID personnel)"
+                  className={inputClass}
+                />
+                <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
+                  <p className="text-xs text-muted-foreground flex items-center gap-2">
+                    <span className="text-base flex-shrink-0">🏠</span>
+                    <span>
+                      Votre <strong className="text-foreground">salle personnelle Zoom</strong> (PMI). Le même lien chaque semaine.
                     </span>
                   </p>
                 </div>
@@ -272,13 +359,13 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
         <button
           onClick={handleSubmit}
           disabled={submitting || !title.trim()}
-          className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
+          className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50 min-h-[48px]"
           style={{ background: "var(--gradient-gold)" }}
         >
           {submitting
             ? "⏳ Publication..."
             : courseType === "zoom"
-              ? zoomSource === "manual"
+              ? zoomSource === "manual" || zoomSource === "personal"
                 ? "🔗 Publier avec le lien Zoom"
                 : zoomMode === "instant" ? "⚡ Lancer en direct & Publier" : "📅 Programmer & Publier"
               : "Publier le cours"}
