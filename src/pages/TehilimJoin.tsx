@@ -433,7 +433,7 @@ const TehilimJoinContent = () => {
         )}
 
         {/* Psalms grid */}
-        <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5">
+        <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
           {Array.from({ length: TOTAL_PSALMS }, (_, i) => i + 1).map((num) => {
             const claim = claims.find((c) => c.chapter_start === num && c.chapter_end === num);
             const isMine = claim ? isOwnClaim(claim) : false;
@@ -447,31 +447,37 @@ const TehilimJoinContent = () => {
                   if (isMine) { setSelectedClaim(claim); return; }
                 }}
                 disabled={!!claim && !isMine}
-                className={`relative aspect-square rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer border overflow-hidden ${
+                className={`relative aspect-square rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer border-2 overflow-hidden ${
                   claim?.completed
-                    ? "bg-green-500/15 border-green-500/30 text-green-600"
+                    ? "bg-green-500/15 border-green-500/40 text-green-700 dark:text-green-400"
                     : claim
                     ? isMine
-                      ? "border-primary/40 text-primary"
-                      : "border-border text-muted-foreground opacity-60"
-                    : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-primary/5"
+                      ? "border-primary/50 text-primary"
+                      : "border-muted text-muted-foreground opacity-70"
+                    : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
                 }`}
-                style={isMine && claim && !claim.completed ? { background: "hsl(var(--gold) / 0.1)" } : {}}
+                style={isMine && claim && !claim.completed ? { background: "hsl(var(--gold) / 0.12)", borderColor: "hsl(var(--gold-matte) / 0.5)" } : {}}
                 title={claim ? `${claim.display_name}${claim.completed ? " ✅" : ""}` : `Psaume ${num}`}
                 whileTap={{ scale: 0.92 }}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.15, delay: num * 0.003 }}
               >
-                <span className="text-[11px] font-bold leading-none">{num}</span>
-                <span className="text-[8px] leading-none mt-0.5 font-hebrew text-muted-foreground" dir="rtl">{toHebrewLetter(num)}</span>
+                {/* Numéro français bien visible */}
+                <span className="text-sm font-extrabold leading-none">{num}</span>
+                {/* Numéro hébreu bien lisible */}
+                <span className="text-[10px] leading-none mt-1 font-hebrew font-bold opacity-70" dir="rtl">{toHebrewLetter(num)}</span>
+                {/* Prénom du lecteur */}
                 {claim && (
-                  <span className="text-[6px] leading-tight truncate w-full text-center px-0.5 mt-0.5 font-medium" style={{ color: claim.completed ? "hsl(142 76% 36%)" : "hsl(var(--gold-matte))" }}>
+                  <span
+                    className="text-[7px] leading-tight truncate w-full text-center px-0.5 mt-1 font-bold"
+                    style={{ color: claim.completed ? "hsl(142 76% 36%)" : "hsl(var(--gold-matte))" }}
+                  >
                     {firstName}
                   </span>
                 )}
-                {claim?.completed && <span className="text-[7px] absolute top-0.5 right-0.5">✅</span>}
-                {isMine && claim && !claim.completed && <span className="text-[7px] absolute top-0.5 right-0.5">📖</span>}
+                {claim?.completed && <span className="text-[8px] absolute top-0.5 right-0.5">✅</span>}
+                {isMine && claim && !claim.completed && <span className="text-[8px] absolute top-0.5 right-0.5">📖</span>}
               </motion.button>
             );
           })}
