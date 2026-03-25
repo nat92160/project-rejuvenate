@@ -127,6 +127,33 @@ serve(async (req) => {
       });
     }
 
+    if (action === "get-pmi") {
+      const accessToken = await getAccessToken();
+      const resp = await fetch("https://api.zoom.us/v2/users/me", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!resp.ok) {
+        return new Response(JSON.stringify({ success: false, error: "Cannot fetch user info" }), {
+          status: resp.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const user = await resp.json();
+      const pmi = user.pmi;
+      const personalMeetingUrl = pmi ? `https://zoom.us/j/${pmi}` : null;
+
+      return new Response(JSON.stringify({
+        success: true,
+        pmi,
+        personalMeetingUrl,
+        displayName: user.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : user.email,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "check-status") {
       try {
         await getAccessToken();
