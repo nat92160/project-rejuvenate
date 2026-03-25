@@ -35,6 +35,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
   const [usePmi, setUsePmi] = useState(false);
   const [pmiInfo, setPmiInfo] = useState<PmiInfo | null>(null);
   const [loadingPmi, setLoadingPmi] = useState(false);
+  const [pmiFetched, setPmiFetched] = useState(false);
   const [dateMode, setDateMode] = useState<"recurring" | "specific">("recurring");
   const [title, setTitle] = useState("");
   const [teacher, setTeacher] = useState("");
