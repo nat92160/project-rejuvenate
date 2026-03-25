@@ -248,7 +248,10 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
             <select value={day} onChange={(e) => setDay(e.target.value)} className={inputClass}>
               {DAYS.map((d) => <option key={d}>{d}</option>)}
             </select>
-            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} placeholder="Heure" className={inputClass} />
+            <div className="relative">
+              <label className="absolute left-4 top-1 text-[10px] text-muted-foreground font-medium">Heure</label>
+              <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={`${inputClass} pt-5`} />
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -276,7 +279,10 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                 />
               </PopoverContent>
             </Popover>
-            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} placeholder="Heure" className={inputClass} />
+            <div className="relative">
+              <label className="absolute left-4 top-1 text-[10px] text-muted-foreground font-medium">Heure</label>
+              <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={`${inputClass} pt-5`} />
+            </div>
           </div>
         )}
 
@@ -305,12 +311,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
             {zoomSource === "auto" ? (
               <div className="space-y-3">
                 {/* PMI option */}
-                {loadingPmi ? (
-                  <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3 flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-[#2D8CFF]" />
-                    <span className="text-xs text-muted-foreground">Chargement des salles personnelles…</span>
-                  </div>
-                ) : pmiInfo?.pmi ? (
+                {pmiInfo?.pmi ? (
                   <button
                     type="button"
                     onClick={() => setUsePmi(!usePmi)}
