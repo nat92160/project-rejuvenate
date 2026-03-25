@@ -1,0 +1,1 @@
+ALTER TABLE public.cours_zoom ADD COLUMN IF NOT EXISTS specific_date date DEFAULT NULL;
