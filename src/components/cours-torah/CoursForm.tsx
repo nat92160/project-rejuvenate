@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,7 +35,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
   const [usePmi, setUsePmi] = useState(false);
   const [pmiInfo, setPmiInfo] = useState<PmiInfo | null>(null);
   const [loadingPmi, setLoadingPmi] = useState(false);
-  const [pmiFetched, setPmiFetched] = useState(false);
+  const pmiFetchedRef = useRef(false);
   const [dateMode, setDateMode] = useState<"recurring" | "specific">("recurring");
   const [title, setTitle] = useState("");
   const [teacher, setTeacher] = useState("");
@@ -51,9 +51,10 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
     setCourseType(initialCourseType);
   }, [initialCourseType]);
 
-  // Fetch PMI when switching to auto zoom source
+  // Fetch PMI once when in auto zoom mode
   useEffect(() => {
-    if (courseType === "zoom" && zoomSource === "auto" && !pmiFetched && !loadingPmi) {
+    if (courseType === "zoom" && zoomSource === "auto" && !pmiFetchedRef.current) {
+      pmiFetchedRef.current = true;
       setLoadingPmi(true);
       supabase.functions.invoke("zoom-proxy", { body: { action: "get-pmi" } })
         .then(({ data }) => {
@@ -68,10 +69,9 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
         .catch(() => {})
         .finally(() => {
           setLoadingPmi(false);
-          setPmiFetched(true);
         });
     }
-  }, [courseType, zoomSource, pmiFetched, loadingPmi]);
+  }, [courseType, zoomSource]);
 
   const createZoomMeeting = async (meetingTitle: string, courseTime: string): Promise<string | null> => {
     try {
