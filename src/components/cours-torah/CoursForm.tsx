@@ -407,54 +407,6 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                       </button>
                     )}
                   </div>
-
-                  {false && pmiInfo?.pmi ? (
-                    <button
-                      type="button"
-                      onClick={() => setUsePmi(!usePmi)}
-                      className={cn(
-                        "mt-3 w-full rounded-xl border p-3 text-left transition-all cursor-pointer",
-                        usePmi
-                          ? "border-[#2D8CFF] bg-[#2D8CFF]/10"
-                          : "border-border bg-card hover:border-[#2D8CFF]/40"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all",
-                          usePmi ? "border-[#2D8CFF] bg-[#2D8CFF]" : "border-muted-foreground/40"
-                        )}>
-                          {usePmi && <div className="w-2 h-2 rounded-full bg-white" />}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-foreground">Utiliser ma salle personnelle</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                            ID : {pmiInfo.pmi} — {pmiInfo.displayName}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  ) : (
-                    <div className="mt-3 rounded-xl border border-border bg-muted/40 p-3">
-                      <p className="text-[11px] text-muted-foreground">
-                        {loadingPmi
-                          ? "Recherche de votre salle personnelle…"
-                          : pmiError || "Salle personnelle indisponible pour le moment."}
-                      </p>
-                      {!loadingPmi && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            pmiFetchedRef.current = false;
-                            fetchPmi(true);
-                          }}
-                          className="mt-2 rounded-lg border border-border bg-card px-3 py-2 text-[11px] font-bold text-foreground cursor-pointer"
-                        >
-                          Réessayer
-                        </button>
-                      )}
-                    </div>
-                  ) : null}
                 </div>
 
                 {!usePmi && (
