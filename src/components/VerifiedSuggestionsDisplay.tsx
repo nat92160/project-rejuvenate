@@ -49,8 +49,26 @@ const VerifiedSuggestionsDisplay = ({ synagogueId, placeId }: { synagogueId?: st
       if (!isActive) return;
 
       const rows = (data || []) as SuggestionRow[];
-      setPendingSuggestions(rows.filter((row) => row.status === "pending"));
-      setApprovedSuggestions(rows.filter((row) => row.status === "approved" && row.verified));
+
+      // Deduplicate: keep only the most recent entry per office_name per status group
+      const dedup = (list: SuggestionRow[]) => {
+        const seen = new Map<string, SuggestionRow>();
+        for (const row of list) {
+          const existing = seen.get(row.office_name);
+          if (!existing || new Date(row.updated_at) > new Date(existing.updated_at)) {
+            seen.set(row.office_name, row);
+          }
+        }
+        return Array.from(seen.values());
+      };
+
+      const pending = rows.filter((row) => row.status === "pending");
+      const approved = rows.filter((row) => row.status === "approved" && row.verified);
+
+      // For pending, exclude offices that already have an approved entry
+      const approvedOffices = new Set(approved.map((r) => r.office_name));
+      setPendingSuggestions(dedup(pending).filter((r) => !approvedOffices.has(r.office_name)));
+      setApprovedSuggestions(dedup(approved));
     };
 
     void loadSuggestions();
