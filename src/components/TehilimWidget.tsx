@@ -922,19 +922,44 @@ const TehilimWidget = () => {
                     <p className="text-center text-sm text-muted-foreground py-6">Aucune chaîne trouvée pour « {searchQuery} »</p>
                   ) : (
                     <div className="space-y-2.5">
-                      {filtered.map(c => (
+                      {filtered.map(c => {
+                        const prog = chainProgress[c.id] || { claimed: 0, completed: 0 };
+                        const pct = Math.round((prog.completed / TOTAL_PSALMS) * 100);
+                        const isComplete = prog.completed >= TOTAL_PSALMS;
+                        return (
                         <button key={c.id} onClick={() => setSelectedChain(c)} className="w-full p-4 rounded-xl border border-border bg-card hover:bg-muted/30 hover:border-primary/15 transition-all cursor-pointer text-left">
                           <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-bold text-foreground">{c.title}</p>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-bold text-foreground truncate">{c.title}</p>
+                                {isComplete && (
+                                  <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                    ✓ Terminé
+                                  </span>
+                                )}
+                              </div>
                               {c.dedication && <p className="text-[11px] text-muted-foreground mt-0.5">{c.dedication}</p>}
                               {c.dedication_type && DEDICATION_LABELS[c.dedication_type] && (
                                 <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{DEDICATION_LABELS[c.dedication_type]}</span>
                               )}
+                              <div className="mt-2 flex items-center gap-2">
+                                <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full transition-all duration-500"
+                                    style={{
+                                      width: `${pct}%`,
+                                      background: isComplete ? "hsl(142, 71%, 45%)" : "var(--gradient-gold, hsl(var(--primary)))",
+                                    }}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-bold text-muted-foreground shrink-0">{pct}%</span>
+                              </div>
                             </div>
-                            <span className="text-xs text-muted-foreground">→</span>
+                            <span className="text-xs text-muted-foreground ml-2">→</span>
                           </div>
                         </button>
+                        );
+                      }
                       ))}
                     </div>
                   );
