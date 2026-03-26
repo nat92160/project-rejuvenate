@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
   const [usePmi, setUsePmi] = useState(false);
   const [pmiInfo, setPmiInfo] = useState<PmiInfo | null>(null);
   const [loadingPmi, setLoadingPmi] = useState(false);
+  const [pmiError, setPmiError] = useState("");
   const pmiFetchedRef = useRef(false);
   const [dateMode, setDateMode] = useState<"recurring" | "specific">("recurring");
   const [title, setTitle] = useState("");
@@ -51,27 +52,43 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
     setCourseType(initialCourseType);
   }, [initialCourseType]);
 
-  // Fetch PMI once when in auto zoom mode
-  useEffect(() => {
-    if (courseType === "zoom" && zoomSource === "auto" && !pmiFetchedRef.current) {
-      pmiFetchedRef.current = true;
-      setLoadingPmi(true);
-      supabase.functions.invoke("zoom-proxy", { body: { action: "get-pmi" } })
-        .then(({ data }) => {
-          if (data?.success && data.pmi) {
-            setPmiInfo({
-              pmi: data.pmi,
-              personalMeetingUrl: data.personalMeetingUrl,
-              displayName: data.displayName,
-            });
-          }
-        })
-        .catch(() => {})
-        .finally(() => {
-          setLoadingPmi(false);
-        });
+  const fetchPmi = useCallback(async (force = false) => {
+    if (loadingPmi) return;
+    if (!force && pmiFetchedRef.current) return;
+
+    pmiFetchedRef.current = true;
+    setLoadingPmi(true);
+    setPmiError("");
+
+    try {
+      const { data, error } = await supabase.functions.invoke("zoom-proxy", { body: { action: "get-pmi" } });
+
+      if (error || !data?.success || !data?.pmi || !data?.personalMeetingUrl) {
+        setPmiInfo(null);
+        setUsePmi(false);
+        setPmiError(data?.error || "Impossible de récupérer votre salle personnelle pour le moment.");
+        return;
+      }
+
+      setPmiInfo({
+        pmi: data.pmi,
+        personalMeetingUrl: data.personalMeetingUrl,
+        displayName: data.displayName,
+      });
+    } catch {
+      setPmiInfo(null);
+      setUsePmi(false);
+      setPmiError("Impossible de récupérer votre salle personnelle pour le moment.");
+    } finally {
+      setLoadingPmi(false);
     }
-  }, [courseType, zoomSource]);
+  }, [loadingPmi]);
+
+  useEffect(() => {
+    if (courseType === "zoom" && zoomSource === "auto") {
+      fetchPmi();
+    }
+  }, [courseType, zoomSource, fetchPmi]);
 
   const createZoomMeeting = async (meetingTitle: string, courseTime: string): Promise<string | null> => {
     try {
@@ -310,38 +327,68 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
 
             {zoomSource === "auto" ? (
               <div className="space-y-3">
-                {/* PMI option */}
-                {pmiInfo?.pmi ? (
-                  <button
-                    type="button"
-                    onClick={() => setUsePmi(!usePmi)}
-                    className={cn(
-                      "w-full rounded-xl border p-3 text-left transition-all cursor-pointer",
-                      usePmi
-                        ? "border-[#2D8CFF] bg-[#2D8CFF]/10"
-                        : "border-border bg-card hover:border-[#2D8CFF]/40"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all",
-                        usePmi ? "border-[#2D8CFF] bg-[#2D8CFF]" : "border-muted-foreground/40"
-                      )}>
-                        {usePmi && <div className="w-2 h-2 rounded-full bg-white" />}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-foreground">🏠 Salle personnelle (PMI)</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                          ID : {pmiInfo.pmi} — {pmiInfo.displayName}
-                        </p>
-                      </div>
+                <div className="rounded-xl border border-border bg-card p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold text-foreground">🏠 Salle personnelle Zoom</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Choisissez si vous voulez utiliser votre PMI ou créer une réunion automatique.
+                      </p>
                     </div>
-                  </button>
-                ) : null}
+                    {loadingPmi && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground flex-shrink-0" />}
+                  </div>
+
+                  {pmiInfo?.pmi ? (
+                    <button
+                      type="button"
+                      onClick={() => setUsePmi(!usePmi)}
+                      className={cn(
+                        "mt-3 w-full rounded-xl border p-3 text-left transition-all cursor-pointer",
+                        usePmi
+                          ? "border-[#2D8CFF] bg-[#2D8CFF]/10"
+                          : "border-border bg-card hover:border-[#2D8CFF]/40"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all",
+                          usePmi ? "border-[#2D8CFF] bg-[#2D8CFF]" : "border-muted-foreground/40"
+                        )}>
+                          {usePmi && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-foreground">Utiliser ma salle personnelle</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                            ID : {pmiInfo.pmi} — {pmiInfo.displayName}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  ) : (
+                    <div className="mt-3 rounded-xl border border-border bg-muted/40 p-3">
+                      <p className="text-[11px] text-muted-foreground">
+                        {loadingPmi
+                          ? "Recherche de votre salle personnelle…"
+                          : pmiError || "Salle personnelle indisponible pour le moment."}
+                      </p>
+                      {!loadingPmi && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            pmiFetchedRef.current = false;
+                            fetchPmi(true);
+                          }}
+                          className="mt-2 rounded-lg border border-border bg-card px-3 py-2 text-[11px] font-bold text-foreground cursor-pointer"
+                        >
+                          Réessayer
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {!usePmi && (
                   <>
-                    {/* Zoom mode: instant vs scheduled */}
                     <div className="flex rounded-lg overflow-hidden border border-[#2D8CFF]/20">
                       <button
                         onClick={() => setZoomMode("instant")}
@@ -367,8 +414,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                         <span>
                           {zoomMode === "instant"
                             ? <>La réunion sera <strong className="text-foreground">lancée immédiatement</strong>.</>
-                            : <>La réunion sera <strong className="text-foreground">programmée</strong> automatiquement.</>
-                          }
+                            : <>La réunion sera <strong className="text-foreground">programmée</strong> automatiquement.</>}
                         </span>
                       </p>
                     </div>
