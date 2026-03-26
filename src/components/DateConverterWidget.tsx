@@ -80,8 +80,8 @@ const DateConverterWidget = () => {
       </div>
 
       {mode === "g2h" ? (
-        <div className="flex items-end gap-3 flex-wrap">
-          <div className="flex-1 min-w-[150px]">
+        <div className="space-y-3">
+          <div>
             <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">
               Date civile
             </label>
@@ -96,7 +96,7 @@ const DateConverterWidget = () => {
           <button
             onClick={convertG2H}
             disabled={loading || !gDate}
-            className="px-6 py-3 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-95 min-h-[52px]"
+            className="w-full py-3 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-95 min-h-[52px]"
             style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
           >
             {loading ? "..." : "Convertir"}
@@ -104,7 +104,7 @@ const DateConverterWidget = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">Jour</label>
               <input
@@ -114,7 +114,7 @@ const DateConverterWidget = () => {
                 value={hDay}
                 onChange={(e) => setHDay(e.target.value)}
                 placeholder="1"
-                className="w-full px-3 py-2.5 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30"
+                className="w-full px-3 py-3 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30 min-h-[48px]"
               />
             </div>
             <div>
@@ -122,7 +122,7 @@ const DateConverterWidget = () => {
               <select
                 value={hMonth}
                 onChange={(e) => setHMonth(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30"
+                className="w-full px-2 py-3 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30 min-h-[48px]"
               >
                 {hebrewMonths.map((m) => (
                   <option key={m} value={m}>{m}</option>
@@ -136,14 +136,14 @@ const DateConverterWidget = () => {
                 value={hYear}
                 onChange={(e) => setHYear(e.target.value)}
                 placeholder="5786"
-                className="w-full px-3 py-2.5 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30"
+                className="w-full px-3 py-3 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30 min-h-[48px]"
               />
             </div>
           </div>
           <button
             onClick={convertH2G}
             disabled={loading || !hDay || !hYear}
-            className="w-full py-2.5 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-95"
+            className="w-full py-3 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-95 min-h-[48px]"
             style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
           >
             {loading ? "..." : "Convertir"}
