@@ -231,28 +231,11 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
 
   return (
     <>
+      <GreetingHeader />
       <Lazy><CitySelector /></Lazy>
       <MySynagogueCard onNavigate={setActiveTab} />
       <ShabbatCountdownBanner />
-
-      <div className="flex gap-3 mb-6">
-        <PowerButton
-          icon={<Book className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
-          label="Siddour"
-          badge={currentPrayer}
-          onClick={() => setActiveTab("siddour")}
-        />
-        <PowerButton
-          icon={<Heart className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
-          label="Tehilim"
-          onClick={() => setActiveTab("tehilim")}
-        />
-        <PowerButton
-          icon={<MapPin className="w-6 h-6" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />}
-          label="Synagogues"
-          onClick={() => setActiveTab("synagogue")}
-        />
-      </div>
+      <QuickActions onNavigate={setActiveTab} currentPrayer={currentPrayer} />
 
       {/* Conditional services from subscribed synagogue */}
       {(services?.mikveEnabled || services?.donationLink) && (
