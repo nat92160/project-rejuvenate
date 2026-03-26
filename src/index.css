@@ -127,8 +127,19 @@
 
   /* Hebrew reading block styles — Consistoire-like */
   .hebrew-reading-block {
-    letter-spacing: 0.04em;
-    word-spacing: 0.08em;
+    font-family: 'Frank Ruhl Libre', 'Noto Serif Hebrew', serif !important;
+    direction: rtl;
+    unicode-bidi: plaintext;
+    text-align: right !important;
+    text-rendering: optimizeLegibility;
+    font-kerning: normal;
+    font-feature-settings: "kern" 1, "liga" 1, "clig" 1, "mark" 1, "mkmk" 1;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    white-space: normal;
+    overflow-wrap: normal;
+    word-break: normal;
+    -webkit-font-smoothing: antialiased;
   }
 
   .hebrew-reading-block small {
