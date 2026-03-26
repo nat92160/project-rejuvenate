@@ -708,6 +708,8 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
               onMarkComplete={(claim) => { toggleComplete(claim); if (nextClaim) { setReadingChapter(nextClaim.chapter_start); } else { setReadingChapter(null); } }}
               nextChapter={nextClaim?.chapter_start}
               onGoNext={nextClaim ? () => setReadingChapter(nextClaim.chapter_start) : undefined}
+              dedication={chain.dedication}
+              dedicationType={chain.dedication_type}
             />
           );
         })()}
