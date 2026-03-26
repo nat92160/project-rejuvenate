@@ -107,6 +107,9 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
           <button onClick={onClose} className="shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 cursor-pointer border-none">✕</button>
         </div>
 
+        {/* Dedication banner */}
+        <DedicationBanner dedication={dedication} dedicationType={dedicationType} />
+
         {/* View mode selector */}
         <div className="px-4 py-2 border-b border-border">
           <ViewModeSelector mode={viewMode} onModeChange={setViewMode} loading={translitLoading} />
@@ -677,6 +680,8 @@ const TehilimJoinContent = () => {
               onUnclaim={(claim) => { unclaimPsalm(claim); setReadingChapter(null); }}
               nextChapter={nextClaim?.chapter_start}
               onGoNext={nextClaim ? () => setReadingChapter(nextClaim.chapter_start) : undefined}
+              dedication={chain?.dedication}
+              dedicationType={chain?.dedication_type}
             />
           );
         })()}
