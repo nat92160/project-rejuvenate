@@ -314,11 +314,12 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
 
 // Psalm tile with name tooltip
 const PsalmTile = ({
-  num, claim, isMine, onClaim, onToggle, onUnclaim, onRead, onSelect
+  num, claim, isMine, isCreator, onClaim, onToggle, onUnclaim, onRead, onSelect
 }: {
   num: number;
   claim: Claim | undefined;
   isMine: boolean;
+  isCreator?: boolean;
   onClaim: () => void;
   onToggle: () => void;
   onUnclaim: () => void;
@@ -333,9 +334,10 @@ const PsalmTile = ({
       onClick={() => {
         if (!claim) { onSelect(); return; }
         if (isMine) { onSelect(); return; }
+        if (isCreator) { onSelect(); return; }
       }}
       onContextMenu={(e) => { e.preventDefault(); if (isMine && claim && !claim.completed) onUnclaim(); }}
-      disabled={!!claim && !isMine}
+      disabled={!!claim && !isMine && !isCreator}
       className={`relative aspect-square rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer border overflow-hidden ${
         claim?.completed ? "bg-green-500/15 border-green-500/30 text-green-600"
         : claim ? isMine ? "border-primary/40 text-primary" : "border-border text-muted-foreground opacity-60"
@@ -444,7 +446,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
   };
 
   const toggleComplete = async (claim: Claim) => {
-    if (!isOwnClaim(claim)) return;
+    if (!isOwnClaim(claim) && !isCreator) return;
     const newCompleted = !claim.completed;
     setClaims(prev => prev.map(c => c.id === claim.id ? { ...c, completed: newCompleted, completed_at: newCompleted ? new Date().toISOString() : null } : c));
     await supabase.from("tehilim_claims").update({ completed: newCompleted, completed_at: newCompleted ? new Date().toISOString() : null }).eq("id", claim.id);
@@ -573,6 +575,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
                   num={num}
                   claim={claim}
                   isMine={isMine}
+                  isCreator={isCreator}
                   onClaim={() => claimPsalm(num)}
                   onToggle={() => claim && toggleComplete(claim)}
                   onUnclaim={() => claim && unclaimPsalm(claim)}
@@ -613,8 +616,10 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
       <AnimatePresence>
         {selectedPsalm !== null && (() => {
           const claim = claims.find(c => c.chapter_start === selectedPsalm && isOwnClaim(c));
-          const anyoneClaimed = claims.find(c => c.chapter_start === selectedPsalm);
+          const anyoneClaim = claims.find(c => c.chapter_start === selectedPsalm);
+          const anyoneClaimed = anyoneClaim;
           const isFree = !anyoneClaimed;
+          const creatorCanManage = isCreator && anyoneClaim && !claim;
           return (
             <>
               <motion.div
@@ -636,7 +641,9 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
                   Psaume {selectedPsalm} — {toHebrewLetter(selectedPsalm)}
                 </h3>
                 <p className="text-xs text-muted-foreground text-center mb-5">
-                  {isFree ? "Ce psaume est libre" : claim?.completed ? "Ce psaume est marqué comme lu" : "Que souhaitez-vous faire ?"}
+                  {isFree ? "Ce psaume est libre"
+                    : creatorCanManage ? `Réservé par ${anyoneClaim.display_name}${anyoneClaim.completed ? " — Lu ✅" : ""}`
+                    : claim?.completed ? "Ce psaume est marqué comme lu" : "Que souhaitez-vous faire ?"}
                 </p>
                 <div className="space-y-2.5">
                   {isFree && (
@@ -680,6 +687,23 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
                       style={{ background: "var(--gradient-gold)" }}
                     >
                       📖 Relire
+                    </button>
+                  )}
+                  {creatorCanManage && !anyoneClaim.completed && (
+                    <button
+                      onClick={() => { toggleComplete(anyoneClaim); setSelectedPsalm(null); }}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border-none cursor-pointer text-primary-foreground"
+                      style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}
+                    >
+                      ✅ Marquer comme lu
+                    </button>
+                  )}
+                  {creatorCanManage && anyoneClaim.completed && (
+                    <button
+                      onClick={() => { toggleComplete(anyoneClaim); setSelectedPsalm(null); }}
+                      className="w-full py-3.5 rounded-xl text-sm font-bold border border-amber-500/30 bg-amber-500/5 text-amber-700 cursor-pointer"
+                    >
+                      ↩️ Remettre en non lu
                     </button>
                   )}
                   <button
