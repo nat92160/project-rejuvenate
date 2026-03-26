@@ -595,7 +595,7 @@ const FideleSynagogueView = () => {
           {!googleLoading && googleSearched && nearbyPartners.length === 0 && externalGoogleResults.length === 0 && (
             <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
               <span className="text-4xl">🏛️</span>
-              <p className="mt-3 text-sm text-muted-foreground">Aucune synagogue trouvée dans un rayon de 15 km.</p>
+              <p className="mt-3 text-sm text-muted-foreground">Aucune synagogue trouvée dans un rayon de 100 km.</p>
             </div>
           )}
         </div>

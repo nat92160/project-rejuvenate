@@ -31,7 +31,30 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 async function searchNearbyPlaces(apiKey: string, lat: number, lon: number, radiusM: number): Promise<PlaceResult[]> {
-  // Use Google Places API (New) - Nearby Search
+  // Google Places API max radius is 50km, so we split larger radii into multiple calls
+  const maxApiRadius = 50000;
+  const allPlaces: PlaceResult[] = [];
+  const seenIds = new Set<string>();
+
+  if (radiusM <= maxApiRadius) {
+    const results = await doNearbySearch(apiKey, lat, lon, radiusM);
+    return results;
+  }
+
+  // First search within 50km
+  const inner = await doNearbySearch(apiKey, lat, lon, maxApiRadius);
+  for (const p of inner) { allPlaces.push(p); seenIds.add(p.id); }
+
+  // Text search for synagogues further out
+  const textResults = await doTextSearch(apiKey, lat, lon, radiusM);
+  for (const p of textResults) {
+    if (!seenIds.has(p.id)) { allPlaces.push(p); seenIds.add(p.id); }
+  }
+
+  return allPlaces.sort((a, b) => a.distance - b.distance);
+}
+
+async function doNearbySearch(apiKey: string, lat: number, lon: number, radiusM: number): Promise<PlaceResult[]> {
   const url = "https://places.googleapis.com/v1/places:searchNearby";
   
   const body = {
@@ -40,7 +63,7 @@ async function searchNearbyPlaces(apiKey: string, lat: number, lon: number, radi
     locationRestriction: {
       circle: {
         center: { latitude: lat, longitude: lon },
-        radius: Math.min(radiusM, 50000), // max 50km per request
+        radius: Math.min(radiusM, 50000),
       },
     },
   };
@@ -61,8 +84,45 @@ async function searchNearbyPlaces(apiKey: string, lat: number, lon: number, radi
   }
 
   const data = await response.json();
-  const places = data.places || [];
+  return mapPlaces(data.places || [], lat, lon);
+}
 
+async function doTextSearch(apiKey: string, lat: number, lon: number, radiusM: number): Promise<PlaceResult[]> {
+  const url = "https://places.googleapis.com/v1/places:searchText";
+  
+  const body = {
+    textQuery: "synagogue",
+    maxResultCount: 20,
+    locationBias: {
+      circle: {
+        center: { latitude: lat, longitude: lon },
+        radius: Math.min(radiusM, 100000),
+      },
+    },
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.formattedAddress,places.internationalPhoneNumber,places.websiteUri,places.shortFormattedAddress",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    console.warn("Text search failed:", response.status);
+    return [];
+  }
+
+  const data = await response.json();
+  const results = mapPlaces(data.places || [], lat, lon);
+  // Filter to only include results within the requested radius
+  return results.filter(r => r.distance <= radiusM);
+}
+
+function mapPlaces(places: any[], lat: number, lon: number): PlaceResult[] {
   return places.map((place: any) => {
     const placeLat = place.location?.latitude;
     const placeLon = place.location?.longitude;
@@ -161,7 +221,7 @@ serve(async (req) => {
     }
 
     // Progressive search: 5km, 15km, 50km
-    const radii = [5000, 15000, 50000];
+    const radii = [5000, 15000, 50000, 100000];
     let results: PlaceResult[] = [];
 
     for (const radius of radii) {
