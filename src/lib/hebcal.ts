@@ -90,9 +90,11 @@ function translateHoliday(title: string): { fr: string; emoji: string } {
 
 // ─── Formatting helpers ───
 
-function fmtZmanTime(dt: Date | null | undefined): string {
+function fmtZmanTime(dt: Date | null | undefined, tz?: string): string {
   if (!dt || isNaN(dt.getTime())) return '--:--';
-  return dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const opts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
+  if (tz) opts.timeZone = tz;
+  return dt.toLocaleTimeString('fr-FR', opts);
 }
 
 function toIsoDate(d: Date): string {
