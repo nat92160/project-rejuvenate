@@ -127,7 +127,7 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
           {!loading && !error && (
             <>
               {(viewMode === "hebrew" || viewMode === "bilingual") && (
-                <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif", fontSize: `${fontSize}px`, lineHeight: 2.2, textAlign: "justify", fontWeight: 600, color: "#111", wordSpacing: "0.06em" }}>
+                <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif", fontSize: `${fontSize}px`, lineHeight: 2.2, textAlign: "right", fontWeight: 600, color: "#111" }}>
                   {verses.map((verse, i) => (
                     <span key={i}>
                       <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
