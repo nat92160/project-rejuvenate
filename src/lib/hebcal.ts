@@ -153,14 +153,14 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
 
       if (desc === 'Candle lighting') {
         const eventTime: Date = (ev as any).eventTime || greg;
-        candles = fmtZmanTime(eventTime);
-        candlesDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+        candles = fmtZmanTime(eventTime, city.tz);
+        candlesDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: city.tz });
         candlesDateTime = eventTime;
       }
       if (desc.startsWith('Havdalah')) {
         const eventTime: Date = (ev as any).eventTime || greg;
-        havdala = fmtZmanTime(eventTime);
-        havdalaDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+        havdala = fmtZmanTime(eventTime, city.tz);
+        havdalaDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: city.tz });
         havdalaDateTime = eventTime;
       }
       if (f & flags.PARSHA_HASHAVUA) {
