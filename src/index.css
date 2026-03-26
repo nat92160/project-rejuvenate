@@ -126,6 +126,11 @@
   }
 
   /* Hebrew reading block styles — Consistoire-like */
+  .hebrew-reading-block {
+    letter-spacing: 0.04em;
+    word-spacing: 0.08em;
+  }
+
   .hebrew-reading-block small {
     display: inline;
     font-size: 0.72em;
