@@ -1,7 +1,7 @@
 {
   "name": "Chabbat Chalom",
-  "short_name": "Chabbat",
-  "description": "Calendrier juif complet — Horaires, Zmanim, Fêtes, Tehilim",
+  "short_name": "Chabbat Chalom",
+  "description": "Votre synagogue en temps réel — Horaires, Zmanim, Tehilim, cours de Torah et vie communautaire.",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
@@ -9,17 +9,27 @@
   "theme_color": "#C59A2E",
   "scope": "/",
   "orientation": "portrait",
-  "categories": ["lifestyle", "utilities", "education"],
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["lifestyle", "utilities", "education", "social"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/icon-1024.png",
