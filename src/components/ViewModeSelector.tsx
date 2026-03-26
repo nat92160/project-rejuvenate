@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { motion } from "framer-motion";
 import type { ViewMode } from "@/hooks/useTransliteration";
 
@@ -14,11 +15,15 @@ const VIEW_OPTIONS: { key: ViewMode; label: string; icon: string }[] = [
   { key: "bilingual", label: "Bilingue", icon: "📖" },
 ];
 
-const ViewModeSelector = ({ mode, onModeChange, loading = false, prayerMode = false }: ViewModeSelectorProps) => {
+const ViewModeSelector = forwardRef<HTMLDivElement, ViewModeSelectorProps>(({ mode, onModeChange, loading = false, prayerMode = false }, ref) => {
   return (
-    <div className="flex gap-1 rounded-xl p-1" style={{
-      background: prayerMode ? "rgba(255,255,255,0.06)" : "hsl(var(--muted))",
-    }}>
+    <div
+      ref={ref}
+      className="flex gap-1 rounded-xl p-1"
+      style={{
+        background: prayerMode ? "rgba(255,255,255,0.06)" : "hsl(var(--muted))",
+      }}
+    >
       {VIEW_OPTIONS.map((opt) => {
         const isActive = mode === opt.key;
         return (
@@ -51,6 +56,8 @@ const ViewModeSelector = ({ mode, onModeChange, loading = false, prayerMode = fa
       })}
     </div>
   );
-};
+});
+
+ViewModeSelector.displayName = "ViewModeSelector";
 
 export default ViewModeSelector;

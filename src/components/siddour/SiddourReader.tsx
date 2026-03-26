@@ -187,13 +187,12 @@ const SiddourReader = ({
               dir="rtl"
               className="hebrew-reading-block"
               style={{
-                fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif",
+                fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
                 fontSize: `${fontSize}px`,
                 lineHeight: 2.4,
-                textAlign: "justify",
+                textAlign: "right",
                 fontWeight: 600,
                 color: prayerMode ? "#e8e0d0" : "#111",
-                wordSpacing: "0.06em",
               }}
             >
               {(() => {
