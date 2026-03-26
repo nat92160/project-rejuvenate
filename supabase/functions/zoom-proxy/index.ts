@@ -37,12 +37,12 @@ serve(async (req) => {
         const err = await resp.text();
         throw new Error(`Zoom token error: ${resp.status} ${err}`);
       }
-      const data = await resp.json();
-      return data.access_token;
+      return await resp.json();
     };
 
     if (action === "create-meeting") {
-      const accessToken = await getAccessToken();
+      const tokenData = await getAccessToken();
+      const accessToken = tokenData.access_token;
       const { title, duration, start_time, timezone, passcode, usePmi } = body;
       const tz = timezone || "Europe/Paris";
 
@@ -101,7 +101,8 @@ serve(async (req) => {
     }
 
     if (action === "check-live") {
-      const accessToken = await getAccessToken();
+      const tokenData = await getAccessToken();
+      const accessToken = tokenData.access_token;
       const resp = await fetch("https://api.zoom.us/v2/users/me/meetings?type=live", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -129,7 +130,9 @@ serve(async (req) => {
     }
 
     if (action === "get-pmi") {
-      const accessToken = await getAccessToken();
+      const tokenData = await getAccessToken();
+      const accessToken = tokenData.access_token;
+      const grantedScopes = String(tokenData.scope || "").split(" ").filter(Boolean);
       const resp = await fetch("https://api.zoom.us/v2/users/me", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -137,6 +140,21 @@ serve(async (req) => {
       if (!resp.ok) {
         const errBody = await resp.text();
         console.error("Zoom get-pmi error:", resp.status, errBody);
+
+        if (resp.status === 400 && grantedScopes.includes("user:read:pm_room:admin")) {
+          return new Response(JSON.stringify({
+            success: true,
+            pmi: null,
+            personalMeetingUrl: null,
+            displayName: "",
+            previewUnavailable: true,
+            message: "Le token Zoom permet d’utiliser la salle perso lors de la création, mais pas d’en afficher l’aperçu.",
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         return new Response(JSON.stringify({ success: false, error: `Zoom API error ${resp.status}: ${errBody}` }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -159,8 +177,8 @@ serve(async (req) => {
 
     if (action === "check-status") {
       try {
-        await getAccessToken();
-        return new Response(JSON.stringify({ success: true, connected: true }), {
+        const tokenData = await getAccessToken();
+        return new Response(JSON.stringify({ success: true, connected: true, scopes: tokenData.scope || "" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       } catch {
