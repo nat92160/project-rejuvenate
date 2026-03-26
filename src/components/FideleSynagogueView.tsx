@@ -568,6 +568,7 @@ const FideleSynagogueView = () => {
                           📝 Proposer des horaires
                         </button>
                       </div>
+                      <VerifiedSuggestionsDisplay placeId={gr.id} />
                       {suggestingSynaId === `gm-${gr.id}` && (
                         <div className="mt-3">
                           <PrayerTimeSuggestionForm
