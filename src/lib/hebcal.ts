@@ -130,11 +130,12 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
   try {
     const location = cityToLocation(city);
     const now = new Date();
-    const nextWeek = new Date(now.getTime() + 8 * 86400000);
+    const start = new Date(now.getTime() - 2 * 86400000);
+    const end = new Date(now.getTime() + 12 * 86400000);
 
     const events = HebrewCalendar.calendar({
-      start: now,
-      end: nextWeek,
+      start,
+      end,
       candlelighting: true,
       location,
       sedrot: true,
@@ -142,43 +143,81 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
       candleLightingMins: city.candleOffset,
     });
 
-    let candles = '', candlesDate = '', havdala = '', havdalaDate = '', parasha = '', parashaHe = '';
-    let candlesDateTime: Date | null = null;
-    let havdalaDateTime: Date | null = null;
+    const candleEvents: Array<{ greg: Date; time: Date }> = [];
+    const havdalahEvents: Array<{ greg: Date; time: Date }> = [];
+    const parashaEvents: Array<{ greg: Date; desc: string; hebrew: string }> = [];
 
     for (const ev of events) {
       const desc = ev.getDesc();
       const greg = ev.getDate().greg();
-      const f = ev.getFlags();
+      const flagsValue = ev.getFlags();
 
       if (desc === 'Candle lighting') {
-        const eventTime: Date = (ev as any).eventTime || greg;
-        candles = fmtZmanTime(eventTime, city.tz);
-        candlesDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: city.tz });
-        candlesDateTime = eventTime;
+        candleEvents.push({ greg, time: (ev as any).eventTime || greg });
       }
+
       if (desc.startsWith('Havdalah')) {
-        const eventTime: Date = (ev as any).eventTime || greg;
-        havdala = fmtZmanTime(eventTime, city.tz);
-        havdalaDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: city.tz });
-        havdalaDateTime = eventTime;
+        havdalahEvents.push({ greg, time: (ev as any).eventTime || greg });
       }
-      if (f & flags.PARSHA_HASHAVUA) {
-        const t = translateHoliday(desc);
-        parasha = t.fr;
-        parashaHe = ev.render('he') || '';
+
+      if (flagsValue & flags.PARSHA_HASHAVUA) {
+        parashaEvents.push({
+          greg,
+          desc,
+          hebrew: ev.render('he') || '',
+        });
       }
     }
 
+    const shabbatWindows = candleEvents
+      .map((candle) => {
+        const havdalah = havdalahEvents.find((candidate) => {
+          const delta = candidate.time.getTime() - candle.time.getTime();
+          return delta > 0 && delta < 3 * 86400000;
+        });
+
+        if (!havdalah) return null;
+
+        const parashaEvent = parashaEvents.find((candidate) => {
+          const gregTime = candidate.greg.getTime();
+          return gregTime >= candle.greg.getTime() && gregTime <= havdalah.greg.getTime();
+        });
+
+        return {
+          candle,
+          havdalah,
+          parasha: parashaEvent,
+        };
+      })
+      .filter((window): window is NonNullable<typeof window> => Boolean(window))
+      .sort((a, b) => a.candle.time.getTime() - b.candle.time.getTime());
+
+    const selectedWindow =
+      shabbatWindows.find(({ candle, havdalah }) => now >= candle.time && now < havdalah.time) ||
+      shabbatWindows.find(({ candle }) => now < candle.time) ||
+      shabbatWindows[shabbatWindows.length - 1];
+
+    if (!selectedWindow) return null;
+
     return {
-      candleLighting: candles,
-      candleLightingDate: candlesDate,
-      candleLightingDateTime: candlesDateTime,
-      havdalah: havdala,
-      havdalahDate: havdalaDate,
-      havdalahDateTime: havdalaDateTime,
-      parasha,
-      parashaHebrew: parashaHe,
+      candleLighting: fmtZmanTime(selectedWindow.candle.time, city.tz),
+      candleLightingDate: selectedWindow.candle.greg.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        timeZone: city.tz,
+      }),
+      candleLightingDateTime: selectedWindow.candle.time,
+      havdalah: fmtZmanTime(selectedWindow.havdalah.time, city.tz),
+      havdalahDate: selectedWindow.havdalah.greg.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        timeZone: city.tz,
+      }),
+      havdalahDateTime: selectedWindow.havdalah.time,
+      parasha: selectedWindow.parasha ? translateHoliday(selectedWindow.parasha.desc).fr : '',
+      parashaHebrew: selectedWindow.parasha?.hebrew || '',
     };
   } catch {
     return null;
