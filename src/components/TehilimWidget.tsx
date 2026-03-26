@@ -93,12 +93,14 @@ const PsalmReader = ({ chapter, onClose }: { chapter: number; onClose: () => voi
   );
 };
 
-// Chain Psalm Reader — opens psalm + mark as complete button
-const ChainPsalmReader = ({ chapter, claim, onClose, onMarkComplete }: {
+// Chain Psalm Reader — opens psalm + mark as complete button + next navigation
+const ChainPsalmReader = ({ chapter, claim, onClose, onMarkComplete, nextChapter, onGoNext }: {
   chapter: number;
   claim?: Claim;
   onClose: () => void;
   onMarkComplete: (claim: Claim) => void;
+  nextChapter?: number | null;
+  onGoNext?: () => void;
 }) => {
   const [verses, setVerses] = useState<string[]>([]);
   const [heTitle, setHeTitle] = useState("");
@@ -206,8 +208,8 @@ const ChainPsalmReader = ({ chapter, claim, onClose, onMarkComplete }: {
         </div>
 
         {/* Action bar */}
-        {claim && !claim.completed && (
-          <div className="p-4 border-t border-border" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))" }}>
+        <div className="p-4 border-t border-border space-y-2" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))" }}>
+          {claim && !claim.completed && (
             <button
               onClick={() => onMarkComplete(claim)}
               className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer transition-all active:scale-[0.98]"
@@ -215,8 +217,17 @@ const ChainPsalmReader = ({ chapter, claim, onClose, onMarkComplete }: {
             >
               ✅ Marquer comme lu
             </button>
-          </div>
-        )}
+          )}
+          {nextChapter && onGoNext && (
+            <button
+              onClick={onGoNext}
+              className="w-full py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all active:scale-[0.98] text-primary-foreground"
+              style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+            >
+              ➡️ Psaume suivant (Ps {nextChapter})
+            </button>
+          )}
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -556,12 +567,12 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
           {/* My claims summary */}
           {claims.filter(c => isOwnClaim(c) && !c.completed).length > 0 && (
             <div className="mt-3 p-3 rounded-xl border border-primary/20" style={{ background: "hsl(var(--gold) / 0.06)" }}>
-              <p className="text-[10px] font-bold text-foreground mb-1.5">Mes réservations :</p>
-              <div className="flex flex-wrap gap-1">
+            <p className="text-[10px] font-bold text-foreground mb-1.5">Mes réservations :</p>
+              <div className="flex flex-wrap gap-1.5">
                 {claims.filter(c => isOwnClaim(c) && !c.completed).map(c => (
-                  <div key={c.id} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border border-primary/20" style={{ background: "hsl(var(--gold) / 0.1)" }}>
+                  <div key={c.id} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-primary/20" style={{ background: "hsl(var(--gold) / 0.1)" }}>
                     <span>Ps {c.chapter_start}</span>
-                    <button onClick={() => unclaimPsalm(c)} className="text-destructive bg-transparent border-none cursor-pointer text-[9px] p-0 hover:scale-110">✕</button>
+                    <button onClick={() => unclaimPsalm(c)} className="text-destructive bg-transparent border-none cursor-pointer text-sm p-0 w-6 h-6 flex items-center justify-center rounded-full hover:bg-destructive/10 transition-colors active:scale-90" aria-label={`Retirer psaume ${c.chapter_start}`}>✕</button>
                   </div>
                 ))}
               </div>
@@ -660,14 +671,21 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
       </AnimatePresence>
 
       <AnimatePresence>
-        {readingChapter !== null && (
-          <ChainPsalmReader
-            chapter={readingChapter}
-            claim={claims.find(c => c.chapter_start === readingChapter && isOwnClaim(c))}
-            onClose={() => setReadingChapter(null)}
-            onMarkComplete={(claim) => { toggleComplete(claim); setReadingChapter(null); }}
-          />
-        )}
+        {readingChapter !== null && (() => {
+          const myUnread = claims.filter(c => isOwnClaim(c) && !c.completed).sort((a, b) => a.chapter_start - b.chapter_start);
+          const currentIdx = myUnread.findIndex(c => c.chapter_start === readingChapter);
+          const nextClaim = currentIdx >= 0 && currentIdx < myUnread.length - 1 ? myUnread[currentIdx + 1] : null;
+          return (
+            <ChainPsalmReader
+              chapter={readingChapter}
+              claim={claims.find(c => c.chapter_start === readingChapter && isOwnClaim(c))}
+              onClose={() => setReadingChapter(null)}
+              onMarkComplete={(claim) => { toggleComplete(claim); if (nextClaim) { setReadingChapter(nextClaim.chapter_start); } else { setReadingChapter(null); } }}
+              nextChapter={nextClaim?.chapter_start}
+              onGoNext={nextClaim ? () => setReadingChapter(nextClaim.chapter_start) : undefined}
+            />
+          );
+        })()}
       </AnimatePresence>
     </div>
   );
