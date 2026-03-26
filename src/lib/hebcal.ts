@@ -228,7 +228,7 @@ export async function fetchMinhaTime(city: CityConfig, date?: Date): Promise<str
     let minhaTime = fifteenBefore;
     if (mk && mk < fifteenBefore) minhaTime = mk;
 
-    return fmtZmanTime(minhaTime);
+    return fmtZmanTime(minhaTime, city.tz);
   } catch {
     return null;
   }
