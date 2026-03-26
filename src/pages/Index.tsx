@@ -10,10 +10,12 @@ import { getCurrentPrayer } from "@/components/MySynagogueCard";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes } from "@/lib/hebcal";
-import { Book, Heart, MapPin, User } from "lucide-react";
+import { User } from "lucide-react";
 import StarOfDavid from "@/components/StarOfDavid";
 import { useSynaServices } from "@/hooks/useSynaServices";
 import { Droplets, ExternalLink } from "lucide-react";
+import GreetingHeader from "@/components/GreetingHeader";
+import QuickActions from "@/components/QuickActions";
 const SpiritualTimeline = lazy(() => import("@/components/SpiritualTimeline"));
 
 // Lazy-loaded modules
