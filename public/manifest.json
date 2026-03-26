@@ -3,10 +3,13 @@
   "short_name": "Chabbat",
   "description": "Calendrier juif complet — Horaires, Zmanim, Fêtes, Tehilim",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#F8F6F0",
   "theme_color": "#C59A2E",
+  "scope": "/",
   "orientation": "portrait",
+  "categories": ["lifestyle", "utilities", "education"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -17,6 +20,12 @@
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
