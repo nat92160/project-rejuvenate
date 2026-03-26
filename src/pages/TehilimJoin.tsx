@@ -30,12 +30,14 @@ type Claim = {
 };
 
 // Psalm Reader Overlay with mark complete + phonetic
-const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim }: {
+const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim, nextChapter, onGoNext }: {
   chapter: number;
   claim?: Claim;
   onClose: () => void;
   onMarkComplete: (claim: Claim) => void;
   onUnclaim: (claim: Claim) => void;
+  nextChapter?: number | null;
+  onGoNext?: () => void;
 }) => {
   const [verses, setVerses] = useState<string[]>([]);
   const [heTitle, setHeTitle] = useState("");
@@ -155,6 +157,15 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
               <div className="text-center py-2">
                 <span className="text-xs font-bold text-green-600">✅ Psaume déjà lu</span>
               </div>
+            )}
+            {nextChapter && onGoNext && (
+              <button
+                onClick={onGoNext}
+                className="w-full py-3 rounded-xl font-bold text-sm border-none cursor-pointer transition-all active:scale-[0.98] text-primary-foreground"
+                style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+              >
+                ➡️ Psaume suivant (Ps {nextChapter})
+              </button>
             )}
           </div>
         )}
@@ -410,9 +421,9 @@ const TehilimJoinContent = () => {
         {myClaims.length > 0 && (
           <div className="p-4 rounded-xl border border-primary/20 mb-4" style={{ background: "hsl(var(--gold) / 0.06)" }}>
             <p className="text-xs font-bold text-foreground mb-2">📖 Mes psaumes ({myClaims.length}) :</p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {myClaims.map(c => (
-                <div key={c.id} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold border" style={{
+                <div key={c.id} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border" style={{
                   background: c.completed ? "hsl(142 76% 36% / 0.1)" : "hsl(var(--gold) / 0.1)",
                   borderColor: c.completed ? "hsl(142 76% 36% / 0.3)" : "hsl(var(--gold) / 0.2)",
                   color: c.completed ? "hsl(142 76% 36%)" : "hsl(var(--gold-matte))",
@@ -422,8 +433,8 @@ const TehilimJoinContent = () => {
                     <span>✅</span>
                   ) : (
                     <>
-                      <button onClick={() => toggleComplete(c)} className="ml-1 bg-transparent border-none cursor-pointer text-[10px] p-0 hover:scale-110 transition-transform" title="Marquer comme lu">✔️</button>
-                      <button onClick={() => unclaimPsalm(c)} className="ml-0.5 text-destructive bg-transparent border-none cursor-pointer text-[10px] p-0 hover:scale-110 transition-transform" title="Annuler">✕</button>
+                      <button onClick={() => toggleComplete(c)} className="bg-transparent border-none cursor-pointer text-sm p-0 w-7 h-7 flex items-center justify-center rounded-full hover:bg-green-500/10 transition-colors active:scale-90" title="Marquer comme lu">✔️</button>
+                      <button onClick={() => unclaimPsalm(c)} className="text-destructive bg-transparent border-none cursor-pointer text-sm p-0 w-7 h-7 flex items-center justify-center rounded-full hover:bg-destructive/10 transition-colors active:scale-90" title="Annuler">✕</button>
                     </>
                   )}
                 </div>
@@ -631,14 +642,19 @@ const TehilimJoinContent = () => {
       {/* Psalm Reader */}
       <AnimatePresence>
         {readingChapter !== null && (() => {
+          const myUnread = myClaims.filter(c => !c.completed).sort((a, b) => a.chapter_start - b.chapter_start);
+          const currentIdx = myUnread.findIndex(c => c.chapter_start === readingChapter);
+          const nextClaim = currentIdx >= 0 && currentIdx < myUnread.length - 1 ? myUnread[currentIdx + 1] : null;
           const myClaim = claims.find(c => c.chapter_start === readingChapter && isOwnClaim(c));
           return (
             <PsalmReaderOverlay
               chapter={readingChapter}
               claim={myClaim}
               onClose={() => setReadingChapter(null)}
-              onMarkComplete={(claim) => { toggleComplete(claim); setReadingChapter(null); }}
+              onMarkComplete={(claim) => { toggleComplete(claim); if (nextClaim) { setReadingChapter(nextClaim.chapter_start); } else { setReadingChapter(null); } }}
               onUnclaim={(claim) => { unclaimPsalm(claim); setReadingChapter(null); }}
+              nextChapter={nextClaim?.chapter_start}
+              onGoNext={nextClaim ? () => setReadingChapter(nextClaim.chapter_start) : undefined}
             />
           );
         })()}
