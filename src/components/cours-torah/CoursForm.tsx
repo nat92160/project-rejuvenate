@@ -409,50 +409,6 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                   </div>
                 </div>
 
-                {!usePmi && (
-                  <>
-                    <div className="flex rounded-lg overflow-hidden border border-[#2D8CFF]/20">
-                      <button
-                        onClick={() => setZoomMode("instant")}
-                        className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
-                          zoomMode === "instant" ? "bg-[#2D8CFF]/80 text-white" : "bg-card text-muted-foreground"
-                        }`}
-                      >
-                        ⚡ En direct
-                      </button>
-                      <button
-                        onClick={() => setZoomMode("scheduled")}
-                        className={`flex-1 py-2 text-[11px] font-bold border-none cursor-pointer transition-all ${
-                          zoomMode === "scheduled" ? "bg-[#2D8CFF]/80 text-white" : "bg-card text-muted-foreground"
-                        }`}
-                      >
-                        📅 Programmée
-                      </button>
-                    </div>
-
-                    <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
-                      <p className="text-xs text-muted-foreground flex items-center gap-2">
-                        <span className="text-base flex-shrink-0">{zoomMode === "instant" ? "⚡" : "📅"}</span>
-                        <span>
-                          {zoomMode === "instant"
-                            ? <>La réunion sera <strong className="text-foreground">lancée immédiatement</strong>.</>
-                            : <>La réunion sera <strong className="text-foreground">programmée</strong> automatiquement.</>}
-                        </span>
-                      </p>
-                    </div>
-                  </>
-                )}
-
-                {usePmi && (
-                  <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
-                    <p className="text-xs text-muted-foreground flex items-center gap-2">
-                      <span className="text-base flex-shrink-0">🏠</span>
-                      <span>
-                        Le cours utilisera votre <strong className="text-foreground">salle personnelle Zoom</strong>. Même lien chaque semaine.
-                      </span>
-                    </p>
-                  </div>
-                )}
               </div>
             ) : (
               <>
