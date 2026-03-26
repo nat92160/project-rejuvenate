@@ -90,9 +90,11 @@ function translateHoliday(title: string): { fr: string; emoji: string } {
 
 // ─── Formatting helpers ───
 
-function fmtZmanTime(dt: Date | null | undefined): string {
+function fmtZmanTime(dt: Date | null | undefined, tz?: string): string {
   if (!dt || isNaN(dt.getTime())) return '--:--';
-  return dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const opts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
+  if (tz) opts.timeZone = tz;
+  return dt.toLocaleTimeString('fr-FR', opts);
 }
 
 function toIsoDate(d: Date): string {
@@ -151,14 +153,14 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
 
       if (desc === 'Candle lighting') {
         const eventTime: Date = (ev as any).eventTime || greg;
-        candles = fmtZmanTime(eventTime);
-        candlesDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+        candles = fmtZmanTime(eventTime, city.tz);
+        candlesDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: city.tz });
         candlesDateTime = eventTime;
       }
       if (desc.startsWith('Havdalah')) {
         const eventTime: Date = (ev as any).eventTime || greg;
-        havdala = fmtZmanTime(eventTime);
-        havdalaDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+        havdala = fmtZmanTime(eventTime, city.tz);
+        havdalaDate = greg.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: city.tz });
         havdalaDateTime = eventTime;
       }
       if (f & flags.PARSHA_HASHAVUA) {
@@ -191,18 +193,19 @@ export async function fetchZmanim(city: CityConfig, date?: Date): Promise<ZmanIt
     const location = cityToLocation(city);
     const zman = new HebcalZmanim(location, d, false);
 
+    const tz = city.tz;
     return [
-      { label: "Alot haChah'ar", time: fmtZmanTime(zman.alotHaShachar()), icon: "🌑", description: "Aube — 72 min avant le lever" },
-      { label: "Nets (Lever du soleil)", time: fmtZmanTime(zman.sunrise()), icon: "🌅", description: "Lever du soleil" },
-      { label: "Chéma (MG\"A)", time: fmtZmanTime(zman.sofZmanShmaMGA()), icon: "📖", description: "Fin du Chéma (Magen Avraham)" },
-      { label: "Chéma (GR\"A)", time: fmtZmanTime(zman.sofZmanShma()), icon: "📖", description: "Fin du Chéma (Gaon de Vilna)" },
-      { label: "Téfila (GR\"A)", time: fmtZmanTime(zman.sofZmanTfilla()), icon: "🙏", description: "Fin de la Téfila" },
-      { label: "'Hatsot (Midi solaire)", time: fmtZmanTime(zman.chatzot()), icon: "🕐", description: "Midi solaire" },
-      { label: "Min'ha Guédola", time: fmtZmanTime(zman.minchaGedola()), icon: "🕐", description: "Début de Min'ha" },
-      { label: "Min'ha Qétana", time: fmtZmanTime(zman.minchaKetana()), icon: "🕐", description: "Min'ha tardive" },
-      { label: "Pélag haMin'ha", time: fmtZmanTime(zman.plagHaMincha()), icon: "🌤️", description: "Pélag haMin'ha" },
-      { label: "Chkia (Coucher du soleil)", time: fmtZmanTime(zman.sunset()), icon: "🌇", description: "Coucher du soleil" },
-      { label: "Tsét haKokhavim", time: fmtZmanTime(zman.tzeit()), icon: "⭐", description: "Sortie des étoiles" },
+      { label: "Alot haChah'ar", time: fmtZmanTime(zman.alotHaShachar(), tz), icon: "🌑", description: "Aube — 72 min avant le lever" },
+      { label: "Nets (Lever du soleil)", time: fmtZmanTime(zman.sunrise(), tz), icon: "🌅", description: "Lever du soleil" },
+      { label: "Chéma (MG\"A)", time: fmtZmanTime(zman.sofZmanShmaMGA(), tz), icon: "📖", description: "Fin du Chéma (Magen Avraham)" },
+      { label: "Chéma (GR\"A)", time: fmtZmanTime(zman.sofZmanShma(), tz), icon: "📖", description: "Fin du Chéma (Gaon de Vilna)" },
+      { label: "Téfila (GR\"A)", time: fmtZmanTime(zman.sofZmanTfilla(), tz), icon: "🙏", description: "Fin de la Téfila" },
+      { label: "'Hatsot (Midi solaire)", time: fmtZmanTime(zman.chatzot(), tz), icon: "🕐", description: "Midi solaire" },
+      { label: "Min'ha Guédola", time: fmtZmanTime(zman.minchaGedola(), tz), icon: "🕐", description: "Début de Min'ha" },
+      { label: "Min'ha Qétana", time: fmtZmanTime(zman.minchaKetana(), tz), icon: "🕐", description: "Min'ha tardive" },
+      { label: "Pélag haMin'ha", time: fmtZmanTime(zman.plagHaMincha(), tz), icon: "🌤️", description: "Pélag haMin'ha" },
+      { label: "Chkia (Coucher du soleil)", time: fmtZmanTime(zman.sunset(), tz), icon: "🌇", description: "Coucher du soleil" },
+      { label: "Tsét haKokhavim", time: fmtZmanTime(zman.tzeit(), tz), icon: "⭐", description: "Sortie des étoiles" },
     ];
   } catch {
     return [];
@@ -225,7 +228,7 @@ export async function fetchMinhaTime(city: CityConfig, date?: Date): Promise<str
     let minhaTime = fifteenBefore;
     if (mk && mk < fifteenBefore) minhaTime = mk;
 
-    return fmtZmanTime(minhaTime);
+    return fmtZmanTime(minhaTime, city.tz);
   } catch {
     return null;
   }
