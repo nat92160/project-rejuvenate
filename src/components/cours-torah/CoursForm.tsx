@@ -26,6 +26,7 @@ interface PmiInfo {
   pmi: number | null;
   personalMeetingUrl: string | null;
   displayName: string;
+  source?: string;
 }
 
 const getPmiHelperMessage = (message?: string) => {
@@ -79,7 +80,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
 
       if (!data?.pmi || !data?.personalMeetingUrl) {
         setPmiInfo(null);
-        setPmiError("Salle perso activable, mais Zoom n’a pas renvoyé l’aperçu de l’ID.");
+        setPmiError(data?.message || "Salle perso activable, mais Zoom n’a pas renvoyé l’aperçu de l’ID.");
         return;
       }
 
@@ -87,6 +88,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
         pmi: data.pmi,
         personalMeetingUrl: data.personalMeetingUrl,
         displayName: data.displayName,
+        source: data.source,
       });
     } catch {
       setPmiInfo(null);
@@ -375,7 +377,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
                         <p className="text-sm font-bold text-foreground">Utiliser l&apos;ID de réunion personnelle</p>
                         <p className="mt-1 text-xs text-muted-foreground truncate">
                           {pmiInfo?.pmi
-                            ? `ID : ${pmiInfo.pmi}${pmiInfo.displayName ? ` — ${pmiInfo.displayName}` : ""}`
+                            ? `ID : ${pmiInfo.pmi}${pmiInfo.displayName ? ` — ${pmiInfo.displayName}` : ""}${pmiInfo.source === "scheduled_meetings" ? " — détecté automatiquement" : ""}`
                             : usePmi && loadingPmi
                               ? "Recherche de votre ID personnel…"
                               : usePmi
