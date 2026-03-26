@@ -266,6 +266,8 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
   const [dedicationType, setDedicationType] = useState("general");
   const [creating, setCreating] = useState(false);
   const [guestPromptOpen, setGuestPromptOpen] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [step, setStep] = useState<"name" | "form">(!user && !getGuestName() ? "name" : "form");
 
   const doCreate = async (creatorId: string) => {
     setCreating(true);
@@ -285,25 +287,61 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
     if (user) {
       await doCreate(user.id);
     } else {
-      const guestName = getGuestName();
-      if (!guestName) { setGuestPromptOpen(true); return; }
-      // Use a deterministic guest UUID based on name for creator_id
+      if (!getGuestName()) { setGuestPromptOpen(true); return; }
       await doCreate("00000000-0000-0000-0000-000000000000");
     }
   };
 
-  const handleGuestNameSubmit = async () => {
+  const handleGuestNameSubmit = async (name?: string) => {
     setGuestPromptOpen(false);
     await doCreate("00000000-0000-0000-0000-000000000000");
   };
 
+  const handleNameStep = () => {
+    if (!guestName.trim()) return;
+    localStorage.setItem("guest_name", guestName.trim());
+    setStep("form");
+  };
+
+  if (step === "name") {
+    return (
+      <div className="space-y-4">
+        <div className="text-center">
+          <span className="text-4xl">👋</span>
+          <h4 className="font-display text-base font-bold text-foreground mt-2">Comment vous appelez-vous ?</h4>
+          <p className="text-xs text-muted-foreground mt-1">Votre prénom sera affiché pour les participants</p>
+        </div>
+        <input
+          value={guestName}
+          onChange={(e) => setGuestName(e.target.value)}
+          placeholder="Votre prénom"
+          className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30"
+          autoFocus
+          onKeyDown={(e) => e.key === "Enter" && handleNameStep()}
+        />
+        <button
+          onClick={handleNameStep}
+          disabled={!guestName.trim()}
+          className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
+          style={{ background: "var(--gradient-gold)" }}
+        >
+          Continuer →
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nom de la chaîne" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-      <select value={dedicationType} onChange={(e) => setDedicationType(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm">
+      <div className="text-center mb-1">
+        <h4 className="font-display text-sm font-bold text-foreground">Créer une nouvelle chaîne</h4>
+        <p className="text-[11px] text-muted-foreground">150 psaumes à répartir entre participants</p>
+      </div>
+      <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Tehilim pour Shabbat" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+      <select value={dedicationType} onChange={(e) => setDedicationType(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm appearance-none">
         <option value="general">Général</option><option value="refouah">Refouah Chelema</option><option value="ilouye">Ilouye Nichmat</option><option value="hatslaha">Hatslaha</option><option value="zivougue">Zivougué</option>
       </select>
-      <input value={dedication} onChange={(e) => setDedication(e.target.value)} placeholder="Nom de la personne / Dédicace (optionnel)" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+      <input value={dedication} onChange={(e) => setDedication(e.target.value)} placeholder="Nom de la personne (optionnel)" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
       <button onClick={handleCreate} disabled={creating || !title.trim()} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50" style={{ background: "var(--gradient-gold)" }}>
         {creating ? "Création…" : "🔗 Créer la chaîne"}
       </button>
@@ -757,28 +795,15 @@ const TehilimWidget = () => {
 
   const fetchChains = useCallback(async () => {
     setLoadingChains(true);
-
-    let subIds: string[] = [];
-    if (user) {
-      const { data: mySubs } = await supabase
-        .from("synagogue_subscriptions")
-        .select("synagogue_id")
-        .eq("user_id", user.id);
-      subIds = (mySubs || []).map((s: any) => s.synagogue_id);
-    }
-
-    let query = supabase.from("tehilim_chains").select("*").eq("status", "active").order("title", { ascending: true });
-
-    if (user && subIds.length > 0) {
-      query = query.or(`creator_id.eq.${user.id},synagogue_id.in.(${subIds.join(",")})`);
-    } else if (user) {
-      query = query.eq("creator_id", user.id);
-    }
-    // For guests: fetch all active chains (no filter)
-
-    const { data } = await query;
-    setChains((data as Chain[]) || []); setLoadingChains(false);
-  }, [user]);
+    // Show ALL active chains to everyone (guests and authenticated users)
+    const { data } = await supabase
+      .from("tehilim_chains")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
+    setChains((data as Chain[]) || []);
+    setLoadingChains(false);
+  }, []);
 
   useEffect(() => { if (tab === "chain") fetchChains(); }, [tab, fetchChains]);
 
@@ -841,8 +866,8 @@ const TehilimWidget = () => {
               </div>
             ) : (
               <div>
-                <button onClick={() => setShowCreateForm(true)} className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer mb-4" style={{ background: "var(--gradient-gold)" }}>
-                  ✨ Créer une chaîne de Tehilim
+                <button onClick={() => setShowCreateForm(true)} className="w-full py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer mb-4 active:scale-[0.98] transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+                  ✨ Nouvelle chaîne de Tehilim
                 </button>
 
                 {/* Search bar */}
@@ -859,11 +884,18 @@ const TehilimWidget = () => {
                   <div className="text-center py-8"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" /></div>
                 ) : chains.length === 0 ? (
                   <div className="text-center py-8">
-                    <span className="text-5xl">🤝</span>
-                    <h4 className="font-display text-lg font-bold mt-4 text-foreground">Chaîne de Tehilim</h4>
-                    <p className="text-sm mt-2 text-muted-foreground max-w-[300px] mx-auto">
-                      Créez votre première chaîne ou attendez qu'une chaîne soit partagée.
+                    <span className="text-5xl">📖</span>
+                    <h4 className="font-display text-lg font-bold mt-4 text-foreground">Aucune chaîne en cours</h4>
+                    <p className="text-sm mt-2 text-muted-foreground max-w-[280px] mx-auto">
+                      Soyez le premier à créer une chaîne ! Chaque participant choisit ses psaumes à lire.
                     </p>
+                    <button
+                      onClick={() => setShowCreateForm(true)}
+                      className="mt-4 px-6 py-3 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer"
+                      style={{ background: "var(--gradient-gold)" }}
+                    >
+                      ✨ Créer ma première chaîne
+                    </button>
                   </div>
                 ) : (() => {
                   const filtered = chains.filter(c =>
