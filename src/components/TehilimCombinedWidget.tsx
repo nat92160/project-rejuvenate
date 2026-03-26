@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import TehilimLibreWidget from "./TehilimLibreWidget";
 import TehilimWidget from "./TehilimWidget";
 
@@ -11,6 +12,17 @@ interface TehilimCombinedWidgetProps {
 
 const TehilimCombinedWidget = ({ prayerMode = false }: TehilimCombinedWidgetProps) => {
   const [tab, setTab] = useState<Tab>("livre");
+  const [globalCount, setGlobalCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { count, error } = await supabase
+        .from("tehilim_claims")
+        .select("*", { count: "exact", head: true })
+        .eq("completed", true);
+      if (!error && count !== null) setGlobalCount(count);
+    })();
+  }, []);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
@@ -19,6 +31,24 @@ const TehilimCombinedWidget = ({ prayerMode = false }: TehilimCombinedWidgetProp
         <span className="text-3xl">📜</span>
         <h3 className="mt-2 font-display text-lg font-bold text-foreground">Tehilim — Psaumes</h3>
         <p className="mt-1 text-xs text-muted-foreground">Lecture libre & Chaînes communautaires</p>
+        {globalCount !== null && globalCount > 0 && (
+          <motion.div
+            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl border"
+            style={{
+              background: "hsl(var(--gold) / 0.08)",
+              borderColor: "hsl(var(--gold-matte) / 0.2)",
+            }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <span className="text-base">🏆</span>
+            <span className="text-sm font-bold" style={{ color: "hsl(var(--gold-matte))" }}>
+              {globalCount.toLocaleString("fr-FR")} Tehilim lus
+            </span>
+            <span className="text-xs text-muted-foreground">par la communauté</span>
+          </motion.div>
+        )}
       </div>
 
       {/* Tab bar */}
