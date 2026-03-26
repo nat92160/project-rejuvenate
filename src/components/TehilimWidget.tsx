@@ -959,7 +959,7 @@ const TehilimWidget = () => {
                           </div>
                         </button>
                         );
-                      )}
+                      })}
                     </div>
                   );
                 })()}
