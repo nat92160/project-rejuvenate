@@ -40,7 +40,7 @@ async function searchNearbyPlaces(apiKey: string, lat: number, lon: number, radi
     locationRestriction: {
       circle: {
         center: { latitude: lat, longitude: lon },
-        radius: Math.min(radiusM, 50000), // max 50km per request
+        radius: Math.min(radiusM, 100000),
       },
     },
   };
@@ -161,7 +161,7 @@ serve(async (req) => {
     }
 
     // Progressive search: 5km, 15km, 50km
-    const radii = [5000, 15000, 50000];
+    const radii = [5000, 15000, 50000, 100000];
     let results: PlaceResult[] = [];
 
     for (const radius of radii) {
