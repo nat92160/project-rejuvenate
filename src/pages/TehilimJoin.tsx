@@ -29,8 +29,28 @@ type Claim = {
   completed: boolean;
 };
 
+// Dedication banner component
+const DedicationBanner = ({ dedication, dedicationType }: { dedication?: string | null; dedicationType?: string | null }) => {
+  if (!dedication) return null;
+  const label = dedicationType && DEDICATION_LABELS[dedicationType] ? DEDICATION_LABELS[dedicationType] : "";
+  return (
+    <div
+      className="mx-4 my-2 px-4 py-2.5 rounded-xl text-center border"
+      style={{
+        background: "linear-gradient(135deg, hsl(var(--gold) / 0.12), hsl(var(--gold) / 0.04))",
+        borderColor: "hsl(var(--gold-matte) / 0.25)",
+      }}
+    >
+      {label && <p className="text-[10px] text-muted-foreground mb-0.5">{label}</p>}
+      <p className="text-sm font-bold uppercase tracking-wide" style={{ color: "hsl(var(--gold-matte))" }}>
+        {dedication}
+      </p>
+    </div>
+  );
+};
+
 // Psalm Reader Overlay with mark complete + phonetic
-const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim, nextChapter, onGoNext }: {
+const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim, nextChapter, onGoNext, dedication, dedicationType }: {
   chapter: number;
   claim?: Claim;
   onClose: () => void;
@@ -38,6 +58,8 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
   onUnclaim: (claim: Claim) => void;
   nextChapter?: number | null;
   onGoNext?: () => void;
+  dedication?: string | null;
+  dedicationType?: string | null;
 }) => {
   const [verses, setVerses] = useState<string[]>([]);
   const [heTitle, setHeTitle] = useState("");
@@ -84,6 +106,9 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
           </div>
           <button onClick={onClose} className="shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 cursor-pointer border-none">✕</button>
         </div>
+
+        {/* Dedication banner */}
+        <DedicationBanner dedication={dedication} dedicationType={dedicationType} />
 
         {/* View mode selector */}
         <div className="px-4 py-2 border-b border-border">
@@ -655,6 +680,8 @@ const TehilimJoinContent = () => {
               onUnclaim={(claim) => { unclaimPsalm(claim); setReadingChapter(null); }}
               nextChapter={nextClaim?.chapter_start}
               onGoNext={nextClaim ? () => setReadingChapter(nextClaim.chapter_start) : undefined}
+              dedication={chain?.dedication}
+              dedicationType={chain?.dedication_type}
             />
           );
         })()}
