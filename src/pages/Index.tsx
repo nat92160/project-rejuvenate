@@ -130,43 +130,7 @@ const ShabbatCountdownBanner = () => {
   );
 };
 
-/* ─── Power Button (large tile with optional badge) ─── */
-const PowerButton = ({
-  icon,
-  label,
-  badge,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  badge?: string;
-  onClick: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    className="relative flex-1 flex flex-col items-center gap-3 py-6 rounded-3xl border border-border bg-card cursor-pointer transition-all active:scale-[0.96] hover:bg-muted/50 hover:-translate-y-0.5"
-    style={{ boxShadow: "var(--shadow-card)" }}
-  >
-    <div
-      className="w-14 h-14 rounded-2xl flex items-center justify-center"
-      style={{ background: "hsl(var(--gold) / 0.06)" }}
-    >
-      {icon}
-    </div>
-    <span className="text-xs font-bold text-foreground tracking-wide">{label}</span>
-    {badge && (
-      <span
-        className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
-        style={{
-          background: "hsl(var(--gold) / 0.12)",
-          color: "hsl(var(--gold-matte))",
-        }}
-      >
-        {badge}
-      </span>
-    )}
-  </button>
-);
+/* ─── (PowerButton removed — replaced by QuickActions) ─── */
 
 /* ─── Ultra-thin Header Bar ─── */
 const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, signOut, onLoginClick }: any) => (
