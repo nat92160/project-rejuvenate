@@ -100,8 +100,8 @@ const VerifiedSuggestionsDisplay = ({ synagogueId, placeId }: Props) => {
   const sortedPending = [...pendingSuggestions].sort(sortByOffice);
 
   return (
-    <div className="mt-2 space-y-2">
-      {/* Inline compact display like partner cards */}
+    <div className="mt-1.5 space-y-2">
+      {/* Inline compact display — same layout as partner cards */}
       {sortedApproved.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           {sortedApproved.map((s) => (
@@ -109,6 +109,12 @@ const VerifiedSuggestionsDisplay = ({ synagogueId, placeId }: Props) => {
               {OFFICE_EMOJI[s.office_name] || "⏰"} {s.time_value?.slice(0, 5) || s.time_rule}
             </span>
           ))}
+          <span
+            className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+            style={{ background: "hsl(142 70% 45% / 0.1)", color: "hsl(142 70% 40%)" }}
+          >
+            ✅ Vérifié
+          </span>
         </div>
       )}
 

@@ -552,6 +552,7 @@ const FideleSynagogueView = () => {
                           {gr.distanceSource === "road" ? "route" : "vol d'oiseau"}
                         </span>
                       </div>
+                      <VerifiedSuggestionsDisplay placeId={gr.id} />
                       <div className="mt-2 flex gap-2 flex-wrap">
                         <a href={`https://www.google.com/maps/dir/?api=1&destination=${gr.lat},${gr.lon}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all hover:scale-105 active:scale-95">
                           🧭 Itinéraire
@@ -568,7 +569,6 @@ const FideleSynagogueView = () => {
                           📝 Proposer des horaires
                         </button>
                       </div>
-                      <VerifiedSuggestionsDisplay placeId={gr.id} />
                       {suggestingSynaId === `gm-${gr.id}` && (
                         <div className="mt-3">
                           <PrayerTimeSuggestionForm
