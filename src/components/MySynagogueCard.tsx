@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { useCity } from "@/hooks/useCity";
-import { MapPin } from "lucide-react";
+import { MapPin, ChevronRight } from "lucide-react";
 
 interface SynaInfo {
   id: string;
@@ -90,29 +90,45 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
   if (!syna) {
     return (
       <motion.div
-        className="rounded-3xl p-8 mb-6 border border-border bg-card text-center cursor-pointer"
+        className="rounded-3xl mb-6 overflow-hidden cursor-pointer"
         style={{ boxShadow: "var(--shadow-elevated)" }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         onClick={() => onNavigate("chooser")}
       >
-        <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ background: "hsl(var(--gold) / 0.08)" }}>
-          <MapPin className="w-7 h-7" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />
-        </div>
-        <h2 className="text-lg font-bold text-foreground mb-2">
-          Ne manquez plus aucun office
-        </h2>
-        <p className="text-sm text-muted-foreground mb-6 max-w-[260px] mx-auto leading-relaxed">
-          {nearbyCount && nearbyCount > 0
-            ? `📍 ${nearbyCount} synagogues proches de vous attendent vos horaires.`
-            : "Recevez les horaires en temps réel de votre communauté."}
-        </p>
         <div
-          className="inline-block px-8 py-3.5 rounded-2xl text-sm font-bold text-primary-foreground animate-pulse"
-          style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)", animationDuration: "2.5s" }}
+          className="p-8 text-center"
+          style={{
+            background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--card)))",
+          }}
         >
-          Choisir ma Synagogue
+          <div
+            className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center"
+            style={{
+              background: "linear-gradient(135deg, hsl(var(--gold) / 0.15), hsl(var(--gold) / 0.05))",
+            }}
+          >
+            <MapPin className="w-7 h-7" style={{ color: "hsl(var(--gold-matte))" }} strokeWidth={1.5} />
+          </div>
+          <h2 className="text-lg font-bold text-foreground mb-2">
+            Ne manquez plus aucun office
+          </h2>
+          <p className="text-sm text-muted-foreground mb-6 max-w-[280px] mx-auto leading-relaxed">
+            {nearbyCount && nearbyCount > 0
+              ? `${nearbyCount} synagogues proches de vous`
+              : "Recevez les horaires de votre communauté"}
+          </p>
+          <div
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-bold text-primary-foreground"
+            style={{
+              background: "var(--gradient-gold)",
+              boxShadow: "var(--shadow-gold)",
+            }}
+          >
+            Choisir ma Synagogue
+            <ChevronRight className="w-4 h-4" />
+          </div>
         </div>
       </motion.div>
     );
@@ -122,7 +138,7 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
 
   return (
     <motion.div
-      className="rounded-3xl p-6 mb-6 border border-border bg-card"
+      className="rounded-3xl mb-6 overflow-hidden border border-border bg-card"
       style={{ boxShadow: "var(--shadow-elevated)" }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -131,30 +147,67 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
       {/* Synagogue identity */}
       <button
         onClick={() => onNavigate("synagogue")}
-        className="w-full flex items-center gap-4 bg-transparent border-none cursor-pointer p-0 text-left group"
+        className="w-full flex items-center gap-4 bg-transparent border-none cursor-pointer p-5 pb-0 text-left group"
       >
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg shrink-0" style={{ background: "hsl(var(--gold) / 0.08)" }}>
+        <div
+          className="w-12 h-12 rounded-full flex items-center justify-center text-lg shrink-0"
+          style={{
+            background: "linear-gradient(135deg, hsl(var(--gold) / 0.12), hsl(var(--gold) / 0.04))",
+          }}
+        >
           🏛️
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] uppercase tracking-[2.5px] text-muted-foreground font-medium mb-0.5">Ma synagogue</div>
-          <div className="text-base font-bold text-foreground truncate group-hover:text-primary transition-colors">{syna.name}</div>
+          <div className="text-[9px] uppercase tracking-[2px] text-muted-foreground/70 font-medium mb-0.5">
+            Ma synagogue
+          </div>
+          <div className="text-base font-bold text-foreground truncate group-hover:text-primary transition-colors">
+            {syna.name}
+          </div>
         </div>
-        <span className="text-muted-foreground/40 text-lg group-hover:text-muted-foreground transition-colors">›</span>
+        <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
       </button>
 
       {/* Next office — hero display */}
       {next && (
-        <div className="mt-5 p-4 rounded-2xl flex items-center justify-between" style={{ background: "hsl(var(--gold) / 0.04)" }}>
+        <div
+          className="mx-5 my-4 p-4 rounded-2xl flex items-center justify-between"
+          style={{
+            background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))",
+          }}
+        >
           <div>
-            <div className="text-[10px] uppercase tracking-[2px] text-muted-foreground font-medium">Prochain office</div>
+            <div className="text-[9px] uppercase tracking-[2px] text-muted-foreground/60 font-medium">
+              Prochain office
+            </div>
             <div className="text-sm font-semibold text-foreground mt-1">{next.label}</div>
           </div>
-          <div className="text-3xl font-extrabold font-display tabular-nums" style={{ color: "hsl(var(--gold-matte))" }}>
+          <div
+            className="text-3xl font-extrabold font-display tabular-nums"
+            style={{ color: "hsl(var(--gold-matte))" }}
+          >
             {next.time}
           </div>
         </div>
       )}
+
+      {/* Prayer times summary */}
+      <div className="flex divide-x divide-border border-t border-border">
+        {[
+          { label: "Cha'harit", time: syna.shacharit_time },
+          { label: "Min'ha", time: syna.minha_time },
+          { label: "Arvit", time: syna.arvit_time },
+        ]
+          .filter((o) => o.time)
+          .map((o) => (
+            <div key={o.label} className="flex-1 text-center py-3">
+              <div className="text-[9px] uppercase tracking-wider text-muted-foreground/50 font-medium">
+                {o.label}
+              </div>
+              <div className="text-sm font-bold text-foreground mt-0.5">{o.time}</div>
+            </div>
+          ))}
+      </div>
     </motion.div>
   );
 };

@@ -228,21 +228,6 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
           })}
         </div>
 
-        {/* Customize shortcut */}
-        <button
-          onClick={() => setShowCustomize(true)}
-          className="flex flex-col items-center justify-center border-none bg-transparent cursor-pointer transition-all active:scale-90"
-          style={{
-            width: "48px",
-            borderLeft: "1px solid hsl(var(--border) / 0.5)",
-            color: "hsl(var(--gold-matte))",
-            WebkitTapHighlightColor: "transparent",
-          }}
-          title="Personnaliser"
-        >
-          <span className="text-base">⚙️</span>
-          <span className="text-[8px] font-medium uppercase tracking-wide text-muted-foreground mt-0.5">Perso</span>
-        </button>
       </nav>
 
       <AnimatePresence>
