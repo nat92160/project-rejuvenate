@@ -112,32 +112,6 @@ const VerifiedSuggestionsDisplay = ({ synagogueId, placeId }: Props) => {
         </div>
       )}
 
-      {/* Verified detail badges */}
-      {sortedApproved.length > 0 && (
-        <div className="space-y-1">
-          <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            <span style={{ color: "hsl(var(--gold-matte))" }}>✓</span> Horaires vérifiés par la communauté
-          </p>
-          {sortedApproved.map((suggestion) => (
-            <div
-              key={suggestion.id}
-              className="flex items-center gap-2 rounded-lg border p-2"
-              style={{ borderColor: "hsl(var(--gold) / 0.2)", background: "hsl(var(--gold) / 0.03)" }}
-            >
-              <span className="text-xs font-bold">{OFFICE_LABELS[suggestion.office_name] || suggestion.office_name}</span>
-              <span className="text-sm font-bold text-foreground">{suggestion.time_value || suggestion.time_rule}</span>
-              <span
-                className="ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold"
-                style={{ background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }}
-              >
-                ✓ Vérifié
-              </span>
-              <span className="text-[9px] text-muted-foreground">{formatSuggestionDate(suggestion.updated_at)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Pending suggestions */}
       {sortedPending.length > 0 && (
         <div className="space-y-1">
