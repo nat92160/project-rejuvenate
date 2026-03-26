@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Megaphone, Bell, Users, BarChart3,
   Settings, MessageSquare, Award, Building2, Calendar,
   BookOpen, Image, Heart as HeartIcon, Droplets, ChevronLeft,
-  Menu, X, GraduationCap, Gem, Home
+  Menu, X, GraduationCap, Gem, Home, Clock
 } from "lucide-react";
 
 // Lazy components
@@ -25,6 +25,7 @@ const MariagesWidget = lazy(() => import("./MariagesWidget"));
 const MikveManager = lazy(() => import("./president/MikveManager"));
 const DonsManager = lazy(() => import("./president/DonsManager"));
 const TehilimCombinedWidget = lazy(() => import("./TehilimCombinedWidget"));
+const PrayerTimesWidget = lazy(() => import("./PrayerTimesWidget"));
 
 const Lazy = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<div className="flex justify-center py-8"><div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}>
@@ -42,6 +43,7 @@ const pilotageItems = [
 ];
 
 const servicesItems = [
+  { id: "horaires", icon: Clock, label: "Horaires" },
   { id: "affiche", icon: Image, label: "Affiche Chabbat" },
   { id: "evenements", icon: Calendar, label: "Événements" },
   { id: "cours", icon: GraduationCap, label: "Cours Torah" },
@@ -150,6 +152,7 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
       case "syna-profile": return <Lazy><SynaProfileManager /></Lazy>;
       case "adjoint": return <Lazy><AdjointManager /></Lazy>;
       case "chat": return <Lazy><ChatManagement /></Lazy>;
+      case "horaires": return <Lazy><PrayerTimesWidget /></Lazy>;
       case "affiche": return <Lazy><AfficheChabbatWidget /></Lazy>;
       case "annonces": return <Lazy><AnnoncesWidget /></Lazy>;
       case "alerte": return <Lazy><AlerteCommunautaireWidget /></Lazy>;
