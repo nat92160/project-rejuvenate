@@ -792,16 +792,32 @@ const TehilimWidget = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loadingChains, setLoadingChains] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [chainProgress, setChainProgress] = useState<Record<string, { claimed: number; completed: number }>>({});
 
   const fetchChains = useCallback(async () => {
     setLoadingChains(true);
-    // Show ALL active chains to everyone (guests and authenticated users)
     const { data } = await supabase
       .from("tehilim_chains")
       .select("*")
       .eq("status", "active")
       .order("created_at", { ascending: false });
-    setChains((data as Chain[]) || []);
+    const chainList = (data as Chain[]) || [];
+    setChains(chainList);
+
+    // Fetch progress for each chain
+    if (chainList.length > 0) {
+      const { data: allClaims } = await supabase
+        .from("tehilim_claims")
+        .select("chain_id, completed")
+        .in("chain_id", chainList.map(c => c.id));
+      const progress: Record<string, { claimed: number; completed: number }> = {};
+      (allClaims || []).forEach((cl: any) => {
+        if (!progress[cl.chain_id]) progress[cl.chain_id] = { claimed: 0, completed: 0 };
+        progress[cl.chain_id].claimed++;
+        if (cl.completed) progress[cl.chain_id].completed++;
+      });
+      setChainProgress(progress);
+    }
     setLoadingChains(false);
   }, []);
 
