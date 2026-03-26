@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,13 +30,13 @@ interface PmiInfo {
 
 const getPmiHelperMessage = (message?: string) => {
   if (message?.includes("does not contain scopes")) {
-    return "Votre app Zoom doit activer le scope user:read:user pour afficher l’ID de salle personnelle.";
+    return "Zoom ne renvoie pas encore l’aperçu de votre salle perso avec le token actuel. Vous pouvez quand même activer cette option et publier.";
   }
 
   return message || "Impossible de récupérer votre salle personnelle pour le moment.";
 };
 
-const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType = "zoom" }: CoursFormProps) => {
+const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogueId, onCreated, onClose, initialCourseType = "zoom" }, ref) => {
   const [courseType, setCourseType] = useState<"zoom" | "presentiel">(initialCourseType);
   const [zoomMode, setZoomMode] = useState<"instant" | "scheduled">("scheduled");
   const [zoomSource, setZoomSource] = useState<"auto" | "manual">("auto");
@@ -71,10 +71,15 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
     try {
       const { data, error } = await supabase.functions.invoke("zoom-proxy", { body: { action: "get-pmi" } });
 
-      if (error || !data?.success || !data?.pmi || !data?.personalMeetingUrl) {
+      if (error || !data?.success) {
         setPmiInfo(null);
-        setUsePmi(false);
         setPmiError(getPmiHelperMessage(data?.error));
+        return;
+      }
+
+      if (!data?.pmi || !data?.personalMeetingUrl) {
+        setPmiInfo(null);
+        setPmiError("Salle perso activable, mais Zoom n’a pas renvoyé l’aperçu de l’ID.");
         return;
       }
 
@@ -85,7 +90,6 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
       });
     } catch {
       setPmiInfo(null);
-      setUsePmi(false);
       setPmiError(getPmiHelperMessage());
     } finally {
       setLoadingPmi(false);
@@ -93,10 +97,10 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
   }, [loadingPmi]);
 
   useEffect(() => {
-    if (courseType === "zoom" && zoomSource === "auto") {
+    if (courseType === "zoom" && zoomSource === "auto" && usePmi) {
       fetchPmi();
     }
-  }, [courseType, zoomSource, fetchPmi]);
+  }, [courseType, zoomSource, usePmi, fetchPmi]);
 
   const createZoomMeeting = async (meetingTitle: string, courseTime: string): Promise<string | null> => {
     try {
@@ -223,6 +227,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
 
   return (
     <motion.div
+      ref={ref}
       className="rounded-2xl bg-card p-4 sm:p-5 mb-4 border border-border"
       style={{ boxShadow: "var(--shadow-card)" }}
       initial={{ opacity: 0, height: 0 }}
@@ -321,11 +326,11 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
         {courseType === "zoom" ? (
           <>
             {/* Zoom source: auto / manual */}
-            <div className="flex rounded-xl overflow-hidden border border-[#2D8CFF]/30">
+            <div className="flex rounded-xl overflow-hidden border border-primary/30">
               <button
                 onClick={() => setZoomSource("auto")}
                 className={`flex-1 py-2.5 text-[11px] font-bold border-none cursor-pointer transition-all ${
-                  zoomSource === "auto" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
+                  zoomSource === "auto" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
                 }`}
               >
                 🤖 Automatique
@@ -333,7 +338,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
               <button
                 onClick={() => { setZoomSource("manual"); setUsePmi(false); }}
                 className={`flex-1 py-2.5 text-[11px] font-bold border-none cursor-pointer transition-all ${
-                  zoomSource === "manual" ? "bg-[#2D8CFF] text-white" : "bg-card text-muted-foreground"
+                  zoomSource === "manual" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
                 }`}
               >
                 🔗 Lien manuel
@@ -355,7 +360,14 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
 
                   <button
                     type="button"
-                    onClick={() => setUsePmi((current) => !current)}
+                    onClick={() => {
+                      const nextValue = !usePmi;
+                      setUsePmi(nextValue);
+
+                      if (nextValue && !pmiFetchedRef.current) {
+                        void fetchPmi();
+                      }
+                    }}
                     className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-all cursor-pointer hover:border-primary/30"
                   >
                     <div className="flex items-center justify-between gap-4">
@@ -364,9 +376,11 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                         <p className="mt-1 text-xs text-muted-foreground truncate">
                           {pmiInfo?.pmi
                             ? `ID : ${pmiInfo.pmi}${pmiInfo.displayName ? ` — ${pmiInfo.displayName}` : ""}`
-                            : loadingPmi
+                            : usePmi && loadingPmi
                               ? "Recherche de votre ID personnel…"
-                              : pmiError || "Activez cette option pour utiliser votre salle personnelle lors de la programmation."}
+                              : usePmi
+                                ? pmiError || "Salle personnelle activée."
+                                : "Activez cette option pour utiliser votre salle personnelle lors de la programmation."}
                         </p>
                       </div>
                       <span
@@ -390,11 +404,13 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                     <p className="text-[11px] leading-relaxed text-muted-foreground">
                       {pmiInfo?.pmi
                         ? "Si cette option est activée, le cours sera programmé avec votre salle personnelle Zoom."
-                        : loadingPmi
+                        : usePmi && loadingPmi
                           ? "Nous vérifions actuellement votre salle personnelle Zoom."
-                          : pmiError || "Vous pouvez activer cette option dès que Zoom renvoie votre ID de réunion personnelle."}
+                          : usePmi
+                            ? pmiError || "La salle personnelle sera utilisée à la publication."
+                            : "Activez cette option si vous voulez publier avec votre salle personnelle Zoom."}
                     </p>
-                    {!loadingPmi && pmiError && (
+                    {!loadingPmi && usePmi && pmiError && (
                       <button
                         type="button"
                         onClick={() => {
@@ -418,7 +434,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                   placeholder="https://zoom.us/j/123456789"
                   className={inputClass}
                 />
-                <div className="rounded-xl border border-[#2D8CFF]/20 bg-[#2D8CFF]/5 p-3">
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
                   <p className="text-xs text-muted-foreground flex items-center gap-2">
                     <span className="text-base flex-shrink-0">💡</span>
                     <span>
@@ -454,6 +470,8 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
       </div>
     </motion.div>
   );
-};
+});
+
+CoursForm.displayName = "CoursForm";
 
 export default CoursForm;
