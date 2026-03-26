@@ -43,7 +43,7 @@ serve(async (req) => {
 
     if (action === "create-meeting") {
       const accessToken = await getAccessToken();
-      const { title, duration, start_time, timezone, passcode } = body;
+      const { title, duration, start_time, timezone, passcode, usePmi } = body;
       const tz = timezone || "Europe/Paris";
 
       const meetingBody: Record<string, unknown> = {
@@ -55,6 +55,7 @@ serve(async (req) => {
           join_before_host: true,
           waiting_room: false,
           mute_upon_entry: true,
+          use_pmi: Boolean(usePmi),
         },
       };
 

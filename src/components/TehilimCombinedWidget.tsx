@@ -18,8 +18,7 @@ const TehilimCombinedWidget = ({ prayerMode = false }: TehilimCombinedWidgetProp
     (async () => {
       const { count, error } = await supabase
         .from("tehilim_claims")
-        .select("*", { count: "exact", head: true })
-        .eq("completed", true);
+        .select("*", { count: "exact", head: true });
       if (!error && count !== null) setGlobalCount(count);
     })();
   }, []);
@@ -44,9 +43,9 @@ const TehilimCombinedWidget = ({ prayerMode = false }: TehilimCombinedWidgetProp
           >
             <span className="text-base">🏆</span>
             <span className="text-sm font-bold" style={{ color: "hsl(var(--gold-matte))" }}>
-              {globalCount.toLocaleString("fr-FR")} Tehilim lus
+              {globalCount.toLocaleString("fr-FR")} Tehilim pris en charge
             </span>
-            <span className="text-xs text-muted-foreground">par la communauté</span>
+            <span className="text-xs text-muted-foreground">via les chaînes</span>
           </motion.div>
         )}
       </div>
