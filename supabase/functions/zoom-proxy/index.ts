@@ -5,6 +5,91 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const inferMeetingNumberFromUrl = (value: unknown) => {
+  if (typeof value !== "string") return null;
+  const match = value.match(/\/(?:j|s)\/(\d+)/i);
+  return match ? match[1] : null;
+};
+
+const getZoomJson = async (accessToken: string, path: string) => {
+  const resp = await fetch(`https://api.zoom.us/v2${path}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const text = await resp.text();
+  let data: unknown = null;
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+
+  return { resp, data, text };
+};
+
+const getPmiFromScheduledMeetings = async (accessToken: string) => {
+  const { resp: meetingsResp, data: meetingsData } = await getZoomJson(
+    accessToken,
+    "/users/me/meetings?type=scheduled&page_size=30",
+  );
+
+  if (!meetingsResp.ok || !meetingsData || typeof meetingsData !== "object") {
+    return null;
+  }
+
+  const meetings = Array.isArray((meetingsData as { meetings?: unknown[] }).meetings)
+    ? ((meetingsData as { meetings?: unknown[] }).meetings as Array<Record<string, unknown>>)
+    : [];
+
+  const candidates = new Map<string, { count: number; joinUrl: string | null; hostEmail: string | null }>();
+
+  for (const meeting of meetings) {
+    const meetingId = meeting.id;
+    if (!meetingId) continue;
+
+    const { resp: detailResp, data: detailData } = await getZoomJson(accessToken, `/meetings/${meetingId}`);
+    if (!detailResp.ok || !detailData || typeof detailData !== "object") continue;
+
+    const detail = detailData as Record<string, unknown>;
+    const settings = (detail.settings as Record<string, unknown> | undefined) || {};
+    if (!settings.use_pmi) continue;
+
+    const inferredMeetingNumber =
+      inferMeetingNumberFromUrl(detail.join_url) ||
+      inferMeetingNumberFromUrl(detail.start_url);
+
+    if (!inferredMeetingNumber) continue;
+
+    const current = candidates.get(inferredMeetingNumber);
+    candidates.set(inferredMeetingNumber, {
+      count: (current?.count || 0) + 1,
+      joinUrl:
+        typeof detail.join_url === "string"
+          ? detail.join_url
+          : current?.joinUrl || `https://zoom.us/j/${inferredMeetingNumber}`,
+      hostEmail:
+        typeof detail.host_email === "string"
+          ? detail.host_email
+          : current?.hostEmail || null,
+    });
+  }
+
+  const bestCandidate = [...candidates.entries()]
+    .sort((a, b) => b[1].count - a[1].count)[0];
+
+  if (!bestCandidate) return null;
+
+  const [pmi, meta] = bestCandidate;
+
+  return {
+    pmi: Number(pmi),
+    personalMeetingUrl: meta.joinUrl || `https://zoom.us/j/${pmi}`,
+    displayName: meta.hostEmail || "",
+    inferredFromMeetings: true,
+  };
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -133,13 +218,23 @@ serve(async (req) => {
       const tokenData = await getAccessToken();
       const accessToken = tokenData.access_token;
       const grantedScopes = String(tokenData.scope || "").split(" ").filter(Boolean);
-      const resp = await fetch("https://api.zoom.us/v2/users/me", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const { resp, data: userData, text: errBody } = await getZoomJson(accessToken, "/users/me");
 
       if (!resp.ok) {
-        const errBody = await resp.text();
         console.error("Zoom get-pmi error:", resp.status, errBody);
+
+        const fallbackPmi = await getPmiFromScheduledMeetings(accessToken);
+        if (fallbackPmi) {
+          return new Response(JSON.stringify({
+            success: true,
+            ...fallbackPmi,
+            source: "scheduled_meetings",
+            message: "Salle perso détectée à partir de vos réunions Zoom existantes.",
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
 
         if (resp.status === 400 && grantedScopes.includes("user:read:pm_room:admin")) {
           return new Response(JSON.stringify({
@@ -161,7 +256,7 @@ serve(async (req) => {
         });
       }
 
-      const user = await resp.json();
+      const user = (userData || {}) as Record<string, unknown>;
       const pmi = user.pmi;
       const personalMeetingUrl = pmi ? `https://zoom.us/j/${pmi}` : null;
 
