@@ -93,14 +93,36 @@ const PsalmReader = ({ chapter, onClose }: { chapter: number; onClose: () => voi
   );
 };
 
+// Dedication banner component
+const DedicationBanner = ({ dedication, dedicationType }: { dedication?: string | null; dedicationType?: string | null }) => {
+  if (!dedication) return null;
+  const label = dedicationType && DEDICATION_LABELS[dedicationType] ? DEDICATION_LABELS[dedicationType] : "";
+  return (
+    <div
+      className="mx-4 my-2 px-4 py-2.5 rounded-xl text-center border"
+      style={{
+        background: "linear-gradient(135deg, hsl(var(--gold) / 0.12), hsl(var(--gold) / 0.04))",
+        borderColor: "hsl(var(--gold-matte) / 0.25)",
+      }}
+    >
+      {label && <p className="text-[10px] text-muted-foreground mb-0.5">{label}</p>}
+      <p className="text-sm font-bold uppercase tracking-wide" style={{ color: "hsl(var(--gold-matte))" }}>
+        {dedication}
+      </p>
+    </div>
+  );
+};
+
 // Chain Psalm Reader — opens psalm + mark as complete button + next navigation
-const ChainPsalmReader = ({ chapter, claim, onClose, onMarkComplete, nextChapter, onGoNext }: {
+const ChainPsalmReader = ({ chapter, claim, onClose, onMarkComplete, nextChapter, onGoNext, dedication, dedicationType }: {
   chapter: number;
   claim?: Claim;
   onClose: () => void;
   onMarkComplete: (claim: Claim) => void;
   nextChapter?: number | null;
   onGoNext?: () => void;
+  dedication?: string | null;
+  dedicationType?: string | null;
 }) => {
   const [verses, setVerses] = useState<string[]>([]);
   const [heTitle, setHeTitle] = useState("");
