@@ -16,21 +16,29 @@ const OFFICE_LABELS: Record<string, string> = {
   arvit: "🌙 Arvit",
 };
 
-const VerifiedSuggestionsDisplay = ({ synagogueId }: { synagogueId: string }) => {
+const VerifiedSuggestionsDisplay = ({ synagogueId, placeId }: { synagogueId?: string; placeId?: string }) => {
   const [suggestions, setSuggestions] = useState<VerifiedSuggestion[]>([]);
 
   useEffect(() => {
+    if (!synagogueId && !placeId) return;
     (async () => {
-      const { data } = await (supabase as any)
+      let query = (supabase as any)
         .from("prayer_time_suggestions")
         .select("id, office_name, time_value, time_rule, display_name, updated_at")
-        .eq("synagogue_id", synagogueId)
         .eq("status", "approved")
         .eq("verified", true)
         .order("updated_at", { ascending: false });
+
+      if (synagogueId) {
+        query = query.eq("synagogue_id", synagogueId);
+      } else if (placeId) {
+        query = query.eq("place_id", placeId);
+      }
+
+      const { data } = await query;
       setSuggestions(data || []);
     })();
-  }, [synagogueId]);
+  }, [synagogueId, placeId]);
 
   if (suggestions.length === 0) return null;
 
