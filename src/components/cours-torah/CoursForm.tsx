@@ -28,6 +28,14 @@ interface PmiInfo {
   displayName: string;
 }
 
+const getPmiHelperMessage = (message?: string) => {
+  if (message?.includes("does not contain scopes")) {
+    return "Votre app Zoom doit activer le scope user:read:user pour afficher l’ID de salle personnelle.";
+  }
+
+  return message || "Impossible de récupérer votre salle personnelle pour le moment.";
+};
+
 const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType = "zoom" }: CoursFormProps) => {
   const [courseType, setCourseType] = useState<"zoom" | "presentiel">(initialCourseType);
   const [zoomMode, setZoomMode] = useState<"instant" | "scheduled">("scheduled");
@@ -66,7 +74,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
       if (error || !data?.success || !data?.pmi || !data?.personalMeetingUrl) {
         setPmiInfo(null);
         setUsePmi(false);
-        setPmiError(data?.error || "Impossible de récupérer votre salle personnelle pour le moment.");
+        setPmiError(getPmiHelperMessage(data?.error));
         return;
       }
 
@@ -78,7 +86,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
     } catch {
       setPmiInfo(null);
       setUsePmi(false);
-      setPmiError("Impossible de récupérer votre salle personnelle pour le moment.");
+      setPmiError(getPmiHelperMessage());
     } finally {
       setLoadingPmi(false);
     }
@@ -97,6 +105,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
         title: meetingTitle,
         timezone: "Europe/Paris",
         duration: 60,
+        usePmi,
       };
 
       if (zoomMode === "scheduled") {
@@ -151,12 +160,16 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
     if (courseType === "zoom") {
       if (zoomSource === "manual") {
         zoomLink = manualZoomLink.trim();
-      } else if (usePmi && pmiInfo?.personalMeetingUrl) {
-        zoomLink = pmiInfo.personalMeetingUrl;
       } else {
-        toast.info(zoomMode === "instant"
-          ? "Création de la réunion Zoom instantanée..."
-          : "Programmation de la réunion Zoom...");
+        toast.info(
+          usePmi
+            ? zoomMode === "instant"
+              ? "Activation de votre salle personnelle Zoom..."
+              : "Programmation avec votre salle personnelle Zoom..."
+            : zoomMode === "instant"
+              ? "Création de la réunion Zoom instantanée..."
+              : "Programmation de la réunion Zoom..."
+        );
         const link = await createZoomMeeting(title.trim(), time || "20:00");
         if (!link) {
           setSubmitting(false);
@@ -197,7 +210,9 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
         ? zoomSource === "manual"
           ? "✅ Cours Zoom publié avec votre lien !"
           : usePmi
-            ? "✅ Cours publié avec votre salle personnelle !"
+            ? zoomMode === "instant"
+              ? "✅ Salle personnelle Zoom activée !"
+              : "✅ Réunion programmée avec votre salle personnelle !"
             : zoomMode === "instant"
               ? "✅ Réunion Zoom instantanée créée !"
               : "✅ Réunion Zoom programmée avec succès !"
@@ -332,13 +347,68 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                     <div>
                       <p className="text-xs font-bold text-foreground">🏠 Salle personnelle Zoom</p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Choisissez si vous voulez utiliser votre PMI ou créer une réunion automatique.
+                        Activez ou non votre salle personnelle au moment de la programmation.
                       </p>
                     </div>
                     {loadingPmi && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground flex-shrink-0" />}
                   </div>
 
-                  {pmiInfo?.pmi ? (
+                  <button
+                    type="button"
+                    onClick={() => setUsePmi((current) => !current)}
+                    className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-all cursor-pointer hover:border-primary/30"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-foreground">Utiliser l&apos;ID de réunion personnelle</p>
+                        <p className="mt-1 text-xs text-muted-foreground truncate">
+                          {pmiInfo?.pmi
+                            ? `ID : ${pmiInfo.pmi}${pmiInfo.displayName ? ` — ${pmiInfo.displayName}` : ""}`
+                            : loadingPmi
+                              ? "Recherche de votre ID personnel…"
+                              : pmiError || "Activez cette option pour utiliser votre salle personnelle lors de la programmation."}
+                        </p>
+                      </div>
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "relative h-7 w-12 flex-shrink-0 rounded-full transition-colors",
+                          usePmi ? "bg-primary" : "bg-muted"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "absolute top-1 h-5 w-5 rounded-full bg-background shadow-sm transition-transform",
+                            usePmi ? "translate-x-6" : "translate-x-1"
+                          )}
+                        />
+                      </span>
+                    </div>
+                  </button>
+
+                  <div className="mt-3 rounded-xl border border-border bg-muted/40 p-3">
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">
+                      {pmiInfo?.pmi
+                        ? "Si cette option est activée, le cours sera programmé avec votre salle personnelle Zoom."
+                        : loadingPmi
+                          ? "Nous vérifions actuellement votre salle personnelle Zoom."
+                          : pmiError || "Vous pouvez activer cette option dès que Zoom renvoie votre ID de réunion personnelle."}
+                    </p>
+                    {!loadingPmi && pmiError && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pmiFetchedRef.current = false;
+                          fetchPmi(true);
+                        }}
+                        className="mt-2 rounded-lg border border-border bg-card px-3 py-2 text-[11px] font-bold text-foreground cursor-pointer"
+                      >
+                        Réessayer
+                      </button>
+                    )}
+                  </div>
+
+                  {false && pmiInfo?.pmi ? (
                     <button
                       type="button"
                       onClick={() => setUsePmi(!usePmi)}
@@ -384,7 +454,7 @@ const CoursForm = ({ userId, synagogueId, onCreated, onClose, initialCourseType 
                         </button>
                       )}
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 {!usePmi && (
