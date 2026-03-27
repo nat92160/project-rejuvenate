@@ -260,8 +260,8 @@ const EspacePersonnelWidget = () => {
               {/* Hebrew date selectors */}
               <div>
                 <label className="text-xs font-bold text-muted-foreground mb-1.5 block">📜 Date hébraïque</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
+                <div className="mobile-form-grid-3 gap-2">
+                  <div className="min-w-0">
                     <label className="text-[10px] text-muted-foreground mb-1 block">Jour</label>
                     <select value={formDay} onChange={(e) => setFormDay(Number(e.target.value))} className={selectClass} style={{ minHeight: "48px" }}>
                       {Array.from({ length: 30 }, (_, i) => i + 1).map((d) => (
@@ -269,7 +269,7 @@ const EspacePersonnelWidget = () => {
                       ))}
                     </select>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className="text-[10px] text-muted-foreground mb-1 block">Mois</label>
                     <select value={formMonth} onChange={(e) => setFormMonth(e.target.value)} className={selectClass} style={{ minHeight: "48px" }}>
                       {HEBREW_MONTHS.map((m) => (
@@ -277,7 +277,7 @@ const EspacePersonnelWidget = () => {
                       ))}
                     </select>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className="text-[10px] text-muted-foreground mb-1 block">Année</label>
                     <select value={formYear} onChange={(e) => setFormYear(Number(e.target.value))} className={selectClass} style={{ minHeight: "48px" }}>
                       {Array.from({ length: 50 }, (_, i) => 5760 + i).map((y) => (

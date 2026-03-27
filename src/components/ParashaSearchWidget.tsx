@@ -48,8 +48,8 @@ const ParashaSearchWidget = () => {
       <p className="text-xs mt-1 mb-4 text-muted-foreground">Recherchez par date hébraïque</p>
 
       <div className="space-y-3">
-        <div className="grid grid-cols-3 gap-2">
-          <div>
+        <div className="mobile-form-grid-3 gap-2">
+          <div className="min-w-0">
             <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">Jour</label>
             <input
               type="number"
@@ -61,7 +61,7 @@ const ParashaSearchWidget = () => {
               className="w-full px-3 py-3 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30 min-h-[52px]"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">Mois</label>
             <select
               value={hMonth}
@@ -73,7 +73,7 @@ const ParashaSearchWidget = () => {
               ))}
             </select>
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">Année</label>
             <input
               type="number"
