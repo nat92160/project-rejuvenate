@@ -103,9 +103,9 @@ const DateConverterWidget = () => {
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-3">
-            <div>
+          <div className="space-y-3">
+            <div className="mobile-form-grid-3 gap-3">
+              <div className="min-w-0">
               <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">Jour</label>
               <input
                 type="number"
@@ -117,7 +117,7 @@ const DateConverterWidget = () => {
                 className="w-full px-3 py-3 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30 min-h-[48px]"
               />
             </div>
-            <div>
+              <div className="min-w-0">
               <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">Mois</label>
               <select
                 value={hMonth}
@@ -129,7 +129,7 @@ const DateConverterWidget = () => {
                 ))}
               </select>
             </div>
-            <div>
+              <div className="min-w-0">
               <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">Année</label>
               <input
                 type="number"

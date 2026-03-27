@@ -261,7 +261,7 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
                 type="time"
                 value={field.value}
                 onChange={(e) => field.set(e.target.value)}
-                className="block h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-center text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                className="block h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-left text-foreground outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
               />
             ) : (
               <select
