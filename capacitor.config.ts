@@ -4,10 +4,8 @@ const config: CapacitorConfig = {
   appId: 'com.chabbatchalom.app',
   appName: 'Chabbat Chalom',
   webDir: 'dist',
-  server: {
-    url: 'https://next-level-code.lovable.app?forceHideBadge=true',
-    cleartext: true,
-  },
+  // server block removed for App Store production build
+  // The app now loads from local bundled files (dist/)
   ios: {
     contentInset: 'automatic',
     preferredContentMode: 'mobile',
