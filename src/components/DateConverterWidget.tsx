@@ -3,12 +3,21 @@ import { motion } from "framer-motion";
 
 const DateConverterWidget = () => {
   const [mode, setMode] = useState<"g2h" | "h2g">("g2h");
-  const [gDate, setGDate] = useState("");
+  const [gDay, setGDay] = useState("");
+  const [gMonth, setGMonth] = useState("1");
+  const [gYear, setGYear] = useState("");
   const [hDay, setHDay] = useState("");
   const [hMonth, setHMonth] = useState("Nisan");
   const [hYear, setHYear] = useState("");
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const civilMonths = [
+    { value: "1", label: "Janvier" }, { value: "2", label: "Février" }, { value: "3", label: "Mars" },
+    { value: "4", label: "Avril" }, { value: "5", label: "Mai" }, { value: "6", label: "Juin" },
+    { value: "7", label: "Juillet" }, { value: "8", label: "Août" }, { value: "9", label: "Septembre" },
+    { value: "10", label: "Octobre" }, { value: "11", label: "Novembre" }, { value: "12", label: "Décembre" },
+  ];
 
   const hebrewMonths = [
     "Nisan", "Iyyar", "Sivan", "Tamuz", "Av", "Elul",
@@ -16,12 +25,11 @@ const DateConverterWidget = () => {
   ];
 
   const convertG2H = async () => {
-    if (!gDate) return;
+    if (!gDay || !gYear) return;
     setLoading(true);
     try {
-      const d = new Date(gDate);
       const r = await fetch(
-        `https://www.hebcal.com/converter?cfg=json&g2h=1&gy=${d.getFullYear()}&gm=${d.getMonth() + 1}&gd=${d.getDate()}`
+        `https://www.hebcal.com/converter?cfg=json&g2h=1&gy=${gYear}&gm=${gMonth}&gd=${gDay}`
       );
       const data = await r.json();
       setResult(`${data.hd} ${data.hm} ${data.hy} — ${data.hebrew}`);
@@ -81,21 +89,45 @@ const DateConverterWidget = () => {
 
       {mode === "g2h" ? (
         <div className="space-y-3">
-          <div>
-            <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">
-              Date civile
-            </label>
-            <input
-              type="date"
-              value={gDate}
-              onChange={(e) => setGDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30 min-h-[52px]"
-              style={{ colorScheme: "light" }}
-            />
+          <div className="grid grid-cols-3 gap-3">
+            <div className="min-w-0">
+              <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">Jour</label>
+              <input
+                type="number"
+                min="1"
+                max="31"
+                value={gDay}
+                onChange={(e) => setGDay(e.target.value)}
+                placeholder="1"
+                className="w-full px-3 py-3 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30 min-h-[48px]"
+              />
+            </div>
+            <div className="min-w-0">
+              <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">Mois</label>
+              <select
+                value={gMonth}
+                onChange={(e) => setGMonth(e.target.value)}
+                className="w-full px-2 py-3 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30 min-h-[48px]"
+              >
+                {civilMonths.map((m) => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="min-w-0">
+              <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1 block">Année</label>
+              <input
+                type="number"
+                value={gYear}
+                onChange={(e) => setGYear(e.target.value)}
+                placeholder="2026"
+                className="w-full px-3 py-3 rounded-xl text-sm bg-muted text-foreground border border-border font-sans focus:outline-none focus:ring-2 focus:ring-ring/30 min-h-[48px]"
+              />
+            </div>
           </div>
           <button
             onClick={convertG2H}
-            disabled={loading || !gDate}
+            disabled={loading || !gDay || !gYear}
             className="w-full py-3 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-95 min-h-[52px]"
             style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
           >
