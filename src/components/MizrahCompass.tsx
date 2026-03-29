@@ -33,9 +33,12 @@ function smoothAngle(prev: number, next: number, factor: number): number {
 
 const MizrahCompass = () => {
   const { city } = useCity();
-  const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
+  const [compassActive, setCompassActive] = useState(false);
   const [permissionGranted, setPermissionGranted] = useState(false);
   const smoothedHeading = useRef<number | null>(null);
+  const needleRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const latestHeading = useRef<number | null>(null);
 
   const bearing = calculateBearing(city.lat, city.lng, JERUSALEM.lat, JERUSALEM.lng);
   const distance = Math.round(getDistanceKm(city.lat, city.lng, JERUSALEM.lat, JERUSALEM.lng));
@@ -53,17 +56,31 @@ const MizrahCompass = () => {
     }
   };
 
+  // RAF loop: reads latest heading ref and applies transform directly (no React re-render)
+  useEffect(() => {
+    if (!permissionGranted) return;
+
+    const tick = () => {
+      if (latestHeading.current !== null && needleRef.current) {
+        const rotation = bearing - latestHeading.current;
+        needleRef.current.style.transform = `rotate(${rotation}deg)`;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [permissionGranted, bearing]);
+
   useEffect(() => {
     if (!permissionGranted) return;
     const handler = (e: DeviceOrientationEvent) => {
-      // iOS provides webkitCompassHeading (clockwise from North)
-      // Standard alpha is counterclockwise, so we invert it
       const iosHeading = (e as any).webkitCompassHeading;
       let compassHeading: number;
       if (typeof iosHeading === "number" && !isNaN(iosHeading)) {
         compassHeading = iosHeading;
       } else if (e.alpha !== null) {
-        // Standard: alpha is counterclockwise from North → invert
         compassHeading = (360 - e.alpha) % 360;
       } else {
         return;
@@ -72,15 +89,16 @@ const MizrahCompass = () => {
       if (smoothedHeading.current === null) {
         smoothedHeading.current = compassHeading;
       } else {
-        smoothedHeading.current = smoothAngle(smoothedHeading.current, compassHeading, 0.15);
+        smoothedHeading.current = smoothAngle(smoothedHeading.current, compassHeading, 0.12);
       }
-      setDeviceHeading(smoothedHeading.current);
+      latestHeading.current = smoothedHeading.current;
+      if (!compassActive) setCompassActive(true);
     };
     window.addEventListener("deviceorientation", handler, true);
     return () => window.removeEventListener("deviceorientation", handler, true);
-  }, [permissionGranted]);
+  }, [permissionGranted, compassActive]);
 
-  const needleRotation = deviceHeading !== null ? bearing - deviceHeading : bearing;
+  const needleRotation = bearing;
 
   return (
     <motion.div
@@ -124,10 +142,12 @@ const MizrahCompass = () => {
 
           {/* Needle pointing to Jerusalem — use CSS transition for smooth movement */}
           <div
+            ref={needleRef}
             className="absolute inset-0 flex items-center justify-center"
             style={{
               transform: `rotate(${needleRotation}deg)`,
-              transition: "transform 0.3s ease-out",
+              transition: compassActive ? "none" : "transform 0.3s ease-out",
+              willChange: "transform",
             }}
           >
             <div className="relative h-full flex flex-col items-center">
@@ -161,7 +181,7 @@ const MizrahCompass = () => {
 
       <div className="text-center">
         <p className="text-sm font-bold text-foreground">{Math.round(bearing)}° depuis le Nord</p>
-        {deviceHeading === null && (
+        {!compassActive && !permissionGranted && (
           <button
             onClick={requestPermission}
             className="mt-3 px-5 py-2 rounded-xl text-xs font-bold text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95"
@@ -170,7 +190,7 @@ const MizrahCompass = () => {
             📱 Activer la boussole
           </button>
         )}
-        {deviceHeading !== null && (
+        {compassActive && (
           <p className="text-xs text-muted-foreground mt-1">Boussole active — orientez votre appareil</p>
         )}
       </div>
