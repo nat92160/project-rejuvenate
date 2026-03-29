@@ -72,6 +72,18 @@ function createCalendar(opts: KosherZmanimOptions): ComplexZmanimCalendar {
 
 export function fetchKosherZmanim(opts: KosherZmanimOptions): ZmanItem[] {
   try {
+    // Sécurité halakhique : bloquer les coordonnées nulles/invalides
+    if (
+      (opts.lat === 0 && opts.lng === 0) ||
+      !Number.isFinite(opts.lat) ||
+      !Number.isFinite(opts.lng) ||
+      opts.lat === null ||
+      opts.lng === null
+    ) {
+      console.warn("[kosher-zmanim] Coordonnées GPS invalides (0,0 ou null) — horaires bloqués");
+      return [];
+    }
+
     const czc = createCalendar(opts);
     const tz = opts.tz;
     const method = opts.method || "gra";
