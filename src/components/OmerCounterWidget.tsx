@@ -58,14 +58,18 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
     }
   }, [realOmerDay]);
 
-  // Hide widget if not in omer period (unless admin simulating)
-  if (!isSimulating && (!omerDay || !omerPeriod)) return null;
-  if (!omerDay) return null;
+  // Hide widget if not in omer period (unless admin can simulate)
+  const canShowAdmin = isAdmin;
+  if (!canShowAdmin && !isSimulating && (!omerDay || !omerPeriod)) return null;
 
-  const { weeks, days } = getWeeksAndDays(omerDay);
-  const progress = (omerDay / 49) * 100;
-  const blessing = getOmerBlessing(omerDay);
-  const sefira = getSefiratDay(omerDay);
+  // Effective day: simulated, real, or default to 1 for admin preview
+  const effectiveDay = isSimulating ? simulatedDay! : (omerDay || (canShowAdmin ? 1 : null));
+  if (!effectiveDay) return null;
+
+  const { weeks, days } = getWeeksAndDays(effectiveDay);
+  const progress = (effectiveDay / 49) * 100;
+  const blessing = getOmerBlessing(effectiveDay);
+  const sefira = getSefiratDay(effectiveDay);
 
   const handleCounted = () => {
     if (!isSimulating && realOmerDay) {
@@ -123,7 +127,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
 
         {/* Share button top-right */}
         <button
-          onClick={() => shareOmer(omerDay)}
+          onClick={() => shareOmer(effectiveDay)}
           className="absolute top-4 right-4 p-2 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
           style={{
             background: "hsl(var(--gold) / 0.15)",
@@ -159,7 +163,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
             animate={{ scale: 1 }}
             transition={{ type: "spring", damping: 10 }}
           >
-            {omerDay}
+            {effectiveDay}
           </motion.div>
 
           {/* Streak flame */}
@@ -228,7 +232,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
         <div className="flex justify-between items-center mb-1.5">
           <span className="text-[10px] font-medium text-muted-foreground">Progression</span>
           <span className="text-[10px] font-bold" style={{ color: "hsl(var(--gold-matte))" }}>
-            {omerDay}/49
+            {effectiveDay}/49
           </span>
         </div>
         <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "hsl(var(--muted))" }}>
@@ -247,8 +251,8 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
         <div className="flex justify-center gap-1.5 mt-3">
           {Array.from({ length: 7 }).map((_, i) => {
             const dotDay = (weeks * 7) + i + 1;
-            const isPast = dotDay < omerDay;
-            const isCurrent = dotDay === omerDay;
+            const isPast = dotDay < effectiveDay;
+            const isCurrent = dotDay === effectiveDay;
             return (
               <motion.div
                 key={i}
@@ -311,7 +315,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
 
             <div className="flex gap-2 justify-center flex-wrap">
               <button
-                onClick={() => shareOmer(omerDay)}
+                onClick={() => shareOmer(effectiveDay)}
                 className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border transition-all active:scale-[0.97]"
                 style={{
                   borderColor: "hsl(var(--gold) / 0.3)",
