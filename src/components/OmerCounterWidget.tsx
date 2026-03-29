@@ -423,6 +423,11 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
           )}
         </AnimatePresence>
       </div>
+
+      {/* Post-count ritual: Psalm 67, Ana BeKhoach, Yehi Ratson */}
+      {(counted || expanded) && (
+        <OmerPostCountRitual currentWeek={weeks} />
+      )}
     </motion.div>
   );
 };
