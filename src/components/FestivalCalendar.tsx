@@ -373,54 +373,63 @@ interface DayTimelineProps {
 }
 
 const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelineProps) => {
-  const isErev = day.type === "erev";
   const isFast = day.type === "fast";
-  const isYomTovOrShabbat = day.type === "yomtov" || day.isShabbat;
-  const showCandles = day.candles && (isErev || (isYomTovOrShabbat && day.isShabbat) || isFast);
-  const showHavdalah = day.havdalah && (isYomTovOrShabbat || isErev || isFast);
-  // For Yom Tov days with ✨ suffix (2nd+ night candles via tzeit)
-  const showYomTovCandles = day.candles && day.type === "yomtov" && !day.isShabbat;
-  const hasTime = showCandles || showHavdalah || showYomTovCandles || day.memo;
+  const lt = day.candleLightingType;
+  const hasCandles = day.candles && lt && lt !== "none";
+  const hasHavdalah = day.havdalah;
+  const hasTime = hasCandles || hasHavdalah || day.memo;
   if (!hasTime && compact) return null;
+
+  // Determine candle icon & label
+  let candleIcon = "🕯️";
+  let candleLabel = "Allumage";
+  if (lt === "from-existing") {
+    candleIcon = "🕯️✨";
+    candleLabel = "Allumage (flamme existante) après";
+  } else if (lt === "fast-start") {
+    candleIcon = "⏰";
+    candleLabel = "Début";
+  }
+
+  // Determine havdalah icon & label
+  let havdalahIcon = "✨";
+  let havdalahLabel = "Sortie";
+  if (day.havdalahType === "havdalah") {
+    havdalahIcon = "🌟";
+    havdalahLabel = "Havdala";
+  }
+  if (isFast) {
+    havdalahIcon = "✅";
+    havdalahLabel = "Fin";
+  }
 
   return (
     <div className={`flex items-center gap-3 flex-wrap ${compact ? "mt-2" : "mt-3"}`}>
-      {isFast && day.candles && (
+      {hasCandles && (
         <div className="flex items-center gap-1.5">
-          <span className="text-xs">⏰</span>
-          <span className="text-xs font-medium text-muted-foreground">Début</span>
-          <span className="text-sm font-bold" style={{ color: "hsl(0 70% 45%)" }}>{day.candles}</span>
+          <span className="text-xs">{candleIcon}</span>
+          <span className="text-xs font-medium text-muted-foreground">{candleLabel}</span>
+          <span
+            className="text-sm font-bold"
+            style={{ color: isFast ? "hsl(0 70% 45%)" : "hsl(var(--primary))" }}
+          >
+            {day.candles}
+          </span>
         </div>
       )}
-      {isFast && day.havdalah && (
+      {hasHavdalah && (
         <div className="flex items-center gap-1.5">
-          <span className="text-xs">✅</span>
-          <span className="text-xs font-medium text-muted-foreground">Fin</span>
-          <span className="text-sm font-bold" style={{ color: "hsl(120 50% 35%)" }}>{day.havdalah}</span>
+          <span className="text-xs">{havdalahIcon}</span>
+          <span className="text-xs font-medium text-muted-foreground">{havdalahLabel}</span>
+          <span
+            className="text-sm font-bold"
+            style={{ color: isFast ? "hsl(120 50% 35%)" : "hsl(var(--primary))" }}
+          >
+            {day.havdalah}
+          </span>
         </div>
       )}
-      {!isFast && showYomTovCandles && (
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs">🕯️</span>
-          <span className="text-xs font-medium text-muted-foreground">Allumage (après ⭐)</span>
-          <span className="text-sm font-bold text-primary">{day.candles}</span>
-        </div>
-      )}
-      {!isFast && !showYomTovCandles && showCandles && (
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs">🕯️</span>
-          <span className="text-xs font-medium text-muted-foreground">Allumage</span>
-          <span className="text-sm font-bold text-primary">{day.candles}</span>
-        </div>
-      )}
-      {!isFast && showHavdalah && (
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs">✨</span>
-          <span className="text-xs font-medium text-muted-foreground">Sortie</span>
-          <span className="text-sm font-bold text-primary">{day.havdalah}</span>
-        </div>
-      )}
-      {(showCandles || showHavdalah || showYomTovCandles) && (
+      {(hasCandles || hasHavdalah) && (
         <button
           onClick={(e) => { e.stopPropagation(); onCalendarClick(day); }}
           className="ml-auto text-[10px] font-bold text-primary/60 hover:text-primary cursor-pointer bg-transparent border-none transition-colors px-2 py-1 rounded-lg hover:bg-primary/5"
