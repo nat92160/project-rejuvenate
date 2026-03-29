@@ -215,6 +215,35 @@ const ZmanimWidget = () => {
         </div>
       )}
 
+      {/* Altitude info & manual input */}
+      <div className="mt-3 p-3 rounded-xl bg-muted/30 border border-border">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <span className="text-[11px] text-muted-foreground">
+            🏔️ Calculé à <span className="font-bold text-foreground">{((city.altitude && city.altitude > 0) ? city.altitude : manualAltitude) || 0}m</span> d'altitude
+            {city.altitude && city.altitude > 0 && (
+              <span className="ml-1 text-primary/60">(GPS)</span>
+            )}
+          </span>
+          {(!city.altitude || city.altitude <= 0) && (
+            <div className="flex items-center gap-1.5">
+              <label className="text-[10px] text-muted-foreground">Alt. manuelle :</label>
+              <input
+                type="number"
+                min={0}
+                max={9000}
+                value={manualAltitude}
+                onChange={(e) => {
+                  const { setManualAltitude } = useCity as any;
+                }}
+                className="w-16 px-1.5 py-1 rounded-lg text-xs bg-card text-foreground border border-border text-center focus:outline-none focus:ring-1 focus:ring-ring/30"
+                placeholder="0"
+              />
+              <span className="text-[10px] text-muted-foreground">m</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Consistoire link */}
       <div className="text-center mt-3">
         <a
