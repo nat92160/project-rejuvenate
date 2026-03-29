@@ -52,11 +52,19 @@ const InfoCarousel = lazy(() => import("@/components/InfoCarousel"));
 const MikveInfoView = lazy(() => import("@/components/MikveInfoView"));
 const CitySelector = lazy(() => import("@/components/CitySelector"));
 
+import { useOmerVisibility } from "@/hooks/useOmerVisibility";
+
 const Lazy = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<div className="flex justify-center py-12"><div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}>
     {children}
   </Suspense>
 );
+
+const OmerGated = () => {
+  const { visible } = useOmerVisibility();
+  if (!visible) return null;
+  return <Lazy><OmerCounterWidget /></Lazy>;
+};
 
 /* ─── Shabbat countdown (J-1 only, relative format) ─── */
 const ShabbatCountdownBanner = () => {

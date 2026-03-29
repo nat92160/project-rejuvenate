@@ -17,9 +17,9 @@ export function useOmerVisibility({ isDirectLink = false }: { isDirectLink?: boo
 
   useEffect(() => {
     const fetchSetting = async () => {
-      const { data } = await supabase
+      const { data } = await (supabase
         .from("app_settings" as any)
-        .select("value")
+        .select("value") as any)
         .eq("key", "omer_enabled")
         .maybeSingle();
       setMasterEnabled(data?.value === true);
