@@ -2,6 +2,7 @@
   "name": "Chabbat Chalom",
   "short_name": "Chabbat Chalom",
   "description": "Votre synagogue en temps réel — Horaires, Zmanim, Tehilim, cours de Torah et vie communautaire.",
+  "version": "1.0.0",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
