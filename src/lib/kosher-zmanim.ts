@@ -3,11 +3,42 @@ import { ZmanItem } from "./hebcal";
 
 // ─── Helper ───
 
-function fmtTime(dt: Date | null | undefined, tz?: string): string {
-  if (!dt || isNaN(dt.getTime())) return "--:--";
-  const opts: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
-  if (tz) opts.timeZone = tz;
-  return dt.toLocaleTimeString("fr-FR", opts);
+function fmtTime(dt: unknown, tz?: string): string {
+  if (!dt) return "--:--";
+
+  if (typeof dt === "object" && dt !== null) {
+    const maybeLuxon = dt as {
+      isValid?: boolean;
+      setZone?: (zone: string) => { toFormat?: (fmt: string) => string };
+      toFormat?: (fmt: string) => string;
+      toJSDate?: () => Date;
+    };
+
+    if (typeof maybeLuxon.toFormat === "function") {
+      if (maybeLuxon.isValid === false) return "--:--";
+      if (tz && typeof maybeLuxon.setZone === "function") {
+        return maybeLuxon.setZone(tz).toFormat?.("HH:mm") || "--:--";
+      }
+      return maybeLuxon.toFormat("HH:mm");
+    }
+
+    if (typeof maybeLuxon.toJSDate === "function") {
+      const jsDate = maybeLuxon.toJSDate();
+      if (Number.isNaN(jsDate.getTime())) return "--:--";
+      const opts: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
+      if (tz) opts.timeZone = tz;
+      return jsDate.toLocaleTimeString("fr-FR", opts);
+    }
+  }
+
+  if (dt instanceof Date) {
+    if (Number.isNaN(dt.getTime())) return "--:--";
+    const opts: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
+    if (tz) opts.timeZone = tz;
+    return dt.toLocaleTimeString("fr-FR", opts);
+  }
+
+  return "--:--";
 }
 
 export type ZmanimMethod = "gra" | "mga";
