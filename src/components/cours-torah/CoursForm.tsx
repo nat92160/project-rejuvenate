@@ -70,7 +70,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
     setPmiError("");
 
     try {
-      const { data, error } = await supabase.functions.invoke("zoom-proxy", { body: { action: "get-pmi" } });
+      const { data, error } = await supabase.functions.invoke("zoom-user-oauth", { body: { action: "get-pmi", userId } });
 
       if (error || !data?.success) {
         setPmiInfo(null);
@@ -108,6 +108,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
     try {
       const body: Record<string, unknown> = {
         action: "create-meeting",
+        userId, // Per-user OAuth: meeting created on THEIR account
         title: meetingTitle,
         timezone: "Europe/Paris",
         duration: 60,
@@ -128,7 +129,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
         body.start_time = `${dateStr}T${courseTime || "20:00"}:00`;
       }
 
-      const { data, error } = await supabase.functions.invoke("zoom-proxy", { body });
+      const { data, error } = await supabase.functions.invoke("zoom-user-oauth", { body });
 
       if (error) {
         console.error("Zoom meeting creation error:", error);
@@ -138,7 +139,11 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
 
       if (!data?.success) {
         console.error("Zoom API error:", data?.error);
-        toast.error(data?.error || "Erreur Zoom API");
+        if (data?.error?.includes("non connecté") || data?.error?.includes("expirée")) {
+          toast.error("Veuillez connecter votre compte Zoom dans les paramètres avant de créer un cours automatique.");
+        } else {
+          toast.error(data?.error || "Erreur Zoom API");
+        }
         return null;
       }
 
