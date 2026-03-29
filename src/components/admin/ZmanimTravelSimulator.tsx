@@ -191,12 +191,14 @@ const ZmanimTravelSimulator = () => {
       const totalMin = h * 60 + m - 18;
       casACandleActual = `${Math.floor(totalMin / 60)}:${String(totalMin % 60).padStart(2, "0")}`;
     }
+    // Validate: candle lighting must be ≈19:59 (±2 min tolerance)
+    const casAPassStrict = casACandleActual !== "--:--" && casACandleActual >= "19:57" && casACandleActual <= "20:01";
     results.push({
       label: "Cas A : Vendredi 3 Avril 2026 – Paris – Allumage",
-      expected: "≈ 19:59 (±3 min selon l'année)",
+      expected: "19:59 (Shkiya ≈ 20:17 minus 18 min)",
       actual: `Allumage: ${casACandleActual} (Shkiya: ${casAActual})`,
-      pass: casACandleActual !== "--:--" && casACandleActual >= "19:50" && casACandleActual <= "20:10",
-      detail: "Vérifie que l'allumage est dans la plage attendue pour début avril à Paris.",
+      pass: casAPassStrict,
+      detail: "Vérifie que l'allumage est à exactement Shkiya − 18 min, avec altitude 0m pour éviter les dérives.",
     });
 
     // CAS B: Samedi 4 Avril 2026 à 21h00 → Omer Jour 2 (après Tzeit)
@@ -226,7 +228,7 @@ const ZmanimTravelSimulator = () => {
       detail: "Vérifie que le Tzeit est bien avant 21h00, garantissant que le widget Omer affiche le jour suivant.",
     });
 
-    // CAS C: Pas de GPS → Vérification du comportement dégradé
+    // CAS C: Pas de GPS → Le moteur doit retourner un tableau vide
     const casCZmanim = fetchKosherZmanim({
       lat: 0,
       lng: 0,
@@ -236,14 +238,14 @@ const ZmanimTravelSimulator = () => {
       date: new Date(),
       method: "gra",
     });
-    const casCHasData = casCZmanim.length > 0 && casCZmanim.some(z => z.time !== "--:--");
+    const casCBlocked = casCZmanim.length === 0;
     results.push({
-      label: "Cas C : En vol / Pas de GPS",
-      expected: "L'app doit demander une ville manuellement au lieu de bugger",
-      actual: casCHasData
-        ? "⚠️ Le moteur retourne des horaires à (0°,0°) — L'UI doit intercepter et demander une ville"
-        : "✅ Aucun horaire valide retourné",
-      pass: !casCHasData,
+      label: "Cas C : En vol / Pas de GPS (0°,0°)",
+      expected: "Le moteur BLOQUE les horaires (retourne []) et l'UI demande une ville",
+      actual: casCBlocked
+        ? "✅ Moteur bloqué — aucun horaire retourné. Sécurité halakhique assurée."
+        : `❌ Le moteur a retourné ${casCZmanim.length} horaires à (0°,0°) — DANGER`,
+      pass: casCBlocked,
       detail: "Vérifie la sécurité halakhique : pas d'horaires faux en l'absence de position GPS.",
     });
 
