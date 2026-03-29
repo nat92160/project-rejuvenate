@@ -251,6 +251,13 @@ const IndexContent = () => {
 
   useEffect(() => { triggerAutoGeo(); }, []);
 
+  // Listen for auth modal trigger from OmerWidget
+  useEffect(() => {
+    const handler = () => setAuthOpen(true);
+    window.addEventListener("open-auth-modal", handler);
+    return () => window.removeEventListener("open-auth-modal", handler);
+  }, []);
+
   useEffect(() => {
     const onScroll = () => setShowHomeBtn(window.scrollY > 200 && activeTab !== "dashboard");
     onScroll();
