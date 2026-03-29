@@ -257,7 +257,7 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
 
       {!isMultiDay && !isFast && card.days[0] && (
         <div className="px-5 pb-4 bg-card border-t border-border">
-          <DayTimeline day={card.days[0]} festivalName={card.name} onCalendarClick={onCalendarClick} />
+          <DayTimeline day={card.days[0]} festivalName={card.name} onCalendarClick={onCalendarClick} isFirstDay isLastDay />
         </div>
       )}
 
@@ -276,6 +276,7 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
                   <DayRow
                     key={day.date}
                     day={day}
+                    isFirst={idx === 0}
                     isLast={idx === card.days.length - 1}
                     festivalName={card.name}
                     onCalendarClick={onCalendarClick}
@@ -295,13 +296,14 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
 
 interface DayRowProps {
   day: FestivalDay;
+  isFirst: boolean;
   isLast: boolean;
   festivalName: string;
   onCalendarClick: (day: FestivalDay) => void;
   categoryColor: string;
 }
 
-const DayRow = ({ day, isLast, festivalName, onCalendarClick, categoryColor }: DayRowProps) => {
+const DayRow = ({ day, isFirst, isLast, festivalName, onCalendarClick, categoryColor }: DayRowProps) => {
   const isYomTov = day.type === "yomtov" || day.type === "erev";
   const isHolHaMoed = day.type === "holhamoed";
 
@@ -365,7 +367,7 @@ const DayRow = ({ day, isLast, festivalName, onCalendarClick, categoryColor }: D
         </div>
         <p className="text-sm font-semibold text-foreground mt-1 capitalize">{day.dateFr}</p>
 
-        <DayTimeline day={day} festivalName={festivalName} onCalendarClick={onCalendarClick} compact />
+        <DayTimeline day={day} festivalName={festivalName} onCalendarClick={onCalendarClick} compact isFirstDay={isFirst} isLastDay={isLast} />
       </div>
     </div>
   );
