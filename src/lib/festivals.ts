@@ -1,4 +1,5 @@
 import { HebrewCalendar, Location, Zmanim as HebcalZmanim, flags } from '@hebcal/core';
+import { ComplexZmanimCalendar, GeoLocation } from 'kosher-zmanim';
 import { CityConfig } from "./cities";
 import { cityToLocation } from "./hebcal";
 
@@ -122,14 +123,53 @@ function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Get Tzeit HaKokhavim for a given date */
-function getTzeit(location: Location, dt: Date): string | undefined {
+/** Get Tzeit HaKokhavim at 7.08° using kosher-zmanim for halakhic precision */
+function getKosherTzeit(city: CityConfig, dt: Date): string | undefined {
   try {
-    const zman = new HebcalZmanim(location, dt, false);
-    const tzeit = zman.tzeit();
-    if (tzeit) return fmtTime(tzeit);
+    const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(dt);
+    const tzeit = czc.getSunsetOffsetByDegrees(97.08); // 90 + 7.08°
+    if (tzeit) return fmtTimeKosher(tzeit, city.tz);
   } catch { /* silent */ }
   return undefined;
+}
+
+/** Get candle lighting time = sunset MINUS offset (default 18min) using kosher-zmanim */
+function getKosherCandleLighting(city: CityConfig, dt: Date): string | undefined {
+  try {
+    const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(dt);
+    const sunset = czc.getSunset();
+    if (sunset) {
+      const candleDate = typeof sunset === 'object' && sunset !== null && 'toJSDate' in sunset
+        ? new Date((sunset as any).toJSDate().getTime() - city.candleOffset * 60000)
+        : sunset instanceof Date
+        ? new Date(sunset.getTime() - city.candleOffset * 60000)
+        : null;
+      if (candleDate) return fmtTimeKosher(candleDate, city.tz);
+    }
+  } catch { /* silent */ }
+  return undefined;
+}
+
+/** Format a kosher-zmanim result (Luxon DateTime or JS Date) */
+function fmtTimeKosher(dt: unknown, tz: string): string {
+  if (!dt) return "--:--";
+  if (typeof dt === "object" && dt !== null) {
+    const maybeLuxon = dt as any;
+    if (typeof maybeLuxon.toJSDate === "function") {
+      const jsDate = maybeLuxon.toJSDate();
+      if (Number.isNaN(jsDate.getTime())) return "--:--";
+      return jsDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: tz });
+    }
+  }
+  if (dt instanceof Date) {
+    if (Number.isNaN(dt.getTime())) return "--:--";
+    return dt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: tz });
+  }
+  return "--:--";
 }
 
 function getStatus(days: FestivalDay[], now: Date): FestivalCard["status"] {
