@@ -64,12 +64,14 @@ export function fetchKosherZmanim(opts: KosherZmanimOptions): ZmanItem[] {
     let sofZmanTefilaGRA: Date | null = null;
 
     // GRA calculations (based on sunrise to sunset)
-    sofZmanShemaGRA = czc.getSofZmanShmaGRA();
-    sofZmanTefilaGRA = czc.getSofZmanTfilaGRA();
+    sofZmanShemaGRA = czc.getSofZmanShma(czc.getSunrise(), czc.getSunset());
+    sofZmanTefilaGRA = czc.getSofZmanTfila(czc.getSunrise(), czc.getSunset());
 
     // MGA calculations (based on Alot 16.1° to Tzeit 16.1°)
-    sofZmanShemaMGA = czc.getSofZmanShmaMGA16Point1Degrees();
-    sofZmanTefilaMGA = czc.getSofZmanTfilaMGA16Point1Degrees();
+    const alot161 = czc.getSunriseOffsetByDegrees(106.1);
+    const tzeit161 = czc.getSunsetOffsetByDegrees(106.1);
+    sofZmanShemaMGA = czc.getSofZmanShma(alot161, tzeit161);
+    sofZmanTefilaMGA = czc.getSofZmanTfila(alot161, tzeit161);
 
     const chatzot = czc.getChatzos();
     const minchaGedola = method === "mga"
@@ -143,7 +145,7 @@ export function getMoladInfo(date?: Date): MoladInfo | null {
     const moladHours = molad.getMoladHours();
     const moladMinutes = molad.getMoladMinutes();
     const moladChalakim = molad.getMoladChalakim() % 18; // remaining chalakim after minutes
-    const moladDayOfWeek = molad.getMoladDayOfWeek();
+    const moladDayOfWeek = molad.getDayOfWeek();
 
     // Hebrew month name
     const monthName = jc.toString();
