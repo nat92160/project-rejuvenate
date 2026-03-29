@@ -14,11 +14,14 @@ import { ComplexZmanimCalendar, GeoLocation, JewishCalendar } from "kosher-zmani
  */
 export function useOmerVisibility({ isDirectLink = false }: { isDirectLink?: boolean } = {}) {
   const { isAdmin } = useAuth();
-  const [masterEnabled, setMasterEnabled] = useState(false);
+  const [masterEnabled, setMasterEnabled] = useState(() => {
+    // Hydrate from localStorage cache to survive app restarts
+    try { return localStorage.getItem("omer_master_switch") === "true"; } catch { return false; }
+  });
   const [loading, setLoading] = useState(true);
   const [geoVisible, setGeoVisible] = useState(false);
 
-  // Fetch master switch
+  // Fetch master switch (with localStorage persistence)
   useEffect(() => {
     const fetchSetting = async () => {
       const { data } = await (supabase
@@ -26,7 +29,9 @@ export function useOmerVisibility({ isDirectLink = false }: { isDirectLink?: boo
         .select("value") as any)
         .eq("key", "omer_enabled")
         .maybeSingle();
-      setMasterEnabled(data?.value === true);
+      const enabled = data?.value === true;
+      setMasterEnabled(enabled);
+      try { localStorage.setItem("omer_master_switch", String(enabled)); } catch {}
       setLoading(false);
     };
 
