@@ -1,257 +1,276 @@
 import { useState, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
-import { fetchZmanim, ZmanItem, fetchShabbatTimes } from "@/lib/hebcal";
-import { HebrewCalendar, Location, Zmanim as HebcalZmanim, flags } from "@hebcal/core";
-import { cityToLocation } from "@/lib/hebcal";
+import { getHebrewDateString, fetchShabbatTimes } from "@/lib/hebcal";
+import { fetchKosherZmanim, getMoladInfo, MoladInfo } from "@/lib/kosher-zmanim";
+import type { ZmanItem } from "@/lib/hebcal";
+import ShemaProgress from "./zmanim/ShemaProgress";
 
-type ContextMode = "morning" | "friday" | "fast" | "default";
+// ─── Helpers ───
 
-function getContextMode(city: any): ContextMode {
-  const now = new Date();
-  const day = now.getDay();
-  const hour = now.getHours();
+function timeToMinutes(time: string): number | null {
+  if (!time || time === "--:--") return null;
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
 
-  // Friday afternoon or Shabbat
-  if ((day === 5 && hour >= 12) || day === 6) return "friday";
+type WidgetMode = "shema" | "next-zman" | "friday" | "rest";
 
-  // Check if today is a fast day
-  try {
-    const location = cityToLocation(city);
-    const events = HebrewCalendar.calendar({
-      start: now,
-      end: now,
-      il: city.country === "IL",
-    });
-    for (const ev of events) {
-      if (ev.getFlags() & (flags.MAJOR_FAST | flags.MINOR_FAST)) {
-        return "fast";
+// ─── Compact Next Zman (inline version) ───
+
+function CompactNextZman({ zmanim }: { zmanim: ZmanItem[] }) {
+  const [countdown, setCountdown] = useState("");
+  const [next, setNext] = useState<ZmanItem | null>(null);
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      const curMin = now.getHours() * 60 + now.getMinutes();
+      let found: ZmanItem | null = null;
+      for (const z of zmanim) {
+        const m = timeToMinutes(z.time);
+        if (m !== null && m > curMin) { found = z; break; }
       }
-    }
-  } catch { /* silent */ }
+      setNext(found);
+      if (!found) { setCountdown(""); return; }
 
-  // Morning
-  if (hour >= 5 && hour < 12) return "morning";
+      const [h, m] = found.time.split(":").map(Number);
+      const target = new Date(now);
+      target.setHours(h, m, 0, 0);
+      const diff = target.getTime() - now.getTime();
+      if (diff <= 0) { setCountdown("Maintenant"); return; }
+      const hrs = Math.floor(diff / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      setCountdown(hrs > 0 ? `${hrs}h ${String(mins).padStart(2, "0")}m` : `${mins}m`);
+    };
+    update();
+    const id = setInterval(update, 30000);
+    return () => clearInterval(id);
+  }, [zmanim]);
 
-  return "default";
+  if (!next) return null;
+
+  const isEvening = next.label.includes("Chkia") || next.label.includes("Tsét") || next.label.includes("Min'ha");
+
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="text-[10px] uppercase tracking-[2px] font-semibold text-muted-foreground mb-0.5">
+          Prochain Zman
+        </div>
+        <div className="text-sm font-bold text-foreground truncate">
+          {next.icon} {next.label}
+        </div>
+      </div>
+      <div className="text-right shrink-0">
+        <div
+          className="text-lg font-extrabold font-display tabular-nums"
+          style={{ color: isEvening ? "hsl(220 60% 70%)" : "hsl(var(--gold-matte))" }}
+        >
+          {next.time}
+        </div>
+        {countdown && (
+          <div className="text-[10px] font-bold tabular-nums" style={{ color: isEvening ? "hsl(220 40% 60%)" : "hsl(var(--gold) / 0.8)" }}>
+            dans {countdown}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
-function fmtTime(d: Date | null | undefined): string {
-  if (!d || isNaN(d.getTime())) return "--:--";
-  return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-}
+// ─── Friday Candles ───
 
-const ContextualHomeWidget = () => {
-  const { city } = useCity();
-  const [mode, setMode] = useState<ContextMode>("default");
-  const [zmanim, setZmanim] = useState<ZmanItem[]>([]);
-  const [shabbatTime, setShabbatTime] = useState<string | null>(null);
-  const [havdalaTime, setHavdalaTime] = useState<string | null>(null);
-  const [fastEnd, setFastEnd] = useState<string | null>(null);
-  const [fastStart, setFastStart] = useState<string | null>(null);
-  const [fastName, setFastName] = useState<string>("");
+function FridayCandles({ candleTime, havdalaTime }: { candleTime: string; havdalaTime: string | null }) {
   const [countdown, setCountdown] = useState("");
 
   useEffect(() => {
-    const m = getContextMode(city);
-    setMode(m);
-
-    if (m === "morning") {
-      fetchZmanim(city).then(setZmanim);
-    }
-
-    if (m === "friday") {
-      fetchShabbatTimes(city).then((data) => {
-        if (data) {
-          setShabbatTime(data.candleLighting);
-          setHavdalaTime(data.havdalah);
-        }
-      });
-    }
-
-    if (m === "fast") {
-      try {
-        const now = new Date();
-        const location = cityToLocation(city);
-        const zman = new HebcalZmanim(location, now, false);
-        const alot = zman.alotHaShachar();
-        const tzeit = zman.tzeit();
-        if (alot) setFastStart(fmtTime(alot));
-        if (tzeit) setFastEnd(fmtTime(tzeit));
-
-        const events = HebrewCalendar.calendar({ start: now, end: now, il: city.country === "IL" });
-        for (const ev of events) {
-          if (ev.getFlags() & (flags.MAJOR_FAST | flags.MINOR_FAST)) {
-            setFastName(ev.getDesc());
-            break;
-          }
-        }
-      } catch { /* silent */ }
-    }
-  }, [city]);
-
-  // Countdown timer for fast end
-  useEffect(() => {
-    if (mode !== "fast" || !fastEnd) return;
+    if (!candleTime) return;
     const update = () => {
       const now = new Date();
-      const [h, m] = fastEnd.split(":").map(Number);
+      const [h, m] = candleTime.split(":").map(Number);
       const target = new Date(now);
       target.setHours(h, m, 0, 0);
-      if (target.getTime() <= now.getTime()) {
-        setCountdown("Terminé ✅");
-        return;
-      }
       const diff = target.getTime() - now.getTime();
-      const hours = Math.floor(diff / 3600000);
+      if (diff <= 0) { setCountdown("Chabbat Chalom ! ✨"); return; }
+      const hrs = Math.floor(diff / 3600000);
       const mins = Math.floor((diff % 3600000) / 60000);
       const secs = Math.floor((diff % 60000) / 1000);
-      setCountdown(`${hours}h ${String(mins).padStart(2, "0")}m ${String(secs).padStart(2, "0")}s`);
+      setCountdown(`${hrs}h ${String(mins).padStart(2, "0")}m ${String(secs).padStart(2, "0")}s`);
     };
     update();
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
-  }, [mode, fastEnd]);
+  }, [candleTime]);
 
-  if (mode === "default") return null;
+  return (
+    <div className="text-center">
+      <div className="text-3xl mb-1.5">🕯️</div>
+      <div className="text-[10px] uppercase tracking-[3px] font-bold text-muted-foreground mb-2">
+        Chabbat Chalom
+      </div>
+      <div className="text-2xl font-extrabold font-display tabular-nums" style={{ color: "hsl(var(--gold-matte))" }}>
+        {candleTime}
+      </div>
+      <div className="text-[10px] text-muted-foreground mt-0.5">Allumage des bougies</div>
+      {countdown && !countdown.includes("Chalom") && (
+        <div className="text-xs font-bold tabular-nums mt-2" style={{ color: "hsl(var(--gold) / 0.8)" }}>
+          dans {countdown}
+        </div>
+      )}
+      {countdown.includes("Chalom") && (
+        <div className="text-sm font-bold mt-2" style={{ color: "hsl(var(--gold-matte))" }}>
+          {countdown}
+        </div>
+      )}
+      {havdalaTime && (
+        <div className="mt-3 pt-2 border-t" style={{ borderColor: "hsl(var(--gold) / 0.15)" }}>
+          <div className="text-[10px] text-muted-foreground">Havdala</div>
+          <div className="text-base font-bold font-display" style={{ color: "hsl(var(--gold-matte))" }}>
+            {havdalaTime}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
-  // ─── Morning: Shema time + key zmanim ───
-  if (mode === "morning") {
-    const shema = zmanim.find((z) => z.label.includes("Chéma (GR\"A)"));
-    const shemaMGA = zmanim.find((z) => z.label.includes("Chéma (MG\"A)"));
-    const tefila = zmanim.find((z) => z.label.includes("Téfila"));
+// ─── Rest State ───
 
-    return (
+function RestState({ hebrewDate, molad }: { hebrewDate: string; molad: MoladInfo | null }) {
+  return (
+    <div className="text-center">
+      {hebrewDate && (
+        <div className="font-hebrew text-lg font-bold" style={{ direction: "rtl", color: "hsl(var(--gold-matte))" }}>
+          {hebrewDate}
+        </div>
+      )}
+      {molad && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          <span className="mr-1">🌙</span>
+          Molad : <span className="font-semibold text-foreground">{molad.dayOfWeek}</span>{" "}
+          {molad.hours}h{String(molad.minutes).padStart(2, "0")} · {molad.chalakim} 'halakim
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Widget ───
+
+const ContextualHomeWidget = () => {
+  const { city, manualAltitude } = useCity();
+  const [zmanim, setZmanim] = useState<ZmanItem[]>([]);
+  const [mode, setMode] = useState<WidgetMode>("rest");
+  const [candleTime, setCandleTime] = useState<string | null>(null);
+  const [havdalaTime, setHavdalaTime] = useState<string | null>(null);
+  const [hebrewDate, setHebrewDate] = useState("");
+  const [molad, setMolad] = useState<MoladInfo | null>(null);
+
+  const effectiveAltitude = useMemo(
+    () => (city.altitude && city.altitude > 0) ? city.altitude : manualAltitude,
+    [city.altitude, manualAltitude]
+  );
+
+  useEffect(() => {
+    const now = new Date();
+    const day = now.getDay();
+    const curMin = now.getHours() * 60 + now.getMinutes();
+
+    // Hebrew date & Molad
+    setHebrewDate(getHebrewDateString(now));
+    setMolad(getMoladInfo(now));
+
+    // Fetch zmanim via kosher-zmanim
+    const data = fetchKosherZmanim({
+      lat: city.lat,
+      lng: city.lng,
+      elevation: effectiveAltitude,
+      tz: city.tz,
+      name: city.name,
+    });
+    setZmanim(data);
+
+    // Friday afternoon or Shabbat → candle mode
+    if ((day === 5 && curMin >= 720) || day === 6) {
+      fetchShabbatTimes(city).then((st) => {
+        if (st) {
+          setCandleTime(st.candleLighting);
+          setHavdalaTime(st.havdalah);
+          setMode("friday");
+        }
+      });
+      return;
+    }
+
+    // Morning: check if before Sof Zman Shema
+    const shemaItem = data.find(z => z.label.includes('Chéma') && z.label.includes('GR"A'));
+    const shemaMin = shemaItem ? timeToMinutes(shemaItem.time) : null;
+    if (shemaMin !== null && curMin < shemaMin && curMin >= 270) {
+      setMode("shema");
+      return;
+    }
+
+    // Check if any zman is within 60 minutes
+    for (const z of data) {
+      const m = timeToMinutes(z.time);
+      if (m !== null && m > curMin && (m - curMin) <= 60) {
+        setMode("next-zman");
+        return;
+      }
+    }
+
+    // Default: rest
+    setMode("rest");
+  }, [city, effectiveAltitude]);
+
+  return (
+    <AnimatePresence mode="wait">
       <motion.div
-        className="rounded-2xl p-5 mb-4 border border-border"
+        key={mode}
+        className="rounded-2xl p-4 mb-4 border border-border/50 overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))",
-          boxShadow: "var(--shadow-card)",
+          background: mode === "friday"
+            ? "linear-gradient(135deg, hsl(var(--gold) / 0.1), hsl(var(--gold) / 0.03))"
+            : "hsl(var(--card) / 0.7)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderColor: mode === "friday" ? "hsl(var(--gold) / 0.25)" : undefined,
+          boxShadow: mode === "friday"
+            ? "0 4px 24px hsl(var(--gold) / 0.1)"
+            : "0 2px 12px hsl(var(--foreground) / 0.04)",
         }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -8, scale: 0.98 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
       >
-        <div className="text-[10px] uppercase tracking-[3px] font-semibold text-muted-foreground mb-3">
-          🌅 Boker Tov — Zmanim du matin
-        </div>
-        <div className="space-y-3">
-          {shemaMGA && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-foreground">📖 Chéma (MG"A)</span>
-              <span className="text-lg font-bold font-display" style={{ color: "hsl(var(--gold-matte))" }}>
-                {shemaMGA.time}
-              </span>
-            </div>
-          )}
-          {shema && (
-            <div className="flex justify-between items-center p-3 rounded-xl" style={{ background: "hsl(var(--gold) / 0.08)" }}>
-              <span className="text-sm font-bold text-foreground">📖 Chéma (GR"A)</span>
-              <span className="text-xl font-extrabold font-display" style={{ color: "hsl(var(--gold-matte))" }}>
-                {shema.time}
-              </span>
-            </div>
-          )}
-          {tefila && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-foreground">🙏 Fin Téfila</span>
-              <span className="text-lg font-bold font-display" style={{ color: "hsl(var(--gold-matte))" }}>
-                {tefila.time}
-              </span>
-            </div>
-          )}
-        </div>
-      </motion.div>
-    );
-  }
+        {mode === "friday" && candleTime && (
+          <FridayCandles candleTime={candleTime} havdalaTime={havdalaTime} />
+        )}
 
-  // ─── Friday: Shabbat countdown prominent ───
-  if (mode === "friday") {
-    return (
-      <motion.div
-        className="rounded-2xl p-6 mb-4 border text-center"
-        style={{
-          background: "linear-gradient(135deg, hsl(var(--gold) / 0.12), hsl(var(--gold) / 0.04))",
-          borderColor: "hsl(var(--gold) / 0.3)",
-          boxShadow: "0 8px 32px hsl(var(--gold) / 0.15)",
-        }}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-      >
-        <div className="text-4xl mb-2">🕯️</div>
-        <div className="text-[10px] uppercase tracking-[4px] font-bold text-muted-foreground mb-4">
-          Chabbat Chalom
-        </div>
-        {shabbatTime && (
-          <div className="mb-4">
-            <div className="text-xs text-muted-foreground mb-1">Allumage des bougies</div>
-            <div className="text-3xl font-extrabold font-display" style={{ color: "hsl(var(--gold-matte))" }}>
-              {shabbatTime}
+        {mode === "shema" && (
+          <div>
+            <div className="text-[10px] uppercase tracking-[3px] font-semibold text-muted-foreground mb-2">
+              🌅 Boker Tov
+            </div>
+            <ShemaProgress zmanim={zmanim} isToday={true} />
+            <div className="mt-2">
+              <CompactNextZman zmanim={zmanim} />
             </div>
           </div>
         )}
-        {havdalaTime && (
-          <div className="pt-3 border-t" style={{ borderColor: "hsl(var(--gold) / 0.15)" }}>
-            <div className="text-xs text-muted-foreground mb-1">Havdala</div>
-            <div className="text-xl font-bold font-display" style={{ color: "hsl(var(--gold-matte))" }}>
-              {havdalaTime}
-            </div>
-          </div>
+
+        {mode === "next-zman" && (
+          <CompactNextZman zmanim={zmanim} />
+        )}
+
+        {mode === "rest" && (
+          <RestState hebrewDate={hebrewDate} molad={molad} />
         )}
       </motion.div>
-    );
-  }
-
-  // ─── Fast day ───
-  if (mode === "fast") {
-    return (
-      <motion.div
-        className="rounded-2xl p-5 mb-4 border text-center"
-        style={{
-          background: "linear-gradient(135deg, hsl(0 70% 50% / 0.08), hsl(0 70% 50% / 0.02))",
-          borderColor: "hsl(0 70% 50% / 0.25)",
-          boxShadow: "var(--shadow-card)",
-        }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <div className="text-3xl mb-2">🕯️</div>
-        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-          {fastName || "Jour de Jeûne"}
-        </div>
-
-        <div className="flex justify-center gap-6 mb-4">
-          {fastStart && (
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Début</div>
-              <div className="text-lg font-bold font-display text-foreground">{fastStart}</div>
-            </div>
-          )}
-          {fastEnd && (
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Fin</div>
-              <div className="text-lg font-bold font-display text-foreground">{fastEnd}</div>
-            </div>
-          )}
-        </div>
-
-        {countdown && countdown !== "Terminé ✅" && (
-          <div className="p-3 rounded-xl" style={{ background: "hsl(0 70% 50% / 0.08)" }}>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Fin du jeûne dans</div>
-            <div className="text-2xl font-extrabold font-display tabular-nums" style={{ color: "hsl(0 70% 50%)" }}>
-              {countdown}
-            </div>
-          </div>
-        )}
-        {countdown === "Terminé ✅" && (
-          <div className="text-lg font-bold" style={{ color: "hsl(120 60% 40%)" }}>
-            ✅ Jeûne terminé — Bon appétit !
-          </div>
-        )}
-      </motion.div>
-    );
-  }
-
-  return null;
+    </AnimatePresence>
+  );
 };
 
 export default ContextualHomeWidget;
