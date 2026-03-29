@@ -398,7 +398,7 @@ const ZmanimTravelSimulator = () => {
       <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
         <h3 className="font-display text-base font-bold text-foreground mb-1">🧪 Diagnostic Complet (Xcode)</h3>
         <p className="text-xs text-muted-foreground mb-4">
-          Simule les 3 cas critiques : Vendredi Paris, Omer après Tzeit, et absence de GPS
+          5 cas critiques : Paris &amp; Jérusalem (allumage), Omer après Tzeit (2 villes), et absence de GPS
         </p>
 
         <button
