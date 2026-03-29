@@ -335,7 +335,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
           const prevDateStr = toIsoDate(prevDt);
 
           // Check if the previous day is also part of this group or is an erev
-          const resolved = resolveYomTovCandles(dateStr, dayOfWeek, candlesByDate, location, prevDateStr);
+          const resolved = resolveYomTovCandles(dateStr, dayOfWeek, candlesByDate, city, prevDateStr);
           dayCandles = resolved.candles;
           candleLightingType = resolved.lightingType;
           if (resolved.havdalah) {
