@@ -1,4 +1,5 @@
-import { HebrewCalendar, Location, Zmanim as HebcalZmanim, flags } from '@hebcal/core';
+import { HebrewCalendar, Location, flags } from '@hebcal/core';
+import { ComplexZmanimCalendar, GeoLocation } from 'kosher-zmanim';
 import { CityConfig } from "./cities";
 import { cityToLocation } from "./hebcal";
 
@@ -122,14 +123,53 @@ function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Get Tzeit HaKokhavim for a given date */
-function getTzeit(location: Location, dt: Date): string | undefined {
+/** Get Tzeit HaKokhavim at 7.08° using kosher-zmanim for halakhic precision */
+function getKosherTzeit(city: CityConfig, dt: Date): string | undefined {
   try {
-    const zman = new HebcalZmanim(location, dt, false);
-    const tzeit = zman.tzeit();
-    if (tzeit) return fmtTime(tzeit);
+    const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(dt);
+    const tzeit = czc.getSunsetOffsetByDegrees(97.08); // 90 + 7.08°
+    if (tzeit) return fmtTimeKosher(tzeit, city.tz);
   } catch { /* silent */ }
   return undefined;
+}
+
+/** Get candle lighting time = sunset MINUS offset (default 18min) using kosher-zmanim */
+function getKosherCandleLighting(city: CityConfig, dt: Date): string | undefined {
+  try {
+    const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(dt);
+    const sunset = czc.getSunset();
+    if (sunset) {
+      const candleDate = typeof sunset === 'object' && sunset !== null && 'toJSDate' in sunset
+        ? new Date((sunset as any).toJSDate().getTime() - city.candleOffset * 60000)
+        : sunset instanceof Date
+        ? new Date(sunset.getTime() - city.candleOffset * 60000)
+        : null;
+      if (candleDate) return fmtTimeKosher(candleDate, city.tz);
+    }
+  } catch { /* silent */ }
+  return undefined;
+}
+
+/** Format a kosher-zmanim result (Luxon DateTime or JS Date) */
+function fmtTimeKosher(dt: unknown, tz: string): string {
+  if (!dt) return "--:--";
+  if (typeof dt === "object" && dt !== null) {
+    const maybeLuxon = dt as any;
+    if (typeof maybeLuxon.toJSDate === "function") {
+      const jsDate = maybeLuxon.toJSDate();
+      if (Number.isNaN(jsDate.getTime())) return "--:--";
+      return jsDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: tz });
+    }
+  }
+  if (dt instanceof Date) {
+    if (Number.isNaN(dt.getTime())) return "--:--";
+    return dt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: tz });
+  }
+  return "--:--";
 }
 
 function getStatus(days: FestivalDay[], now: Date): FestivalCard["status"] {
@@ -158,7 +198,7 @@ function resolveYomTovCandles(
   dateStr: string,
   dayOfWeek: number,
   candlesByDate: Record<string, string>,
-  location: Location,
+  city: CityConfig,
   previousDayStr?: string,
 ): { candles?: string; lightingType: LightingType; havdalah?: string; havdalahType?: "havdalah" | "sortie" } {
 
@@ -167,7 +207,7 @@ function resolveYomTovCandles(
 
   // Case 1: It's Friday → entering Shabbat → standard candle lighting BEFORE shkiya
   if (dayOfWeek === 5) {
-    const stdCandles = candlesByDate[dateStr];
+    const stdCandles = candlesByDate[dateStr] || getKosherCandleLighting(city, new Date(dateStr + "T12:00:00"));
     return {
       candles: stdCandles,
       lightingType: stdCandles ? "erev" : "none",
@@ -176,8 +216,7 @@ function resolveYomTovCandles(
 
   // Case 2: Previous day was Shabbat (Saturday night) → Havdalah/Sortie, not candle lighting
   if (prevDayOfWeek === 6) {
-    // Tzeit of Saturday = Havdalah time
-    const tzeit = previousDayStr ? getTzeit(location, new Date(previousDayStr + "T12:00:00")) : undefined;
+    const tzeit = previousDayStr ? getKosherTzeit(city, new Date(previousDayStr + "T12:00:00")) : undefined;
     return {
       lightingType: "none",
       havdalah: tzeit,
@@ -187,7 +226,7 @@ function resolveYomTovCandles(
 
   // Case 3: 2nd+ day Yom Tov (not Friday, not after Shabbat) → after Tzeit of PREVIOUS day
   if (previousDayStr) {
-    const tzeit = getTzeit(location, new Date(previousDayStr + "T12:00:00"));
+    const tzeit = getKosherTzeit(city, new Date(previousDayStr + "T12:00:00"));
     if (tzeit) {
       return {
         candles: tzeit,
@@ -219,7 +258,9 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
 
     const events = allEvents.filter(ev => ev.getDate().greg().getFullYear() === year);
 
-    // Build candle/havdalah time maps by date
+    // Build candle/havdalah time maps by date using kosher-zmanim for precision
+    // Candle lighting = sunset - candleOffset (kosher-zmanim)
+    // Havdalah = Tzeit HaKokhavim 7.08° (kosher-zmanim)
     const candlesByDate: Record<string, string> = {};
     const havdalahByDate: Record<string, string> = {};
 
@@ -229,12 +270,14 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       const dateKey = toIsoDate(greg);
 
       if (desc === 'Candle lighting') {
-        const eventTime: Date = (ev as any).eventTime || greg;
-        candlesByDate[dateKey] = fmtTime(eventTime);
+        // Use kosher-zmanim: sunset - candleOffset
+        const kosherCandle = getKosherCandleLighting(city, greg);
+        candlesByDate[dateKey] = kosherCandle || fmtTime((ev as any).eventTime || greg);
       }
       if (desc.startsWith('Havdalah')) {
-        const eventTime: Date = (ev as any).eventTime || greg;
-        havdalahByDate[dateKey] = fmtTime(eventTime);
+        // Use kosher-zmanim: Tzeit at 7.08°
+        const kosherTzeit = getKosherTzeit(city, greg);
+        havdalahByDate[dateKey] = kosherTzeit || fmtTime((ev as any).eventTime || greg);
       }
     }
 
@@ -296,7 +339,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
           const prevDateStr = toIsoDate(prevDt);
 
           // Check if the previous day is also part of this group or is an erev
-          const resolved = resolveYomTovCandles(dateStr, dayOfWeek, candlesByDate, location, prevDateStr);
+          const resolved = resolveYomTovCandles(dateStr, dayOfWeek, candlesByDate, city, prevDateStr);
           dayCandles = resolved.candles;
           candleLightingType = resolved.lightingType;
           if (resolved.havdalah) {
@@ -350,14 +393,16 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
         let fastEnd = havdalahByDate[dateStr];
         if (isFast) {
           try {
-            const zman = new HebcalZmanim(location, dt, false);
+            const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
+            const czc = new ComplexZmanimCalendar(geo);
+            czc.setDate(dt);
             if (!fastStart) {
-              const alot = zman.alotHaShachar();
-              if (alot) fastStart = fmtTime(alot);
+              const alot = czc.getSunriseOffsetByDegrees(106.1); // 16.1°
+              if (alot) fastStart = fmtTimeKosher(alot, city.tz);
             }
             if (!fastEnd) {
-              const tzeit = zman.tzeit();
-              if (tzeit) fastEnd = fmtTime(tzeit);
+              const tzeit = czc.getSunsetOffsetByDegrees(97.08); // 7.08°
+              if (tzeit) fastEnd = fmtTimeKosher(tzeit, city.tz);
             }
           } catch { /* silent */ }
         }

@@ -284,6 +284,14 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
                   />
                 ))}
               </div>
+              {/* Footnote for multi-day Yom Tov */}
+              {card.category === "yomtov" && card.days.length > 1 && (
+                <div className="px-5 py-3 border-t border-border" style={{ background: "hsl(var(--muted) / 0.5)" }}>
+                  <p className="text-[10px] text-muted-foreground italic leading-relaxed">
+                    📝 Note : Pour le 2ème soir de fête, l'allumage se fait après la sortie des étoiles à partir d'une flamme existante.
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -353,14 +361,25 @@ const DayRow = ({ day, isFirst, isLast, festivalName, onCalendarClick, categoryC
           </span>
           {day.type === "yomtov" && (
             <span
-              className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
-              style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}
+              className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border"
+              style={{
+                background: "linear-gradient(135deg, hsl(43 74% 49% / 0.15), hsl(43 74% 49% / 0.08))",
+                color: "hsl(var(--gold-matte))",
+                borderColor: "hsl(var(--gold) / 0.25)",
+              }}
             >
               Yom Tov
             </span>
           )}
           {day.isShabbat && (
-            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-primary/10 text-primary">
+            <span
+              className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border"
+              style={{
+                background: "linear-gradient(135deg, hsl(220 15% 70% / 0.15), hsl(220 15% 70% / 0.08))",
+                color: "hsl(220 10% 50%)",
+                borderColor: "hsl(220 15% 70% / 0.3)",
+              }}
+            >
               Chabbat
             </span>
           )}
@@ -387,30 +406,29 @@ interface DayTimelineProps {
 const DayTimeline = ({ day, festivalName, onCalendarClick, compact, isFirstDay = true, isLastDay = true }: DayTimelineProps) => {
   const isFast = day.type === "fast";
 
-  // Show 🕯️ Allumage for:
-  // - Erev (veille de fête)
+  // === SIMPLIFIED "MAISON" LOGIC ===
+  // 🕯️ Allumage ONLY for:
+  // - Erev (1st night of the festival)
   // - Friday (entering Shabbat)
   // - Fasts ("Début")
-  // - Single-day events
+  // - Single-day standalone events
   const showCandles = day.candles && (
     isFast ||
     day.type === "erev" ||
     day.dayOfWeek === 5 || // Friday
-    (isFirstDay && isLastDay)
+    (isFirstDay && isLastDay) // single-day event
   );
 
-  // Show ✨ Sortie for:
-  // - Saturday (Shabbat ending) — ALWAYS, even mid-festival
-  // - Last day of the festival
-  // - End of any Yom Tov day that has havdalah
+  // ✨ Sortie ONLY for:
+  // - Saturday night (Shabbat ending) — ALWAYS
+  // - Last day of the festival (clôture définitive)
   // - Fasts ("Fin")
-  // - Single-day events
+  // - Single-day standalone events
   const showHavdalah = day.havdalah && (
     isFast ||
     isLastDay ||
-    day.isShabbat || // Saturday = always show Sortie
-    day.dayOfWeek === 6 || // Shabbat day
-    (isFirstDay && isLastDay)
+    day.isShabbat || day.dayOfWeek === 6 || // Saturday = always show Sortie
+    (isFirstDay && isLastDay) // single-day event
   );
 
   if (!showCandles && !showHavdalah && compact) return null;
