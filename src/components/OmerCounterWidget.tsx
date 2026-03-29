@@ -16,6 +16,7 @@ import {
   getStreak,
   shareOmer,
 } from "@/components/omer/omerStorage";
+import OmerPostCountRitual from "@/components/omer/OmerPostCountRitual";
 import OmerAdminSimulator from "@/components/omer/OmerAdminSimulator";
 
 // Re-export for landing page
