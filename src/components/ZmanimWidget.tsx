@@ -6,7 +6,7 @@ import { fetchKosherZmanim, getMoladInfo, ZmanimMethod, MoladInfo } from "@/lib/
 import type { ZmanItem } from "@/lib/hebcal";
 
 const ZmanimWidget = () => {
-  const { city, manualAltitude } = useCity();
+  const { city, manualAltitude, setManualAltitude } = useCity();
   const [zmanim, setZmanim] = useState<ZmanItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
