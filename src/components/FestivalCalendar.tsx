@@ -380,17 +380,37 @@ interface DayTimelineProps {
   festivalName: string;
   onCalendarClick: (day: FestivalDay) => void;
   compact?: boolean;
+  isFirstDay?: boolean;
+  isLastDay?: boolean;
 }
 
-const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelineProps) => {
+const DayTimeline = ({ day, festivalName, onCalendarClick, compact, isFirstDay = true, isLastDay = true }: DayTimelineProps) => {
   const isFast = day.type === "fast";
-  const lt = day.candleLightingType;
-  const hasCandles = day.candles && lt && lt !== "none";
-  const hasHavdalah = day.havdalah;
-  const hasTime = hasCandles || hasHavdalah;
-  if (!hasTime && compact) return null;
 
-  // Simplified: always "Allumage" for candles, always "Sortie" for havdalah
+  // Show candle lighting only for:
+  // - Erev (first night / veille)
+  // - Friday (entering Shabbat during festival)
+  // - Fasts (show "Début")
+  // - Single-day events
+  const showCandles = day.candles && (
+    isFast ||
+    day.type === "erev" ||
+    day.dayOfWeek === 5 || // Friday
+    (isFirstDay && isLastDay) // single-day card
+  );
+
+  // Show sortie only for:
+  // - Last day of the festival
+  // - Fasts (show "Fin")
+  // - Single-day events
+  const showHavdalah = day.havdalah && (
+    isFast ||
+    isLastDay ||
+    (isFirstDay && isLastDay)
+  );
+
+  if (!showCandles && !showHavdalah && compact) return null;
+
   const candleIcon = isFast ? "⏰" : "🕯️";
   const candleLabel = isFast ? "Début" : "Allumage";
   const havdalahIcon = isFast ? "✅" : "✨";
@@ -398,7 +418,7 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelin
 
   return (
     <div className={`flex items-center gap-4 flex-wrap ${compact ? "mt-2" : "mt-3"}`}>
-      {hasCandles && (
+      {showCandles && (
         <div className="flex items-center gap-2">
           <span className="text-xs">{candleIcon}</span>
           <span className="text-xs font-medium text-muted-foreground">{candleLabel}</span>
@@ -410,7 +430,7 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelin
           </span>
         </div>
       )}
-      {hasHavdalah && (
+      {showHavdalah && (
         <div className="flex items-center gap-2">
           <span className="text-xs">{havdalahIcon}</span>
           <span className="text-xs font-medium text-muted-foreground">{havdalahLabel}</span>
@@ -422,7 +442,7 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelin
           </span>
         </div>
       )}
-      {(hasCandles || hasHavdalah) && (
+      {(showCandles || showHavdalah) && (
         <button
           onClick={(e) => { e.stopPropagation(); onCalendarClick(day); }}
           className="ml-auto text-[10px] font-bold text-primary/60 hover:text-primary cursor-pointer bg-transparent border-none transition-colors px-2 py-1 rounded-lg hover:bg-primary/5"
