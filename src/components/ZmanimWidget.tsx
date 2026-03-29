@@ -232,9 +232,7 @@ const ZmanimWidget = () => {
                 min={0}
                 max={9000}
                 value={manualAltitude}
-                onChange={(e) => {
-                  const { setManualAltitude } = useCity as any;
-                }}
+                onChange={(e) => setManualAltitude(Math.max(0, Number(e.target.value) || 0))}
                 className="w-16 px-1.5 py-1 rounded-lg text-xs bg-card text-foreground border border-border text-center focus:outline-none focus:ring-1 focus:ring-ring/30"
                 placeholder="0"
               />
