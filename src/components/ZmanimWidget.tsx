@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
-import { fetchZmanim, ZmanItem, getHebrewDateString } from "@/lib/hebcal";
+import { getHebrewDateString } from "@/lib/hebcal";
+import { fetchKosherZmanim, getMoladInfo, ZmanimMethod, MoladInfo } from "@/lib/kosher-zmanim";
+import type { ZmanItem } from "@/lib/hebcal";
 
 const ZmanimWidget = () => {
   const { city } = useCity();
@@ -11,15 +13,25 @@ const ZmanimWidget = () => {
   const [dateLabel, setDateLabel] = useState("");
   const [hebrewForDate, setHebrewForDate] = useState("");
   const [highlight, setHighlight] = useState<string | null>(null);
+  const [method, setMethod] = useState<ZmanimMethod>("gra");
+  const [molad, setMolad] = useState<MoladInfo | null>(null);
 
-  const loadZmanim = useCallback(async (dateStr: string) => {
+  const loadZmanim = useCallback((dateStr: string) => {
     setLoading(true);
     const d = new Date(dateStr + "T12:00:00");
     setDateLabel(
       d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     );
     setHebrewForDate(getHebrewDateString(d));
-    const data = await fetchZmanim(city, d);
+
+    const data = fetchKosherZmanim({
+      lat: city.lat,
+      lng: city.lng,
+      tz: city.tz,
+      name: city.name,
+      date: d,
+      method,
+    });
     setZmanim(data);
     setLoading(false);
 
@@ -38,7 +50,10 @@ const ZmanimWidget = () => {
     } else {
       setHighlight(null);
     }
-  }, [city]);
+
+    // Molad
+    setMolad(getMoladInfo(d));
+  }, [city, method]);
 
   useEffect(() => {
     loadZmanim(date);
@@ -68,6 +83,30 @@ const ZmanimWidget = () => {
       <h3 className="font-display text-base font-bold flex items-center gap-2 text-foreground">
         ⏰ Zmanim du jour
       </h3>
+
+      {/* Method toggle */}
+      <div className="flex items-center justify-center gap-2 mt-3">
+        <button
+          onClick={() => setMethod("gra")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            method === "gra"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-accent"
+          }`}
+        >
+          GR&quot;A
+        </button>
+        <button
+          onClick={() => setMethod("mga")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            method === "mga"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-accent"
+          }`}
+        >
+          MG&quot;A
+        </button>
+      </div>
 
       {/* Date navigation */}
       <div className="flex items-center justify-center gap-2.5 mt-4 mb-2 flex-wrap">
@@ -156,6 +195,20 @@ const ZmanimWidget = () => {
               </motion.div>
             );
           })}
+        </div>
+      )}
+
+      {/* Molad display */}
+      {molad && (
+        <div className="mt-4 p-3 rounded-xl bg-muted/50 border border-border">
+          <div className="text-[10px] uppercase tracking-[2px] font-semibold text-muted-foreground mb-2">
+            🌙 Molad du mois
+          </div>
+          <div className="text-sm text-foreground font-medium">
+            <span className="font-bold">{molad.dayOfWeek}</span>{" "}
+            à <span className="font-bold font-display">{molad.hours}h {String(molad.minutes).padStart(2, "0")}m</span>{" "}
+            et <span className="font-bold font-display">{molad.chalakim}</span> 'halakim
+          </div>
         </div>
       )}
 
