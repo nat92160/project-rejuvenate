@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Share2, Check, UserPlus, Flame } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,10 +10,12 @@ import {
   getSefiratDay,
 } from "@/components/omer/omerData";
 import {
-  hasAlreadyCounted,
+  hasAlreadyCountedAsync,
+  hasAlreadyCountedLocal,
   markAsCounted,
-  updateStreak,
-  getStreak,
+  getStreakAsync,
+  getStreakLocal,
+  migrateLocalToDb,
   shareOmer,
 } from "@/components/omer/omerStorage";
 import OmerPostCountRitual from "@/components/omer/OmerPostCountRitual";
@@ -50,20 +52,40 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
   const isSimulating = isAdmin && simulatedDay !== null;
   const omerDay = isSimulating ? simulatedDay : realOmerDay;
 
+  // Load counted/streak state (async for DB users)
   useEffect(() => {
-    if (realOmerDay) {
-      setCounted(hasAlreadyCounted(realOmerDay));
-      const { streak: s, lastDay } = getStreak();
-      if (lastDay === realOmerDay) setStreak(s);
-      else if (lastDay === realOmerDay - 1) setStreak(s); // will increment on count
+    if (!realOmerDay) return;
+    const userId = user?.id ?? null;
+
+    const load = async () => {
+      const alreadyCounted = userId
+        ? await hasAlreadyCountedAsync(realOmerDay, userId)
+        : hasAlreadyCountedLocal(realOmerDay);
+      setCounted(alreadyCounted);
+
+      if (userId) {
+        const s = await getStreakAsync(realOmerDay, userId);
+        setStreak(s.lastDay >= realOmerDay - 1 ? s.streak : 0);
+      } else {
+        const { streak: s, lastDay } = getStreakLocal();
+        if (lastDay >= realOmerDay - 1) setStreak(s);
+      }
+    };
+
+    load();
+  }, [realOmerDay, user?.id]);
+
+  // Migrate localStorage → DB when user first logs in during Omer
+  useEffect(() => {
+    if (user?.id && realOmerDay) {
+      migrateLocalToDb(user.id);
     }
-  }, [realOmerDay]);
+  }, [user?.id, realOmerDay]);
 
   // Hide widget if not in omer period (unless admin can simulate)
   const canShowAdmin = isAdmin;
   if (!canShowAdmin && !isSimulating && (!omerDay || !omerPeriod)) return null;
 
-  // Effective day: simulated, real, or default to 1 for admin preview
   const effectiveDay = isSimulating ? simulatedDay! : (omerDay || (canShowAdmin ? 1 : null));
   if (!effectiveDay) return null;
 
@@ -72,10 +94,9 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
   const blessing = getOmerBlessing(effectiveDay);
   const sefira = getSefiratDay(effectiveDay);
 
-  const handleCounted = () => {
+  const handleCounted = async () => {
     if (!isSimulating && realOmerDay) {
-      markAsCounted(realOmerDay);
-      const newStreak = updateStreak(realOmerDay);
+      const newStreak = await markAsCounted(realOmerDay, user?.id ?? null);
       setStreak(newStreak);
     }
     setCounted(true);
@@ -96,7 +117,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Invite banner for shared link visitors */}
       {showInviteBanner && (
         <div
           className="px-5 py-3 text-center text-xs font-medium"
@@ -116,17 +136,14 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
           background: "linear-gradient(135deg, hsl(var(--gold) / 0.15), hsl(var(--gold) / 0.05))",
         }}
       >
-        {/* Admin simulator */}
         {isAdmin && (
           <OmerAdminSimulator simulatedDay={simulatedDay} onSimulate={setSimulatedDay} />
         )}
 
-        {/* Decorative sparkles */}
         <div className="absolute top-2 left-4 text-lg opacity-30 animate-pulse">✨</div>
         <div className="absolute top-3 right-6 text-sm opacity-20 animate-pulse" style={{ animationDelay: "0.5s" }}>✨</div>
         <div className="absolute bottom-2 left-1/4 text-xs opacity-25 animate-pulse" style={{ animationDelay: "1s" }}>⭐</div>
 
-        {/* Share button top-right */}
         <button
           onClick={() => shareOmer(effectiveDay)}
           className="absolute top-4 right-4 p-2 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
@@ -151,7 +168,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
           Séfirat HaOmer
         </div>
 
-        {/* Big day number + streak flame */}
         <div className="flex items-center justify-center gap-2 my-3">
           <motion.div
             className="text-5xl font-extrabold font-display"
@@ -167,7 +183,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
             {effectiveDay}
           </motion.div>
 
-          {/* Streak flame */}
           {streak > 1 && !isSimulating && (
             <motion.div
               className="flex flex-col items-center"
@@ -197,18 +212,16 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
         </div>
 
         <div className="text-xs font-bold text-foreground">
-          {weeks > 0 && (
+          {weeks > 0 ? (
             <span>
               {weeks} semaine{weeks > 1 ? "s" : ""}
               {days > 0 && ` et ${days} jour${days > 1 ? "s" : ""}`}
             </span>
-          )}
-          {weeks === 0 && (
+          ) : (
             <span>{days} jour{days > 1 ? "s" : ""}</span>
           )}
         </div>
 
-        {/* Sefira attribute */}
         <div
           className="mt-2 inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
           style={{
@@ -219,7 +232,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
           {sefira.attribute} dans {sefira.within}
         </div>
 
-        {/* Simulation indicator */}
         {isSimulating && (
           <div className="mt-2 text-[9px] font-bold px-2 py-0.5 rounded-full inline-block"
             style={{ background: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))" }}>
@@ -248,7 +260,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
           />
         </div>
 
-        {/* 7-dot week indicator */}
         <div className="flex justify-center gap-1.5 mt-3">
           {Array.from({ length: 7 }).map((_, i) => {
             const dotDay = (weeks * 7) + i + 1;
@@ -276,7 +287,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
         </div>
       </div>
 
-      {/* "J'ai compté" button OR congratulations */}
+      {/* Count button or congratulations */}
       <div className="bg-card border-t border-border">
         {!counted ? (
           <div className="px-5 py-3 flex gap-2">
@@ -302,7 +313,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
               {getStreakMessage(streak)}
             </motion.div>
 
-            {/* Streak encouragement for non-logged users */}
             {streak > 1 && !user && (
               <motion.div
                 initial={{ opacity: 0, y: 5 }}
@@ -347,7 +357,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
         )}
       </div>
 
-      {/* Expand for blessing */}
+      {/* Blessing section */}
       <div className="bg-card border-t border-border">
         <button
           onClick={() => setExpanded(!expanded)}
@@ -366,7 +376,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Hebrew */}
               <div
                 className="p-4 rounded-xl text-right leading-relaxed"
                 style={{
@@ -380,7 +389,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
                 {blessing.hebrew}
               </div>
 
-              {/* Phonetic */}
               <div className="p-3 rounded-xl border border-border">
                 <div className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground mb-1">Phonétique</div>
                 <p className="text-sm italic text-foreground leading-relaxed">
@@ -388,7 +396,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
                 </p>
               </div>
 
-              {/* French */}
               <div className="p-3 rounded-xl border border-border">
                 <div className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground mb-1">Traduction</div>
                 <p className="text-sm text-foreground leading-relaxed">
@@ -396,7 +403,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
                 </p>
               </div>
 
-              {/* CTA for guests on landing page */}
               {showInviteBanner && !user && (
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("open-auth-modal"))}
@@ -412,7 +418,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
                 </button>
               )}
 
-              {/* Reminder */}
               <div
                 className="text-center text-[11px] italic text-muted-foreground p-3 rounded-xl"
                 style={{ background: "hsl(var(--gold) / 0.04)" }}
@@ -424,7 +429,6 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
         </AnimatePresence>
       </div>
 
-      {/* Post-count ritual: Psalm 67, Ana BeKhoach, Yehi Ratson */}
       {(counted || expanded) && (
         <OmerPostCountRitual currentWeek={weeks} />
       )}
