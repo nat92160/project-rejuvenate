@@ -75,10 +75,10 @@ export function fetchKosherZmanim(opts: KosherZmanimOptions): ZmanItem[] {
 
     const chatzot = czc.getChatzos();
     const minchaGedola = method === "mga"
-      ? czc.getMinchaGedola16Point1Degrees()
-      : czc.getMinchaGedola();
-    const minchaKetana = czc.getMinchaKetana();
-    const plagHaMincha = czc.getPlagHamincha();
+      ? czc.getMinchaGedola(alot161, tzeit161)
+      : czc.getMinchaGedola(sunrise, sunset);
+    const minchaKetana = czc.getMinchaKetana(sunrise, sunset);
+    const plagHaMincha = czc.getPlagHamincha(sunrise, sunset);
 
     // Tzeit HaKokhavim at 7.08°
     const tzeitKokhavim = czc.getSunsetOffsetByDegrees(97.08); // 90 + 7.08
