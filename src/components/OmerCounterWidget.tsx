@@ -67,9 +67,9 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
   if (!effectiveDay) return null;
 
   const { weeks, days } = getWeeksAndDays(effectiveDay);
-  const progress = (omerDay / 49) * 100;
-  const blessing = getOmerBlessing(omerDay);
-  const sefira = getSefiratDay(omerDay);
+  const progress = (effectiveDay / 49) * 100;
+  const blessing = getOmerBlessing(effectiveDay);
+  const sefira = getSefiratDay(effectiveDay);
 
   const handleCounted = () => {
     if (!isSimulating && realOmerDay) {
