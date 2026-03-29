@@ -387,25 +387,29 @@ interface DayTimelineProps {
 const DayTimeline = ({ day, festivalName, onCalendarClick, compact, isFirstDay = true, isLastDay = true }: DayTimelineProps) => {
   const isFast = day.type === "fast";
 
-  // Show candle lighting only for:
-  // - Erev (first night / veille)
-  // - Friday (entering Shabbat during festival)
-  // - Fasts (show "Début")
+  // Show 🕯️ Allumage for:
+  // - Erev (veille de fête)
+  // - Friday (entering Shabbat)
+  // - Fasts ("Début")
   // - Single-day events
   const showCandles = day.candles && (
     isFast ||
     day.type === "erev" ||
     day.dayOfWeek === 5 || // Friday
-    (isFirstDay && isLastDay) // single-day card
+    (isFirstDay && isLastDay)
   );
 
-  // Show sortie only for:
+  // Show ✨ Sortie for:
+  // - Saturday (Shabbat ending) — ALWAYS, even mid-festival
   // - Last day of the festival
-  // - Fasts (show "Fin")
+  // - End of any Yom Tov day that has havdalah
+  // - Fasts ("Fin")
   // - Single-day events
   const showHavdalah = day.havdalah && (
     isFast ||
     isLastDay ||
+    day.isShabbat || // Saturday = always show Sortie
+    day.dayOfWeek === 6 || // Shabbat day
     (isFirstDay && isLastDay)
   );
 
