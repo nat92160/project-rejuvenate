@@ -90,6 +90,17 @@ export function CityProvider({ children }: { children: ReactNode }) {
   const [gpsCity, setGpsCity] = useState<ActiveCityConfig | null>(() => loadStoredGpsCity());
   const [locationError, setLocationError] = useState<string | null>(null);
   const [autoGeoTriggered, setAutoGeoTriggered] = useState(false);
+  const [manualAltitude, setManualAltitudeState] = useState<number>(() => {
+    try {
+      const stored = localStorage.getItem(ALT_STORAGE_KEY);
+      return stored ? Number(stored) : 0;
+    } catch { return 0; }
+  });
+
+  const setManualAltitude = (alt: number) => {
+    setManualAltitudeState(alt);
+    try { localStorage.setItem(ALT_STORAGE_KEY, String(alt)); } catch { /* ignore */ }
+  };
 
   const setCityKey = (key: string) => {
     setCityKeyState(key);
@@ -113,10 +124,14 @@ export function CityProvider({ children }: { children: ReactNode }) {
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
+        const { latitude, longitude, accuracy, altitude: gpsAltitude } = position.coords;
         const baseCity = getNearestBaseCity(latitude, longitude);
         const realCityName = await reverseGeocode(latitude, longitude);
         const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || baseCity.tz;
+
+        const resolvedAltitude = (gpsAltitude && Number.isFinite(gpsAltitude) && gpsAltitude > 0)
+          ? Math.round(gpsAltitude)
+          : 0;
 
         const nextGpsCity: ActiveCityConfig = {
           ...baseCity,
@@ -127,6 +142,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
           _gps: true,
           accuracyMeters: Number.isFinite(accuracy) ? Math.round(accuracy) : null,
           source: "gps",
+          altitude: resolvedAltitude,
         };
 
         setGpsCity(nextGpsCity);
@@ -174,7 +190,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <CityContext.Provider value={{ city, cityKey, setCityKey, isGeolocating, geolocate, locationError, triggerAutoGeo }}>
+    <CityContext.Provider value={{ city, cityKey, setCityKey, isGeolocating, geolocate, locationError, triggerAutoGeo, manualAltitude, setManualAltitude }}>
       {children}
     </CityContext.Provider>
   );
