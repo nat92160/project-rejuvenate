@@ -84,7 +84,7 @@ const SettingsTab = () => {
   );
 };
 
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const AdminDashboard = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "simulator" | "settings">("requests");
   const [requests, setRequests] = useState<PresidentRequest[]>([]);
