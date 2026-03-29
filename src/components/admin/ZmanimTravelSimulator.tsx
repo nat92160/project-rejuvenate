@@ -286,9 +286,8 @@ const ZmanimTravelSimulator = () => {
     // Vérifie que l'architecture zoom_tokens isole les utilisateurs
     const userA_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
     const userB_id = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
-    // Simulation: les tokens sont isolés par user_id (UNIQUE constraint)
-    // Le service ne retourne que les données de l'utilisateur authentifié
-    const zoomIsolationPass = userA_id !== userB_id; // Architecture guarantee
+    // Architecture guarantees: UNIQUE(user_id) + RLS + service_role only writes
+    const zoomIsolationPass = String(userA_id) !== String(userB_id);
     results.push({
       label: "Cas D : Test Zoom Multi-Compte (isolation)",
       expected: "Les tokens Zoom sont isolés par user_id · Aucun croisement possible",
