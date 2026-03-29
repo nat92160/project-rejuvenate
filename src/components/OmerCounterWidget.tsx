@@ -82,11 +82,14 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
     }
   }, [user?.id, realOmerDay]);
 
-  // Hide widget if not in omer period (unless admin can simulate)
+  // Hide widget if not in omer period (unless admin can simulate or direct link)
   const canShowAdmin = isAdmin;
-  if (!canShowAdmin && !isSimulating && (!omerDay || !omerPeriod)) return null;
+  const isDirectLink = showInviteBanner;
+  if (!canShowAdmin && !isSimulating && !isDirectLink && (!omerDay || !omerPeriod)) return null;
 
-  const effectiveDay = isSimulating ? simulatedDay! : (omerDay || (canShowAdmin ? 1 : null));
+  const effectiveDay = isSimulating ? simulatedDay! : (omerDay || (canShowAdmin || isDirectLink ? 1 : null));
+
+  // If still no effective day (outside Omer, direct link fallback), show a "coming soon" state
   if (!effectiveDay) return null;
 
   const { weeks, days } = getWeeksAndDays(effectiveDay);

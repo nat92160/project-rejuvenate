@@ -1,16 +1,28 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import OmerCounterWidget from "@/components/OmerCounterWidget";
-import { getTodayOmerDay } from "@/components/omer/omerData";
+import { getTodayOmerDay, getOmerPeriodDates } from "@/components/omer/omerData";
 import AuthModal from "@/components/AuthModal";
 
 const OmerLanding = () => {
   const [showAuth, setShowAuth] = useState(false);
   const omerDay = getTodayOmerDay();
   const widgetRef = useRef<HTMLDivElement>(null);
+  const isOmerPeriod = omerDay !== null;
+
+  const nextOmerStart = useMemo(() => {
+    if (isOmerPeriod) return null;
+    const year = new Date().getFullYear();
+    const thisYear = getOmerPeriodDates(year);
+    if (thisYear && thisYear.start > new Date()) return thisYear.start;
+    const nextYear = getOmerPeriodDates(year + 1);
+    return nextYear?.start ?? null;
+  }, [isOmerPeriod]);
 
   useEffect(() => {
     const day = omerDay || "";
-    document.title = `🌾 Comptez l'Omer – Jour ${day} | Chabbat Chalom`;
+    document.title = isOmerPeriod
+      ? `🌾 Comptez l'Omer – Jour ${day} | Chabbat Chalom`
+      : `🌾 Séfirat HaOmer | Chabbat Chalom`;
 
     const updateMeta = (property: string, content: string) => {
       let el = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
@@ -22,8 +34,12 @@ const OmerLanding = () => {
       el.setAttribute("content", content);
     };
 
-    updateMeta("og:title", `🌾 Comptez l'Omer aujourd'hui : Jour ${day}`);
-    updateMeta("og:description", `C'est le ${day}ème jour du Omer ! Récitez la Brakha et validez votre compte ce soir.`);
+    updateMeta("og:title", isOmerPeriod
+      ? `🌾 Comptez l'Omer aujourd'hui : Jour ${day}`
+      : `🌾 Séfirat HaOmer — Chabbat Chalom`);
+    updateMeta("og:description", isOmerPeriod
+      ? `C'est le ${day}ème jour du Omer ! Récitez la Brakha et validez votre compte ce soir.`
+      : `Rejoignez des milliers de fidèles qui comptent ensemble chaque soir.`);
     updateMeta("og:type", "website");
     updateMeta("og:url", window.location.href);
     updateMeta("og:image", "https://www.chabbat-chalom.com/omer-share.jpg");
@@ -36,7 +52,7 @@ const OmerLanding = () => {
     const handler = () => setShowAuth(true);
     window.addEventListener("open-auth-modal", handler);
     return () => window.removeEventListener("open-auth-modal", handler);
-  }, [omerDay]);
+  }, [omerDay, isOmerPeriod]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,10 +62,50 @@ const OmerLanding = () => {
           <p className="text-[10px] text-muted-foreground tracking-wide">Chabbat Chalom — Votre Synagogue en Temps Réel</p>
         </div>
 
-        {/* Direct Omer widget */}
-        <div ref={widgetRef}>
-          <OmerCounterWidget showInviteBanner />
-        </div>
+        {/* If NOT in Omer period, show a coming-soon card */}
+        {!isOmerPeriod && (
+          <div
+            className="rounded-2xl border p-6 mb-4 text-center"
+            style={{
+              borderColor: "hsl(var(--gold) / 0.3)",
+              background: "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))",
+              boxShadow: "0 8px 32px hsl(var(--gold) / 0.1)",
+            }}
+          >
+            <div className="text-4xl mb-3">🌾</div>
+            <h2 className="font-display text-xl font-bold text-foreground mb-2">
+              Séfirat HaOmer
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              La période du Omer n'a pas encore commencé.
+            </p>
+            {nextOmerStart && (
+              <p className="text-xs font-medium" style={{ color: "hsl(var(--gold-matte))" }}>
+                🗓️ Début prévu le {nextOmerStart.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground mt-3">
+              Inscrivez-vous pour recevoir un rappel dès le premier soir !
+            </p>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-auth-modal"))}
+              className="mt-4 px-6 py-2.5 rounded-xl text-sm font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
+              style={{
+                background: "linear-gradient(135deg, hsl(var(--gold)), hsl(var(--gold-matte)))",
+                color: "hsl(var(--card))",
+              }}
+            >
+              ✨ S'inscrire gratuitement
+            </button>
+          </div>
+        )}
+
+        {/* Direct Omer widget — only show when in Omer period */}
+        {isOmerPeriod && (
+          <div ref={widgetRef}>
+            <OmerCounterWidget showInviteBanner />
+          </div>
+        )}
 
         {/* Sticky bottom discovery banner */}
         <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-sm safe-area-bottom">
