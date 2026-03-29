@@ -50,7 +50,40 @@ interface SynaItem {
   created_at: string;
 }
 
-const AdminDashboard = () => {
+const SettingsTab = () => {
+  const { masterEnabled } = useOmerVisibility();
+  const [toggling, setToggling] = useState(false);
+
+  const handleToggle = async (checked: boolean) => {
+    setToggling(true);
+    const { error } = await toggleOmerMasterSwitch(checked);
+    if (error) toast.error("Erreur de mise à jour");
+    else toast.success(checked ? "🌾 Omer activé pour tous !" : "Omer masqué (lien direct toujours actif)");
+    setToggling(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+        <h3 className="font-bold text-foreground mb-1">🌾 Séfirat HaOmer</h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Contrôle la visibilité du widget Omer sur la page d'accueil. Le lien direct <code className="bg-muted px-1 rounded">/omer</code> reste toujours actif.
+        </p>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-foreground">Activer l'Omer pour tous</span>
+          <Switch checked={masterEnabled} onCheckedChange={handleToggle} disabled={toggling} />
+        </div>
+        {masterEnabled && (
+          <p className="text-xs text-primary mt-2">✅ Le widget est visible pour tous les utilisateurs</p>
+        )}
+        {!masterEnabled && (
+          <p className="text-xs text-muted-foreground mt-2">🔒 Visible uniquement via /omer ou pour les admins</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
   const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "simulator" | "settings">("requests");
