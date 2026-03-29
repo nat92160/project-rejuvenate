@@ -43,7 +43,9 @@ export function useOmerVisibility({ isDirectLink = false }: { isDirectLink?: boo
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "app_settings", filter: "key=eq.omer_enabled" },
         (payload: any) => {
-          setMasterEnabled(payload.new?.value === true);
+          const enabled = payload.new?.value === true;
+          setMasterEnabled(enabled);
+          try { localStorage.setItem("omer_master_switch", String(enabled)); } catch {}
         }
       )
       .subscribe();
