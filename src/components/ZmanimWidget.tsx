@@ -6,7 +6,7 @@ import { fetchKosherZmanim, getMoladInfo, ZmanimMethod, MoladInfo } from "@/lib/
 import type { ZmanItem } from "@/lib/hebcal";
 
 const ZmanimWidget = () => {
-  const { city } = useCity();
+  const { city, manualAltitude } = useCity();
   const [zmanim, setZmanim] = useState<ZmanItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -24,9 +24,12 @@ const ZmanimWidget = () => {
     );
     setHebrewForDate(getHebrewDateString(d));
 
+    const effectiveAltitude = (city.altitude && city.altitude > 0) ? city.altitude : manualAltitude;
+
     const data = fetchKosherZmanim({
       lat: city.lat,
       lng: city.lng,
+      elevation: effectiveAltitude,
       tz: city.tz,
       name: city.name,
       date: d,
@@ -53,7 +56,7 @@ const ZmanimWidget = () => {
 
     // Molad
     setMolad(getMoladInfo(d));
-  }, [city, method]);
+  }, [city, method, manualAltitude]);
 
   useEffect(() => {
     loadZmanim(date);
