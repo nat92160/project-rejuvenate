@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { Switch } from "@/components/ui/switch";
+import { useOmerVisibility, toggleOmerMasterSwitch } from "@/hooks/useOmerVisibility";
 import {
   Dialog,
   DialogContent,
@@ -48,10 +50,44 @@ interface SynaItem {
   created_at: string;
 }
 
+const SettingsTab = () => {
+  const { masterEnabled } = useOmerVisibility();
+  const [toggling, setToggling] = useState(false);
+
+  const handleToggle = async (checked: boolean) => {
+    setToggling(true);
+    const { error } = await toggleOmerMasterSwitch(checked);
+    if (error) toast.error("Erreur de mise à jour");
+    else toast.success(checked ? "🌾 Omer activé pour tous !" : "Omer masqué (lien direct toujours actif)");
+    setToggling(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+        <h3 className="font-bold text-foreground mb-1">🌾 Séfirat HaOmer</h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Contrôle la visibilité du widget Omer sur la page d'accueil. Le lien direct <code className="bg-muted px-1 rounded">/omer</code> reste toujours actif.
+        </p>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-foreground">Activer l'Omer pour tous</span>
+          <Switch checked={masterEnabled} onCheckedChange={handleToggle} disabled={toggling} />
+        </div>
+        {masterEnabled && (
+          <p className="text-xs text-primary mt-2">✅ Le widget est visible pour tous les utilisateurs</p>
+        )}
+        {!masterEnabled && (
+          <p className="text-xs text-muted-foreground mt-2">🔒 Visible uniquement via /omer ou pour les admins</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "simulator">("requests");
+  const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "simulator" | "settings">("requests");
   const [requests, setRequests] = useState<PresidentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -245,6 +281,7 @@ const AdminDashboard = () => {
             { id: "synagogues" as const, icon: "🏛️", label: "Synagogues", count: synas.length },
             { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
             { id: "simulator" as const, icon: "✈️", label: "Simulateur", count: 0 },
+            { id: "settings" as const, icon: "⚙️", label: "Réglages", count: 0 },
           ].map((t) => (
             <button
               key={t.id}
@@ -489,6 +526,11 @@ const AdminDashboard = () => {
         {/* Simulator tab */}
         {tab === "simulator" && (
           <ZmanimTravelSimulator />
+        )}
+
+        {/* Settings tab */}
+        {tab === "settings" && (
+          <SettingsTab />
         )}
       </div>
 
