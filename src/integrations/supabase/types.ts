@@ -282,6 +282,33 @@ export type Database = {
         }
         Relationships: []
       }
+      omer_counts: {
+        Row: {
+          counted_at: string
+          day_number: number
+          id: string
+          omer_year: number
+          streak: number
+          user_id: string
+        }
+        Insert: {
+          counted_at?: string
+          day_number: number
+          id?: string
+          omer_year?: number
+          streak?: number
+          user_id: string
+        }
+        Update: {
+          counted_at?: string
+          day_number?: number
+          id?: string
+          omer_year?: number
+          streak?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       personal_dates: {
         Row: {
           civil_date: string | null
