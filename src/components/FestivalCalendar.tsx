@@ -349,9 +349,17 @@ const DayRow = ({ day, isLast, festivalName, onCalendarClick, categoryColor }: D
           >
             {DAY_TYPE_LABELS[day.type]}
           </span>
+          {day.type === "yomtov" && (
+            <span
+              className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+              style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}
+            >
+              Yom Tov
+            </span>
+          )}
           {day.isShabbat && (
             <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-primary/10 text-primary">
-              Chabbat & Yom Tov
+              Chabbat
             </span>
           )}
         </div>
@@ -377,40 +385,23 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelin
   const lt = day.candleLightingType;
   const hasCandles = day.candles && lt && lt !== "none";
   const hasHavdalah = day.havdalah;
-  const hasTime = hasCandles || hasHavdalah || day.memo;
+  const hasTime = hasCandles || hasHavdalah;
   if (!hasTime && compact) return null;
 
-  // Determine candle icon & label
-  let candleIcon = "🕯️";
-  let candleLabel = "Allumage";
-  if (lt === "from-existing") {
-    candleIcon = "🕯️✨";
-    candleLabel = "Allumage (flamme existante) après";
-  } else if (lt === "fast-start") {
-    candleIcon = "⏰";
-    candleLabel = "Début";
-  }
-
-  // Determine havdalah icon & label
-  let havdalahIcon = "✨";
-  let havdalahLabel = "Sortie";
-  if (day.havdalahType === "havdalah") {
-    havdalahIcon = "🌟";
-    havdalahLabel = "Havdala";
-  }
-  if (isFast) {
-    havdalahIcon = "✅";
-    havdalahLabel = "Fin";
-  }
+  // Simplified: always "Allumage" for candles, always "Sortie" for havdalah
+  const candleIcon = isFast ? "⏰" : "🕯️";
+  const candleLabel = isFast ? "Début" : "Allumage";
+  const havdalahIcon = isFast ? "✅" : "✨";
+  const havdalahLabel = isFast ? "Fin" : "Sortie";
 
   return (
-    <div className={`flex items-center gap-3 flex-wrap ${compact ? "mt-2" : "mt-3"}`}>
+    <div className={`flex items-center gap-4 flex-wrap ${compact ? "mt-2" : "mt-3"}`}>
       {hasCandles && (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <span className="text-xs">{candleIcon}</span>
           <span className="text-xs font-medium text-muted-foreground">{candleLabel}</span>
           <span
-            className="text-sm font-bold"
+            className="text-sm font-bold tracking-wide"
             style={{ color: isFast ? "hsl(0 70% 45%)" : "hsl(var(--primary))" }}
           >
             {day.candles}
@@ -418,11 +409,11 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact }: DayTimelin
         </div>
       )}
       {hasHavdalah && (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <span className="text-xs">{havdalahIcon}</span>
           <span className="text-xs font-medium text-muted-foreground">{havdalahLabel}</span>
           <span
-            className="text-sm font-bold"
+            className="text-sm font-bold tracking-wide"
             style={{ color: isFast ? "hsl(120 50% 35%)" : "hsl(var(--primary))" }}
           >
             {day.havdalah}
