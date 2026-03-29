@@ -144,7 +144,7 @@ const ZmanimTravelSimulator = () => {
       }
     }
 
-    // Test "no GPS" fallback
+    // Test "no GPS" fallback — le moteur doit bloquer
     const noGpsZmanim = fetchKosherZmanim({
       lat: 0,
       lng: 0,
@@ -155,10 +155,11 @@ const ZmanimTravelSimulator = () => {
       method: "gra",
     });
     
-    if (noGpsZmanim.length > 0 && noGpsZmanim.every(z => z.time !== "--:--")) {
-      results.push("⚠️ Sans GPS : Le moteur retourne des horaires (0°,0° UTC) — l'UI devrait bloquer l'affichage");
+    if (noGpsZmanim.length === 0) {
+      results.push("✅ Sans GPS : Moteur bloqué — aucun horaire retourné. Sécurité halakhique OK.");
     } else {
-      results.push("✅ Sans GPS : Horaires indéterminés ou bloqués");
+      results.push("❌ Sans GPS : Le moteur a retourné des horaires à (0°,0°) — DANGER");
+      allPassed = false;
     }
 
     setFridayTestResult(
