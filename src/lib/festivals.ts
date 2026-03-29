@@ -4,6 +4,8 @@ import { cityToLocation } from "./hebcal";
 
 // ─── Festival grouping logic ───
 
+export type LightingType = "erev" | "from-existing" | "havdalah" | "fast-start" | "fast-end" | "none";
+
 export interface FestivalDay {
   date: string;
   dateFr: string;
@@ -12,7 +14,9 @@ export interface FestivalDay {
   hebrew: string;
   type: "erev" | "yomtov" | "holhamoed" | "isrouHag" | "fast" | "single";
   candles?: string;
+  candleLightingType?: LightingType;
   havdalah?: string;
+  havdalahType?: "havdalah" | "sortie";
   isShabbat: boolean;
   memo?: string;
 }
@@ -118,6 +122,16 @@ function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+/** Get Tzeit HaKokhavim for a given date */
+function getTzeit(location: Location, dt: Date): string | undefined {
+  try {
+    const zman = new HebcalZmanim(location, dt, false);
+    const tzeit = zman.tzeit();
+    if (tzeit) return fmtTime(tzeit);
+  } catch { /* silent */ }
+  return undefined;
+}
+
 function getStatus(days: FestivalDay[], now: Date): FestivalCard["status"] {
   const dates = days.map(d => d.date);
   const first = new Date(dates[0] + "T00:00:00");
@@ -132,6 +146,59 @@ function getStatus(days: FestivalDay[], now: Date): FestivalCard["status"] {
   return "encours";
 }
 
+/**
+ * Determine the halakhic candle lighting for a Yom Tov day (not erev).
+ * 
+ * Rules:
+ * 1. If it's Friday (entering Shabbat during Yom Tov): light BEFORE shkiya (18min) → use standard candle lighting
+ * 2. If the previous day was Shabbat (Saturday night → Yom Tov): this is Havdalah/Sortie, NOT candle lighting
+ * 3. Otherwise (2nd+ day of Yom Tov): light AFTER Tzeit HaKokhavim of the PREVIOUS day, from existing flame
+ */
+function resolveYomTovCandles(
+  dateStr: string,
+  dayOfWeek: number,
+  candlesByDate: Record<string, string>,
+  location: Location,
+  previousDayStr?: string,
+): { candles?: string; lightingType: LightingType; havdalah?: string; havdalahType?: "havdalah" | "sortie" } {
+
+  const prevDt = previousDayStr ? new Date(previousDayStr + "T12:00:00") : null;
+  const prevDayOfWeek = prevDt ? prevDt.getDay() : -1;
+
+  // Case 1: It's Friday → entering Shabbat → standard candle lighting BEFORE shkiya
+  if (dayOfWeek === 5) {
+    const stdCandles = candlesByDate[dateStr];
+    return {
+      candles: stdCandles,
+      lightingType: stdCandles ? "erev" : "none",
+    };
+  }
+
+  // Case 2: Previous day was Shabbat (Saturday night) → Havdalah/Sortie, not candle lighting
+  if (prevDayOfWeek === 6) {
+    // Tzeit of Saturday = Havdalah time
+    const tzeit = previousDayStr ? getTzeit(location, new Date(previousDayStr + "T12:00:00")) : undefined;
+    return {
+      lightingType: "none",
+      havdalah: tzeit,
+      havdalahType: "havdalah",
+    };
+  }
+
+  // Case 3: 2nd+ day Yom Tov (not Friday, not after Shabbat) → after Tzeit of PREVIOUS day
+  if (previousDayStr) {
+    const tzeit = getTzeit(location, new Date(previousDayStr + "T12:00:00"));
+    if (tzeit) {
+      return {
+        candles: tzeit,
+        lightingType: "from-existing",
+      };
+    }
+  }
+
+  return { lightingType: "none" };
+}
+
 // ─── Main fetch using @hebcal/core SDK (offline) ───
 
 export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard[]> {
@@ -141,7 +208,6 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
     const il = city.country === 'IL';
     const year = now.getFullYear();
 
-    // Generate events strictly for the current year only
     const allEvents = HebrewCalendar.calendar({
       start: new Date(year, 0, 1),
       end: new Date(year, 11, 31),
@@ -151,7 +217,6 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       candleLightingMins: city.candleOffset,
     });
 
-    // Strict year filter — prevent any events from next year
     const events = allEvents.filter(ev => ev.getDate().greg().getFullYear() === year);
 
     // Build candle/havdalah time maps by date
@@ -184,7 +249,6 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       const greg = ev.getDate().greg();
       const dateStr = toIsoDate(greg);
 
-      // Skip candle/havdalah events
       if (desc === 'Candle lighting' || desc.startsWith('Havdalah')) continue;
 
       // Process Rosh Chodesh
@@ -199,7 +263,6 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
         continue;
       }
 
-      // Only process holiday-type events
       if (!(f & (flags.CHAG | flags.CHOL_HAMOED | flags.EREV | flags.MAJOR_FAST | flags.MINOR_FAST | flags.MINOR_HOLIDAY))) continue;
 
       const key = desc.toLowerCase().trim();
@@ -207,7 +270,6 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       const dayOfWeek = dt.getDay();
       const isShabbat = dayOfWeek === 6;
 
-      // Check if it belongs to a multi-day group
       const groupInfo = FESTIVAL_GROUPS[key];
       if (groupInfo) {
         if (!groups[groupInfo.group]) groups[groupInfo.group] = [];
@@ -218,15 +280,35 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
           ? `Hol HaMoèd — ${fmtDate(dateStr)}`
           : desc.replace(/^(Pesach|Sukkot|Shavuot)\s*/i, "").trim();
 
-        // For Yom Tov days without standard candle lighting (2nd+ nights),
-        // compute Tset HaKokhavim as candle lighting time
-        let dayCandles = candlesByDate[dateStr];
-        if (!dayCandles && groupInfo.type === "yomtov") {
-          try {
-            const zman = new HebcalZmanim(location, dt, false);
-            const tzeit = zman.tzeit();
-            if (tzeit) dayCandles = fmtTime(tzeit) + " ✨";
-          } catch { /* silent */ }
+        let dayCandles: string | undefined;
+        let candleLightingType: LightingType = "none";
+        let dayHavdalah = havdalahByDate[dateStr];
+        let havdalahType: "havdalah" | "sortie" | undefined;
+
+        if (groupInfo.type === "erev") {
+          // Erev Yom Tov: standard candle lighting 18min before shkiya
+          dayCandles = candlesByDate[dateStr];
+          candleLightingType = dayCandles ? "erev" : "none";
+        } else if (groupInfo.type === "yomtov") {
+          // Get previous date string for halakhic logic
+          const prevDt = new Date(dt);
+          prevDt.setDate(prevDt.getDate() - 1);
+          const prevDateStr = toIsoDate(prevDt);
+
+          // Check if the previous day is also part of this group or is an erev
+          const resolved = resolveYomTovCandles(dateStr, dayOfWeek, candlesByDate, location, prevDateStr);
+          dayCandles = resolved.candles;
+          candleLightingType = resolved.lightingType;
+          if (resolved.havdalah) {
+            dayHavdalah = resolved.havdalah;
+            havdalahType = resolved.havdalahType;
+          }
+        }
+
+        // For the last day of a multi-day Yom Tov, ensure we show Havdalah
+        // The standard havdalahByDate should cover this via hebcal
+        if (dayHavdalah && !havdalahType) {
+          havdalahType = "sortie";
         }
 
         groups[groupInfo.group].push({
@@ -237,7 +319,9 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
           hebrew: ev.render('he') || '',
           type: groupInfo.type,
           candles: dayCandles,
-          havdalah: havdalahByDate[dateStr],
+          candleLightingType,
+          havdalah: dayHavdalah,
+          havdalahType,
           isShabbat,
           memo: ev.memo || undefined,
         });
@@ -250,7 +334,6 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
         const daysLeft = Math.ceil((dt.getTime() - now.getTime()) / 86400000);
         if (daysLeft < -1) continue;
 
-        // Deduplicate: keep only nearest
         const existingIdx = singles.findIndex(s => s.name === singleInfo.name);
         if (existingIdx !== -1) {
           const existing = singles[existingIdx];
@@ -263,7 +346,6 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
 
         const isFast = singleInfo.category === "jeune";
 
-        // For fasts: compute start (Alot HaShachar) and end (Tset HaKokhavim)
         let fastStart = candlesByDate[dateStr];
         let fastEnd = havdalahByDate[dateStr];
         if (isFast) {
@@ -297,7 +379,9 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
             hebrew: ev.render('he') || '',
             type: isFast ? "fast" : "single",
             candles: isFast ? fastStart : candlesByDate[dateStr],
+            candleLightingType: isFast ? "fast-start" : "erev",
             havdalah: isFast ? fastEnd : havdalahByDate[dateStr],
+            havdalahType: isFast ? undefined : "sortie",
             isShabbat,
             memo: ev.memo || undefined,
           }],
@@ -336,7 +420,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       });
     }
 
-    // Build Rosh Chodesh cards — deduplicate by month name
+    // Build Rosh Chodesh cards
     const roshChodeshCards: FestivalCard[] = [];
     const seenRCMonths = new Set<string>();
 
