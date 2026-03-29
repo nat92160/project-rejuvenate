@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Share2, Check, UserPlus, Flame } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +16,7 @@ import {
   getStreak,
   shareOmer,
 } from "@/components/omer/omerStorage";
+import OmerPostCountRitual from "@/components/omer/OmerPostCountRitual";
 import OmerAdminSimulator from "@/components/omer/OmerAdminSimulator";
 
 // Re-export for landing page
@@ -422,6 +423,11 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
           )}
         </AnimatePresence>
       </div>
+
+      {/* Post-count ritual: Psalm 67, Ana BeKhoach, Yehi Ratson */}
+      {(counted || expanded) && (
+        <OmerPostCountRitual currentWeek={weeks} />
+      )}
     </motion.div>
   );
 };
