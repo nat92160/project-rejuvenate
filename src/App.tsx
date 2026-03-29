@@ -14,8 +14,10 @@ import AdminDashboard from "./pages/AdminDashboard.tsx";
 import Install from "./pages/Install.tsx";
 
 const OmerLanding = lazy(() => import("./pages/OmerLanding.tsx"));
-
 const DonationPage = lazy(() => import("./pages/DonationPage.tsx"));
+const ZoomCallback = lazy(() => import("./pages/ZoomCallback.tsx"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy.tsx"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
