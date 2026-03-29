@@ -4,6 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { Switch } from "@/components/ui/switch";
+import { useOmerVisibility, toggleOmerMasterSwitch } from "@/hooks/useOmerVisibility";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
 import {
   Dialog,
   DialogContent,
@@ -51,7 +55,7 @@ interface SynaItem {
 const AdminDashboard = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "simulator">("requests");
+  const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "simulator" | "settings">("requests");
   const [requests, setRequests] = useState<PresidentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
