@@ -361,14 +361,25 @@ const DayRow = ({ day, isFirst, isLast, festivalName, onCalendarClick, categoryC
           </span>
           {day.type === "yomtov" && (
             <span
-              className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
-              style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}
+              className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border"
+              style={{
+                background: "linear-gradient(135deg, hsl(43 74% 49% / 0.15), hsl(43 74% 49% / 0.08))",
+                color: "hsl(var(--gold-matte))",
+                borderColor: "hsl(var(--gold) / 0.25)",
+              }}
             >
               Yom Tov
             </span>
           )}
           {day.isShabbat && (
-            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-primary/10 text-primary">
+            <span
+              className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border"
+              style={{
+                background: "linear-gradient(135deg, hsl(220 15% 70% / 0.15), hsl(220 15% 70% / 0.08))",
+                color: "hsl(220 10% 50%)",
+                borderColor: "hsl(220 15% 70% / 0.3)",
+              }}
+            >
               Chabbat
             </span>
           )}
