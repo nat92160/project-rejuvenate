@@ -101,18 +101,27 @@ export function previewSound(type: AlarmSound) {
   stopPreview();
 
   previewAudio = new Audio(SOUND_URLS[type]);
+  previewAudio.crossOrigin = "anonymous";
   previewAudio.volume = 0;
+
+  previewAudio.addEventListener("error", (e) => {
+    console.error("[AlarmAudio] Preview load error:", previewAudio?.error?.message, e);
+  });
+
+  previewAudio.addEventListener("canplaythrough", () => {
+    console.log("[AlarmAudio] Preview ready, starting playback");
+  });
 
   const play = async () => {
     if (!previewAudio) return;
     try {
+      console.log("[AlarmAudio] Attempting preview for:", type, SOUND_URLS[type]);
       await previewAudio.play();
+      console.log("[AlarmAudio] Preview playing successfully");
       previewFadeInterval = fadeIn(previewAudio, PREVIEW_FADE_DURATION);
-
-      // Auto-stop after 8 seconds
       setTimeout(() => stopPreview(), 8000);
-    } catch {
-      // Autoplay blocked
+    } catch (err: any) {
+      console.error("[AlarmAudio] Preview play failed:", err?.message || err);
     }
   };
 
