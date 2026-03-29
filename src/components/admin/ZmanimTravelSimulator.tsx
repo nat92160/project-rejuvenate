@@ -22,8 +22,8 @@ const SIM_CITIES: Record<string, SimCity> = {
     lat: 48.8566,
     lng: 2.3522,
     tz: "Europe/Paris",
-    elevation: 35,
-    note: "Cas standard · 18 min avant Shkiya",
+    elevation: 0,
+    note: "Cas standard · 18 min avant Shkiya · altitude 0m",
   },
   jerusalem: {
     label: "Jérusalem",
@@ -31,8 +31,8 @@ const SIM_CITIES: Record<string, SimCity> = {
     lat: 31.7683,
     lng: 35.2137,
     tz: "Asia/Jerusalem",
-    elevation: 800,
-    note: "Allumage souvent 40 min avant Shkiya",
+    elevation: 0,
+    note: "Allumage souvent 40 min avant Shkiya · altitude 0m",
   },
   new_york: {
     label: "New York",
@@ -40,8 +40,8 @@ const SIM_CITIES: Record<string, SimCity> = {
     lat: 40.7128,
     lng: -74.006,
     tz: "America/New_York",
-    elevation: 10,
-    note: "Changement de fuseau complet",
+    elevation: 0,
+    note: "Changement de fuseau complet · altitude 0m",
   },
 };
 
