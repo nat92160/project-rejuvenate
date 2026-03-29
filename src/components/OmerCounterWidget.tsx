@@ -1,6 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HebrewCalendar, HDate, flags } from "@hebcal/core";
+import { Share2, Check, UserPlus } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 // Hebrew number words for the Omer blessing
 const HEBREW_ONES = ["", "אֶחָד", "שְׁנַיִם", "שְׁלֹשָׁה", "אַרְבָּעָה", "חֲמִשָּׁה", "שִׁשָּׁה", "שִׁבְעָה", "שְׁמוֹנָה", "תִּשְׁעָה", "עֲשָׂרָה"];
@@ -39,7 +41,6 @@ function getOmerBlessing(day: number): { hebrew: string; phonetic: string; frenc
 
   const hebrew = `בָּרוּךְ אַתָּה יְיָ אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו, וְצִוָּנוּ עַל סְפִירַת הָעֹמֶר. הַיּוֹם ${dayWord}${weeksPhrase} לָעֹמֶר.`;
 
-  // Phonetic
   const dayPhonetic = `${day}`;
   const phonetic = `Baroukh Ata Ado-naï Élo-hénou Mélekh HaOlam, Achère Kiddéchanou Bémitsvotav, Vétsivanou Al Séfirat HaOmer. HaYom ${dayPhonetic} yamim${weeks > 0 ? `, chéhem ${weeks} chavouo${weeks > 1 ? "t" : "a"} vé${days} yamim` : ""} laOmer.`;
 
@@ -48,7 +49,7 @@ function getOmerBlessing(day: number): { hebrew: string; phonetic: string; frenc
   return { hebrew, phonetic, french };
 }
 
-function getTodayOmerDay(): number | null {
+export function getTodayOmerDay(): number | null {
   try {
     const now = new Date();
     const events = HebrewCalendar.calendar({
@@ -85,7 +86,6 @@ function getOmerPeriodDates(year: number): { start: Date; end: Date } | null {
   }
 }
 
-// Sefira quality/attribute for each day
 const SEFIROT = [
   "Hessed", "Gvoura", "Tiféret", "Nétsa'h", "Hod", "Yessod", "Malkhout"
 ];
@@ -97,11 +97,80 @@ function getSefiratDay(day: number): { attribute: string; within: string } {
   return { attribute: SEFIROT[dayIdx], within: SEFIROT[weekIdx] };
 }
 
-const OmerCounterWidget = () => {
-  const [expanded, setExpanded] = useState(false);
+// ─── Persistence: "already counted" until next Tzeit ───
+
+function getCountedStorageKey(day: number): string {
+  return `omer-counted-day-${day}`;
+}
+
+function hasAlreadyCounted(day: number): boolean {
+  try {
+    const stored = localStorage.getItem(getCountedStorageKey(day));
+    if (!stored) return false;
+    // Stored as ISO timestamp of expiry (next day's approximate tzeit)
+    const expiry = new Date(stored);
+    return new Date() < expiry;
+  } catch {
+    return false;
+  }
+}
+
+function markAsCounted(day: number) {
+  try {
+    // Set expiry to tomorrow at ~21:30 (approximate tzeit for most locations)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(21, 30, 0, 0);
+    localStorage.setItem(getCountedStorageKey(day), tomorrow.toISOString());
+  } catch { /* silent */ }
+}
+
+// ─── Share helper ───
+
+function getShareUrl(): string {
+  return `${window.location.origin}/omer`;
+}
+
+function getShareMessage(day: number): string {
+  return `Ce soir, c'est le ${day}${day === 1 ? "er" : "ème"} jour de l'Omer ! 🌾\n\nVoici la Brakha pour compter ce soir :\n${getShareUrl()}\n\nInscris-toi gratuitement pour recevoir ton rappel quotidien chaque soir à l'heure de la sortie des étoiles ! ✨`;
+}
+
+async function shareOmer(day: number) {
+  const text = getShareMessage(day);
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: `Omer – Jour ${day}`,
+        text,
+        url: getShareUrl(),
+      });
+    } catch { /* user cancelled */ }
+  } else {
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Message copié ! Collez-le dans WhatsApp ou Telegram.");
+    } catch { /* silent */ }
+  }
+}
+
+// ─── Component ───
+
+interface OmerCounterWidgetProps {
+  showInviteBanner?: boolean;
+}
+
+const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps) => {
+  const { user } = useAuth();
+  const [expanded, setExpanded] = useState(showInviteBanner); // auto-expand on landing page
   const omerDay = useMemo(() => getTodayOmerDay(), []);
   const currentYear = new Date().getFullYear();
   const omerPeriod = useMemo(() => getOmerPeriodDates(currentYear), [currentYear]);
+  const [counted, setCounted] = useState(false);
+
+  useEffect(() => {
+    if (omerDay) setCounted(hasAlreadyCounted(omerDay));
+  }, [omerDay]);
 
   if (!omerDay || !omerPeriod) return null;
 
@@ -110,7 +179,12 @@ const OmerCounterWidget = () => {
   const blessing = getOmerBlessing(omerDay);
   const sefira = getSefiratDay(omerDay);
 
-  // Gradient colors based on progress
+  const handleCounted = () => {
+    markAsCounted(omerDay);
+    setCounted(true);
+    setExpanded(true);
+  };
+
   const gradientStart = "hsl(var(--gold))";
   const gradientEnd = "hsl(var(--gold-matte))";
 
@@ -125,7 +199,20 @@ const OmerCounterWidget = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Header with gradient */}
+      {/* Invite banner for shared link visitors */}
+      {showInviteBanner && (
+        <div
+          className="px-5 py-3 text-center text-xs font-medium"
+          style={{
+            background: "linear-gradient(135deg, hsl(var(--gold) / 0.12), hsl(var(--primary) / 0.08))",
+            color: "hsl(var(--foreground))",
+          }}
+        >
+          ✨ Vous avez reçu ce rappel d'un ami. Ne manquez plus un seul soir : inscrivez-vous pour recevoir vos notifications personnalisées.
+        </div>
+      )}
+
+      {/* Header */}
       <div
         className="p-5 text-center relative overflow-hidden"
         style={{
@@ -136,6 +223,19 @@ const OmerCounterWidget = () => {
         <div className="absolute top-2 left-4 text-lg opacity-30 animate-pulse">✨</div>
         <div className="absolute top-3 right-6 text-sm opacity-20 animate-pulse" style={{ animationDelay: "0.5s" }}>✨</div>
         <div className="absolute bottom-2 left-1/4 text-xs opacity-25 animate-pulse" style={{ animationDelay: "1s" }}>⭐</div>
+
+        {/* Share button top-right */}
+        <button
+          onClick={() => shareOmer(omerDay)}
+          className="absolute top-4 right-4 p-2 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
+          style={{
+            background: "hsl(var(--gold) / 0.15)",
+            color: "hsl(var(--gold-matte))",
+          }}
+          title="Partager la Mitsva"
+        >
+          <Share2 size={16} />
+        </button>
 
         <motion.div
           className="text-4xl mb-2"
@@ -236,6 +336,65 @@ const OmerCounterWidget = () => {
         </div>
       </div>
 
+      {/* "J'ai compté" button OR congratulations */}
+      <div className="bg-card border-t border-border">
+        {!counted ? (
+          <div className="px-5 py-3 flex gap-2">
+            <button
+              onClick={handleCounted}
+              className="flex-1 py-3 rounded-xl text-sm font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
+              style={{
+                background: `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`,
+                color: "hsl(var(--card))",
+              }}
+            >
+              <Check size={14} className="inline mr-1.5 -mt-0.5" />
+              J'ai compté ce soir
+            </button>
+          </div>
+        ) : (
+          <div className="px-5 py-4 text-center space-y-3">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="text-sm font-bold text-foreground"
+            >
+              🌟 Bravo ! Mitsva accomplie pour ce soir.
+            </motion.div>
+            <div className="flex gap-2 justify-center flex-wrap">
+              <button
+                onClick={() => shareOmer(omerDay)}
+                className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border transition-all active:scale-[0.97]"
+                style={{
+                  borderColor: "hsl(var(--gold) / 0.3)",
+                  color: "hsl(var(--gold-matte))",
+                  background: "hsl(var(--gold) / 0.08)",
+                }}
+              >
+                <Share2 size={12} className="inline mr-1.5 -mt-0.5" />
+                Partager avec un ami
+              </button>
+              {!user && (
+                <button
+                  onClick={() => {
+                    // Trigger auth modal by dispatching custom event
+                    window.dispatchEvent(new CustomEvent("open-auth-modal"));
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
+                  style={{
+                    background: `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`,
+                    color: "hsl(var(--card))",
+                  }}
+                >
+                  <UserPlus size={12} className="inline mr-1.5 -mt-0.5" />
+                  M'inscrire pour ne pas oublier demain
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Expand for blessing */}
       <div className="bg-card border-t border-border">
         <button
@@ -284,6 +443,22 @@ const OmerCounterWidget = () => {
                   {blessing.french}
                 </p>
               </div>
+
+              {/* CTA for guests on landing page */}
+              {showInviteBanner && !user && (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("open-auth-modal"))}
+                  className="w-full py-3.5 rounded-xl text-sm font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
+                  style={{
+                    background: `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`,
+                    color: "hsl(var(--card))",
+                    boxShadow: "0 4px 16px hsl(var(--gold) / 0.3)",
+                  }}
+                >
+                  <UserPlus size={14} className="inline mr-2 -mt-0.5" />
+                  M'inscrire aux rappels quotidiens
+                </button>
+              )}
 
               {/* Reminder */}
               <div
