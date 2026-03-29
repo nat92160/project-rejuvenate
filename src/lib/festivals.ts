@@ -258,7 +258,9 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
 
     const events = allEvents.filter(ev => ev.getDate().greg().getFullYear() === year);
 
-    // Build candle/havdalah time maps by date
+    // Build candle/havdalah time maps by date using kosher-zmanim for precision
+    // Candle lighting = sunset - candleOffset (kosher-zmanim)
+    // Havdalah = Tzeit HaKokhavim 7.08° (kosher-zmanim)
     const candlesByDate: Record<string, string> = {};
     const havdalahByDate: Record<string, string> = {};
 
@@ -268,12 +270,14 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       const dateKey = toIsoDate(greg);
 
       if (desc === 'Candle lighting') {
-        const eventTime: Date = (ev as any).eventTime || greg;
-        candlesByDate[dateKey] = fmtTime(eventTime);
+        // Use kosher-zmanim: sunset - candleOffset
+        const kosherCandle = getKosherCandleLighting(city, greg);
+        candlesByDate[dateKey] = kosherCandle || fmtTime((ev as any).eventTime || greg);
       }
       if (desc.startsWith('Havdalah')) {
-        const eventTime: Date = (ev as any).eventTime || greg;
-        havdalahByDate[dateKey] = fmtTime(eventTime);
+        // Use kosher-zmanim: Tzeit at 7.08°
+        const kosherTzeit = getKosherTzeit(city, greg);
+        havdalahByDate[dateKey] = kosherTzeit || fmtTime((ev as any).eventTime || greg);
       }
     }
 
