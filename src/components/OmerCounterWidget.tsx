@@ -1,178 +1,66 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { HebrewCalendar, HDate, flags } from "@hebcal/core";
-import { Share2, Check, UserPlus } from "lucide-react";
+import { Share2, Check, UserPlus, Flame } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  getTodayOmerDay,
+  getOmerPeriodDates,
+  getWeeksAndDays,
+  getOmerBlessing,
+  getSefiratDay,
+} from "@/components/omer/omerData";
+import {
+  hasAlreadyCounted,
+  markAsCounted,
+  updateStreak,
+  getStreak,
+  shareOmer,
+} from "@/components/omer/omerStorage";
+import OmerAdminSimulator from "@/components/omer/OmerAdminSimulator";
 
-// Hebrew number words for the Omer blessing
-const HEBREW_ONES = ["", "אֶחָד", "שְׁנַיִם", "שְׁלֹשָׁה", "אַרְבָּעָה", "חֲמִשָּׁה", "שִׁשָּׁה", "שִׁבְעָה", "שְׁמוֹנָה", "תִּשְׁעָה", "עֲשָׂרָה"];
-const HEBREW_TENS = ["", "עֲשָׂרָה", "עֶשְׂרִים", "שְׁלֹשִׁים", "אַרְבָּעִים"];
-const HEBREW_TEENS = ["עֲשָׂרָה", "אַחַד עָשָׂר", "שְׁנֵים עָשָׂר", "שְׁלֹשָׁה עָשָׂר", "אַרְבָּעָה עָשָׂר", "חֲמִשָּׁה עָשָׂר", "שִׁשָּׁה עָשָׂר", "שִׁבְעָה עָשָׂר", "שְׁמוֹנָה עָשָׂר", "תִּשְׁעָה עָשָׂר"];
+// Re-export for landing page
+export { getTodayOmerDay };
 
-function hebrewDayCount(day: number): string {
-  if (day <= 0 || day > 49) return "";
-  if (day <= 10) return HEBREW_ONES[day];
-  if (day < 20) return HEBREW_TEENS[day - 10];
-  const tens = Math.floor(day / 10);
-  const ones = day % 10;
-  if (ones === 0) return HEBREW_TENS[tens];
-  return `${HEBREW_ONES[ones]} וְ${HEBREW_TENS[tens]}`;
+function getStreakMessage(streak: number): string {
+  if (streak >= 49) return "🏆 49 jours sans interruption ! Kol HaKavod !";
+  if (streak >= 30) return `🔥 ${streak} jours consécutifs ! Incroyable !`;
+  if (streak >= 14) return `🔥 ${streak} jours de suite ! Tu es un exemple !`;
+  if (streak >= 7) return `🔥 ${streak} jours consécutifs ! Une semaine complète !`;
+  if (streak >= 3) return `🔥 ${streak}ème jour consécutif ! Continue comme ça !`;
+  if (streak === 2) return "🔥 2ème jour consécutif ! Belle série !";
+  return "🌟 Bravo ! Mitsva accomplie pour ce soir.";
 }
-
-function getWeeksAndDays(day: number): { weeks: number; days: number } {
-  return { weeks: Math.floor(day / 7), days: day % 7 };
-}
-
-function getOmerBlessing(day: number): { hebrew: string; phonetic: string; french: string } {
-  const { weeks, days } = getWeeksAndDays(day);
-
-  const dayWord = day === 1 ? "יוֹם אֶחָד" : `${hebrewDayCount(day)} יָמִים`;
-  
-  let weeksPhrase = "";
-  if (weeks > 0) {
-    const weekWord = weeks === 1 ? "שָׁבוּעַ אֶחָד" : `${hebrewDayCount(weeks)} שָׁבוּעוֹת`;
-    if (days === 0) {
-      weeksPhrase = `, שֶׁהֵם ${weekWord}`;
-    } else {
-      const daysWord = days === 1 ? "יוֹם אֶחָד" : `${hebrewDayCount(days)} יָמִים`;
-      weeksPhrase = `, שֶׁהֵם ${weekWord} וְ${daysWord}`;
-    }
-  }
-
-  const hebrew = `בָּרוּךְ אַתָּה יְיָ אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו, וְצִוָּנוּ עַל סְפִירַת הָעֹמֶר. הַיּוֹם ${dayWord}${weeksPhrase} לָעֹמֶר.`;
-
-  const dayPhonetic = `${day}`;
-  const phonetic = `Baroukh Ata Ado-naï Élo-hénou Mélekh HaOlam, Achère Kiddéchanou Bémitsvotav, Vétsivanou Al Séfirat HaOmer. HaYom ${dayPhonetic} yamim${weeks > 0 ? `, chéhem ${weeks} chavouo${weeks > 1 ? "t" : "a"} vé${days} yamim` : ""} laOmer.`;
-
-  const french = `Béni sois-Tu Éternel notre D.ieu Roi du monde, qui nous a sanctifiés par Ses commandements et nous a ordonné le compte du Omer. Aujourd'hui ${day}${day === 1 ? "er" : ""} jour${weeks > 0 ? `, soit ${weeks} semaine${weeks > 1 ? "s" : ""} et ${days} jour${days > 1 ? "s" : ""}` : ""} du Omer.`;
-
-  return { hebrew, phonetic, french };
-}
-
-export function getTodayOmerDay(): number | null {
-  try {
-    const now = new Date();
-    const events = HebrewCalendar.calendar({
-      start: now,
-      end: now,
-      omer: true,
-    });
-    for (const ev of events) {
-      if (ev.getFlags() & flags.OMER_COUNT) {
-        const desc = ev.getDesc();
-        const match = desc.match(/(\d+)/);
-        if (match) return parseInt(match[1]);
-      }
-    }
-  } catch { /* silent */ }
-  return null;
-}
-
-function getOmerPeriodDates(year: number): { start: Date; end: Date } | null {
-  try {
-    const events = HebrewCalendar.calendar({
-      start: new Date(year, 0, 1),
-      end: new Date(year, 11, 31),
-      omer: true,
-    });
-    const omerEvents = events.filter((ev) => ev.getFlags() & flags.OMER_COUNT);
-    if (omerEvents.length === 0) return null;
-    return {
-      start: omerEvents[0].getDate().greg(),
-      end: omerEvents[omerEvents.length - 1].getDate().greg(),
-    };
-  } catch {
-    return null;
-  }
-}
-
-const SEFIROT = [
-  "Hessed", "Gvoura", "Tiféret", "Nétsa'h", "Hod", "Yessod", "Malkhout"
-];
-
-function getSefiratDay(day: number): { attribute: string; within: string } {
-  if (day < 1 || day > 49) return { attribute: "", within: "" };
-  const weekIdx = Math.floor((day - 1) / 7);
-  const dayIdx = (day - 1) % 7;
-  return { attribute: SEFIROT[dayIdx], within: SEFIROT[weekIdx] };
-}
-
-// ─── Persistence: "already counted" until next Tzeit ───
-
-function getCountedStorageKey(day: number): string {
-  return `omer-counted-day-${day}`;
-}
-
-function hasAlreadyCounted(day: number): boolean {
-  try {
-    const stored = localStorage.getItem(getCountedStorageKey(day));
-    if (!stored) return false;
-    // Stored as ISO timestamp of expiry (next day's approximate tzeit)
-    const expiry = new Date(stored);
-    return new Date() < expiry;
-  } catch {
-    return false;
-  }
-}
-
-function markAsCounted(day: number) {
-  try {
-    // Set expiry to tomorrow at ~21:30 (approximate tzeit for most locations)
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(21, 30, 0, 0);
-    localStorage.setItem(getCountedStorageKey(day), tomorrow.toISOString());
-  } catch { /* silent */ }
-}
-
-// ─── Share helper ───
-
-function getShareUrl(): string {
-  return `${window.location.origin}/omer`;
-}
-
-function getShareMessage(day: number): string {
-  return `Ce soir, c'est le ${day}${day === 1 ? "er" : "ème"} jour de l'Omer ! 🌾\n\nVoici la Brakha pour compter ce soir :\n${getShareUrl()}\n\nInscris-toi gratuitement pour recevoir ton rappel quotidien chaque soir à l'heure de la sortie des étoiles ! ✨`;
-}
-
-async function shareOmer(day: number) {
-  const text = getShareMessage(day);
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: `Omer – Jour ${day}`,
-        text,
-        url: getShareUrl(),
-      });
-    } catch { /* user cancelled */ }
-  } else {
-    // Fallback: copy to clipboard
-    try {
-      await navigator.clipboard.writeText(text);
-      alert("Message copié ! Collez-le dans WhatsApp ou Telegram.");
-    } catch { /* silent */ }
-  }
-}
-
-// ─── Component ───
 
 interface OmerCounterWidgetProps {
   showInviteBanner?: boolean;
 }
 
 const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps) => {
-  const { user } = useAuth();
-  const [expanded, setExpanded] = useState(showInviteBanner); // auto-expand on landing page
-  const omerDay = useMemo(() => getTodayOmerDay(), []);
+  const { user, isAdmin } = useAuth();
+  const [expanded, setExpanded] = useState(showInviteBanner);
+  const realOmerDay = useMemo(() => getTodayOmerDay(), []);
   const currentYear = new Date().getFullYear();
   const omerPeriod = useMemo(() => getOmerPeriodDates(currentYear), [currentYear]);
   const [counted, setCounted] = useState(false);
+  const [streak, setStreak] = useState(0);
+
+  // Admin simulation
+  const [simulatedDay, setSimulatedDay] = useState<number | null>(null);
+  const isSimulating = isAdmin && simulatedDay !== null;
+  const omerDay = isSimulating ? simulatedDay : realOmerDay;
 
   useEffect(() => {
-    if (omerDay) setCounted(hasAlreadyCounted(omerDay));
-  }, [omerDay]);
+    if (realOmerDay) {
+      setCounted(hasAlreadyCounted(realOmerDay));
+      const { streak: s, lastDay } = getStreak();
+      if (lastDay === realOmerDay) setStreak(s);
+      else if (lastDay === realOmerDay - 1) setStreak(s); // will increment on count
+    }
+  }, [realOmerDay]);
 
-  if (!omerDay || !omerPeriod) return null;
+  // Hide widget if not in omer period (unless admin simulating)
+  if (!isSimulating && (!omerDay || !omerPeriod)) return null;
+  if (!omerDay) return null;
 
   const { weeks, days } = getWeeksAndDays(omerDay);
   const progress = (omerDay / 49) * 100;
@@ -180,7 +68,11 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
   const sefira = getSefiratDay(omerDay);
 
   const handleCounted = () => {
-    markAsCounted(omerDay);
+    if (!isSimulating && realOmerDay) {
+      markAsCounted(realOmerDay);
+      const newStreak = updateStreak(realOmerDay);
+      setStreak(newStreak);
+    }
     setCounted(true);
     setExpanded(true);
   };
@@ -219,6 +111,11 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
           background: "linear-gradient(135deg, hsl(var(--gold) / 0.15), hsl(var(--gold) / 0.05))",
         }}
       >
+        {/* Admin simulator */}
+        {isAdmin && (
+          <OmerAdminSimulator simulatedDay={simulatedDay} onSimulate={setSimulatedDay} />
+        )}
+
         {/* Decorative sparkles */}
         <div className="absolute top-2 left-4 text-lg opacity-30 animate-pulse">✨</div>
         <div className="absolute top-3 right-6 text-sm opacity-20 animate-pulse" style={{ animationDelay: "0.5s" }}>✨</div>
@@ -249,20 +146,50 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
           Séfirat HaOmer
         </div>
 
-        {/* Big day number */}
-        <motion.div
-          className="text-5xl font-extrabold font-display my-3"
-          style={{
-            background: `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", damping: 10 }}
-        >
-          {omerDay}
-        </motion.div>
+        {/* Big day number + streak flame */}
+        <div className="flex items-center justify-center gap-2 my-3">
+          <motion.div
+            className="text-5xl font-extrabold font-display"
+            style={{
+              background: `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", damping: 10 }}
+          >
+            {omerDay}
+          </motion.div>
+
+          {/* Streak flame */}
+          {streak > 1 && !isSimulating && (
+            <motion.div
+              className="flex flex-col items-center"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", damping: 8, delay: 0.3 }}
+            >
+              <motion.div
+                animate={{ y: [0, -3, 0], scale: [1, 1.15, 1] }}
+                transition={{ duration: 0.8, repeat: Infinity, repeatType: "reverse" }}
+              >
+                <Flame
+                  size={28}
+                  className="drop-shadow-lg"
+                  style={{ color: "hsl(var(--gold))" }}
+                  fill="hsl(var(--gold) / 0.3)"
+                />
+              </motion.div>
+              <span
+                className="text-[10px] font-extrabold -mt-1"
+                style={{ color: "hsl(var(--gold-matte))" }}
+              >
+                ×{streak}
+              </span>
+            </motion.div>
+          )}
+        </div>
 
         <div className="text-xs font-bold text-foreground">
           {weeks > 0 && (
@@ -286,6 +213,14 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
         >
           {sefira.attribute} dans {sefira.within}
         </div>
+
+        {/* Simulation indicator */}
+        {isSimulating && (
+          <div className="mt-2 text-[9px] font-bold px-2 py-0.5 rounded-full inline-block"
+            style={{ background: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))" }}>
+            ⚙️ MODE SIMULATION
+          </div>
+        )}
       </div>
 
       {/* Progress bar */}
@@ -359,8 +294,21 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
               animate={{ scale: 1, opacity: 1 }}
               className="text-sm font-bold text-foreground"
             >
-              🌟 Bravo ! Mitsva accomplie pour ce soir.
+              {getStreakMessage(streak)}
             </motion.div>
+
+            {/* Streak encouragement for non-logged users */}
+            {streak > 1 && !user && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-[11px] text-muted-foreground italic"
+              >
+                💡 Créez un compte pour sauvegarder votre série de {streak} jours sur tous vos appareils !
+              </motion.div>
+            )}
+
             <div className="flex gap-2 justify-center flex-wrap">
               <button
                 onClick={() => shareOmer(omerDay)}
@@ -376,10 +324,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
               </button>
               {!user && (
                 <button
-                  onClick={() => {
-                    // Trigger auth modal by dispatching custom event
-                    window.dispatchEvent(new CustomEvent("open-auth-modal"));
-                  }}
+                  onClick={() => window.dispatchEvent(new CustomEvent("open-auth-modal"))}
                   className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
                   style={{
                     background: `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`,
@@ -387,7 +332,9 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
                   }}
                 >
                   <UserPlus size={12} className="inline mr-1.5 -mt-0.5" />
-                  M'inscrire pour ne pas oublier demain
+                  {streak > 1
+                    ? `Sauvegarder ma série de ${streak} jours`
+                    : "M'inscrire pour ne pas oublier demain"}
                 </button>
               )}
             </div>
