@@ -66,7 +66,7 @@ const OmerLanding = () => {
         </div>
       </div>
 
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      {showAuth && <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />}
     </div>
   );
 };

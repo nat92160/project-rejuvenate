@@ -13,6 +13,8 @@ import TehilimJoin from "./pages/TehilimJoin.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import Install from "./pages/Install.tsx";
 
+const OmerLanding = lazy(() => import("./pages/OmerLanding.tsx"));
+
 const DonationPage = lazy(() => import("./pages/DonationPage.tsx"));
 
 const queryClient = new QueryClient({
