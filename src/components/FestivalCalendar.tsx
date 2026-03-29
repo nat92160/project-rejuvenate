@@ -284,6 +284,14 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
                   />
                 ))}
               </div>
+              {/* Footnote for multi-day Yom Tov */}
+              {card.category === "yomtov" && card.days.length > 1 && (
+                <div className="px-5 py-3 border-t border-border" style={{ background: "hsl(var(--muted) / 0.5)" }}>
+                  <p className="text-[10px] text-muted-foreground italic leading-relaxed">
+                    📝 Note : Pour le 2ème soir de fête, l'allumage se fait après la sortie des étoiles à partir d'une flamme existante.
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
