@@ -5,6 +5,7 @@ export interface ActiveCityConfig extends CityConfig {
   _gps?: boolean;
   accuracyMeters?: number | null;
   source?: "gps" | "manual";
+  altitude?: number;
 }
 
 interface CityContextType {
@@ -12,6 +13,8 @@ interface CityContextType {
   cityKey: string;
   setCityKey: (key: string) => void;
   isGeolocating: boolean;
+  manualAltitude: number;
+  setManualAltitude: (alt: number) => void;
   geolocate: () => void;
   locationError: string | null;
   triggerAutoGeo: () => void;
@@ -19,6 +22,7 @@ interface CityContextType {
 
 const CityContext = createContext<CityContextType | null>(null);
 const GPS_STORAGE_KEY = "calj_gps_city";
+const ALT_STORAGE_KEY = "calj_manual_altitude";
 
 async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
   try {
