@@ -231,7 +231,7 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
       )}
 
       <Lazy><SpiritualTimeline /></Lazy>
-      <Lazy><OmerCounterWidget /></Lazy>
+      <OmerGated />
     </>
   );
 };
