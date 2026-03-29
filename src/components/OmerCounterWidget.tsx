@@ -58,11 +58,15 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
     }
   }, [realOmerDay]);
 
-  // Hide widget if not in omer period (unless admin simulating)
-  if (!isSimulating && (!omerDay || !omerPeriod)) return null;
-  if (!omerDay) return null;
+  // Hide widget if not in omer period (unless admin can simulate)
+  const canShowAdmin = isAdmin;
+  if (!canShowAdmin && !isSimulating && (!omerDay || !omerPeriod)) return null;
 
-  const { weeks, days } = getWeeksAndDays(omerDay);
+  // Effective day: simulated, real, or default to 1 for admin preview
+  const effectiveDay = isSimulating ? simulatedDay! : (omerDay || (canShowAdmin ? 1 : null));
+  if (!effectiveDay) return null;
+
+  const { weeks, days } = getWeeksAndDays(effectiveDay);
   const progress = (omerDay / 49) * 100;
   const blessing = getOmerBlessing(omerDay);
   const sefira = getSefiratDay(omerDay);
