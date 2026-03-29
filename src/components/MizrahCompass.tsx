@@ -47,12 +47,15 @@ const MizrahCompass = () => {
     try {
       if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
         const perm = await (DeviceOrientationEvent as any).requestPermission();
-        if (perm === "granted") setPermissionGranted(true);
+        if (perm === "granted") {
+          setPermissionGranted(true);
+        }
+        // If denied, do nothing — stay on static bearing display
       } else {
         setPermissionGranted(true);
       }
     } catch {
-      setPermissionGranted(true);
+      // Permission refused or API unavailable — stay on static mode silently
     }
   };
 

@@ -16,21 +16,39 @@ export interface SynagogueResult {
 }
 
 export async function fetchNearbySynagogues(lat: number, lon: number, signal?: AbortSignal): Promise<SynagogueResult[]> {
-  const { data, error } = await supabase.functions.invoke("nearby-synagogues", {
-    body: { lat, lon },
-  });
+  // Timeout: if the edge function takes more than 8s, abort and return empty
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
 
-  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+  try {
+    const { data, error } = await supabase.functions.invoke("nearby-synagogues", {
+      body: { lat, lon },
+    });
 
-  if (error) {
-    throw new Error(error.message || "Erreur lors de la recherche de synagogues");
+    clearTimeout(timeout);
+
+    if (signal?.aborted || controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
+
+    if (error) {
+      console.warn("Nearby search failed, falling back to raw GPS coords:", error.message);
+      return [];
+    }
+
+    if (!data?.success) {
+      console.warn("Nearby search invalid response, falling back:", data?.error);
+      return [];
+    }
+
+    return (data.results || []) as SynagogueResult[];
+  } catch (err: any) {
+    clearTimeout(timeout);
+    if (err?.name === "AbortError") {
+      console.warn("Nearby search timed out after 8s, falling back to raw GPS");
+    } else {
+      console.warn("Nearby search error, falling back:", err);
+    }
+    return [];
   }
-
-  if (!data?.success) {
-    throw new Error(data?.error || "Réponse invalide du serveur");
-  }
-
-  return (data.results || []) as SynagogueResult[];
 }
 
 export function formatDistance(distanceInMeters: number): string {
