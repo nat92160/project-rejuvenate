@@ -172,97 +172,91 @@ export async function shareOmer(day: number, cardElement?: HTMLElement | null) {
   const text = getShareMessage(day);
   const title = `🌾 Omer Jour ${day} — Chabbat Chalom`;
 
-  // Try to generate image from the card element
+  // Generate image from a cloned card off-screen (prevents visible blue flash)
   let imageFile: File | undefined;
   if (cardElement) {
-    const wrapper = cardElement.parentElement;
-    // Save original styles for both card and wrapper
-    const savedCard = {
-      position: cardElement.style.position,
-      left: cardElement.style.left,
-      top: cardElement.style.top,
-      zIndex: cardElement.style.zIndex,
-      opacity: cardElement.style.opacity,
-    };
-    const savedWrapper = wrapper ? {
-      left: wrapper.style.left,
-      opacity: wrapper.style.opacity,
-      width: wrapper.style.width,
-      height: wrapper.style.height,
-      overflow: wrapper.style.overflow,
-    } : null;
+    const clone = cardElement.cloneNode(true) as HTMLElement;
+    const mount = document.createElement("div");
+    mount.setAttribute("aria-hidden", "true");
+    mount.style.position = "fixed";
+    mount.style.left = "-10000px";
+    mount.style.top = "0";
+    mount.style.pointerEvents = "none";
+    mount.style.opacity = "1";
+    mount.style.zIndex = "-1";
 
-    // Make everything visible for capture
-    if (wrapper) {
-      wrapper.style.left = "0";
-      wrapper.style.opacity = "1";
-      wrapper.style.width = "auto";
-      wrapper.style.height = "auto";
-      wrapper.style.overflow = "visible";
-    }
-    cardElement.style.position = "fixed";
-    cardElement.style.left = "0";
-    cardElement.style.top = "0";
-    cardElement.style.zIndex = "99999";
-    cardElement.style.opacity = "1";
+    // Ensure clone has stable dimensions for capture
+    clone.style.position = "relative";
+    clone.style.left = "0";
+    clone.style.top = "0";
+    clone.style.opacity = "1";
+
+    mount.appendChild(clone);
+    document.body.appendChild(mount);
 
     try {
-      await new Promise(r => setTimeout(r, 100));
-      const canvas = await html2canvas(cardElement, {
+      await new Promise((r) => setTimeout(r, 30));
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         backgroundColor: "#0A1628",
         logging: false,
-        width: 540,
-        height: cardElement.scrollHeight || 720,
+        width: clone.scrollWidth || 540,
+        height: clone.scrollHeight || 720,
       });
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/jpeg", 0.92)
-      );
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
       if (blob) {
         imageFile = new File([blob], `omer-jour-${day}.jpg`, { type: "image/jpeg" });
       }
     } catch {
       /* image generation failed, continue with text only */
     } finally {
-      // Restore original styles
-      cardElement.style.position = savedCard.position;
-      cardElement.style.left = savedCard.left;
-      cardElement.style.top = savedCard.top;
-      cardElement.style.zIndex = savedCard.zIndex;
-      cardElement.style.opacity = savedCard.opacity;
-      if (wrapper && savedWrapper) {
-        wrapper.style.left = savedWrapper.left;
-        wrapper.style.opacity = savedWrapper.opacity;
-        wrapper.style.width = savedWrapper.width;
-        wrapper.style.height = savedWrapper.height;
-        wrapper.style.overflow = savedWrapper.overflow;
-      }
+      mount.remove();
     }
   }
 
   if (navigator.share) {
-    try {
-      const shareData: ShareData = { title, text, url: getShareUrl() };
-      if (imageFile && navigator.canShare?.({ files: [imageFile] })) {
-        shareData.files = [imageFile];
+    // 1) Prefer share with image file when supported
+    if (imageFile && navigator.canShare?.({ files: [imageFile] })) {
+      try {
+        await navigator.share({ title, text, files: [imageFile] });
+        return;
+      } catch {
+        // fall through to text/url share
       }
-      await navigator.share(shareData);
-    } catch { /* user cancelled */ }
-  } else {
-    // Desktop fallback: download image + copy text
-    if (imageFile) {
-      const url = URL.createObjectURL(imageFile);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `omer-jour-${day}.jpg`;
-      a.click();
-      URL.revokeObjectURL(url);
     }
+
+    // 2) Fallback to text/url share
+    try {
+      await navigator.share({ title, text, url: getShareUrl() });
+      return;
+    } catch {
+      // continue to manual fallback
+    }
+  }
+
+  // 3) Final fallback: download image + open WhatsApp share URL
+  if (imageFile) {
+    const url = URL.createObjectURL(imageFile);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `omer-jour-${day}.jpg`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+  // Use same-tab navigation to avoid popup blockers after async capture
+  try {
+    window.location.assign(whatsappUrl);
+  } catch {
     try {
       await navigator.clipboard.writeText(text);
-      alert("Image téléchargée et message copié !");
-    } catch { /* silent */ }
+      alert("Partage bloqué par le navigateur : message copié dans le presse-papiers.");
+    } catch {
+      alert("Impossible de partager automatiquement. Copiez le message manuellement.");
+    }
   }
 }
 
