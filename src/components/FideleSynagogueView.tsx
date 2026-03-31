@@ -553,6 +553,27 @@ const FideleSynagogueView = () => {
                         </span>
                       </div>
                       <VerifiedSuggestionsDisplay placeId={gr.id} />
+
+                      {/* CTA incitant à renseigner les horaires */}
+                      {suggestingSynaId !== `gm-${gr.id}` && (
+                        <div
+                          className="mt-2.5 rounded-xl border border-primary/15 p-3 cursor-pointer transition-all active:scale-[0.98] hover:border-primary/30"
+                          style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}
+                          onClick={() => setSuggestingSynaId(`gm-${gr.id}`)}
+                        >
+                          <p className="text-[11px] font-bold text-foreground">🕐 Vous connaissez les horaires de tefila ?</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            Renseignez Cha'harit, Min'ha ou Arvit pour aider la communauté !
+                          </p>
+                          <span
+                            className="inline-block mt-1.5 rounded-lg px-3 py-1 text-[10px] font-bold"
+                            style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}
+                          >
+                            ✍️ Renseigner les horaires
+                          </span>
+                        </div>
+                      )}
+
                       <div className="mt-2 flex gap-2 flex-wrap">
                         <a href={`https://www.google.com/maps/dir/?api=1&destination=${gr.lat},${gr.lon}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-[11px] font-bold text-foreground no-underline transition-all hover:scale-105 active:scale-95">
                           🧭 Itinéraire
@@ -562,12 +583,6 @@ const FideleSynagogueView = () => {
                             📞 Appeler
                           </a>
                         )}
-                        <button
-                          onClick={() => setSuggestingSynaId(suggestingSynaId === `gm-${gr.id}` ? null : `gm-${gr.id}`)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary cursor-pointer transition-all active:scale-95 hover:bg-primary/10"
-                        >
-                          📝 Proposer des horaires
-                        </button>
                       </div>
                       {suggestingSynaId === `gm-${gr.id}` && (
                         <div className="mt-3">
