@@ -109,6 +109,7 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
       displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.display_name || "Utilisateur";
     } else {
       displayName = guestName.trim();
+      try { localStorage.setItem("guest_display_name", displayName); } catch { /* ignore */ }
     }
 
     const suffix = isGuest ? " (invité)" : "";
