@@ -390,22 +390,23 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
 
         const isFast = singleInfo.category === "jeune";
 
-        let fastStart = candlesByDate[dateStr];
-        let fastEnd = havdalahByDate[dateStr];
+        let fastStart: string | undefined;
+        let fastEnd: string | undefined;
         if (isFast) {
+          // Always compute fast times from kosher-zmanim, never from candlesByDate
+          // (candlesByDate may contain Yom Tov candle lighting on the same date)
           try {
             const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
             const czc = new ComplexZmanimCalendar(geo);
             czc.setDate(dt);
-            if (!fastStart) {
-              const alot = czc.getSunriseOffsetByDegrees(106.1); // 16.1°
-              if (alot) fastStart = fmtTimeKosher(alot, city.tz);
-            }
-            if (!fastEnd) {
-              const tzeit = czc.getSunsetOffsetByDegrees(97.08); // 7.08°
-              if (tzeit) fastEnd = fmtTimeKosher(tzeit, city.tz);
-            }
+            const alot = czc.getSunriseOffsetByDegrees(106.1); // 16.1°
+            if (alot) fastStart = fmtTimeKosher(alot, city.tz);
+            const tzeit = czc.getSunsetOffsetByDegrees(97.08); // 7.08°
+            if (tzeit) fastEnd = fmtTimeKosher(tzeit, city.tz);
           } catch { /* silent */ }
+        } else {
+          fastStart = candlesByDate[dateStr];
+          fastEnd = havdalahByDate[dateStr];
         }
 
         singles.push({
