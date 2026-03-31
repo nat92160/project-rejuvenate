@@ -150,7 +150,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
         <div className="absolute bottom-2 left-1/4 text-xs opacity-25 animate-pulse" style={{ animationDelay: "1s" }}>⭐</div>
 
         <button
-          onClick={() => shareOmer(effectiveDay)}
+          onClick={() => shareOmer(effectiveDay, shareCardRef.current)}
           className="absolute top-4 right-4 p-2 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
           style={{
             background: "hsl(var(--gold) / 0.15)",
