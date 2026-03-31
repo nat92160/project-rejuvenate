@@ -246,9 +246,11 @@ export async function shareOmer(day: number, cardElement?: HTMLElement | null) {
   }
 
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-  const popup = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
 
-  if (!popup) {
+  // Use same-tab navigation to avoid popup blockers after async capture
+  try {
+    window.location.assign(whatsappUrl);
+  } catch {
     try {
       await navigator.clipboard.writeText(text);
       alert("Partage bloqué par le navigateur : message copié dans le presse-papiers.");
