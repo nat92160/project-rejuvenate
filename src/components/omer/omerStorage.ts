@@ -175,7 +175,22 @@ export async function shareOmer(day: number, cardElement?: HTMLElement | null) {
   // Try to generate image from the card element
   let imageFile: File | undefined;
   if (cardElement) {
+    // Temporarily make the card visible for html2canvas capture
+    const prev = {
+      position: cardElement.style.position,
+      left: cardElement.style.left,
+      top: cardElement.style.top,
+      zIndex: cardElement.style.zIndex,
+      opacity: cardElement.style.opacity,
+    };
+    cardElement.style.position = "fixed";
+    cardElement.style.left = "0";
+    cardElement.style.top = "0";
+    cardElement.style.zIndex = "99999";
+    cardElement.style.opacity = "1";
+
     try {
+      await new Promise(r => setTimeout(r, 80));
       const canvas = await html2canvas(cardElement, {
         scale: 2,
         useCORS: true,
@@ -192,6 +207,13 @@ export async function shareOmer(day: number, cardElement?: HTMLElement | null) {
       }
     } catch {
       /* image generation failed, continue with text only */
+    } finally {
+      // Restore original styles
+      cardElement.style.position = prev.position;
+      cardElement.style.left = prev.left;
+      cardElement.style.top = prev.top;
+      cardElement.style.zIndex = prev.zIndex;
+      cardElement.style.opacity = prev.opacity;
     }
   }
 
