@@ -61,6 +61,8 @@ const ShabbatWidget = () => {
         </span>
       </div>
 
+      <HalakhicDisclaimer />
+
       {loading ? (
         <div className="space-y-3">
           <div className="h-16 rounded-xl animate-pulse bg-muted" />

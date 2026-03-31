@@ -52,6 +52,8 @@ const HolidaysWidget = () => {
         🎉 Prochaines Fêtes
       </h3>
 
+      <HalakhicDisclaimer />
+
       {loading ? (
         <div className="mt-5 space-y-3">
           {[...Array(3)].map((_, i) => (
