@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchHolidays, HolidayItem } from "@/lib/hebcal";
+import HalakhicDisclaimer from "@/components/zmanim/HalakhicDisclaimer";
 
 const CATEGORY_BAR: Record<string, string> = {
   "🕯️": "hsl(0 70% 50%)",    // Fasts - red
