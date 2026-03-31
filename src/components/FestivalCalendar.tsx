@@ -224,13 +224,17 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
                   <span className="text-sm font-bold" style={{ color: "hsl(0 70% 45%)" }}>{card.days[0].candles}</span>
                 </div>
               )}
-              {card.days[0].havdalah && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs">✅</span>
-                  <span className="text-[10px] font-medium text-muted-foreground">Fin</span>
-                  <span className="text-sm font-bold" style={{ color: "hsl(120 50% 35%)" }}>{card.days[0].havdalah}</span>
-                </div>
-              )}
+              {card.days[0].havdalah && (() => {
+                const startHour = card.days[0].candles ? parseInt(card.days[0].candles.split(":")[0], 10) : 0;
+                const isOvernight = !isNaN(startHour) && startHour >= 17;
+                return (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs">✅</span>
+                    <span className="text-[10px] font-medium text-muted-foreground">{isOvernight ? "Fin (lendemain)" : "Fin"}</span>
+                    <span className="text-sm font-bold" style={{ color: "hsl(120 50% 35%)" }}>{card.days[0].havdalah}</span>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
@@ -433,10 +437,16 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact, isFirstDay =
 
   if (!showCandles && !showHavdalah && compact) return null;
 
+  // Detect overnight fasts: if start time is evening (≥17h), end is next day
+  const isOvernightFast = isFast && day.candles && (() => {
+    const h = parseInt(day.candles!.split(":")[0], 10);
+    return !isNaN(h) && h >= 17;
+  })();
+
   const candleIcon = isFast ? "⏰" : "🕯️";
   const candleLabel = isFast ? "Début" : "Allumage";
   const havdalahIcon = isFast ? "✅" : "✨";
-  const havdalahLabel = isFast ? "Fin" : "Sortie";
+  const havdalahLabel = isFast ? (isOvernightFast ? "Fin (lendemain)" : "Fin") : "Sortie";
 
   return (
     <div className={`flex items-center gap-4 flex-wrap ${compact ? "mt-2" : "mt-3"}`}>
