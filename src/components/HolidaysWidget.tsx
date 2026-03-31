@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchHolidays, HolidayItem } from "@/lib/hebcal";
+import HalakhicDisclaimer from "@/components/zmanim/HalakhicDisclaimer";
 
 const CATEGORY_BAR: Record<string, string> = {
   "🕯️": "hsl(0 70% 50%)",    // Fasts - red
@@ -50,6 +51,8 @@ const HolidaysWidget = () => {
       <h3 className="font-display text-base font-bold flex items-center gap-2 text-foreground">
         🎉 Prochaines Fêtes
       </h3>
+
+      <HalakhicDisclaimer />
 
       {loading ? (
         <div className="mt-5 space-y-3">

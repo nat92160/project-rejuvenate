@@ -7,6 +7,7 @@ import type { ZmanItem } from "@/lib/hebcal";
 import SunArc from "./zmanim/SunArc";
 import NextZmanHero from "./zmanim/NextZmanHero";
 import ShemaProgress from "./zmanim/ShemaProgress";
+import HalakhicDisclaimer from "./zmanim/HalakhicDisclaimer";
 
 // ─── Group definitions ───
 
@@ -143,6 +144,7 @@ const ZmanimWidget = () => {
       {!loading && <SunArc zmanim={zmanim} isToday={isToday} />}
 
       <div className="px-5 pb-5">
+        <HalakhicDisclaimer />
         {/* Title + Method toggle */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <h3 className="font-display text-base font-bold text-foreground">
