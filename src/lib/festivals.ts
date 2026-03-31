@@ -515,8 +515,48 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       });
     }
 
+    // Build Omer card
+    const omerCards: FestivalCard[] = [];
+    const omerPeriod = getOmerPeriodDates(year);
+    if (omerPeriod) {
+      const omerStart = omerPeriod.start;
+      const omerEnd = omerPeriod.end;
+      const omerStartDt = new Date(omerStart);
+      const daysLeftOmer = Math.ceil((omerStartDt.getTime() - now.getTime()) / 86400000);
+      const omerDay = getTodayOmerDay();
+
+      // Show if upcoming or in progress (not past)
+      if (daysLeftOmer > -50) {
+        const omerStatus: FestivalCard["status"] = 
+          now < omerStartDt ? "bientot" : 
+          now > new Date(omerEnd.getTime() + 86400000) ? "termine" : "encours";
+
+        if (omerStatus !== "termine") {
+          omerCards.push({
+            id: "sefirat-haomer",
+            name: "Séfirat HaOmer",
+            emoji: "🌾",
+            hebrew: "סְפִירַת הָעוֹמֶר",
+            dateRange: `${fmtDateShort(toIsoDate(omerStart))} — ${fmtDateShort(toIsoDate(omerEnd))}`,
+            daysLeft: Math.max(0, daysLeftOmer),
+            status: omerStatus,
+            category: "minor",
+            days: [{
+              date: toIsoDate(omerStart),
+              dateFr: fmtDate(toIsoDate(omerStart)),
+              dayOfWeek: omerStart.getDay(),
+              title: omerDay ? `Jour ${omerDay} sur 49` : "49 jours de compte",
+              hebrew: "סְפִירַת הָעוֹמֶר",
+              type: "single",
+              isShabbat: false,
+            }],
+          });
+        }
+      }
+    }
+
     // Merge and sort
-    const all = [...cards, ...singles, ...roshChodeshCards.slice(0, 3)]
+    const all = [...cards, ...singles, ...omerCards, ...roshChodeshCards.slice(0, 3)]
       .filter(c => c.status !== "termine")
       .sort((a, b) => {
         const dateA = a.days[0]?.date || "";
