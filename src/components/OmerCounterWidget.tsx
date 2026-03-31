@@ -20,6 +20,7 @@ import {
 } from "@/components/omer/omerStorage";
 import OmerPostCountRitual from "@/components/omer/OmerPostCountRitual";
 import OmerAdminSimulator from "@/components/omer/OmerAdminSimulator";
+import OmerShareCard from "@/components/omer/OmerShareCard";
 
 // Re-export for landing page
 export { getTodayOmerDay };
