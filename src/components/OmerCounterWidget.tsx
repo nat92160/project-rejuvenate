@@ -47,6 +47,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
   const omerPeriod = useMemo(() => getOmerPeriodDates(currentYear), [currentYear]);
   const [counted, setCounted] = useState(false);
   const [streak, setStreak] = useState(0);
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   // Admin simulation
   const [simulatedDay, setSimulatedDay] = useState<number | null>(null);
