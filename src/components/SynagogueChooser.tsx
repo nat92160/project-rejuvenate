@@ -162,7 +162,7 @@ const SynagogueChooser = ({ onSelect }: Props) => {
     const dbPartners: PartnerSyna[] = (allSynas || [])
       .filter((s: any) => s.latitude && s.longitude)
       .map((s: any) => ({ ...s, dist: haversine(lat, lng, s.latitude, s.longitude), source: "partner" as const }))
-      .filter((s) => s.dist <= 15000)
+      .filter((s) => s.dist <= 100000)
       .sort((a, b) => a.dist - b.dist);
 
     setPartners(dbPartners);
@@ -170,7 +170,7 @@ const SynagogueChooser = ({ onSelect }: Props) => {
     try {
       const results = await fetchNearbySynagogues(lat, lng);
       const deduped = results
-        .filter(r => r.distance <= 15000)
+        .filter(r => r.distance <= 100000)
         .filter(r => !dbPartners.some(p => p.latitude && p.longitude && haversine(p.latitude, p.longitude, r.lat, r.lon) < 100))
         .map(r => ({ ...r, source: "google" as const }));
       setExternals(deduped);
