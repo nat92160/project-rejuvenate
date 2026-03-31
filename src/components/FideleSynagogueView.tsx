@@ -241,7 +241,7 @@ const FideleSynagogueView = () => {
         ...syna,
         dist: getDistanceInMeters(city.lat, city.lng, syna.latitude!, syna.longitude!),
       }))
-      .filter((syna) => syna.dist <= 15000)
+      .filter((syna) => syna.dist <= 100000)
       .sort((a, b) => a.dist - b.dist);
   }, [directory, city.lat, city.lng]);
 
