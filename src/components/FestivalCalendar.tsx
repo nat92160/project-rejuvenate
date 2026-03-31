@@ -224,13 +224,17 @@ const FestivalAccordionCard = ({ card, isExpanded, onToggle, onCalendarClick }: 
                   <span className="text-sm font-bold" style={{ color: "hsl(0 70% 45%)" }}>{card.days[0].candles}</span>
                 </div>
               )}
-              {card.days[0].havdalah && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs">✅</span>
-                  <span className="text-[10px] font-medium text-muted-foreground">Fin</span>
-                  <span className="text-sm font-bold" style={{ color: "hsl(120 50% 35%)" }}>{card.days[0].havdalah}</span>
-                </div>
-              )}
+              {card.days[0].havdalah && (() => {
+                const startHour = card.days[0].candles ? parseInt(card.days[0].candles.split(":")[0], 10) : 0;
+                const isOvernight = !isNaN(startHour) && startHour >= 17;
+                return (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs">✅</span>
+                    <span className="text-[10px] font-medium text-muted-foreground">{isOvernight ? "Fin (lendemain)" : "Fin"}</span>
+                    <span className="text-sm font-bold" style={{ color: "hsl(120 50% 35%)" }}>{card.days[0].havdalah}</span>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
