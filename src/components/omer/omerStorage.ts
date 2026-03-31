@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import html2canvas from "html2canvas";
 
 // ─── Counted persistence (hybrid: DB for auth, localStorage for guests) ───
 
