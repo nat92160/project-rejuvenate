@@ -168,16 +168,54 @@ function getSefiratDay(day: number): { attribute: string; within: string } {
   return { attribute: SEFIROT[dayIdx], within: SEFIROT[weekIdx] };
 }
 
-export async function shareOmer(day: number) {
+export async function shareOmer(day: number, cardElement?: HTMLElement | null) {
   const text = getShareMessage(day);
+  const title = `🌾 Omer Jour ${day} — Chabbat Chalom`;
+
+  // Try to generate image from the card element
+  let imageFile: File | undefined;
+  if (cardElement) {
+    try {
+      const canvas = await html2canvas(cardElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+        logging: false,
+        width: cardElement.scrollWidth,
+        height: cardElement.scrollHeight,
+      });
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", 0.92)
+      );
+      if (blob) {
+        imageFile = new File([blob], `omer-jour-${day}.jpg`, { type: "image/jpeg" });
+      }
+    } catch {
+      /* image generation failed, continue with text only */
+    }
+  }
+
   if (navigator.share) {
     try {
-      await navigator.share({ title: `🌾 Omer Jour ${day} — Chabbat Chalom`, text, url: getShareUrl() });
+      const shareData: ShareData = { title, text, url: getShareUrl() };
+      if (imageFile && navigator.canShare?.({ files: [imageFile] })) {
+        shareData.files = [imageFile];
+      }
+      await navigator.share(shareData);
     } catch { /* user cancelled */ }
   } else {
+    // Desktop fallback: download image + copy text
+    if (imageFile) {
+      const url = URL.createObjectURL(imageFile);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `omer-jour-${day}.jpg`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
     try {
       await navigator.clipboard.writeText(text);
-      alert("Message copié ! Collez-le dans WhatsApp ou Telegram.");
+      alert("Image téléchargée et message copié !");
     } catch { /* silent */ }
   }
 }
