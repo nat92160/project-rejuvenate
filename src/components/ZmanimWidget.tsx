@@ -7,6 +7,7 @@ import type { ZmanItem } from "@/lib/hebcal";
 import SunArc from "./zmanim/SunArc";
 import NextZmanHero from "./zmanim/NextZmanHero";
 import ShemaProgress from "./zmanim/ShemaProgress";
+import HalakhicDisclaimer from "./zmanim/HalakhicDisclaimer";
 
 // ─── Group definitions ───
 
