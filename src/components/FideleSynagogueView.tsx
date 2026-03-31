@@ -220,7 +220,7 @@ const FideleSynagogueView = () => {
     setGoogleLoading(true);
     try {
       const results = await fetchNearbySynagogues(city.lat, city.lng);
-      setGoogleResults(results.filter(r => r.distance <= 15000));
+      setGoogleResults(results.filter(r => r.distance <= 100000));
       setGoogleSearched(true);
     } catch (err) {
       console.warn("Google nearby search failed:", err);
