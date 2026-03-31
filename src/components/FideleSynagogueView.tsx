@@ -216,7 +216,7 @@ const FideleSynagogueView = () => {
 
   // Fetch Google Maps nearby synagogues when GPS is active
   const fetchGoogleNearby = useCallback(async () => {
-    if (!hasCoordinates(city.lat, city.lng) || !city._gps) return;
+    if (!hasCoordinates(city.lat, city.lng)) return;
     setGoogleLoading(true);
     try {
       const results = await fetchNearbySynagogues(city.lat, city.lng);
@@ -228,7 +228,7 @@ const FideleSynagogueView = () => {
     } finally {
       setGoogleLoading(false);
     }
-  }, [city.lat, city.lng, city._gps]);
+  }, [city.lat, city.lng]);
 
   useEffect(() => { fetchGoogleNearby(); }, [fetchGoogleNearby]);
 
