@@ -133,14 +133,45 @@ export function getShareUrl(): string {
 }
 
 export function getShareMessage(day: number): string {
-  return `Ce soir, c'est le ${day}${day === 1 ? "er" : "ème"} jour de l'Omer ! 🌾\n\nVoici la Brakha pour compter ce soir :\n${getShareUrl()}\n\nInscris-toi gratuitement pour recevoir ton rappel quotidien chaque soir à l'heure de la sortie des étoiles ! ✨`;
+  const { weeks, days } = getWeeksAndDays(day);
+  const sefira = getSefiratDay(day);
+
+  const weekStr = weeks > 0
+    ? `${weeks} semaine${weeks > 1 ? "s" : ""}${days > 0 ? ` et ${days} jour${days > 1 ? "s" : ""}` : ""}`
+    : `${days} jour${days > 1 ? "s" : ""}`;
+
+  return [
+    `🌾 *Séfirat HaOmer — Jour ${day}/49*`,
+    `📅 ${weekStr}`,
+    `✨ _${sefira.attribute} dans ${sefira.within}_`,
+    ``,
+    `Ne manque pas le compte de ce soir !`,
+    `👉 ${getShareUrl()}`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━`,
+    `📲 *Chabbat Chalom* — L'app qui connecte ta synagogue`,
+    `Horaires · Tehilim · Minyanim · Rappels`,
+    `🔔 Inscris-toi gratuitement pour recevoir ton rappel chaque soir à la sortie des étoiles !`,
+  ].join("\n");
+}
+
+function getWeeksAndDays(day: number): { weeks: number; days: number } {
+  return { weeks: Math.floor(day / 7), days: day % 7 };
+}
+
+function getSefiratDay(day: number): { attribute: string; within: string } {
+  const SEFIROT = ["Hessed", "Gvoura", "Tiféret", "Nétsa'h", "Hod", "Yessod", "Malkhout"];
+  if (day < 1 || day > 49) return { attribute: "", within: "" };
+  const weekIdx = Math.floor((day - 1) / 7);
+  const dayIdx = (day - 1) % 7;
+  return { attribute: SEFIROT[dayIdx], within: SEFIROT[weekIdx] };
 }
 
 export async function shareOmer(day: number) {
   const text = getShareMessage(day);
   if (navigator.share) {
     try {
-      await navigator.share({ title: `Omer – Jour ${day}`, text, url: getShareUrl() });
+      await navigator.share({ title: `🌾 Omer Jour ${day} — Chabbat Chalom`, text, url: getShareUrl() });
     } catch { /* user cancelled */ }
   } else {
     try {
