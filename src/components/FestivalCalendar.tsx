@@ -433,10 +433,16 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact, isFirstDay =
 
   if (!showCandles && !showHavdalah && compact) return null;
 
+  // Detect overnight fasts: if start time is evening (≥17h), end is next day
+  const isOvernightFast = isFast && day.candles && (() => {
+    const h = parseInt(day.candles!.split(":")[0], 10);
+    return !isNaN(h) && h >= 17;
+  })();
+
   const candleIcon = isFast ? "⏰" : "🕯️";
   const candleLabel = isFast ? "Début" : "Allumage";
   const havdalahIcon = isFast ? "✅" : "✨";
-  const havdalahLabel = isFast ? "Fin" : "Sortie";
+  const havdalahLabel = isFast ? (isOvernightFast ? "Fin (lendemain)" : "Fin") : "Sortie";
 
   return (
     <div className={`flex items-center gap-4 flex-wrap ${compact ? "mt-2" : "mt-3"}`}>
