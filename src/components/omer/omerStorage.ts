@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import html2canvas from "html2canvas";
 
 // ─── Counted persistence (hybrid: DB for auth, localStorage for guests) ───
 
@@ -133,19 +134,88 @@ export function getShareUrl(): string {
 }
 
 export function getShareMessage(day: number): string {
-  return `Ce soir, c'est le ${day}${day === 1 ? "er" : "ème"} jour de l'Omer ! 🌾\n\nVoici la Brakha pour compter ce soir :\n${getShareUrl()}\n\nInscris-toi gratuitement pour recevoir ton rappel quotidien chaque soir à l'heure de la sortie des étoiles ! ✨`;
+  const { weeks, days } = getWeeksAndDays(day);
+  const sefira = getSefiratDay(day);
+
+  const weekStr = weeks > 0
+    ? `${weeks} semaine${weeks > 1 ? "s" : ""}${days > 0 ? ` et ${days} jour${days > 1 ? "s" : ""}` : ""}`
+    : `${days} jour${days > 1 ? "s" : ""}`;
+
+  return [
+    `🌾 *Séfirat HaOmer — Jour ${day}/49*`,
+    `📅 ${weekStr}`,
+    `✨ _${sefira.attribute} dans ${sefira.within}_`,
+    ``,
+    `Ne manque pas le compte de ce soir !`,
+    `👉 ${getShareUrl()}`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━`,
+    `📲 *Chabbat Chalom* — L'app qui connecte ta synagogue`,
+    `Horaires · Tehilim · Minyanim · Rappels`,
+    `🔔 Inscris-toi gratuitement pour recevoir ton rappel chaque soir à la sortie des étoiles !`,
+  ].join("\n");
 }
 
-export async function shareOmer(day: number) {
+function getWeeksAndDays(day: number): { weeks: number; days: number } {
+  return { weeks: Math.floor(day / 7), days: day % 7 };
+}
+
+function getSefiratDay(day: number): { attribute: string; within: string } {
+  const SEFIROT = ["Hessed", "Gvoura", "Tiféret", "Nétsa'h", "Hod", "Yessod", "Malkhout"];
+  if (day < 1 || day > 49) return { attribute: "", within: "" };
+  const weekIdx = Math.floor((day - 1) / 7);
+  const dayIdx = (day - 1) % 7;
+  return { attribute: SEFIROT[dayIdx], within: SEFIROT[weekIdx] };
+}
+
+export async function shareOmer(day: number, cardElement?: HTMLElement | null) {
   const text = getShareMessage(day);
+  const title = `🌾 Omer Jour ${day} — Chabbat Chalom`;
+
+  // Try to generate image from the card element
+  let imageFile: File | undefined;
+  if (cardElement) {
+    try {
+      const canvas = await html2canvas(cardElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+        logging: false,
+        width: cardElement.scrollWidth,
+        height: cardElement.scrollHeight,
+      });
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", 0.92)
+      );
+      if (blob) {
+        imageFile = new File([blob], `omer-jour-${day}.jpg`, { type: "image/jpeg" });
+      }
+    } catch {
+      /* image generation failed, continue with text only */
+    }
+  }
+
   if (navigator.share) {
     try {
-      await navigator.share({ title: `Omer – Jour ${day}`, text, url: getShareUrl() });
+      const shareData: ShareData = { title, text, url: getShareUrl() };
+      if (imageFile && navigator.canShare?.({ files: [imageFile] })) {
+        shareData.files = [imageFile];
+      }
+      await navigator.share(shareData);
     } catch { /* user cancelled */ }
   } else {
+    // Desktop fallback: download image + copy text
+    if (imageFile) {
+      const url = URL.createObjectURL(imageFile);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `omer-jour-${day}.jpg`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
     try {
       await navigator.clipboard.writeText(text);
-      alert("Message copié ! Collez-le dans WhatsApp ou Telegram.");
+      alert("Image téléchargée et message copié !");
     } catch { /* silent */ }
   }
 }

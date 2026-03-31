@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Share2, Check, UserPlus, Flame } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,7 @@ import {
 } from "@/components/omer/omerStorage";
 import OmerPostCountRitual from "@/components/omer/OmerPostCountRitual";
 import OmerAdminSimulator from "@/components/omer/OmerAdminSimulator";
+import OmerShareCard from "@/components/omer/OmerShareCard";
 
 // Re-export for landing page
 export { getTodayOmerDay };
@@ -46,6 +47,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
   const omerPeriod = useMemo(() => getOmerPeriodDates(currentYear), [currentYear]);
   const [counted, setCounted] = useState(false);
   const [streak, setStreak] = useState(0);
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   // Admin simulation
   const [simulatedDay, setSimulatedDay] = useState<number | null>(null);
@@ -148,7 +150,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
         <div className="absolute bottom-2 left-1/4 text-xs opacity-25 animate-pulse" style={{ animationDelay: "1s" }}>⭐</div>
 
         <button
-          onClick={() => shareOmer(effectiveDay)}
+          onClick={() => shareOmer(effectiveDay, shareCardRef.current)}
           className="absolute top-4 right-4 p-2 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
           style={{
             background: "hsl(var(--gold) / 0.15)",
@@ -329,7 +331,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
 
             <div className="flex gap-2 justify-center flex-wrap">
               <button
-                onClick={() => shareOmer(effectiveDay)}
+                onClick={() => shareOmer(effectiveDay, shareCardRef.current)}
                 className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border transition-all active:scale-[0.97]"
                 style={{
                   borderColor: "hsl(var(--gold) / 0.3)",
@@ -435,6 +437,11 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
       {(counted || expanded) && (
         <OmerPostCountRitual currentWeek={weeks} />
       )}
+
+      {/* Hidden card for share image generation */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0, pointerEvents: "none" }}>
+        <OmerShareCard ref={shareCardRef} day={effectiveDay} />
+      </div>
     </motion.div>
   );
 };

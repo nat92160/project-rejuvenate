@@ -35,14 +35,24 @@ const OmerLanding = () => {
     };
 
     updateMeta("og:title", isOmerPeriod
-      ? `🌾 Comptez l'Omer aujourd'hui : Jour ${day}`
+      ? `🌾 Séfirat HaOmer — Jour ${day}/49 | Chabbat Chalom`
       : `🌾 Séfirat HaOmer — Chabbat Chalom`);
     updateMeta("og:description", isOmerPeriod
-      ? `C'est le ${day}ème jour du Omer ! Récitez la Brakha et validez votre compte ce soir.`
-      : `Rejoignez des milliers de fidèles qui comptent ensemble chaque soir.`);
+      ? `C'est le ${day}${day === 1 ? "er" : "ème"} jour du Omer ! Comptez ce soir avec la Brakha et ne manquez plus un seul jour grâce aux rappels gratuits.`
+      : `Rejoignez des milliers de fidèles qui comptent ensemble chaque soir. Rappels gratuits à la sortie des étoiles.`);
     updateMeta("og:type", "website");
     updateMeta("og:url", window.location.href);
     updateMeta("og:image", "https://www.chabbat-chalom.com/omer-share.jpg");
+    updateMeta("og:site_name", "Chabbat Chalom");
+
+    // Twitter Card
+    let twitterCard = document.querySelector('meta[name="twitter:card"]') as HTMLMetaElement | null;
+    if (!twitterCard) {
+      twitterCard = document.createElement("meta");
+      twitterCard.setAttribute("name", "twitter:card");
+      document.head.appendChild(twitterCard);
+    }
+    twitterCard.setAttribute("content", "summary_large_image");
 
     // Auto-scroll to widget
     setTimeout(() => {
