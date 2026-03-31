@@ -438,8 +438,17 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
         <OmerPostCountRitual currentWeek={weeks} />
       )}
 
-      {/* Hidden card for share image generation — uses overflow:hidden to hide visually */}
-      <div style={{ position: "fixed", left: "-9999px", top: 0, pointerEvents: "none", overflow: "hidden", width: 0, height: 0 }}>
+      {/* Hidden card for share image generation — positioned off-screen but full size for html2canvas */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          left: "-9999px",
+          top: 0,
+          pointerEvents: "none",
+          opacity: 0,
+        }}
+      >
         <OmerShareCard ref={shareCardRef} day={effectiveDay} />
       </div>
     </motion.div>
