@@ -168,96 +168,24 @@ function getSefiratDay(day: number): { attribute: string; within: string } {
   return { attribute: SEFIROT[dayIdx], within: SEFIROT[weekIdx] };
 }
 
-export async function shareOmer(day: number, cardElement?: HTMLElement | null) {
+export async function shareOmer(day: number, _cardElement?: HTMLElement | null) {
   const text = getShareMessage(day);
   const title = `🌾 Omer Jour ${day} — Chabbat Chalom`;
+  const url = getShareUrl();
 
-  // Generate image from a cloned card off-screen (prevents visible blue flash)
-  let imageFile: File | undefined;
-  if (cardElement) {
-    const clone = cardElement.cloneNode(true) as HTMLElement;
-    const mount = document.createElement("div");
-    mount.setAttribute("aria-hidden", "true");
-    mount.style.position = "fixed";
-    mount.style.left = "-10000px";
-    mount.style.top = "0";
-    mount.style.pointerEvents = "none";
-    mount.style.opacity = "1";
-    mount.style.zIndex = "-1";
-
-    // Ensure clone has stable dimensions for capture
-    clone.style.position = "relative";
-    clone.style.left = "0";
-    clone.style.top = "0";
-    clone.style.opacity = "1";
-
-    mount.appendChild(clone);
-    document.body.appendChild(mount);
-
-    try {
-      await new Promise((r) => setTimeout(r, 30));
-      const canvas = await html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#0A1628",
-        logging: false,
-        width: clone.scrollWidth || 540,
-        height: clone.scrollHeight || 720,
-      });
-      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
-      if (blob) {
-        imageFile = new File([blob], `omer-jour-${day}.jpg`, { type: "image/jpeg" });
-      }
-    } catch {
-      /* image generation failed, continue with text only */
-    } finally {
-      mount.remove();
-    }
-  }
-
+  // 1) Try native Web Share API immediately (preserves user gesture)
   if (navigator.share) {
-    // 1) Prefer share with image file when supported
-    if (imageFile && navigator.canShare?.({ files: [imageFile] })) {
-      try {
-        await navigator.share({ title, text, files: [imageFile] });
-        return;
-      } catch {
-        // fall through to text/url share
-      }
-    }
-
-    // 2) Fallback to text/url share
     try {
-      await navigator.share({ title, text, url: getShareUrl() });
+      await navigator.share({ title, text, url });
       return;
     } catch {
-      // continue to manual fallback
+      // User cancelled or API failed — fall through
     }
   }
 
-  // 3) Final fallback: download image + open WhatsApp share URL
-  if (imageFile) {
-    const url = URL.createObjectURL(imageFile);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `omer-jour-${day}.jpg`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
+  // 2) Fallback: open WhatsApp with text
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-
-  // Use same-tab navigation to avoid popup blockers after async capture
-  try {
-    window.location.assign(whatsappUrl);
-  } catch {
-    try {
-      await navigator.clipboard.writeText(text);
-      alert("Partage bloqué par le navigateur : message copié dans le presse-papiers.");
-    } catch {
-      alert("Impossible de partager automatiquement. Copiez le message manuellement.");
-    }
-  }
+  window.open(whatsappUrl, "_blank") || window.location.assign(whatsappUrl);
 }
 
 // ─── Migration helper: push localStorage data to DB on first login ───
