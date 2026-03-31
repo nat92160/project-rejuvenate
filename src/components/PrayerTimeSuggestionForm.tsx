@@ -63,7 +63,9 @@ const PrayerTimeSuggestionForm = ({ synagogueId, synagogueName, placeId, placeNa
   const [shacharit, setShacharit] = useState("");
   const [minha, setMinha] = useState("");
   const [arvit, setArvit] = useState("");
-  const [guestName, setGuestName] = useState("");
+  const [guestName, setGuestName] = useState(() => {
+    try { return localStorage.getItem("guest_display_name") || ""; } catch { return ""; }
+  });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
