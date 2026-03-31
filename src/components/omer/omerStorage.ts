@@ -175,14 +175,31 @@ export async function shareOmer(day: number, cardElement?: HTMLElement | null) {
   // Try to generate image from the card element
   let imageFile: File | undefined;
   if (cardElement) {
-    // Temporarily make the card visible for html2canvas capture
-    const prev = {
+    const wrapper = cardElement.parentElement;
+    // Save original styles for both card and wrapper
+    const savedCard = {
       position: cardElement.style.position,
       left: cardElement.style.left,
       top: cardElement.style.top,
       zIndex: cardElement.style.zIndex,
       opacity: cardElement.style.opacity,
     };
+    const savedWrapper = wrapper ? {
+      left: wrapper.style.left,
+      opacity: wrapper.style.opacity,
+      width: wrapper.style.width,
+      height: wrapper.style.height,
+      overflow: wrapper.style.overflow,
+    } : null;
+
+    // Make everything visible for capture
+    if (wrapper) {
+      wrapper.style.left = "0";
+      wrapper.style.opacity = "1";
+      wrapper.style.width = "auto";
+      wrapper.style.height = "auto";
+      wrapper.style.overflow = "visible";
+    }
     cardElement.style.position = "fixed";
     cardElement.style.left = "0";
     cardElement.style.top = "0";
@@ -190,14 +207,14 @@ export async function shareOmer(day: number, cardElement?: HTMLElement | null) {
     cardElement.style.opacity = "1";
 
     try {
-      await new Promise(r => setTimeout(r, 80));
+      await new Promise(r => setTimeout(r, 100));
       const canvas = await html2canvas(cardElement, {
         scale: 2,
         useCORS: true,
-        backgroundColor: null,
+        backgroundColor: "#0A1628",
         logging: false,
-        width: cardElement.scrollWidth,
-        height: cardElement.scrollHeight,
+        width: 540,
+        height: cardElement.scrollHeight || 720,
       });
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob(resolve, "image/jpeg", 0.92)
@@ -209,11 +226,18 @@ export async function shareOmer(day: number, cardElement?: HTMLElement | null) {
       /* image generation failed, continue with text only */
     } finally {
       // Restore original styles
-      cardElement.style.position = prev.position;
-      cardElement.style.left = prev.left;
-      cardElement.style.top = prev.top;
-      cardElement.style.zIndex = prev.zIndex;
-      cardElement.style.opacity = prev.opacity;
+      cardElement.style.position = savedCard.position;
+      cardElement.style.left = savedCard.left;
+      cardElement.style.top = savedCard.top;
+      cardElement.style.zIndex = savedCard.zIndex;
+      cardElement.style.opacity = savedCard.opacity;
+      if (wrapper && savedWrapper) {
+        wrapper.style.left = savedWrapper.left;
+        wrapper.style.opacity = savedWrapper.opacity;
+        wrapper.style.width = savedWrapper.width;
+        wrapper.style.height = savedWrapper.height;
+        wrapper.style.overflow = savedWrapper.overflow;
+      }
     }
   }
 
