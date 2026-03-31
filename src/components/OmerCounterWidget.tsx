@@ -437,6 +437,11 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
       {(counted || expanded) && (
         <OmerPostCountRitual currentWeek={weeks} />
       )}
+
+      {/* Hidden card for share image generation */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0, pointerEvents: "none" }}>
+        <OmerShareCard ref={shareCardRef} day={effectiveDay} />
+      </div>
     </motion.div>
   );
 };
