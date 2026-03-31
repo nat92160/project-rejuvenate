@@ -331,7 +331,7 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
 
             <div className="flex gap-2 justify-center flex-wrap">
               <button
-                onClick={() => shareOmer(effectiveDay)}
+                onClick={() => shareOmer(effectiveDay, shareCardRef.current)}
                 className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border transition-all active:scale-[0.97]"
                 style={{
                   borderColor: "hsl(var(--gold) / 0.3)",
