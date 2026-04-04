@@ -130,7 +130,7 @@ function updateStreakLocal(currentDay: number): number {
 // ─── Share helper ───
 
 export function getShareUrl(): string {
-  return `${window.location.origin}/omer`;
+  return "https://www.chabbat-chalom.com/omer";
 }
 
 export function getShareMessage(day: number): string {
