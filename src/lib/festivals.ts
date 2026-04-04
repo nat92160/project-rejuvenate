@@ -229,17 +229,17 @@ function resolveYomTovCandles(
 
   // Case 2: Previous day was Shabbat (Saturday night) → Havdalah/Sortie, not candle lighting
   if (prevDayOfWeek === 6) {
-    const tzeit = previousDayStr ? getKosherTzeit(city, new Date(previousDayStr + "T12:00:00")) : undefined;
+    const havdalah = previousDayStr ? getKosherHavdalah(city, new Date(previousDayStr + "T12:00:00")) : undefined;
     return {
       lightingType: "none",
-      havdalah: tzeit,
+      havdalah,
       havdalahType: "havdalah",
     };
   }
 
   // Case 3: 2nd+ day Yom Tov (not Friday, not after Shabbat) → after Tzeit of PREVIOUS day
   if (previousDayStr) {
-    const tzeit = getKosherTzeit(city, new Date(previousDayStr + "T12:00:00"));
+    const tzeit = getKosherHavdalah(city, new Date(previousDayStr + "T12:00:00"));
     if (tzeit) {
       return {
         candles: tzeit,
