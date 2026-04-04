@@ -222,6 +222,19 @@ export function getKosherHavdalahTime(opts: { lat: number; lng: number; tz: stri
   } catch { return null; }
 }
 
+/** Fast end time at 7.08° (Consistoire standard for minor fasts) */
+export function getKosherFastEndTime(opts: { lat: number; lng: number; tz: string; name?: string; date: Date }): string | null {
+  try {
+    if (!isValidCoords(opts.lat, opts.lng)) return null;
+    const geo = new GeoLocation(opts.name || "Location", opts.lat, opts.lng, 0, opts.tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(opts.date);
+    const tzeit = czc.getSunsetOffsetByDegrees(ANGLE_TZEIT_FAST);
+    if (!tzeit) return null;
+    return fmtTime(tzeit, opts.tz);
+  } catch { return null; }
+}
+
 /** Convert kosher-zmanim result (Luxon or Date) to JS Date */
 function toJsDate(dt: unknown): Date | null {
   if (!dt) return null;
