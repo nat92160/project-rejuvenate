@@ -288,9 +288,9 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
         candlesByDate[dateKey] = kosherCandle || fmtTime((ev as any).eventTime || greg);
       }
       if (desc.startsWith('Havdalah')) {
-        // Use kosher-zmanim: Tzeit at 7.08°
-        const kosherTzeit = getKosherTzeit(city, greg);
-        havdalahByDate[dateKey] = kosherTzeit || fmtTime((ev as any).eventTime || greg);
+        // Use kosher-zmanim: 8.5° for Shabbat/YomTov Havdalah (standard Consistoire)
+        const kosherHavdalah = getKosherHavdalah(city, greg);
+        havdalahByDate[dateKey] = kosherHavdalah || fmtTime((ev as any).eventTime || greg);
       }
     }
 
