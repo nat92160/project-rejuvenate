@@ -5,7 +5,8 @@ import { ZmanItem } from "./hebcal";
 // Angles conformes au standard Consistoire de France
 const ANGLE_ALOT = 106.1;       // 90 + 16.1° — Aube halakhique
 const ANGLE_MISHEYAKIR = 101.0; // 90 + 11.0° — Reconnaissance bleu/blanc
-const ANGLE_TZEIT = 98.5;       // 90 + 8.5°  — Sortie des étoiles (Consistoire)
+const ANGLE_TZEIT = 98.5;       // 90 + 8.5°  — Sortie des étoiles / Havdalah (Consistoire)
+const ANGLE_TZEIT_FAST = 97.08; // 90 + 7.08° — Fin des jeûnes mineurs (Consistoire)
 const ANGLE_TZEIT_RT = 106.1;   // 90 + 16.1° — Rabénou Tam
 
 // ─── Helper ───
