@@ -160,7 +160,7 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
       }
 
       if (desc.startsWith('Havdalah')) {
-        // Use kosher-zmanim: Tzeit HaKokhavim at 7.08° for halakhic precision
+        // Use kosher-zmanim: Tzeit HaKokhavim at 8.5° (standard Consistoire)
         const kosherTime = getKosherTzeitDate(city, greg);
         havdalahEvents.push({ greg, time: kosherTime || (ev as any).eventTime || greg });
       }
