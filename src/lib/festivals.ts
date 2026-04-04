@@ -124,13 +124,13 @@ function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Get Tzeit HaKokhavim at 7.08° — used for FASTS only */
+/** Get Tzeit HaKokhavim at 8.5° (standard Consistoire) — used for fasts */
 function getKosherTzeit(city: CityConfig, dt: Date): string | undefined {
   try {
     const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
     const czc = new ComplexZmanimCalendar(geo);
     czc.setDate(dt);
-    const tzeit = czc.getSunsetOffsetByDegrees(97.08); // 90 + 7.08°
+    const tzeit = czc.getSunsetOffsetByDegrees(98.5); // 90 + 8.5°
     if (tzeit) return fmtTimeKosher(tzeit, city.tz);
   } catch { /* silent */ }
   return undefined;
@@ -413,7 +413,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
             czc.setDate(dt);
             const alot = czc.getSunriseOffsetByDegrees(106.1); // 16.1°
             if (alot) fastStart = fmtTimeKosher(alot, city.tz);
-            const tzeit = czc.getSunsetOffsetByDegrees(97.08); // 7.08°
+            const tzeit = czc.getSunsetOffsetByDegrees(98.5); // 8.5° (standard Consistoire)
             if (tzeit) fastEnd = fmtTimeKosher(tzeit, city.tz);
           } catch { /* silent */ }
         } else {
