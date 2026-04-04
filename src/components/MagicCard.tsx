@@ -57,7 +57,7 @@ function getFastEndTime(city: { name: string; lat: number; lng: number; tz: stri
     const czc = new ComplexZmanimCalendar(geo);
     czc.setDate(date);
 
-    return fmtTime(czc.getSunsetOffsetByDegrees(98.5));
+    return fmtTime(czc.getSunsetOffsetByDegrees(97.08));
   } catch {
     return null;
   }

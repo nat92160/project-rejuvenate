@@ -5,7 +5,8 @@ import { ZmanItem } from "./hebcal";
 // Angles conformes au standard Consistoire de France
 const ANGLE_ALOT = 106.1;       // 90 + 16.1° — Aube halakhique
 const ANGLE_MISHEYAKIR = 101.0; // 90 + 11.0° — Reconnaissance bleu/blanc
-const ANGLE_TZEIT = 98.5;       // 90 + 8.5°  — Sortie des étoiles (Consistoire)
+const ANGLE_TZEIT = 98.5;       // 90 + 8.5°  — Sortie des étoiles / Havdalah (Consistoire)
+const ANGLE_TZEIT_FAST = 97.08; // 90 + 7.08° — Fin des jeûnes mineurs (Consistoire)
 const ANGLE_TZEIT_RT = 106.1;   // 90 + 16.1° — Rabénou Tam
 
 // ─── Helper ───
@@ -216,6 +217,19 @@ export function getKosherHavdalahTime(opts: { lat: number; lng: number; tz: stri
     const czc = new ComplexZmanimCalendar(geo);
     czc.setDate(opts.date);
     const tzeit = czc.getSunsetOffsetByDegrees(ANGLE_TZEIT);
+    if (!tzeit) return null;
+    return fmtTime(tzeit, opts.tz);
+  } catch { return null; }
+}
+
+/** Fast end time at 7.08° (Consistoire standard for minor fasts) */
+export function getKosherFastEndTime(opts: { lat: number; lng: number; tz: string; name?: string; date: Date }): string | null {
+  try {
+    if (!isValidCoords(opts.lat, opts.lng)) return null;
+    const geo = new GeoLocation(opts.name || "Location", opts.lat, opts.lng, 0, opts.tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(opts.date);
+    const tzeit = czc.getSunsetOffsetByDegrees(ANGLE_TZEIT_FAST);
     if (!tzeit) return null;
     return fmtTime(tzeit, opts.tz);
   } catch { return null; }
