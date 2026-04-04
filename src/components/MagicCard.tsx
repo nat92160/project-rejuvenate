@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { ComplexZmanimCalendar, GeoLocation } from "kosher-zmanim";
 import { useCity } from "@/hooks/useCity";
 import { fetchZmanim, fetchShabbatTimes, fetchMinhaTime, type ZmanItem, type ShabbatTimes } from "@/lib/hebcal";
 import { HebrewCalendar, Zmanim as HebcalZmanim, flags } from "@hebcal/core";
@@ -30,9 +31,36 @@ function getCardMode(city: any): CardMode {
   return "evening";
 }
 
-function fmtTime(d: Date | null | undefined): string {
-  if (!d || isNaN(d.getTime())) return "--:--";
+function fmtTime(d: unknown): string {
+  if (!d) return "--:--";
+
+  if (typeof d === "object" && d !== null) {
+    const maybeLuxon = d as { toJSDate?: () => Date };
+    if (typeof maybeLuxon.toJSDate === "function") {
+      const jsDate = maybeLuxon.toJSDate();
+      if (isNaN(jsDate.getTime())) return "--:--";
+      return jsDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    }
+  }
+
+  if (!(d instanceof Date) || isNaN(d.getTime())) return "--:--";
   return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function getFastEndTime(city: { name: string; lat: number; lng: number; tz: string }, date: Date): string | null {
+  try {
+    if ((city.lat === 0 && city.lng === 0) || !Number.isFinite(city.lat) || !Number.isFinite(city.lng)) {
+      return null;
+    }
+
+    const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(date);
+
+    return fmtTime(czc.getSunsetOffsetByDegrees(98.5));
+  } catch {
+    return null;
+  }
 }
 
 interface MagicCardProps {
@@ -69,9 +97,7 @@ const MagicCard = ({ onNavigate }: MagicCardProps) => {
     if (m === "fast") {
       try {
         const now = new Date();
-        const location = cityToLocation(city);
-        const z = new HebcalZmanim(location, now, false);
-        setFastEnd(fmtTime(z.tzeit()));
+        setFastEnd(getFastEndTime(city, now));
         const events = HebrewCalendar.calendar({ start: now, end: now, il: city.country === "IL" });
         for (const ev of events) {
           if (ev.getFlags() & (flags.MAJOR_FAST | flags.MINOR_FAST)) {
