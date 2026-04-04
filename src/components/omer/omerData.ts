@@ -47,6 +47,23 @@ export function getOmerBlessing(day: number): { hebrew: string; phonetic: string
 export function getTodayOmerDay(): number | null {
   try {
     const now = new Date();
+    const hour = now.getHours();
+
+    // After 17h (safe margin before any sunset in France/Israel),
+    // the user needs tonight's count → use tomorrow's Gregorian date
+    if (hour >= 17) {
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const events = HebrewCalendar.calendar({ start: tomorrow, end: tomorrow, omer: true });
+      for (const ev of events) {
+        if (ev.getFlags() & flags.OMER_COUNT) {
+          const match = ev.getDesc().match(/(\d+)/);
+          if (match) return parseInt(match[1]);
+        }
+      }
+    }
+
+    // Daytime: show today's omer (already counted last night)
     const events = HebrewCalendar.calendar({ start: now, end: now, omer: true });
     for (const ev of events) {
       if (ev.getFlags() & flags.OMER_COUNT) {
