@@ -1,4 +1,5 @@
 import { HebrewCalendar, Location, Zmanim as HebcalZmanim, HDate, flags } from '@hebcal/core';
+import { ComplexZmanimCalendar, GeoLocation } from 'kosher-zmanim';
 import { CityConfig } from './cities';
 
 // ─── Helper ───
