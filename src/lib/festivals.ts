@@ -124,13 +124,25 @@ function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Get Tzeit HaKokhavim at 7.08° using kosher-zmanim for halakhic precision */
+/** Get Tzeit HaKokhavim at 7.08° — used for FASTS only */
 function getKosherTzeit(city: CityConfig, dt: Date): string | undefined {
   try {
     const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
     const czc = new ComplexZmanimCalendar(geo);
     czc.setDate(dt);
     const tzeit = czc.getSunsetOffsetByDegrees(97.08); // 90 + 7.08°
+    if (tzeit) return fmtTimeKosher(tzeit, city.tz);
+  } catch { /* silent */ }
+  return undefined;
+}
+
+/** Get Havdalah at 8.5° — used for Shabbat & Yom Tov (standard Consistoire) */
+function getKosherHavdalah(city: CityConfig, dt: Date): string | undefined {
+  try {
+    const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(dt);
+    const tzeit = czc.getSunsetOffsetByDegrees(98.5); // 90 + 8.5°
     if (tzeit) return fmtTimeKosher(tzeit, city.tz);
   } catch { /* silent */ }
   return undefined;
