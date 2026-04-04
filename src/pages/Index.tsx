@@ -73,7 +73,11 @@ const ShabbatCountdownBanner = () => {
   const [candleTime, setCandleTime] = useState<string | null>(null);
 
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let cancelled = false;
+
     fetchShabbatTimes(city).then((data) => {
+      if (cancelled) return;
       if (!data?.candleLightingDateTime) return;
       setCandleTime(data.candleLighting);
 
@@ -94,9 +98,13 @@ const ShabbatCountdownBanner = () => {
       };
 
       update();
-      const id = setInterval(update, 30000);
-      return () => clearInterval(id);
+      intervalId = setInterval(update, 30000);
     });
+
+    return () => {
+      cancelled = true;
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [city]);
 
   if (!timeLeft) return null;

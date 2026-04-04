@@ -119,14 +119,32 @@ export function CityProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Prevent double-tap while already geolocating
+    if (isGeolocating) return;
+
     setIsGeolocating(true);
     setLocationError(null);
 
+    // Safety timeout: if GPS never responds, unlock the button after 25s
+    const safetyTimer = setTimeout(() => {
+      setIsGeolocating(false);
+      setLocationError("La localisation a pris trop de temps. Réessayez.");
+    }, 25000);
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        clearTimeout(safetyTimer);
         const { latitude, longitude, accuracy, altitude: gpsAltitude } = position.coords;
         const baseCity = getNearestBaseCity(latitude, longitude);
-        const realCityName = await reverseGeocode(latitude, longitude);
+
+        let realCityName: string | null = null;
+        try {
+          realCityName = await Promise.race([
+            reverseGeocode(latitude, longitude),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+          ]);
+        } catch { /* use fallback */ }
+
         const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || baseCity.tz;
 
         const resolvedAltitude = (gpsAltitude && Number.isFinite(gpsAltitude) && gpsAltitude > 0)
@@ -158,6 +176,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
         setIsGeolocating(false);
       },
       (error) => {
+        clearTimeout(safetyTimer);
         setLocationError(getGeolocationErrorMessage(error));
         setIsGeolocating(false);
       },
