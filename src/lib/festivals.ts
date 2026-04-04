@@ -124,13 +124,25 @@ function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Get Tzeit HaKokhavim at 7.08° using kosher-zmanim for halakhic precision */
+/** Get Tzeit HaKokhavim at 7.08° — used for FASTS only */
 function getKosherTzeit(city: CityConfig, dt: Date): string | undefined {
   try {
     const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
     const czc = new ComplexZmanimCalendar(geo);
     czc.setDate(dt);
     const tzeit = czc.getSunsetOffsetByDegrees(97.08); // 90 + 7.08°
+    if (tzeit) return fmtTimeKosher(tzeit, city.tz);
+  } catch { /* silent */ }
+  return undefined;
+}
+
+/** Get Havdalah at 8.5° — used for Shabbat & Yom Tov (standard Consistoire) */
+function getKosherHavdalah(city: CityConfig, dt: Date): string | undefined {
+  try {
+    const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(dt);
+    const tzeit = czc.getSunsetOffsetByDegrees(98.5); // 90 + 8.5°
     if (tzeit) return fmtTimeKosher(tzeit, city.tz);
   } catch { /* silent */ }
   return undefined;
@@ -217,17 +229,17 @@ function resolveYomTovCandles(
 
   // Case 2: Previous day was Shabbat (Saturday night) → Havdalah/Sortie, not candle lighting
   if (prevDayOfWeek === 6) {
-    const tzeit = previousDayStr ? getKosherTzeit(city, new Date(previousDayStr + "T12:00:00")) : undefined;
+    const havdalah = previousDayStr ? getKosherHavdalah(city, new Date(previousDayStr + "T12:00:00")) : undefined;
     return {
       lightingType: "none",
-      havdalah: tzeit,
+      havdalah,
       havdalahType: "havdalah",
     };
   }
 
   // Case 3: 2nd+ day Yom Tov (not Friday, not after Shabbat) → after Tzeit of PREVIOUS day
   if (previousDayStr) {
-    const tzeit = getKosherTzeit(city, new Date(previousDayStr + "T12:00:00"));
+    const tzeit = getKosherHavdalah(city, new Date(previousDayStr + "T12:00:00"));
     if (tzeit) {
       return {
         candles: tzeit,
@@ -276,9 +288,9 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
         candlesByDate[dateKey] = kosherCandle || fmtTime((ev as any).eventTime || greg);
       }
       if (desc.startsWith('Havdalah')) {
-        // Use kosher-zmanim: Tzeit at 7.08°
-        const kosherTzeit = getKosherTzeit(city, greg);
-        havdalahByDate[dateKey] = kosherTzeit || fmtTime((ev as any).eventTime || greg);
+        // Use kosher-zmanim: 8.5° for Shabbat/YomTov Havdalah (standard Consistoire)
+        const kosherHavdalah = getKosherHavdalah(city, greg);
+        havdalahByDate[dateKey] = kosherHavdalah || fmtTime((ev as any).eventTime || greg);
       }
     }
 

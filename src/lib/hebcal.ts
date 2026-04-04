@@ -231,14 +231,14 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
 
 // ─── Kosher-zmanim helpers for Shabbat ───
 
-/** Get Tzeit HaKokhavim at 7.08° as a JS Date */
+/** Get Havdalah time at 8.5° (standard Consistoire for Shabbat/YomTov) as a JS Date */
 function getKosherTzeitDate(city: CityConfig, dt: Date): Date | null {
   try {
     if ((city.lat === 0 && city.lng === 0) || !Number.isFinite(city.lat) || !Number.isFinite(city.lng)) return null;
     const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
     const czc = new ComplexZmanimCalendar(geo);
     czc.setDate(dt);
-    const tzeit = czc.getSunsetOffsetByDegrees(97.08); // 90 + 7.08°
+    const tzeit = czc.getSunsetOffsetByDegrees(98.5); // 90 + 8.5° for Havdalah
     if (!tzeit) return null;
     if (typeof tzeit === 'object' && tzeit !== null && 'toJSDate' in tzeit) {
       return (tzeit as any).toJSDate();
