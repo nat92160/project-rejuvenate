@@ -1,4 +1,5 @@
 import { HebrewCalendar, Location, Zmanim as HebcalZmanim, HDate, flags } from '@hebcal/core';
+import { ComplexZmanimCalendar, GeoLocation } from 'kosher-zmanim';
 import { CityConfig } from './cities';
 
 // ─── Helper ───
@@ -153,11 +154,15 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
       const flagsValue = ev.getFlags();
 
       if (desc === 'Candle lighting') {
-        candleEvents.push({ greg, time: (ev as any).eventTime || greg });
+        // Use kosher-zmanim: sunset - candleOffset for precision
+        const kosherTime = getKosherCandleLightingDate(city, greg);
+        candleEvents.push({ greg, time: kosherTime || (ev as any).eventTime || greg });
       }
 
       if (desc.startsWith('Havdalah')) {
-        havdalahEvents.push({ greg, time: (ev as any).eventTime || greg });
+        // Use kosher-zmanim: Tzeit HaKokhavim at 7.08° for halakhic precision
+        const kosherTime = getKosherTzeitDate(city, greg);
+        havdalahEvents.push({ greg, time: kosherTime || (ev as any).eventTime || greg });
       }
 
       if (flagsValue & flags.PARSHA_HASHAVUA) {
@@ -222,6 +227,43 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
   } catch {
     return null;
   }
+}
+
+// ─── Kosher-zmanim helpers for Shabbat ───
+
+/** Get Tzeit HaKokhavim at 7.08° as a JS Date */
+function getKosherTzeitDate(city: CityConfig, dt: Date): Date | null {
+  try {
+    if ((city.lat === 0 && city.lng === 0) || !Number.isFinite(city.lat) || !Number.isFinite(city.lng)) return null;
+    const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(dt);
+    const tzeit = czc.getSunsetOffsetByDegrees(97.08); // 90 + 7.08°
+    if (!tzeit) return null;
+    if (typeof tzeit === 'object' && tzeit !== null && 'toJSDate' in tzeit) {
+      return (tzeit as any).toJSDate();
+    }
+    if (tzeit instanceof Date) return tzeit;
+  } catch { /* silent */ }
+  return null;
+}
+
+/** Get candle lighting = sunset - candleOffset as a JS Date */
+function getKosherCandleLightingDate(city: CityConfig, dt: Date): Date | null {
+  try {
+    if ((city.lat === 0 && city.lng === 0) || !Number.isFinite(city.lat) || !Number.isFinite(city.lng)) return null;
+    const geo = new GeoLocation(city.name, city.lat, city.lng, 0, city.tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(dt);
+    const sunset = czc.getSunset();
+    if (!sunset) return null;
+    const sunsetDate = (typeof sunset === 'object' && sunset !== null && 'toJSDate' in sunset)
+      ? (sunset as any).toJSDate()
+      : sunset instanceof Date ? sunset : null;
+    if (!sunsetDate || isNaN(sunsetDate.getTime())) return null;
+    return new Date(sunsetDate.getTime() - city.candleOffset * 60000);
+  } catch { /* silent */ }
+  return null;
 }
 
 // ─── Zmanim (offline) ───
