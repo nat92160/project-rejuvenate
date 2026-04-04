@@ -32,7 +32,7 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
     const data = await response.json();
     const address = data.address || {};
 
-    return address.city || address.municipality || address.town || address.village || address.county || null;
+    return address.town || address.city || address.village || address.municipality || address.county || null;
   } catch {
     return null;
   }
