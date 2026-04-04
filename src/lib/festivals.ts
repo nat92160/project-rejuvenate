@@ -413,8 +413,7 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
             czc.setDate(dt);
             const alot = czc.getSunriseOffsetByDegrees(106.1); // 16.1°
             if (alot) fastStart = fmtTimeKosher(alot, city.tz);
-            const tzeit = czc.getSunsetOffsetByDegrees(98.5); // 8.5° (standard Consistoire)
-            if (tzeit) fastEnd = fmtTimeKosher(tzeit, city.tz);
+            fastEnd = getKosherTzeit(city, dt);
           } catch { /* silent */ }
         } else {
           fastStart = candlesByDate[dateStr];
