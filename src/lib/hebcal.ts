@@ -152,15 +152,16 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
       const desc = ev.getDesc();
       const greg = ev.getDate().greg();
       const flagsValue = ev.getFlags();
+      const dayOfWeek = greg.getDay();
 
-      if (desc === 'Candle lighting') {
-        // Use kosher-zmanim: sunset - candleOffset for precision
+      // Only keep FRIDAY candle lightings (Shabbat), skip Yom Tov
+      if (desc === 'Candle lighting' && dayOfWeek === 5) {
         const kosherTime = getKosherCandleLightingDate(city, greg);
         candleEvents.push({ greg, time: kosherTime || (ev as any).eventTime || greg });
       }
 
-      if (desc.startsWith('Havdalah')) {
-        // Use kosher-zmanim: Tzeit HaKokhavim at 8.5° (standard Consistoire)
+      // Only keep SATURDAY havdalah (Shabbat), skip Yom Tov
+      if (desc.startsWith('Havdalah') && dayOfWeek === 6) {
         const kosherTime = getKosherTzeitDate(city, greg);
         havdalahEvents.push({ greg, time: kosherTime || (ev as any).eventTime || greg });
       }
