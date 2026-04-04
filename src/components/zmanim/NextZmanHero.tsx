@@ -13,10 +13,42 @@ function timeToMinutes(time: string): number | null {
   return h * 60 + m;
 }
 
+type TimeOfDay = "morning" | "afternoon" | "evening";
+
+function getTimeOfDay(min: number): TimeOfDay {
+  if (min < 720) return "morning";
+  if (min < 1080) return "afternoon";
+  return "evening";
+}
+
+const STYLES: Record<TimeOfDay, { bg: string; border: string; shadow: string; accent: string; sub: string }> = {
+  morning: {
+    bg: "linear-gradient(135deg, hsl(45 80% 60% / 0.12), hsl(35 70% 65% / 0.06))",
+    border: "hsl(var(--gold) / 0.25)",
+    shadow: "0 4px 20px hsl(var(--gold) / 0.1)",
+    accent: "hsl(var(--gold-matte))",
+    sub: "hsl(var(--gold) / 0.8)",
+  },
+  afternoon: {
+    bg: "linear-gradient(135deg, hsl(30 70% 55% / 0.12), hsl(25 60% 60% / 0.06))",
+    border: "hsl(30 60% 50% / 0.25)",
+    shadow: "0 4px 20px hsl(30 60% 40% / 0.1)",
+    accent: "hsl(30 70% 45%)",
+    sub: "hsl(30 50% 50%)",
+  },
+  evening: {
+    bg: "linear-gradient(135deg, hsl(220 40% 25% / 0.12), hsl(250 35% 30% / 0.08))",
+    border: "hsl(220 40% 50% / 0.2)",
+    shadow: "0 4px 20px hsl(220 40% 30% / 0.1)",
+    accent: "hsl(220 60% 70%)",
+    sub: "hsl(220 40% 60%)",
+  },
+};
+
 const NextZmanHero = ({ zmanim, isToday }: NextZmanHeroProps) => {
   const [countdown, setCountdown] = useState("");
   const [nextZman, setNextZman] = useState<ZmanItem | null>(null);
-  const [isEvening, setIsEvening] = useState(false);
+  const [tod, setTod] = useState<TimeOfDay>("morning");
 
   useEffect(() => {
     if (!isToday || zmanim.length === 0) {
@@ -28,7 +60,6 @@ const NextZmanHero = ({ zmanim, isToday }: NextZmanHeroProps) => {
       const now = new Date();
       const currentMin = now.getHours() * 60 + now.getMinutes();
 
-      // Find next zman
       let found: ZmanItem | null = null;
       for (const z of zmanim) {
         const min = timeToMinutes(z.time);
@@ -47,9 +78,8 @@ const NextZmanHero = ({ zmanim, isToday }: NextZmanHeroProps) => {
 
       setNextZman(found);
       const targetMin = timeToMinutes(found.time)!;
-      setIsEvening(targetMin > (12 * 60 + 30) && (found.label.includes("Chkia") || found.label.includes("Tsét") || found.label.includes("Pélag") || found.label.includes("Min'ha")));
+      setTod(getTimeOfDay(targetMin));
 
-      // Countdown
       const target = new Date(now);
       const [h, m] = found.time.split(":").map(Number);
       target.setHours(h, m, 0, 0);
@@ -75,21 +105,17 @@ const NextZmanHero = ({ zmanim, isToday }: NextZmanHeroProps) => {
 
   if (!nextZman || !isToday) return null;
 
+  const s = STYLES[tod];
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={nextZman.label}
         className="rounded-xl p-4 mb-4 border"
         style={{
-          background: isEvening
-            ? "linear-gradient(135deg, hsl(220 40% 25% / 0.12), hsl(250 35% 30% / 0.08))"
-            : "linear-gradient(135deg, hsl(45 80% 60% / 0.12), hsl(35 70% 65% / 0.06))",
-          borderColor: isEvening
-            ? "hsl(220 40% 50% / 0.2)"
-            : "hsl(var(--gold) / 0.25)",
-          boxShadow: isEvening
-            ? "0 4px 20px hsl(220 40% 30% / 0.1)"
-            : "0 4px 20px hsl(var(--gold) / 0.1)",
+          background: s.bg,
+          borderColor: s.border,
+          boxShadow: s.shadow,
         }}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -107,10 +133,10 @@ const NextZmanHero = ({ zmanim, isToday }: NextZmanHeroProps) => {
             <div className="text-[11px] text-muted-foreground mt-0.5">{nextZman.description}</div>
           </div>
           <div className="text-right">
-            <div className="text-xl font-extrabold font-display tabular-nums" style={{ color: isEvening ? "hsl(220 60% 70%)" : "hsl(var(--gold-matte))" }}>
+            <div className="text-xl font-extrabold font-display tabular-nums" style={{ color: s.accent }}>
               {nextZman.time}
             </div>
-            <div className="text-xs font-bold tabular-nums mt-0.5" style={{ color: isEvening ? "hsl(220 40% 60%)" : "hsl(var(--gold) / 0.8)" }}>
+            <div className="text-xs font-bold tabular-nums mt-0.5" style={{ color: s.sub }}>
               dans {countdown}
             </div>
           </div>

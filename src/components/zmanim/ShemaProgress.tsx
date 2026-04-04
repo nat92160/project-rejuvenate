@@ -22,10 +22,14 @@ const ShemaProgress = ({ zmanim, isToday }: ShemaProgressProps) => {
     return () => clearInterval(id);
   }, [isToday]);
 
+  // Find the first Chéma item (which is the selected method's — principal)
   const shemaItem = useMemo(() => {
-    // Find the GRA Shema (priority) or MGA
-    return zmanim.find(z => z.label.includes('Chéma') && z.label.includes('GR"A'))
-      || zmanim.find(z => z.label.includes('Chéma'));
+    return zmanim.find(z => z.label.includes('Chéma'));
+  }, [zmanim]);
+
+  // Find Alot for the start of the window
+  const alotItem = useMemo(() => {
+    return zmanim.find(z => z.label.includes("Alot"));
   }, [zmanim]);
 
   if (!isToday || !shemaItem) return null;
@@ -33,34 +37,31 @@ const ShemaProgress = ({ zmanim, isToday }: ShemaProgressProps) => {
   const shemaMin = timeToMinutes(shemaItem.time);
   if (shemaMin === null) return null;
 
+  const alotMin = alotItem ? timeToMinutes(alotItem.time) : null;
   const currentMin = now.getHours() * 60 + now.getMinutes();
 
-  // Only show before Shema time and after Alot (roughly 4:30 AM)
-  if (currentMin >= shemaMin || currentMin < 270) return null;
+  // Only show between Alot and Sof Zman Chéma
+  const windowStart = alotMin ?? (shemaMin - 180);
+  if (currentMin >= shemaMin || currentMin < windowStart) return null;
 
-  // Find sunrise for reference
-  const sunriseItem = zmanim.find(z => z.label.includes("Nets"));
-  const sunriseMin = sunriseItem ? timeToMinutes(sunriseItem.time) || (shemaMin - 180) : (shemaMin - 180);
-
-  const totalWindow = shemaMin - sunriseMin;
-  const elapsed = currentMin - sunriseMin;
+  const totalWindow = shemaMin - windowStart;
+  const elapsed = currentMin - windowStart;
   const remaining = shemaMin - currentMin;
   const progress = Math.max(0, Math.min(1, elapsed / totalWindow));
 
-  // Color based on urgency
   let barColor = "hsl(142 60% 45%)"; // green
-  let label = `${remaining} min restantes`;
+  let label = `Il reste ${remaining} min pour le Chéma`;
 
   if (remaining <= 10) {
     barColor = "hsl(0 75% 50%)"; // red
     label = `⚠️ ${remaining} min — Imminent !`;
   } else if (remaining <= 30) {
     barColor = "hsl(35 90% 50%)"; // orange
-    label = `⏳ ${remaining} min restantes`;
+    label = `⏳ Il reste ${remaining} min`;
   }
 
   return (
-    <div className="px-1 mt-1 mb-1">
+    <div className="px-1 mt-1 mb-3">
       <div className="flex items-center justify-between mb-1">
         <span className="text-[10px] font-semibold text-muted-foreground">📖 Chéma avant {shemaItem.time}</span>
         <span className="text-[10px] font-bold" style={{ color: barColor }}>{label}</span>
