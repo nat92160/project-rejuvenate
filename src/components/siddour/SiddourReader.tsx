@@ -155,6 +155,17 @@ const SiddourReader = ({
         </button>
       </div>
 
+      {/* Liturgical context bar for Amida sections */}
+      {showAmidaContext && (
+        <div className="mb-4">
+          <LiturgicalContextBar
+            context={litContext}
+            onContextChange={setLitContext}
+            prayerMode={prayerMode}
+          />
+        </div>
+      )}
+
       {/* View mode selector */}
       <div className="mb-4">
         <ViewModeSelector mode={viewMode} onModeChange={onViewModeChange} loading={translitLoading} prayerMode={prayerMode} />
