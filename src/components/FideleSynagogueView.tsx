@@ -400,7 +400,7 @@ const FideleSynagogueView = () => {
                     }
                     title={syna.isSubscribed ? "Se désabonner" : "S'abonner"}
                   >
-                    {subscribing === syna.id ? "…" : syna.isSubscribed ? "🔔" : "🔕"}
+                    {subscribing === syna.id ? "…" : syna.isSubscribed ? "⭐" : "☆"}
                   </button>
                 </div>
               </motion.div>
