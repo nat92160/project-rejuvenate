@@ -48,11 +48,12 @@ function findPrayerStartIndex(hebrew: string[]): number {
 
 
 interface SectionContent {
-  hebrew: string[];
-  french: string[];
+  hebrew?: string[];
+  french?: string[];
   title: string;
   heTitle: string;
   isHazara?: boolean;
+  phonetic?: string[];
 }
 
 interface SiddourReaderProps {
@@ -214,7 +215,7 @@ const SiddourReader = ({
             >
               {(() => {
                 let verseNum = 0;
-                return content.hebrew.map((verse, i) => {
+                return (content.hebrew || []).map((verse, i) => {
                   const isPrayerStart = i === prayerStartIdx;
                   const isPrelude = i < prayerStartIdx;
 
@@ -319,7 +320,7 @@ const SiddourReader = ({
                 (() => {
                   let verseNum = 0;
                   let firstFound = false;
-                  return content.hebrew.map((verse, i) => {
+                  return (content.hebrew || []).map((verse, i) => {
                     if (isInstructionOnly(verse)) return null;
                     verseNum++;
                     if (!transliterations[i]) return null;
