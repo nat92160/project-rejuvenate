@@ -18,11 +18,8 @@ function base64urlToUint8Array(base64url: string): Uint8Array {
 // Import ECDSA key from raw private key bytes
 async function importPrivateKey(base64url: string): Promise<CryptoKey> {
   const raw = base64urlToUint8Array(base64url);
-
-  // Build JWK from raw 32-byte private key
   const pubKeyBase64url = Deno.env.get("VAPID_PUBLIC_KEY")!;
   const pubRaw = base64urlToUint8Array(pubKeyBase64url);
-  // pubRaw is 65 bytes uncompressed point (04 || x || y)
   const x = pubRaw.slice(1, 33);
   const y = pubRaw.slice(33, 65);
 
@@ -76,7 +73,6 @@ async function createVapidJwt(
     new TextEncoder().encode(unsignedToken)
   );
 
-  // Convert DER signature to raw r||s (64 bytes)
   const sigBytes = new Uint8Array(sig);
   let r: Uint8Array, s: Uint8Array;
 
@@ -84,7 +80,6 @@ async function createVapidJwt(
     r = sigBytes.slice(0, 32);
     s = sigBytes.slice(32, 64);
   } else {
-    // DER format
     let offset = 2;
     const rLen = sigBytes[offset + 1];
     offset += 2;
@@ -94,7 +89,6 @@ async function createVapidJwt(
     offset += 2;
     s = sigBytes.slice(offset, offset + sLen);
 
-    // Trim leading zeros and pad to 32 bytes
     if (r.length > 32) r = r.slice(r.length - 32);
     if (s.length > 32) s = s.slice(s.length - 32);
     if (r.length < 32) {
@@ -158,7 +152,6 @@ async function encryptPayload(
 
   const salt = crypto.getRandomValues(new Uint8Array(16));
 
-  // HKDF helpers
   async function hkdfExtract(salt: Uint8Array, ikm: Uint8Array): Promise<Uint8Array> {
     const key = await crypto.subtle.importKey("raw", salt, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
     return new Uint8Array(await crypto.subtle.sign("HMAC", key, ikm));
@@ -185,8 +178,6 @@ async function encryptPayload(
   }
 
   const encoder = new TextEncoder();
-
-  // IKM
   const authInfo = concatUint8(
     encoder.encode("WebPush: info\0"),
     userPublicKeyRaw,
@@ -195,14 +186,12 @@ async function encryptPayload(
   const prk = await hkdfExtract(authSecret, sharedSecret);
   const ikm = await hkdfExpand(prk, authInfo, 32);
 
-  // Content encryption key and nonce
   const prkFinal = await hkdfExtract(salt, ikm);
   const cekInfo = concatUint8(encoder.encode("Content-Encoding: aes128gcm\0"));
   const nonceInfo = concatUint8(encoder.encode("Content-Encoding: nonce\0"));
   const cek = await hkdfExpand(prkFinal, cekInfo, 16);
   const nonce = await hkdfExpand(prkFinal, nonceInfo, 12);
 
-  // Pad payload (add delimiter byte 0x02)
   const paddedPayload = concatUint8(payload, new Uint8Array([2]));
 
   const encKey = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
@@ -213,8 +202,6 @@ async function encryptPayload(
   );
 
   const encrypted = new Uint8Array(encryptedBuf);
-
-  // Build the aes128gcm content coding header + ciphertext
   const rs = 4096;
   const header = new Uint8Array(16 + 4 + 1 + localPublicKey.length);
   header.set(salt, 0);
@@ -227,6 +214,135 @@ async function encryptPayload(
     salt,
     localPublicKey,
   };
+}
+
+// ─── APNs JWT for native push ─────────────────────────────
+async function createApnsJwt(): Promise<string | null> {
+  const keyId = Deno.env.get("APNS_KEY_ID");
+  const teamId = Deno.env.get("APNS_TEAM_ID");
+  const authKeyBase64 = Deno.env.get("APNS_AUTH_KEY_BASE64");
+
+  if (!keyId || !teamId || !authKeyBase64) {
+    return null;
+  }
+
+  // Decode the .p8 key from base64
+  const pemContent = atob(authKeyBase64);
+  const pemLines = pemContent.split("\n").filter(
+    (l) => !l.startsWith("-----") && l.trim() !== ""
+  );
+  const keyBase64 = pemLines.join("");
+  const keyData = Uint8Array.from(atob(keyBase64), (c) => c.charCodeAt(0));
+
+  const privateKey = await crypto.subtle.importKey(
+    "pkcs8",
+    keyData,
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign"]
+  );
+
+  const header = { alg: "ES256", kid: keyId };
+  const now = Math.floor(Date.now() / 1000);
+  const claims = { iss: teamId, iat: now };
+
+  const encode = (obj: unknown) =>
+    btoa(JSON.stringify(obj))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+  const unsignedToken = `${encode(header)}.${encode(claims)}`;
+  const sig = await crypto.subtle.sign(
+    { name: "ECDSA", hash: "SHA-256" },
+    privateKey,
+    new TextEncoder().encode(unsignedToken)
+  );
+
+  const sigBytes = new Uint8Array(sig);
+  let r: Uint8Array, s: Uint8Array;
+
+  if (sigBytes.length === 64) {
+    r = sigBytes.slice(0, 32);
+    s = sigBytes.slice(32, 64);
+  } else {
+    let offset = 2;
+    const rLen = sigBytes[offset + 1];
+    offset += 2;
+    r = sigBytes.slice(offset, offset + rLen);
+    offset += rLen;
+    const sLen = sigBytes[offset + 1];
+    offset += 2;
+    s = sigBytes.slice(offset, offset + sLen);
+
+    if (r.length > 32) r = r.slice(r.length - 32);
+    if (s.length > 32) s = s.slice(s.length - 32);
+    if (r.length < 32) {
+      const padded = new Uint8Array(32);
+      padded.set(r, 32 - r.length);
+      r = padded;
+    }
+    if (s.length < 32) {
+      const padded = new Uint8Array(32);
+      padded.set(s, 32 - s.length);
+      s = padded;
+    }
+  }
+
+  const rawSig = new Uint8Array(64);
+  rawSig.set(r, 0);
+  rawSig.set(s, 32);
+
+  const sigB64 = btoa(String.fromCharCode(...rawSig))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+
+  return `${unsignedToken}.${sigB64}`;
+}
+
+async function sendApnsPush(
+  deviceToken: string,
+  title: string,
+  body: string,
+  apnsJwt: string
+): Promise<boolean> {
+  const bundleId = Deno.env.get("APNS_BUNDLE_ID") || "com.chabbatchalom.app";
+  const isProduction = Deno.env.get("APNS_PRODUCTION") !== "false";
+  const host = isProduction
+    ? "https://api.push.apple.com"
+    : "https://api.sandbox.push.apple.com";
+
+  const apnsPayload = {
+    aps: {
+      alert: { title, body },
+      sound: "default",
+      badge: 1,
+    },
+  };
+
+  try {
+    const res = await fetch(`${host}/3/device/${deviceToken}`, {
+      method: "POST",
+      headers: {
+        authorization: `bearer ${apnsJwt}`,
+        "apns-topic": bundleId,
+        "apns-push-type": "alert",
+        "apns-priority": "10",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(apnsPayload),
+    });
+
+    if (res.status === 200) return true;
+    
+    const errText = await res.text();
+    console.error(`APNs error for ${deviceToken}: ${res.status} ${errText}`);
+    return false;
+  } catch (e) {
+    console.error(`APNs fetch error for ${deviceToken}:`, e);
+    return false;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -277,15 +393,23 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Separate web and native subscriptions
+    const webSubs = subs.filter((s: any) => s.push_type !== "native");
+    const nativeSubs = subs.filter((s: any) => s.push_type === "native" && s.device_token);
+
     const privateKey = await importPrivateKey(vapidPrivateKey);
+    const pushTitle = title || "Nouveau message";
+    const pushBody = body.slice(0, 200);
     const payload = new TextEncoder().encode(
-      JSON.stringify({ title: title || "Nouveau message", body: body.slice(0, 200) })
+      JSON.stringify({ title: pushTitle, body: pushBody })
     );
 
     let sent = 0;
     const staleIds: string[] = [];
 
-    for (const sub of subs) {
+    // --- Send Web Push ---
+    for (const sub of webSubs) {
+      if (!sub.endpoint || !sub.p256dh || !sub.auth) continue;
       try {
         const url = new URL(sub.endpoint);
         const audience = `${url.protocol}//${url.host}`;
@@ -313,6 +437,24 @@ Deno.serve(async (req) => {
         }
       } catch (e) {
         console.error(`Push error for ${sub.id}:`, e);
+      }
+    }
+
+    // --- Send Native Push (APNs) ---
+    if (nativeSubs.length > 0) {
+      const apnsJwt = await createApnsJwt();
+      if (apnsJwt) {
+        for (const sub of nativeSubs) {
+          const success = await sendApnsPush(
+            sub.device_token!,
+            pushTitle,
+            pushBody,
+            apnsJwt
+          );
+          if (success) sent++;
+        }
+      } else {
+        console.warn("APNs credentials not configured — skipping native push");
       }
     }
 
