@@ -140,6 +140,15 @@ const SettingsTab = () => {
           ))}
         </div>
       </div>
+
+      {/* Test push button */}
+      <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+        <h3 className="font-bold text-foreground mb-1">🧪 Test Push</h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Envoyez-vous une notification push de test pour vérifier que tout fonctionne.
+        </p>
+        <TestPushButton />
+      </div>
     </div>
   );
 };
