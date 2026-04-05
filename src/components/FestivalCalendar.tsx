@@ -445,7 +445,12 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact, isFirstDay =
   })();
 
   const candleIcon = isFast ? "⏰" : "🕯️";
-  const candleLabel = isFast ? "Début" : "Allumage";
+  const isFromExisting = day.candleLightingType === "from-existing";
+  const candleLabel = isFast
+    ? "Début"
+    : isFromExisting
+    ? "Entrée (veille au soir)"
+    : "Allumage";
   const havdalahIcon = isFast ? "✅" : "✨";
   const baseSortieLabel = isFast ? "Fin" : "Sortie";
   const havdalahLabel = isNextDay ? `${baseSortieLabel} (lendemain)` : baseSortieLabel;
