@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  isNativePlatform,
+  requestNativePushPermission,
+  registerNativePush,
+  onNativePushReceived,
+} from "@/lib/capacitorPush";
+import { toast } from "sonner";
 
 const VAPID_PUBLIC_KEY = "BPEw1AhklkYgH1yJk9BrOmGhJfxTRGNMrHPpyBnLNd13gQpl8LB6TibiN0zd9XqJqXMTin7DidhxV9-mwjdOF6M";
 
@@ -16,35 +23,67 @@ export function usePushSubscription(synagogueId: string) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const native = isNativePlatform();
 
-  // Register push service worker
+  // --- WEB: Register push service worker ---
   useEffect(() => {
+    if (native) return; // skip on native
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
       setLoading(false);
       return;
     }
-
     navigator.serviceWorker
       .register("/sw-push.js")
-      .then((reg) => {
-        setSwRegistration(reg);
-      })
+      .then((reg) => setSwRegistration(reg))
       .catch((err) => {
         console.error("SW registration failed:", err);
         setLoading(false);
       });
-  }, []);
+  }, [native]);
 
-  // Check existing subscription
+  // --- NATIVE: Listen for push notifications ---
   useEffect(() => {
-    if (!swRegistration || !user) {
+    if (!native) return;
+    onNativePushReceived((notification) => {
+      if (notification.title || notification.body) {
+        toast(notification.title || "Notification", {
+          description: notification.body,
+        });
+      }
+    });
+  }, [native]);
+
+  // --- Check existing subscription ---
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    if (native) {
+      // Check if we have a native subscription for this synagogue
+      (supabase
+        .from("push_subscriptions")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("synagogue_id", synagogueId) as any)
+        .eq("push_type", "native")
+        .maybeSingle()
+        .then(({ data }) => {
+          setIsSubscribed(!!data);
+          setLoading(false);
+        });
+      return;
+    }
+
+    // Web: check via service worker
+    if (!swRegistration) {
       setLoading(false);
       return;
     }
 
     swRegistration.pushManager.getSubscription().then((sub) => {
       if (sub) {
-        // Check if this subscription is saved for this synagogue
         const key = sub.getKey("p256dh");
         const auth = sub.getKey("auth");
         if (key && auth) {
@@ -66,10 +105,47 @@ export function usePushSubscription(synagogueId: string) {
         setLoading(false);
       }
     });
-  }, [swRegistration, user, synagogueId]);
+  }, [swRegistration, user, synagogueId, native]);
 
+  // --- SUBSCRIBE ---
   const subscribe = useCallback(async () => {
-    if (!swRegistration || !user) return false;
+    if (!user) return false;
+
+    if (native) {
+      try {
+        const granted = await requestNativePushPermission();
+        if (!granted) return false;
+
+        const deviceToken = await registerNativePush();
+
+        const { error } = await supabase.from("push_subscriptions").upsert(
+          {
+            user_id: user.id,
+            synagogue_id: synagogueId,
+            push_type: "native",
+            device_token: deviceToken,
+            endpoint: null,
+            p256dh: null,
+            auth: null,
+          } as never,
+          { onConflict: "user_id,synagogue_id" }
+        );
+
+        if (error) {
+          console.error("Native push sub save error:", error);
+          return false;
+        }
+
+        setIsSubscribed(true);
+        return true;
+      } catch (err) {
+        console.error("Native push subscribe error:", err);
+        return false;
+      }
+    }
+
+    // Web push
+    if (!swRegistration) return false;
 
     try {
       const permission = await Notification.requestPermission();
@@ -100,6 +176,8 @@ export function usePushSubscription(synagogueId: string) {
           endpoint: sub.endpoint,
           p256dh: toBase64url(key),
           auth: toBase64url(auth),
+          push_type: "web",
+          device_token: null,
         } as never,
         { onConflict: "user_id,endpoint,synagogue_id" }
       );
@@ -115,11 +193,24 @@ export function usePushSubscription(synagogueId: string) {
       console.error("Push subscribe error:", err);
       return false;
     }
-  }, [swRegistration, user, synagogueId]);
+  }, [swRegistration, user, synagogueId, native]);
 
+  // --- UNSUBSCRIBE ---
   const unsubscribe = useCallback(async () => {
-    if (!swRegistration || !user) return;
+    if (!user) return;
 
+    if (native) {
+      await (supabase
+        .from("push_subscriptions")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("synagogue_id", synagogueId) as any)
+        .eq("push_type", "native");
+      setIsSubscribed(false);
+      return;
+    }
+
+    if (!swRegistration) return;
     const sub = await swRegistration.pushManager.getSubscription();
     if (sub) {
       await supabase
@@ -129,11 +220,11 @@ export function usePushSubscription(synagogueId: string) {
         .eq("synagogue_id", synagogueId)
         .eq("endpoint", sub.endpoint);
     }
-
     setIsSubscribed(false);
-  }, [swRegistration, user, synagogueId]);
+  }, [swRegistration, user, synagogueId, native]);
 
-  const supported = "serviceWorker" in navigator && "PushManager" in window;
+  // On native, push is always "supported"
+  const supported = native || ("serviceWorker" in navigator && "PushManager" in window);
 
   return { isSubscribed, subscribe, unsubscribe, loading, supported };
 }

@@ -505,29 +505,35 @@ export type Database = {
       }
       push_subscriptions: {
         Row: {
-          auth: string
+          auth: string | null
           created_at: string
-          endpoint: string
+          device_token: string | null
+          endpoint: string | null
           id: string
-          p256dh: string
+          p256dh: string | null
+          push_type: string
           synagogue_id: string
           user_id: string
         }
         Insert: {
-          auth: string
+          auth?: string | null
           created_at?: string
-          endpoint: string
+          device_token?: string | null
+          endpoint?: string | null
           id?: string
-          p256dh: string
+          p256dh?: string | null
+          push_type?: string
           synagogue_id: string
           user_id: string
         }
         Update: {
-          auth?: string
+          auth?: string | null
           created_at?: string
-          endpoint?: string
+          device_token?: string | null
+          endpoint?: string | null
           id?: string
-          p256dh?: string
+          p256dh?: string | null
+          push_type?: string
           synagogue_id?: string
           user_id?: string
         }
