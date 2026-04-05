@@ -415,18 +415,28 @@ const FideleSynagogueView = () => {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleSubscribe(syna.id)}
-                    disabled={subscribing === syna.id}
-                    className="shrink-0 rounded-xl border-none px-4 py-2 text-xs font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
-                    style={
-                      syna.isSubscribed
-                        ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
-                        : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
-                    }
-                  >
-                    {subscribing === syna.id ? "…" : syna.isSubscribed ? "✓ Suivi" : "+ S'abonner"}
-                  </button>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <button
+                      onClick={() => handleSubscribe(syna.id)}
+                      disabled={subscribing === syna.id}
+                      className="rounded-xl border-none px-4 py-2 text-xs font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                      style={
+                        syna.isSubscribed
+                          ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                          : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
+                      }
+                    >
+                      {subscribing === syna.id ? "…" : syna.isSubscribed ? "✓ Suivi" : "+ S'abonner"}
+                    </button>
+                    {syna.isSubscribed && (
+                      <button
+                        onClick={() => handleSubscribe(syna.id)}
+                        className="text-[10px] text-destructive/70 hover:text-destructive bg-transparent border-none cursor-pointer underline px-1"
+                      >
+                        Se désabonner
+                      </button>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             ))
