@@ -91,7 +91,9 @@ const YoutubeCoursesWidget = () => {
   }, [fetchCourses]);
 
   const ravNames = [...new Set(courses.map((c) => c.channel_name))];
-  const filtered = filter === "all" ? courses : courses.filter((c) => c.channel_name === filter);
+  const filtered = filter === "all"
+    ? ravNames.map((name) => courses.find((c) => c.channel_name === name)!).filter(Boolean)
+    : courses.filter((c) => c.channel_name === filter);
 
   return (
     <div className="mt-6">
