@@ -227,20 +227,18 @@ const SiddourReader = ({
               {(() => {
                 let verseNum = 0;
                 return content.hebrew.map((verse, i) => {
+                  const processed = processedVerses?.[i];
+                  const renderedVerse = processed?.html ?? verse;
+                  const isInstruction = processed?.isInstruction ?? isInstructionOnly(verse);
+                  const isSeasonalInactive = Boolean(processed && !processed.isActive && !processed.isInstruction);
+                  const isSeasonalMarker = Boolean(processed?.isSeasonalMarker);
                   const isPrayerStart = i === prayerStartIdx;
                   const isPrelude = i < prayerStartIdx;
 
-                  // Liturgical processing for Amida
-                  const processed = processedVerses?.[i];
-                  const isSeasonalInactive = processed && !processed.isActive && !processed.isInstruction;
-                  const isSeasonalMarker = processed?.isSeasonalMarker;
-
-                  // ── HIDE inactive seasonal markers & verses completely ──
                   if (isSeasonalMarker && processed && !processed.isActive) return null;
                   if (isSeasonalInactive) return null;
 
-                  if (isInstructionOnly(verse)) {
-                    // Active seasonal marker → subtle inline label
+                  if (isInstruction) {
                     if (isSeasonalMarker && processed?.isActive) {
                       return (
                         <span
@@ -255,17 +253,17 @@ const SiddourReader = ({
                               color: "hsl(var(--gold-matte))",
                               border: "1px solid hsl(var(--gold) / 0.18)",
                             }}
-                            dangerouslySetInnerHTML={{ __html: verse.replace(/<\/?small>/g, '') }}
+                            dangerouslySetInnerHTML={{ __html: renderedVerse.replace(/<\/?small>/g, '') }}
                           />
                         </span>
                       );
                     }
-                    // Regular instruction — show as note
+
                     return (
                       <span
                         key={i}
-                        className={isShemaSecondaryLine(verse) ? "verse-secondary" : "verse-instruction"}
-                        dangerouslySetInnerHTML={{ __html: verse }}
+                        className={isShemaSecondaryLine(renderedVerse) ? "verse-secondary" : "verse-instruction"}
+                        dangerouslySetInnerHTML={{ __html: renderedVerse }}
                       />
                     );
                   }
@@ -276,7 +274,7 @@ const SiddourReader = ({
                       <span key={i}>
                         <span
                           className="verse-prelude"
-                          dangerouslySetInnerHTML={{ __html: verse }}
+                          dangerouslySetInnerHTML={{ __html: renderedVerse }}
                         />
                         {isLastPrelude && (
                           <span className="block my-4 flex items-center justify-center gap-3" dir="ltr">
@@ -291,7 +289,6 @@ const SiddourReader = ({
 
                   verseNum++;
 
-                  // Active seasonal verse gets a subtle highlight
                   const activeSeasonalStyle: React.CSSProperties = (processed && processed.isActive && !processed.isSeasonalMarker && processedVerses?.[i - 1]?.isSeasonalMarker)
                     ? { background: "hsl(var(--gold) / 0.06)", borderRadius: "8px", padding: "4px 8px", borderRight: "3px solid hsl(var(--gold) / 0.3)" }
                     : {};
@@ -314,7 +311,7 @@ const SiddourReader = ({
                       </span>
                       <span
                         className={isPrayerStart ? "prayer-opening" : undefined}
-                        dangerouslySetInnerHTML={{ __html: verse }}
+                        dangerouslySetInnerHTML={{ __html: renderedVerse }}
                       />{" "}
                     </span>
                   );
