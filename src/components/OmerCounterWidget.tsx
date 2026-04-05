@@ -165,7 +165,7 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
         <div className="absolute top-3 right-6 text-sm opacity-20 animate-pulse" style={{ animationDelay: "0.5s" }}>✨</div>
         <div className="absolute bottom-2 left-1/4 text-xs opacity-25 animate-pulse" style={{ animationDelay: "1s" }}>⭐</div>
 
-        <div className="absolute top-4 right-4 flex gap-1.5">
+        <div className="absolute top-3 right-3 flex gap-2 z-10">
           {pushSupported && (
             <button
               onClick={async (e) => {
@@ -179,14 +179,14 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
                   else toast.error("Impossible d'activer les notifications");
                 }
               }}
-              className="p-2.5 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
               style={{
-                background: isPushSubscribed ? "hsl(var(--gold) / 0.3)" : "hsl(var(--gold) / 0.2)",
+                background: isPushSubscribed ? "hsl(var(--gold) / 0.3)" : "hsl(var(--gold) / 0.15)",
                 color: "hsl(var(--gold-matte))",
               }}
               title={isPushSubscribed ? "Désactiver les rappels" : "Activer les rappels quotidiens"}
             >
-              {isPushSubscribed ? <BellOff size={16} /> : <Bell size={16} />}
+              {isPushSubscribed ? <BellOff size={20} /> : <Bell size={20} />}
             </button>
           )}
           <button
@@ -194,14 +194,14 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
               const shared = await shareOmer(effectiveDay, shareCardRef.current);
               if (shared) toast.success("Partage envoyé !");
             }}
-            className="p-2.5 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
             style={{
-              background: "hsl(var(--gold) / 0.2)",
+              background: "hsl(var(--gold) / 0.15)",
               color: "hsl(var(--gold-matte))",
             }}
             title="Partager la Mitsva"
           >
-            <Share2 size={18} />
+            <Share2 size={20} />
           </button>
         </div>
 
