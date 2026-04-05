@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { shareText } from "@/lib/shareUtils";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import type { SynaProfile } from "@/components/poster/MasterPosterTemplate";
-import { exportPosterPng } from "@/components/poster/usePosterExport";
+import { sharePosterPng } from "@/components/poster/usePosterExport";
 import { normalizeCourseType } from "@/lib/courseType";
 
 interface CoursCardProps {
