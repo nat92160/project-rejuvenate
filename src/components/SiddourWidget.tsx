@@ -67,10 +67,28 @@ const OFFICES = OFFICE_CATEGORIES.flatMap(c => c.offices);
 
 const CACHE_PREFIX = "siddour_v9_sefarade_";
 
-function detectOffice(): Office {
+function detectOffice(ctx?: LiturgicalPeriod): Office {
+  const litCtx = ctx || getLiturgicalContext();
   const h = new Date().getHours();
   const day = new Date().getDay();
-  if (day === 6 || (day === 5 && h >= 16)) return "shabbat";
+
+  // Festival/special period auto-detection
+  if (litCtx.hanoucca) return "hanukkah";
+  if (litCtx.pourim) return "purim";
+  if (litCtx.holHaMoedPessach || litCtx.holHaMoedSukkot) return "fetes";
+  if (litCtx.yomTov) return "fetes";
+  if (litCtx.roshHodesh && !litCtx.shabbat) return "rosh_hodesh";
+
+  // Shabbat
+  if (day === 6 || (day === 5 && h >= 16)) {
+    if (day === 6 && h >= 9 && h < 12) return "shabbat_shacharit";
+    if (day === 6 && h >= 12 && h < 14) return "shabbat_mussaf";
+    if (day === 6 && h >= 14 && h < 18) return "shabbat_minha";
+    if (day === 6 && h >= 18) return "havdala";
+    return "shabbat";
+  }
+
+  // Weekday
   if (h < 12) return "shacharit";
   if (h < 17) return "minha";
   return "arvit";
