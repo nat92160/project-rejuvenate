@@ -24,6 +24,27 @@ function isShemaSecondaryLine(html: string): boolean {
 }
 
 /**
+ * Detect if a verse is an internal section title (prayer name / sub-heading).
+ * These are short bold-only lines from Sefaria that act as prayer dividers.
+ * Matches: <b>title</b>, <big><b>title</b></big>, <b><big>title</big></b>
+ */
+function isInternalSectionTitle(html: string): boolean {
+  const trimmed = html.trim();
+  // <big><b>...</b></big> pattern
+  if (/^<big><b>.*<\/b><\/big>$/.test(trimmed)) {
+    const text = normalizeHebrewMatch(trimmed);
+    return text.length >= 2 && text.length <= 80;
+  }
+  // Pure <b>...</b> pattern (no other tags mixed in)
+  if (/^<b>[^<]*(<[^b\/][^>]*>[^<]*<\/[^b][^>]*>)*[^<]*<\/b>$/.test(trimmed) || 
+      (trimmed.startsWith("<b>") && trimmed.endsWith("</b>") && !trimmed.includes("<small>"))) {
+    const text = normalizeHebrewMatch(trimmed);
+    return text.length >= 2 && text.length <= 80;
+  }
+  return false;
+}
+
+/**
  * Detect the true liturgical start.
  * 1. Explicit sacred openings (Shema / Amida)
  * 2. First bold verse
@@ -239,6 +260,40 @@ const SiddourReader = ({
 
                   const isPrayerStart = i === prayerStartIdx;
                   const isPrelude = i < prayerStartIdx;
+
+                  // Internal section title — render as a prayer divider (check BEFORE instructions)
+                  if (isInternalSectionTitle(verse)) {
+                    const titleText = normalizeHebrewMatch(verse);
+                    return (
+                      <div
+                        key={i}
+                        className="flex flex-col items-center gap-2 my-8 clear-both"
+                        style={{ display: "flex", direction: "rtl" }}
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <span className="block h-[1px] flex-1" style={{ background: `linear-gradient(90deg, transparent, hsl(var(--gold) / 0.3))` }} />
+                          <span className="text-[9px]" style={{ color: "hsl(var(--gold) / 0.4)" }}>✦</span>
+                          <span className="block h-[1px] flex-1" style={{ background: `linear-gradient(270deg, transparent, hsl(var(--gold) / 0.3))` }} />
+                        </div>
+                        <h3
+                          className="text-center font-bold px-4 py-1"
+                          style={{
+                            fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif",
+                            fontSize: `${Math.min(fontSize + 2, 32)}px`,
+                            color: prayerMode ? "#e8e0d0" : "hsl(var(--gold-matte))",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {titleText}
+                        </h3>
+                        <div className="flex items-center gap-3 w-full">
+                          <span className="block h-[1px] flex-1" style={{ background: `linear-gradient(90deg, transparent, hsl(var(--gold) / 0.3))` }} />
+                          <span className="text-[9px]" style={{ color: "hsl(var(--gold) / 0.4)" }}>✦</span>
+                          <span className="block h-[1px] flex-1" style={{ background: `linear-gradient(270deg, transparent, hsl(var(--gold) / 0.3))` }} />
+                        </div>
+                      </div>
+                    );
+                  }
 
                   if (isInstructionOnly(verse)) {
                     return (
