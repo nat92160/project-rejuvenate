@@ -535,6 +535,7 @@ export const BIRKAT_INSERTS: BirkatInsert[] = [
     hebrew: "רְצֵה וְהַחֲלִיצֵנוּ ה' אֱלֹהֵינוּ בְּמִצְוֹתֶיךָ וּבְמִצְוַת יוֹם הַשְּׁבִיעִי הַשַּׁבָּת הַגָּדוֹל וְהַקָּדוֹשׁ הַזֶּה, כִּי יוֹם זֶה גָּדוֹל וְקָדוֹשׁ הוּא לְפָנֶיךָ, לִשְׁבָּת בּוֹ וְלָנוּחַ בּוֹ בְּאַהֲבָה כְּמִצְוַת רְצוֹנֶךָ. וּבִרְצוֹנְךָ הָנִיחַ לָנוּ ה' אֱלֹהֵינוּ, שֶׁלֹּא תְהֵא צָרָה וְיָגוֹן וַאֲנָחָה בְּיוֹם מְנוּחָתֵנוּ. וְהַרְאֵנוּ ה' אֱלֹהֵינוּ בְּנֶחָמַת צִיּוֹן עִירֶךָ, וּבְבִנְיַן יְרוּשָׁלַיִם עִיר קָדְשֶׁךָ, כִּי אַתָּה הוּא בַּעַל הַיְשׁוּעוֹת וּבַעַל הַנֶּחָמוֹת.",
     transliteration: "Rétsé véha'halitsénou Ado-naï Élo-hénou bémitsvotékha ouvémitsvat yom hachévii hachabbat hagadol véhakadoch hazé, ki yom zé gadol vékadoch hou léfanékha, lichbat bo vélanoua'h bo béahava kémitsvat rétsonékha...",
     instruction: "S'ajoute dans la 3e brakha (Ra'hèm), avant « Ouvné Yérouchalaïm »",
+    insertBeforeMarker: "וּבְנֵה יְרוּשָׁלַיִם",
   },
   {
     id: "rosh_hodesh",
