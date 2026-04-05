@@ -103,6 +103,10 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
   const [loading, setLoading] = useState(false);
   const [tocLoading, setTocLoading] = useState(true);
   const [fontSize, setFontSize] = useState(24);
+  const [activeCategory, setActiveCategory] = useState(() => {
+    const currentOffice = initialOffice || detectOffice(getLiturgicalContext());
+    return OFFICE_CATEGORIES.find(c => c.offices.some(o => o.key === currentOffice))?.id || "daily";
+  });
   const [viewMode, setViewMode] = useState<ViewMode>("hebrew");
   const { favorites, toggle: toggleFavorite, isFavorite } = useSiddourFavorites();
   const { save: saveBookmark, load: loadBookmark, restoreScroll, startAutoSave } = useSiddourBookmark();
