@@ -586,15 +586,14 @@ const FideleSynagogueView = () => {
                         <button
                           onClick={() => handleSubscribePlace(gr)}
                           disabled={subscribing === gr.id}
-                          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-none cursor-pointer transition-all active:scale-90 disabled:opacity-50 text-base"
+                          className="shrink-0 rounded-xl border-none px-3 py-1.5 text-[11px] font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
                           style={
                             subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name)
-                              ? { background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }
-                              : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                              ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                              : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
                           }
-                          title="S'abonner"
                         >
-                          {subscribing === gr.id ? "…" : subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name) ? "⭐" : "☆"}
+                          {subscribing === gr.id ? "…" : subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name) ? "✓ Suivi" : "+ S'abonner"}
                         </button>
                       </div>
                       {gr.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {gr.address}</p>}
