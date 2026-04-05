@@ -182,7 +182,7 @@ const SiddourReader = ({
           </div>
 
           {/* Hebrew text */}
-          {(viewMode === "hebrew" || viewMode === "bilingual") && (
+          {viewMode === "hebrew" && (
             <div
               dir="rtl"
               className="hebrew-reading-block"
