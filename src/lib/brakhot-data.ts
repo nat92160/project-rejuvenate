@@ -429,6 +429,49 @@ export const BRAKHOT_DATA: BrakhaCategory[] = [
       },
     ],
   },
+  {
+    id: "evenements",
+    label: "Événements & Voyage",
+    icon: "✈️",
+    items: [
+      {
+        name: "Téfilat HaDérèkh (Voyage)",
+        icon: "🛣️",
+        rishona: {
+          hebrew: "יְהִי רָצוֹן מִלְּפָנֶיךָ ה' אֱלֹהֵינוּ וֵאלֹהֵי אֲבוֹתֵינוּ, שֶׁתּוֹלִיכֵנוּ לְשָׁלוֹם, וְתַצְעִידֵנוּ לְשָׁלוֹם, וְתִסְמְכֵנוּ לְשָׁלוֹם, וְתַדְרִיכֵנוּ לְשָׁלוֹם, וְתַגִּיעֵנוּ לִמְחוֹז חֶפְצֵנוּ לְחַיִּים וּלְשִׂמְחָה וּלְשָׁלוֹם. וְתַצִּילֵנוּ מִכַּף כָּל אוֹיֵב וְאוֹרֵב וְלִסְטִים וְחַיּוֹת רָעוֹת בַּדֶּרֶךְ, וּמִכָּל מִינֵי פֻּרְעָנִיּוֹת הַמִּתְרַגְּשׁוֹת לָבוֹא לָעוֹלָם. וְתִשְׁלַח בְּרָכָה בְּכָל מַעֲשֵׂה יָדֵינוּ, וְתִתְּנֵנוּ לְחֵן וּלְחֶסֶד וּלְרַחֲמִים בְּעֵינֶיךָ וּבְעֵינֵי כָל רוֹאֵינוּ, וְתִשְׁמַע קוֹל תַּחֲנוּנֵינוּ, כִּי אֵל שׁוֹמֵעַ תְּפִלָּה וְתַחֲנוּן אָתָּה. בָּרוּךְ אַתָּה ה', שׁוֹמֵעַ תְּפִלָּה.",
+          transliteration: "Yéhi ratson miléfanékha Ado-naï Élo-hénou véÉlo-hé avotéinou, chétolikhénou léchalom, vétatsiédénou léchalom, vétismkhénou léchalom, vétadrikhénou léchalom, vétagiénou lim'hoz 'heftsènou lé'hayim oulésim'ha ouléchalom. Vétatsilénou mikaf kol oyèv véorèv vélistim vé'hayot raot badérèkh, oumikhol miné fouraniout hamitragchot lavo laolam. Vétichla'h bérakha békhol maassé yadénou, vétitérénou lé'hèn oulé'hèssèd oulra'hamim béèynékha ouvéèyné kol roénou, vétichma kol ta'hanounénou, ki El choméa téfila véta'hanoun Ata. Baroukh Ata Ado-naï, choméa téfila.",
+          translation: "Que ce soit Ta volonté… de nous conduire en paix, de nous guider, de nous soutenir et de nous faire arriver à destination en vie, en joie et en paix. Sauve-nous de tout ennemi, embuscade, brigands et bêtes sauvages sur la route… Béni sois-Tu Éternel, Qui écoute la prière.",
+        },
+        aharona: { name: "—", hebrew: "", transliteration: "", translation: "" },
+        shiur: "Se dit une fois par trajet, après avoir quitté la ville (au-delà de 72 minutes de marche). On peut la dire debout ou assis.",
+        keywords: ["voyage", "route", "avion", "train", "voiture", "départ", "travel", "tefila", "derekh", "derech"],
+      },
+      {
+        name: "Birkat HaGomel (rescapé)",
+        icon: "🙏",
+        rishona: {
+          hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הַגּוֹמֵל לְחַיָּבִים טוֹבוֹת, שֶׁגְּמָלַנִי כָּל טוֹב.",
+          transliteration: "Baroukh Ata Ado-naï Élo-hénou Mélekh haolam, hagomel lé'hayavim tovot, chéguémalani kol tov.",
+          translation: "Béni sois-Tu… Qui accorde des bienfaits à ceux qui en sont redevables, et m'a accordé tout bien.",
+        },
+        aharona: { name: "Réponse de l'assemblée", hebrew: "מִי שֶׁגְּמָלְךָ כָּל טוֹב, הוּא יִגְמָלְךָ כָּל טוֹב. סֶלָה.", transliteration: "Mi chéguémalkha kol tov, hou yigmalkha kol tov. Séla.", translation: "Que Celui qui t'a accordé tout bien, continue à t'accorder tout bien. Séla." },
+        shiur: "Se dit devant un Séfer Torah après : voyage en avion/mer, maladie grave, accouchement, libération de prison. Doit être dit dans les 3 jours.",
+        keywords: ["gomel", "hagomel", "rescapé", "guérison", "accouchement", "avion", "voyage", "maladie"],
+      },
+      {
+        name: "Chéhé'héyanou (nouveauté)",
+        icon: "🎉",
+        rishona: {
+          hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, שֶׁהֶחֱיָנוּ וְקִיְּמָנוּ וְהִגִּיעָנוּ לַזְּמַן הַזֶּה.",
+          transliteration: "Baroukh Ata Ado-naï Élo-hénou Mélekh haolam, chéhé'héyanou vékiyémanou véhiguianou lazémane hazé.",
+          translation: "Béni sois-Tu… Qui nous a fait vivre, nous a maintenus et nous a fait parvenir à ce moment.",
+        },
+        aharona: { name: "—", hebrew: "", transliteration: "", translation: "" },
+        shiur: "Se dit pour : un fruit nouveau de la saison, un vêtement neuf important, l'entrée d'une fête (Yom Tov), retrouvailles après 30 jours.",
+        keywords: ["chehecheyanu", "shehecheyanu", "nouveau", "fête", "fruit", "vêtement", "joie"],
+      },
+    ],
+  },
 ];
 
 // ---- CAS COMPLEXES ----
