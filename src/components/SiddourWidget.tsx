@@ -97,7 +97,8 @@ function detectOffice(ctx?: LiturgicalPeriod): Office {
 interface SiddourWidgetProps { prayerMode?: boolean; initialOffice?: Office; }
 
 const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps) => {
-  const [office, setOffice] = useState<Office>(initialOffice || detectOffice);
+  const [litContext, setLitContext] = useState<LiturgicalPeriod>(() => getLiturgicalContext());
+  const [office, setOffice] = useState<Office>(initialOffice || (() => detectOffice(litContext)));
   const [sections, setSections] = useState<Section[]>([]);
   const [activeSection, setActiveSection] = useState<number | null>(null);
   const [content, setContent] = useState<SectionContent | null>(null);
