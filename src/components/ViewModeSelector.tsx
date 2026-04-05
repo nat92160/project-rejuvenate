@@ -12,7 +12,6 @@ interface ViewModeSelectorProps {
 const VIEW_OPTIONS: { key: ViewMode; label: string; icon: string }[] = [
   { key: "hebrew", label: "Hébreu", icon: "🔤" },
   { key: "phonetic", label: "Phonétique", icon: "🗣️" },
-  { key: "bilingual", label: "Bilingue", icon: "📖" },
 ];
 
 const ViewModeSelector = forwardRef<HTMLDivElement, ViewModeSelectorProps>(({ mode, onModeChange, loading = false, prayerMode = false }, ref) => {
