@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Share2, Check, UserPlus, Flame } from "lucide-react";
+import { Share2, Check, UserPlus, Flame, Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useOmerPushSubscription } from "@/hooks/useOmerPushSubscription";
 import {
   getTodayOmerDay,
   getOmerPeriodDates,
