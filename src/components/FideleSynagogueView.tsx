@@ -369,7 +369,7 @@ const FideleSynagogueView = () => {
                       {syna.name.charAt(0)}
                     </div>
                   )}
-                  <div className="min-w-0 flex-1">
+                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
                       {syna.verified ? (
@@ -392,14 +392,15 @@ const FideleSynagogueView = () => {
                   <button
                     onClick={() => handleSubscribe(syna.id)}
                     disabled={subscribing === syna.id}
-                    className="shrink-0 rounded-xl border-none px-4 py-2 text-xs font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                    className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border-none cursor-pointer transition-all active:scale-90 disabled:opacity-50 text-base"
                     style={
                       syna.isSubscribed
-                        ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
-                        : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
+                        ? { background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }
+                        : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
                     }
+                    title={syna.isSubscribed ? "Se désabonner" : "S'abonner"}
                   >
-                    {subscribing === syna.id ? "…" : syna.isSubscribed ? "✓ Abonné" : "🔔 S'abonner"}
+                    {subscribing === syna.id ? "…" : syna.isSubscribed ? "🔔" : "🔕"}
                   </button>
                 </div>
               </motion.div>
@@ -459,11 +460,26 @@ const FideleSynagogueView = () => {
                           {syna.name.charAt(0)}
                         </div>
                       )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h4 className="font-display text-sm font-bold leading-tight text-foreground">{syna.name}</h4>
-                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full" style={{ background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }}>⭐ Partenaire</span>
-                          {syna.verified && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">✅</span>}
+                       <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                            <h4 className="font-display text-sm font-bold leading-tight text-foreground">{syna.name}</h4>
+                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full" style={{ background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }}>⭐ Partenaire</span>
+                            {syna.verified && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">✅</span>}
+                          </div>
+                          <button
+                            onClick={() => handleSubscribe(syna.id)}
+                            disabled={subscribing === syna.id}
+                            className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-none cursor-pointer transition-all active:scale-90 disabled:opacity-50"
+                            style={
+                              directory.find(d => d.id === syna.id)?.isSubscribed
+                                ? { background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }
+                                : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                            }
+                            title={directory.find(d => d.id === syna.id)?.isSubscribed ? "Se désabonner" : "S'abonner"}
+                          >
+                            {subscribing === syna.id ? "…" : directory.find(d => d.id === syna.id)?.isSubscribed ? "🔔" : "🔕"}
+                          </button>
                         </div>
                         {syna.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {syna.address}</p>}
                         <span className="text-[11px] font-bold text-primary/80">📏 {distLabel}</span>
