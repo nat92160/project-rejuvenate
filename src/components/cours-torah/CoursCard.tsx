@@ -61,9 +61,10 @@ const CoursCard = ({
     bgColor: isZoom ? "#EFF6FF" : "#F0FDF4",
   };
 
-  const handleExportPng = async () => {
+  const handleSharePng = async () => {
     setExporting(true);
-    await exportPosterPng(posterRef.current, `cours-${title.replace(/\s+/g, "-").toLowerCase()}.png`);
+    const filename = `cours-${title.replace(/\s+/g, "-").toLowerCase()}.png`;
+    await sharePosterPng(posterRef.current, filename, `📚 ${title}`);
     setExporting(false);
   };
 
