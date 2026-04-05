@@ -114,7 +114,7 @@ const EvenementsWidget = () => {
     },
   ] as const;
 
-  const triggerExport = useCallback(async (ev: Evenement) => {
+  const triggerShare = useCallback(async (ev: Evenement) => {
     setExportingId(ev.id);
     setPosterEvent(ev);
   }, []);
@@ -123,7 +123,8 @@ const EvenementsWidget = () => {
     if (!posterEvent || !exportingId) return;
     const timer = requestAnimationFrame(() => {
       setTimeout(async () => {
-        await exportPosterPng(posterRef.current, `evenement-${posterEvent.title.replace(/\s+/g, "-").toLowerCase()}.png`);
+        const filename = `evenement-${posterEvent.title.replace(/\s+/g, "-").toLowerCase()}.png`;
+        await sharePosterPng(posterRef.current, filename, posterEvent.title);
         setExportingId(null);
         setPosterEvent(null);
       }, 100);
