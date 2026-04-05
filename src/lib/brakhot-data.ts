@@ -544,6 +544,7 @@ export const BIRKAT_INSERTS: BirkatInsert[] = [
     hebrew: "יַעֲלֶה וְיָבֹא וְיַגִּיעַ וְיֵרָאֶה וְיֵרָצֶה וְיִשָּׁמַע וְיִפָּקֵד וְיִזָּכֵר זִכְרוֹנֵנוּ וּפִקְדוֹנֵנוּ, וְזִכְרוֹן אֲבוֹתֵינוּ, וְזִכְרוֹן מָשִׁיחַ בֶּן דָּוִד עַבְדֶּךָ, וְזִכְרוֹן יְרוּשָׁלַיִם עִיר קָדְשֶׁךָ, וְזִכְרוֹן כָּל עַמְּךָ בֵּית יִשְׂרָאֵל לְפָנֶיךָ, לִפְלֵטָה לְטוֹבָה, לְחֵן וּלְחֶסֶד וּלְרַחֲמִים, לְחַיִּים וּלְשָׁלוֹם, בְּיוֹם רֹאשׁ הַחֹדֶשׁ הַזֶּה. זָכְרֵנוּ ה' אֱלֹהֵינוּ בּוֹ לְטוֹבָה, וּפָקְדֵנוּ בוֹ לִבְרָכָה, וְהוֹשִׁיעֵנוּ בוֹ לְחַיִּים טוֹבִים.",
     transliteration: "Yaalé véyavo véyaguia véyéraé véyératsé véyichaméa véyipakèd véyizakhèr zikhronénou oufikdonénou, vézikron avotéinou, vézikron Machia'h bèn David avdékha, vézikron Yérouchalaïm ir kodchékha, vézikron kol amkha bèt Israël léfanékha, lifléta létova, lé'hèn oulé'hèssèd oulra'hamim, lé'hayim ouléchalom, béyom roch ha'hodèch hazé...",
     instruction: "S'ajoute dans la 3e brakha (Ra'hèm), avant « Ouvné Yérouchalaïm ». On remplace « béyom roch ha'hodèch » par le nom de la fête concernée.",
+    insertBeforeMarker: "וּבְנֵה יְרוּשָׁלַיִם",
   },
   {
     id: "yom_tov",
