@@ -213,29 +213,38 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         <p className="mt-1 text-xs" style={{ color: pmMuted }}>Rite Séfarade — Hébreu, Phonétique & Traduction</p>
       </div>
 
-      {/* Office selector */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        {OFFICES.map((off) => {
-          const isSuggested = off.key === suggestedOffice && office !== off.key;
-          return (
-            <button
-              key={off.key}
-              onClick={() => { setOffice(off.key); setActiveSection(null); setViewMode("hebrew"); }}
-              className="shrink-0 flex items-center gap-1 rounded-xl border-none px-3 py-2 text-[10px] font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap relative"
-              style={{
-                background: office === off.key ? "var(--gradient-gold)" : (prayerMode ? pmCard : "hsl(var(--muted))"),
-                color: office === off.key ? "hsl(var(--primary-foreground))" : (prayerMode ? pmMuted : "hsl(var(--muted-foreground))"),
-                boxShadow: office === off.key ? "var(--shadow-gold)" : "none",
-              }}
-            >
-              <span>{off.icon}</span>
-              <span>{off.label}</span>
-              {isSuggested && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: "hsl(var(--gold))" }} />
-              )}
-            </button>
-          );
-        })}
+      {/* Office selector by category */}
+      <div className="space-y-2">
+        {OFFICE_CATEGORIES.map((cat) => (
+          <div key={cat.label}>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-1 px-1" style={{ color: pmMuted || "hsl(var(--muted-foreground))" }}>
+              {cat.label}
+            </p>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {cat.offices.map((off) => {
+                const isSuggested = off.key === suggestedOffice && office !== off.key;
+                return (
+                  <button
+                    key={off.key}
+                    onClick={() => { setOffice(off.key); setActiveSection(null); setViewMode("hebrew"); }}
+                    className="shrink-0 flex items-center gap-1 rounded-xl border-none px-3 py-2 text-[10px] font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap relative"
+                    style={{
+                      background: office === off.key ? "var(--gradient-gold)" : (prayerMode ? pmCard : "hsl(var(--muted))"),
+                      color: office === off.key ? "hsl(var(--primary-foreground))" : (prayerMode ? pmMuted : "hsl(var(--muted-foreground))"),
+                      boxShadow: office === off.key ? "var(--shadow-gold)" : "none",
+                    }}
+                  >
+                    <span>{off.icon}</span>
+                    <span>{off.label}</span>
+                    {isSuggested && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: "hsl(var(--gold))" }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Font size slider */}
