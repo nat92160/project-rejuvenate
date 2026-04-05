@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { shareText } from "@/lib/shareUtils";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import type { SynaProfile } from "@/components/poster/MasterPosterTemplate";
 import { exportPosterPng } from "@/components/poster/usePosterExport";
