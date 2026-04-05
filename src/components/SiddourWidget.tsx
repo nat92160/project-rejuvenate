@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
-import { useTransliteration, type ViewMode } from "@/hooks/useTransliteration";
+import { type ViewMode } from "@/hooks/useTransliteration";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useSiddourBookmark } from "@/hooks/useSiddourBookmark";
 import { useSiddourFavorites } from "@/hooks/useSiddourFavorites";
@@ -11,42 +11,57 @@ import SiddourReader from "@/components/siddour/SiddourReader";
 import SiddourQuickJump from "@/components/siddour/SiddourQuickJump";
 import SiddourSearch from "@/components/siddour/SiddourSearch";
 
-type Office = "shacharit" | "additions_shacharit" | "minha" | "arvit" | "shabbat" | "shabbat_shacharit" | "shabbat_moussaf" | "shabbat_minha" | "seoudot" | "havdala" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "berakhot" | "tikoun_hatsot" | "nissan" | "mishnayot_shabbat" | "birkat_halevana" | "chema_coucher" | "brakhot_diverses";
+type Office = "shacharit" | "hazara" | "additions_shacharit" | "minha" | "arvit" | "shabbat" | "shabbat_shacharit" | "shabbat_mussaf" | "shabbat_minha" | "havdala" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "tikoun_hatsot" | "nissan" | "sefirat_haomer" | "birkat" | "berakhot" | "birkat_halevana" | "bedtime_shema" | "mishnayot_shabbat";
 
-interface Section { index: number; title: string; heTitle: string; }
-interface SectionContent { hebrew: string[]; french: string[]; title: string; heTitle: string; }
+interface Section {
+  index: number;
+  title: string;
+  heTitle: string;
+  ref: string;
+  he: string[];
+  en: string[];
+  phonetic: string[];
+}
 
-const OFFICES: { key: Office; label: string; icon: string }[] = [
-  { key: "shacharit", label: "Cha'harit", icon: "🌅" },
-  { key: "additions_shacharit", label: "Ajouts", icon: "📜" },
-  { key: "minha", label: "Min'ha", icon: "🌇" },
-  { key: "arvit", label: "Arvit", icon: "🌙" },
-  { key: "shabbat", label: "Chabbat soir", icon: "🕯️" },
-  { key: "shabbat_shacharit", label: "Chabbat matin", icon: "☀️" },
-  { key: "shabbat_moussaf", label: "Moussaf Chabbat", icon: "📖" },
-  { key: "shabbat_minha", label: "Min'ha Chabbat", icon: "🌄" },
-  { key: "seoudot", label: "Séoudot", icon: "🍞" },
-  { key: "havdala", label: "Havdala", icon: "🔥" },
-  { key: "rosh_hodesh", label: "Roch 'Hodech", icon: "🌙" },
-  { key: "fetes", label: "Fêtes", icon: "🎺" },
-  { key: "hanukkah", label: "'Hanouka", icon: "🕎" },
-  { key: "purim", label: "Pourim", icon: "🎭" },
-  { key: "taanit", label: "Jeûnes", icon: "🕊️" },
-  { key: "berakhot", label: "Bérakhot", icon: "✡️" },
-  { key: "tikoun_hatsot", label: "Tikoun 'Hatsot", icon: "🌑" },
-  { key: "nissan", label: "Nissan", icon: "🌸" },
-  { key: "mishnayot_shabbat", label: "Michnayot", icon: "📖" },
-  { key: "birkat_halevana", label: "Birkat HaLévana", icon: "🌕" },
-  { key: "chema_coucher", label: "Chéma coucher", icon: "🛏️" },
-  { key: "brakhot_diverses", label: "Brakhot diverses", icon: "💍" },
+interface SectionContent {
+  title: string;
+  heTitle: string;
+  he: string[];
+  en: string[];
+  phonetic: string[];
+}
+
+const OFFICES: { id: Office; label: string; icon: string }[] = [
+  { id: "shacharit", label: "Cha'harit", icon: "🌅" },
+  { id: "hazara", label: "Hazara (Répétition)", icon: "🔄" },
+  { id: "additions_shacharit", label: "Ajouts Cha'harit", icon: "➕" },
+  { id: "minha", label: "Min'ha", icon: "☀️" },
+  { id: "arvit", label: "Arvit", icon: "🌙" },
+  { id: "shabbat", label: "Chabbat (Soir)", icon: "🕯️" },
+  { id: "shabbat_shacharit", label: "Chabbat Cha'harit", icon: "✡️" },
+  { id: "shabbat_mussaf", label: "Chabbat Moussaf", icon: "📜" },
+  { id: "shabbat_minha", label: "Chabbat Min'ha", icon: "🌤️" },
+  { id: "havdala", label: "Havdala", icon: "🔥" },
+  { id: "rosh_hodesh", label: "Roch 'Hodech", icon: "🌙" },
+  { id: "fetes", label: "Fêtes", icon: "🎺" },
+  { id: "hanukkah", label: "'Hanouka", icon: "🕎" },
+  { id: "purim", label: "Pourim", icon: "🎭" },
+  { id: "taanit", label: "Jeûnes", icon: "🕊️" },
+  { id: "tikoun_hatsot", label: "Tikoun 'Hatsot", icon: "🌑" },
+  { id: "nissan", label: "Nissan", icon: "🌸" },
+  { id: "sefirat_haomer", label: "Séfirat HaOmer", icon: "🔢" },
+  { id: "birkat", label: "Birkat HaMazone", icon: "🍞" },
+  { id: "berakhot", label: "Brakhot diverses", icon: "🙏" },
+  { id: "birkat_halevana", label: "Birkat HaLévana", icon: "🌕" },
+  { id: "bedtime_shema", label: "Chéma' du coucher", icon: "😴" },
+  { id: "mishnayot_shabbat", label: "Michnayot Chabbat", icon: "📖" },
 ];
 
 const CACHE_PREFIX = "siddour_v7_sefarade_";
 
-/** Detect the most relevant office based on current time */
 function detectOffice(): Office {
   const h = new Date().getHours();
-  const day = new Date().getDay(); // 0=Sun, 6=Sat
+  const day = new Date().getDay();
   if (day === 6 || (day === 5 && h >= 16)) return "shabbat";
   if (h < 12) return "shacharit";
   if (h < 17) return "minha";
@@ -59,12 +74,10 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
   const [office, setOffice] = useState<Office>(initialOffice || detectOffice);
   const [sections, setSections] = useState<Section[]>([]);
   const [activeSection, setActiveSection] = useState<number | null>(null);
-  const [content, setContent] = useState<SectionContent | null>(null);
   const [loading, setLoading] = useState(false);
   const [tocLoading, setTocLoading] = useState(true);
   const [fontSize, setFontSize] = useState(24);
   const [viewMode, setViewMode] = useState<ViewMode>("hebrew");
-  const { transliterations, loading: translitLoading, fetchTransliteration, clearTransliterations } = useTransliteration();
   const { favorites, toggle: toggleFavorite, isFavorite } = useSiddourFavorites();
   const { save: saveBookmark, load: loadBookmark, restoreScroll, startAutoSave } = useSiddourBookmark();
 
@@ -101,60 +114,62 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
     if (activeSection !== null) startAutoSave(office, activeSection);
   }, [activeSection, office, startAutoSave]);
 
-  const fetchToc = useCallback(async (off: Office) => {
+  const fetchOffice = useCallback(async (off: Office) => {
+    setLoading(true);
     setTocLoading(true);
     setSections([]);
-    setActiveSection(null);
-    setContent(null);
 
-    const cacheKey = `${CACHE_PREFIX}toc_${off}`;
+    const cacheKey = `${CACHE_PREFIX}office_${off}`;
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
-      try { setSections(JSON.parse(cached)); setTocLoading(false); return; } catch { /* */ }
+      try {
+        setSections(JSON.parse(cached));
+        setTocLoading(false);
+        setLoading(false);
+        return;
+      } catch {}
     }
 
     try {
       const { data, error } = await supabase.functions.invoke("get-siddour", { body: { office: off } });
       if (error) throw error;
       if (data?.sections) {
-        setSections(data.sections);
-        try { localStorage.setItem(cacheKey, JSON.stringify(data.sections)); } catch { /* */ }
+        const nextSections: Section[] = data.sections.map((section: Omit<Section, "index">, index: number) => ({
+          index,
+          title: section.title,
+          heTitle: section.heTitle,
+          ref: section.ref,
+          he: section.he || [],
+          en: section.en || [],
+          phonetic: section.phonetic || [],
+        }));
+        setSections(nextSections);
+        try { localStorage.setItem(cacheKey, JSON.stringify(nextSections)); } catch {}
       }
-    } catch (err) { console.error("Error fetching siddour toc:", err); }
+    } catch (err) {
+      console.error("Error fetching siddour:", err);
+    }
+
     setTocLoading(false);
+    setLoading(false);
   }, []);
 
-  const fetchSection = useCallback(async (off: Office, idx: number) => {
-    setLoading(true);
-    setContent(null);
-    clearTransliterations();
-
-    const cacheKey = `${CACHE_PREFIX}${off}_${idx}`;
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      try { setContent(JSON.parse(cached)); setLoading(false); return; } catch { /* */ }
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke("get-siddour", { body: { office: off, section: idx } });
-      if (error) throw error;
-      if (data?.hebrew) {
-        const c: SectionContent = { hebrew: data.hebrew, french: data.french || [], title: data.title, heTitle: data.heTitle };
-        setContent(c);
-        try { localStorage.setItem(cacheKey, JSON.stringify(c)); } catch { /* */ }
-      }
-    } catch (err) { console.error("Error fetching section:", err); }
-    setLoading(false);
-  }, [clearTransliterations]);
-
-  useEffect(() => { if (bookmarkRestored) fetchToc(office); }, [office, fetchToc, bookmarkRestored]);
-  useEffect(() => { if (activeSection !== null) fetchSection(office, activeSection); }, [activeSection, office, fetchSection]);
-
   useEffect(() => {
-    if (viewMode === "phonetic" && content && content.hebrew.length > 0 && transliterations.length === 0) {
-      fetchTransliteration(content.hebrew, `siddour_${office}_${activeSection}`);
-    }
-  }, [viewMode, content, transliterations.length, office, activeSection, fetchTransliteration]);
+    if (bookmarkRestored) fetchOffice(office);
+  }, [office, fetchOffice, bookmarkRestored]);
+
+  const content = useMemo<SectionContent | null>(() => {
+    if (activeSection === null) return null;
+    const section = sections.find((item) => item.index === activeSection);
+    if (!section) return null;
+    return {
+      title: section.title,
+      heTitle: section.heTitle,
+      he: section.he,
+      en: section.en,
+      phonetic: section.phonetic,
+    };
+  }, [activeSection, sections]);
 
   const suggestedOffice = useMemo(detectOffice, []);
 
@@ -171,9 +186,7 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
 
   const handleBack = useCallback(() => {
     setActiveSection(null);
-    setContent(null);
-    clearTransliterations();
-  }, [clearTransliterations]);
+  }, []);
 
   return (
     <motion.div
@@ -196,16 +209,16 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
 
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {OFFICES.map((off) => {
-          const isSuggested = off.key === suggestedOffice && office !== off.key;
+          const isSuggested = off.id === suggestedOffice && office !== off.id;
           return (
             <button
-              key={off.key}
-              onClick={() => { setOffice(off.key); setActiveSection(null); setViewMode("hebrew"); }}
+              key={off.id}
+              onClick={() => { setOffice(off.id); setActiveSection(null); setViewMode("hebrew"); }}
               className="shrink-0 flex items-center gap-1 rounded-xl border-none px-3 py-2 text-[10px] font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap relative"
               style={{
-                background: office === off.key ? "var(--gradient-gold)" : (prayerMode ? pmCard : "hsl(var(--muted))"),
-                color: office === off.key ? "hsl(var(--primary-foreground))" : (prayerMode ? pmMuted : "hsl(var(--muted-foreground))"),
-                boxShadow: office === off.key ? "var(--shadow-gold)" : "none",
+                background: office === off.id ? "var(--gradient-gold)" : (prayerMode ? pmCard : "hsl(var(--muted))"),
+                color: office === off.id ? "hsl(var(--primary-foreground))" : (prayerMode ? pmMuted : "hsl(var(--muted-foreground))"),
+                boxShadow: office === off.id ? "var(--shadow-gold)" : "none",
               }}
             >
               <span>{off.icon}</span>
@@ -264,8 +277,6 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
             fontSize={fontSize}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            transliterations={transliterations}
-            translitLoading={translitLoading}
             onBack={handleBack}
             onPrev={() => activeSection > 0 && setActiveSection(activeSection - 1)}
             onNext={() => activeSection < sections.length - 1 && setActiveSection(activeSection + 1)}

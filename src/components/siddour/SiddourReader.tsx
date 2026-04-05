@@ -7,11 +7,15 @@ import LiturgicalContextBar from "@/components/siddour/LiturgicalContextBar";
 import { getLiturgicalContext, processAmidaVerses, type LiturgicalPeriod } from "@/lib/liturgicalContext";
 import type { ViewMode } from "@/hooks/useTransliteration";
 
-/** Known liturgical openings matched without niqqud/html for robust detection. */
+const SIDDOUR_VIEW_OPTIONS: { key: ViewMode; label: string; icon: string }[] = [
+  { key: "hebrew", label: "Hébreu", icon: "🔤" },
+  { key: "phonetic", label: "Phonétique", icon: "🗣️" },
+  { key: "translation", label: "Traduction", icon: "🌍" },
+];
+
 const KNOWN_OPENINGS = ["שמע ישראל", "אדני שפתי תפתח"];
 const SHEMA_SECONDARY = "ברוך שם כבוד מלכותו לעולם ועד";
 
-/** Detect if a section title relates to the Amida */
 function isAmidaSection(title: string): boolean {
   const lower = title.toLowerCase();
   return lower.includes("amida") || lower.includes("עמידה") || lower.includes("amidah");
@@ -30,12 +34,6 @@ function isShemaSecondaryLine(html: string): boolean {
   return normalizeHebrewMatch(html).includes(SHEMA_SECONDARY);
 }
 
-/**
- * Detect the true liturgical start.
- * 1. Explicit sacred openings (Shema / Amida)
- * 2. First bold verse
- * 3. First non-instruction verse
- */
 function findPrayerStartIndex(hebrew: string[]): number {
   let firstNonInstruction = -1;
   let firstBold = -1;
@@ -53,11 +51,10 @@ function findPrayerStartIndex(hebrew: string[]): number {
   return firstNonInstruction >= 0 ? firstNonInstruction : 0;
 }
 
-
-
 interface SectionContent {
-  hebrew: string[];
-  french: string[];
+  he: string[];
+  en: string[];
+  phonetic: string[];
   title: string;
   heTitle: string;
 }
@@ -68,8 +65,6 @@ interface SiddourReaderProps {
   fontSize: number;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
-  transliterations: string[];
-  translitLoading: boolean;
   onBack: () => void;
   onPrev: () => void;
   onNext: () => void;
@@ -82,7 +77,6 @@ interface SiddourReaderProps {
 
 const SiddourReader = ({
   content, loading, fontSize, viewMode, onViewModeChange,
-  transliterations, translitLoading,
   onBack, onPrev, onNext, hasPrev, hasNext,
   isFavorite, onToggleFavorite,
   prayerMode = false,
@@ -90,19 +84,16 @@ const SiddourReader = ({
   const topRef = useRef<HTMLDivElement>(null);
   const prayerStartRef = useRef<HTMLSpanElement>(null);
 
-  // Liturgical context for Amida
   const [litContext, setLitContext] = useState<LiturgicalPeriod>(() => getLiturgicalContext());
   const showAmidaContext = content ? isAmidaSection(content.title) : false;
 
-  // Process Amida verses with liturgical context
   const processedVerses = useMemo(() => {
     if (!content || !showAmidaContext) return null;
-    return processAmidaVerses(content.hebrew, litContext);
+    return processAmidaVerses(content.he, litContext);
   }, [content, showAmidaContext, litContext]);
 
-  // Detect the real prayer start index (first <b> verse, or first non-instruction)
   const prayerStartIdx = useMemo(
-    () => content ? findPrayerStartIndex(content.hebrew) : 0,
+    () => content ? findPrayerStartIndex(content.he) : 0,
     [content]
   );
 
@@ -110,7 +101,6 @@ const SiddourReader = ({
   const pmMuted = prayerMode ? "#999" : undefined;
   const pmBorder = prayerMode ? "rgba(255,255,255,0.08)" : undefined;
 
-  // Scroll to first actual prayer verse, skipping instructions
   useEffect(() => {
     if (!content) return;
     const timer = setTimeout(() => {
@@ -133,7 +123,6 @@ const SiddourReader = ({
     >
       <div ref={topRef} id="siddour-reader-top" />
 
-      {/* Back + Favorite bar */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={onBack}
@@ -155,7 +144,6 @@ const SiddourReader = ({
         </button>
       </div>
 
-      {/* Liturgical context bar for Amida sections */}
       {showAmidaContext && (
         <div className="mb-4">
           <LiturgicalContextBar
@@ -166,9 +154,8 @@ const SiddourReader = ({
         </div>
       )}
 
-      {/* View mode selector */}
       <div className="mb-4">
-        <ViewModeSelector mode={viewMode} onModeChange={onViewModeChange} loading={translitLoading} prayerMode={prayerMode} />
+        <ViewModeSelector mode={viewMode} onModeChange={onViewModeChange} options={SIDDOUR_VIEW_OPTIONS} prayerMode={prayerMode} />
       </div>
 
       {loading ? (
@@ -185,7 +172,6 @@ const SiddourReader = ({
             borderColor: pmBorder || "hsl(var(--border) / 0.5)",
           }}
         >
-          {/* Title block - ornamental, 20px comfort margin top */}
           <div className="text-center mb-6 pb-4 pt-5" style={{ borderBottom: `1px solid ${pmBorder || "hsl(var(--gold) / 0.15)"}` }}>
             <div className="flex items-center justify-center gap-3 mb-2">
               <span className="block h-[1px] w-8" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--gold) / 0.4))" }} />
@@ -210,7 +196,6 @@ const SiddourReader = ({
             </div>
           </div>
 
-          {/* Hebrew text */}
           {viewMode === "hebrew" && (
             <div
               dir="rtl"
@@ -226,7 +211,7 @@ const SiddourReader = ({
             >
               {(() => {
                 let verseNum = 0;
-                return content.hebrew.map((verse, i) => {
+                return content.he.map((verse, i) => {
                   const processed = processedVerses?.[i];
                   const renderedVerse = processed?.html ?? verse;
                   const isInstruction = processed?.isInstruction ?? isInstructionOnly(verse);
@@ -320,7 +305,6 @@ const SiddourReader = ({
             </div>
           )}
 
-          {/* Phonetic only */}
           {viewMode === "phonetic" && (
             <div
               dir="ltr"
@@ -333,19 +317,14 @@ const SiddourReader = ({
                 color: prayerMode ? "#e8e0d0" : "#222",
               }}
             >
-              {translitLoading ? (
-                <div className="text-center py-10">
-                  <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" />
-                  <p className="text-sm mt-3" style={{ color: pmMuted }}>Génération de la phonétique…</p>
-                </div>
-              ) : transliterations.length > 0 ? (
+              {content.phonetic.length > 0 ? (
                 (() => {
                   let verseNum = 0;
                   let firstFound = false;
-                  return content.hebrew.map((verse, i) => {
+                  return content.he.map((verse, i) => {
                     if (isInstructionOnly(verse)) return null;
                     verseNum++;
-                    if (!transliterations[i]) return null;
+                    if (!content.phonetic[i]) return null;
                     const isFirst = !firstFound;
                     if (isFirst) firstFound = true;
                     return (
@@ -364,7 +343,7 @@ const SiddourReader = ({
                         >
                           {toHebrewLetter(verseNum)}
                         </span>
-                        {transliterations[i]}
+                        {content.phonetic[i]}
                       </p>
                     );
                   });
@@ -377,14 +356,36 @@ const SiddourReader = ({
             </div>
           )}
 
-          {/* Section separator ornament */}
+          {viewMode === "translation" && (
+            <div
+              dir="ltr"
+              style={{
+                fontFamily: "'Lora', serif",
+                fontSize: `${Math.max(fontSize - 2, 16)}px`,
+                lineHeight: 2,
+                textAlign: "left",
+                fontWeight: 500,
+                color: prayerMode ? "#e8e0d0" : "#222",
+              }}
+            >
+              {content.en.length > 0 ? (
+                content.en.map((paragraph, index) => (
+                  <p key={index} className="mb-4" dangerouslySetInnerHTML={{ __html: paragraph }} />
+                ))
+              ) : (
+                <p className="text-center text-sm" style={{ color: pmMuted }}>
+                  La traduction n'est pas disponible pour cette section.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center justify-center gap-4 mt-6 mb-4">
             <span className="block h-[1px] flex-1 max-w-[80px]" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--gold) / 0.2))" }} />
             <span className="text-[10px]" style={{ color: "hsl(var(--gold) / 0.35)" }}>◈</span>
             <span className="block h-[1px] flex-1 max-w-[80px]" style={{ background: "linear-gradient(270deg, transparent, hsl(var(--gold) / 0.2))" }} />
           </div>
 
-          {/* Section navigation */}
           <div className="flex justify-between pt-2">
             <button
               onClick={onPrev}

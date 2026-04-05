@@ -6,6 +6,7 @@ interface ViewModeSelectorProps {
   mode: ViewMode;
   onModeChange: (mode: ViewMode) => void;
   loading?: boolean;
+  options?: { key: ViewMode; label: string; icon: string }[];
   prayerMode?: boolean;
 }
 
@@ -14,7 +15,7 @@ const VIEW_OPTIONS: { key: ViewMode; label: string; icon: string }[] = [
   { key: "phonetic", label: "Phonétique", icon: "🗣️" },
 ];
 
-const ViewModeSelector = forwardRef<HTMLDivElement, ViewModeSelectorProps>(({ mode, onModeChange, loading = false, prayerMode = false }, ref) => {
+const ViewModeSelector = forwardRef<HTMLDivElement, ViewModeSelectorProps>(({ mode, onModeChange, loading = false, options = VIEW_OPTIONS, prayerMode = false }, ref) => {
   return (
     <div
       ref={ref}
@@ -23,7 +24,7 @@ const ViewModeSelector = forwardRef<HTMLDivElement, ViewModeSelectorProps>(({ mo
         background: prayerMode ? "rgba(255,255,255,0.06)" : "hsl(var(--muted))",
       }}
     >
-      {VIEW_OPTIONS.map((opt) => {
+      {options.map((opt) => {
         const isActive = mode === opt.key;
         return (
           <button
