@@ -354,7 +354,24 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
                 <Share2 size={12} className="inline mr-1.5 -mt-0.5" />
                 Partager avec un ami
               </button>
-              {!user && (
+              {!user && pushSupported && !isPushSubscribed && (
+                <button
+                  onClick={async () => {
+                    const ok = await subscribePush();
+                    if (ok) toast.success("🔔 Rappel activé ! Vous serez notifié chaque soir.");
+                    else toast.error("Impossible d'activer les notifications");
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
+                  style={{
+                    background: `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`,
+                    color: "hsl(var(--card))",
+                  }}
+                >
+                  <Bell size={12} className="inline mr-1.5 -mt-0.5" />
+                  🔔 Recevoir un rappel chaque soir
+                </button>
+              )}
+              {!user && !pushSupported && (
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("open-auth-modal"))}
                   className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
