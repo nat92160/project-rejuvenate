@@ -603,18 +603,28 @@ const FideleSynagogueView = () => {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="font-display text-sm font-bold leading-tight text-foreground">{gr.name}</h4>
-                        <button
-                          onClick={() => handleSubscribePlace(gr)}
-                          disabled={subscribing === gr.id}
-                          className="shrink-0 rounded-xl border-none px-3 py-1.5 text-[11px] font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
-                          style={
-                            subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name)
-                              ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
-                              : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
-                          }
-                        >
-                          {subscribing === gr.id ? "…" : subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name) ? "✓ Suivi" : "+ S'abonner"}
-                        </button>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <button
+                            onClick={() => handleSubscribePlace(gr)}
+                            disabled={subscribing === gr.id}
+                            className="rounded-xl border-none px-3 py-1.5 text-[11px] font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                            style={
+                              subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name)
+                                ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                                : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
+                            }
+                          >
+                            {subscribing === gr.id ? "…" : subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name) ? "✓ Suivi" : "+ S'abonner"}
+                          </button>
+                          {(subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name)) && (
+                            <button
+                              onClick={() => handleSubscribePlace(gr)}
+                              className="text-[10px] text-destructive/70 hover:text-destructive bg-transparent border-none cursor-pointer underline px-1"
+                            >
+                              Se désabonner
+                            </button>
+                          )}
+                        </div>
                       </div>
                       {gr.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {gr.address}</p>}
                       <div className="mt-1 flex items-center gap-2">
