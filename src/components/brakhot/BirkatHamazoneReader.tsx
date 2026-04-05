@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BIRKAT_HAMAZONE, BIRKAT_INSERTS } from "@/lib/brakhot-data";
 
 interface Props {
   onBack: () => void;
 }
+
+const hebrewTextStyle = {
+  direction: "rtl" as const,
+  fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+  fontFeatureSettings: "'kern', 'mark', 'mkmk'",
+  color: "hsl(var(--foreground))",
+};
 
 const BirkatHamazoneReader = ({ onBack }: Props) => {
   const [selectedVersion, setSelectedVersion] = useState("sefarade");
@@ -16,6 +23,41 @@ const BirkatHamazoneReader = ({ onBack }: Props) => {
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
+
+  // Build paragraph list with inserts injected at correct positions
+  const enrichedParagraphs = useMemo(() => {
+    if (selectedVersion === "abregee" || activeInserts.length === 0) {
+      return version.paragraphs.map((p) => ({ ...p, isInsert: false, insertLabel: "" }));
+    }
+
+    const activeInsertData = BIRKAT_INSERTS.filter((ins) => activeInserts.includes(ins.id));
+    const result: Array<{
+      hebrew: string;
+      transliteration?: string;
+      isInsert: boolean;
+      insertLabel: string;
+      insertIcon?: string;
+    }> = [];
+
+    for (const para of version.paragraphs) {
+      // Check if any insert should be placed before this paragraph
+      const insertsHere = activeInsertData.filter((ins) =>
+        para.hebrew.startsWith(ins.insertBeforeMarker)
+      );
+      for (const ins of insertsHere) {
+        result.push({
+          hebrew: ins.hebrew,
+          transliteration: ins.transliteration,
+          isInsert: true,
+          insertLabel: `${ins.icon} ${ins.label}`,
+          insertIcon: ins.icon,
+        });
+      }
+      result.push({ ...para, isInsert: false, insertLabel: "" });
+    }
+
+    return result;
+  }, [version, selectedVersion, activeInserts]);
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
@@ -78,51 +120,7 @@ const BirkatHamazoneReader = ({ onBack }: Props) => {
         </div>
       )}
 
-      {/* Active inserts display */}
-      <AnimatePresence>
-        {activeInserts.length > 0 && selectedVersion !== "abregee" && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden space-y-3"
-          >
-            {BIRKAT_INSERTS.filter((ins) => activeInserts.includes(ins.id)).map((ins) => (
-              <div
-                key={ins.id}
-                className="rounded-xl border p-4 space-y-2"
-                style={{
-                  background: "hsl(var(--gold) / 0.06)",
-                  borderColor: "hsl(var(--gold) / 0.2)",
-                }}
-              >
-                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--gold-matte))" }}>
-                  {ins.icon} {ins.label}
-                </p>
-                <p className="text-[11px] text-muted-foreground italic mb-2">
-                  📍 {ins.instruction}
-                </p>
-                <p
-                  className="text-base leading-[2.4] font-semibold text-right"
-                  style={{
-                    direction: "rtl",
-                    fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
-                    fontFeatureSettings: "'kern', 'mark', 'mkmk'",
-                    color: "hsl(var(--foreground))",
-                  }}
-                >
-                  {ins.hebrew}
-                </p>
-                {ins.transliteration && (
-                  <p className="text-xs text-muted-foreground italic">{ins.transliteration}</p>
-                )}
-              </div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Reading mode */}
+      {/* Reading mode with inline inserts */}
       <div
         className="rounded-2xl border border-border p-5 space-y-6"
         style={{ background: "hsl(var(--card))", boxShadow: "var(--shadow-card)" }}
@@ -131,15 +129,40 @@ const BirkatHamazoneReader = ({ onBack }: Props) => {
           {version.name}
         </p>
 
-        {version.paragraphs.map((para, i) => (
+        {enrichedParagraphs.map((para, i) => (
           <div key={i} className="space-y-2">
+            {/* Insert label badge */}
+            {para.isInsert && (
+              <AnimatePresence>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-2 mb-1"
+                >
+                  <span
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                    style={{
+                      background: "hsl(var(--gold) / 0.15)",
+                      color: "hsl(var(--gold-matte))",
+                      border: "1px solid hsl(var(--gold) / 0.25)",
+                    }}
+                  >
+                    {para.insertLabel}
+                  </span>
+                </motion.div>
+              </AnimatePresence>
+            )}
+
             <p
-              className="text-lg leading-[2.4] font-semibold text-right"
+              className={`text-lg leading-[2.4] font-semibold text-right ${para.isInsert ? "rounded-xl px-3 py-2" : ""}`}
               style={{
-                direction: "rtl",
-                fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
-                fontFeatureSettings: "'kern', 'mark', 'mkmk'",
-                color: "hsl(var(--foreground))",
+                ...hebrewTextStyle,
+                ...(para.isInsert
+                  ? {
+                      background: "hsl(var(--gold) / 0.06)",
+                      borderLeft: "3px solid hsl(var(--gold) / 0.3)",
+                    }
+                  : {}),
               }}
             >
               {para.hebrew}
@@ -147,7 +170,7 @@ const BirkatHamazoneReader = ({ onBack }: Props) => {
             {para.transliteration && (
               <p className="text-xs text-muted-foreground italic">{para.transliteration}</p>
             )}
-            {i < version.paragraphs.length - 1 && (
+            {i < enrichedParagraphs.length - 1 && !para.isInsert && (
               <div className="border-t border-border/50 pt-2" />
             )}
           </div>
