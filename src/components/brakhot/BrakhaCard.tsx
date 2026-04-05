@@ -44,8 +44,13 @@ const BrakhaCard = ({ item, isExpanded, isFavorite, onToggle, onToggleFavorite }
                   Brakha Rishona (initiale)
                 </p>
                 <p
-                  className="text-base leading-loose font-semibold text-right mb-2"
-                  style={{ direction: "rtl", fontFamily: "'David Libre', serif", color: "hsl(var(--gold-matte))" }}
+                  className="text-lg leading-[2.4] font-semibold text-right mb-2"
+                  style={{
+                    direction: "rtl",
+                    fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+                    fontFeatureSettings: "'kern', 'mark', 'mkmk'",
+                    color: "hsl(var(--gold-matte))",
+                  }}
                 >
                   {item.rishona.hebrew}
                 </p>
