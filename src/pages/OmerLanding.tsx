@@ -97,15 +97,17 @@ const OmerLanding = () => {
             <p className="text-xs text-muted-foreground mt-3">
               Inscrivez-vous pour recevoir un rappel dès le premier soir !
             </p>
+            <OmerPushButton />
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("open-auth-modal"))}
-              className="mt-4 px-6 py-2.5 rounded-xl text-sm font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
+              className="mt-2 px-6 py-2 rounded-xl text-xs font-medium cursor-pointer border transition-all active:scale-[0.97]"
               style={{
-                background: "linear-gradient(135deg, hsl(var(--gold)), hsl(var(--gold-matte)))",
-                color: "hsl(var(--card))",
+                borderColor: "hsl(var(--gold) / 0.3)",
+                color: "hsl(var(--gold-matte))",
+                background: "hsl(var(--gold) / 0.08)",
               }}
             >
-              ✨ S'inscrire gratuitement
+              Créer un compte
             </button>
           </div>
         )}
