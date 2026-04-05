@@ -7,6 +7,7 @@ import { useSynaProfile } from "@/hooks/useSynaProfile";
 import { toast } from "sonner";
 import CoursCard from "./cours-torah/CoursCard";
 import CoursForm from "./cours-torah/CoursForm";
+import YoutubeCoursesWidget from "./cours-torah/YoutubeCoursesWidget";
 import { normalizeCourseType } from "@/lib/courseType";
 
 interface CoursItem {
@@ -136,6 +137,9 @@ const CoursVirtuelWidget = () => {
           ))}
         </div>
       )}
+
+      {/* YouTube Courses Aggregator */}
+      <YoutubeCoursesWidget />
     </motion.div>
   );
 };
