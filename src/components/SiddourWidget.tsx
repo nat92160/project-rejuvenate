@@ -20,26 +20,22 @@ interface SectionContent { hebrew: string[]; french: string[]; title: string; he
 
 const OFFICE_CATEGORIES = [
   {
-    label: "📅 Quotidien",
+    label: "Quotidien",
     offices: [
       { key: "shacharit" as Office, label: "Cha'harit", icon: "🌅" },
       { key: "minha" as Office, label: "Min'ha", icon: "☀️" },
       { key: "arvit" as Office, label: "Arvit", icon: "🌙" },
-      { key: "bedtime_shema" as Office, label: "Chéma' du coucher", icon: "😴" },
     ],
   },
   {
-    label: "🕯️ Chabbat",
+    label: "Chabbat",
     offices: [
-      { key: "shabbat" as Office, label: "Kabbalat Chabbat", icon: "🕯️" },
-      { key: "shabbat_shacharit" as Office, label: "Cha'harit", icon: "✡️" },
-      { key: "shabbat_mussaf" as Office, label: "Moussaf", icon: "📜" },
-      { key: "shabbat_minha" as Office, label: "Min'ha", icon: "🌤️" },
-      { key: "havdala" as Office, label: "Havdala", icon: "🔥" },
+      { key: "shabbat" as Office, label: "Chabbat complet", icon: "🕯️" },
+      { key: "mishnayot_shabbat" as Office, label: "Michnayot", icon: "📖" },
     ],
   },
   {
-    label: "🎺 Fêtes & Occasions",
+    label: "Fêtes & Occasions",
     offices: [
       { key: "rosh_hodesh" as Office, label: "Roch 'Hodech", icon: "🌙" },
       { key: "fetes" as Office, label: "Fêtes", icon: "🎺" },
@@ -47,18 +43,15 @@ const OFFICE_CATEGORIES = [
       { key: "purim" as Office, label: "Pourim", icon: "🎭" },
       { key: "taanit" as Office, label: "Jeûnes", icon: "🕊️" },
       { key: "nissan" as Office, label: "Nissan", icon: "🌸" },
-      { key: "sefirat_haomer" as Office, label: "Séfirat HaOmer", icon: "🔢" },
     ],
   },
   {
-    label: "🙏 Brakhot & Compléments",
+    label: "Brakhot & Prières",
     offices: [
       { key: "birkat" as Office, label: "Birkat HaMazone", icon: "🍞" },
       { key: "berakhot" as Office, label: "Brakhot", icon: "🙏" },
       { key: "birkat_halevana" as Office, label: "Birkat HaLévana", icon: "🌕" },
-      { key: "additions_shacharit" as Office, label: "Ajouts Cha'harit", icon: "➕" },
       { key: "tikoun_hatsot" as Office, label: "Tikoun 'Hatsot", icon: "🌑" },
-      { key: "mishnayot_shabbat" as Office, label: "Michnayot", icon: "📖" },
     ],
   },
 ];
