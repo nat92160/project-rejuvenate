@@ -313,8 +313,11 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
 
             <div className="flex gap-2 justify-center flex-wrap">
               <button
-                onClick={() => shareOmer(effectiveDay, shareCardRef.current)}
-                className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border transition-all active:scale-[0.97]"
+                onClick={async () => {
+                  const shared = await shareOmer(effectiveDay, shareCardRef.current);
+                  if (shared) toast.success("Partage envoyé !");
+                }}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer border transition-all active:scale-[0.97]"
                 style={{
                   borderColor: "hsl(var(--gold) / 0.3)",
                   color: "hsl(var(--gold-matte))",
