@@ -106,7 +106,7 @@ const SiddourReader = ({
   litContext,
 }: SiddourReaderProps) => {
   const topRef = useRef<HTMLDivElement>(null);
-  const prayerStartRef = useRef<HTMLSpanElement>(null);
+  const prayerStartRef = useRef<HTMLParagraphElement>(null);
 
   // Detect the real prayer start index (first <b> verse, or first non-instruction)
   const prayerStartIdx = useMemo(
@@ -237,10 +237,10 @@ const SiddourReader = ({
               style={{
                 fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
                 fontSize: `${fontSize}px`,
-                lineHeight: 2.4,
-                textAlign: "right",
+                textAlign: "center",
                 fontWeight: 600,
                 color: prayerMode ? "#e8e0d0" : "#111",
+                fontFeatureSettings: "'kern', 'mark', 'mkmk'",
               }}
             >
               {(() => {
@@ -252,23 +252,21 @@ const SiddourReader = ({
                   // If we have liturgical processing, skip inactive seasonal verses
                   if (processed && processed[i]) {
                     const pv = processed[i];
-                    if (!pv.isActive) return null; // Hide inactive seasonal variant
-                    if (pv.isSeasonalMarker) return null; // Hide marker labels
-                    // Use processed HTML (may have conditional inserts resolved)
+                    if (!pv.isActive) return null;
+                    if (pv.isSeasonalMarker) return null;
                     verse = pv.html;
                   }
 
                   const isPrayerStart = i === prayerStartIdx;
-                  const isPrelude = i < prayerStartIdx;
 
-                  // Internal section title — render as a prayer divider (check BEFORE instructions)
+                  // Internal section title — render as a prayer divider
                   if (isInternalSectionTitle(verse)) {
                     const titleText = normalizeHebrewMatch(verse);
                     return (
                       <div
                         key={i}
-                        className="flex flex-col items-center gap-1.5 mt-3 mb-4 clear-both"
-                        style={{ display: "flex", direction: "rtl" }}
+                        className="flex flex-col items-center gap-1.5 mt-6 mb-5 clear-both"
+                        style={{ direction: "rtl" }}
                       >
                         <div className="flex items-center gap-3 w-full">
                           <span className="block h-[1px] flex-1" style={{ background: `linear-gradient(90deg, transparent, hsl(var(--gold) / 0.3))` }} />
@@ -297,9 +295,10 @@ const SiddourReader = ({
 
                   if (isInstructionOnly(verse)) {
                     return (
-                      <span
+                      <div
                         key={i}
                         className={isShemaSecondaryLine(verse) ? "verse-secondary" : "verse-instruction"}
+                        style={{ marginBottom: "0.75rem", lineHeight: 1.8 }}
                         dangerouslySetInnerHTML={{ __html: verse }}
                       />
                     );
@@ -307,26 +306,26 @@ const SiddourReader = ({
 
                   verseNum++;
                   return (
-                    <span key={i} ref={isPrayerStart ? prayerStartRef : undefined}>
-                      <span
-                        style={{
-                          fontSize: isPrayerStart ? `${fontSize + 8}px` : `${Math.max(fontSize - 3, 14)}px`,
-                          marginInlineEnd: isPrayerStart ? "4px" : "5px",
-                          fontWeight: isPrayerStart ? 800 : 700,
-                          color: isPrayerStart
-                            ? (prayerMode ? "#e8e0d0" : "hsl(var(--gold-matte))")
-                            : "#888",
-                          verticalAlign: "baseline",
-                          lineHeight: 1,
-                        }}
-                      >
-                        {toHebrewLetter(verseNum)}
-                      </span>
-                      <span
-                        className={isPrayerStart ? "prayer-opening" : undefined}
-                        dangerouslySetInnerHTML={{ __html: verse }}
-                      />{" "}
-                    </span>
+                    <p
+                      key={i}
+                      ref={isPrayerStart ? prayerStartRef : undefined}
+                      style={{
+                        marginBottom: "1.1rem",
+                        lineHeight: 2.4,
+                        textAlign: "center",
+                      }}
+                    >
+                      {isPrayerStart && (
+                        <span
+                          className="prayer-opening"
+                          style={{
+                            fontWeight: 800,
+                            fontSize: `${fontSize + 4}px`,
+                          }}
+                        />
+                      )}
+                      <span dangerouslySetInnerHTML={{ __html: verse }} />
+                    </p>
                   );
                 });
               })()}
