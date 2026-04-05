@@ -93,6 +93,12 @@ const SiddourReader = ({
     [content]
   );
 
+  // Process verses with liturgical context (seasonal variants filtering)
+  const processedVerses = useMemo(() => {
+    if (!content?.hebrew?.length || !litContext) return null;
+    return processAmidaVerses(content.hebrew, litContext);
+  }, [content, litContext]);
+
   const pmText = prayerMode ? "#e8e0d0" : undefined;
   const pmMuted = prayerMode ? "#999" : undefined;
   const pmBorder = prayerMode ? "rgba(255,255,255,0.08)" : undefined;
