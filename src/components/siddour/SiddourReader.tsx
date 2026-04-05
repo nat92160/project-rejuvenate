@@ -48,11 +48,12 @@ function findPrayerStartIndex(hebrew: string[]): number {
 
 
 interface SectionContent {
-  hebrew: string[];
-  french: string[];
+  hebrew?: string[];
+  french?: string[];
   title: string;
   heTitle: string;
   isHazara?: boolean;
+  phonetic?: string[];
 }
 
 interface SiddourReaderProps {
