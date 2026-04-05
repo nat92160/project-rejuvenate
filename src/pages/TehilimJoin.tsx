@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { shareText } from "@/lib/shareUtils";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 import HazakCelebration from "@/components/HazakCelebration";
 import { toHebrewLetter } from "@/lib/utils";
