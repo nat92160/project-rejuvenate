@@ -82,6 +82,7 @@ const SiddourReader = ({
   onBack, onPrev, onNext, hasPrev, hasNext,
   isFavorite, onToggleFavorite,
   prayerMode = false,
+  litContext,
 }: SiddourReaderProps) => {
   const topRef = useRef<HTMLDivElement>(null);
   const prayerStartRef = useRef<HTMLSpanElement>(null);
