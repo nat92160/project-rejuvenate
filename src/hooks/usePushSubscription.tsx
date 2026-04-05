@@ -62,12 +62,12 @@ export function usePushSubscription(synagogueId: string) {
 
     if (native) {
       // Check if we have a native subscription for this synagogue
-      supabase
+      (supabase
         .from("push_subscriptions")
         .select("id")
         .eq("user_id", user.id)
-        .eq("synagogue_id", synagogueId)
-        .eq("push_type" as any, "native")
+        .eq("synagogue_id", synagogueId) as any)
+        .eq("push_type", "native")
         .maybeSingle()
         .then(({ data }) => {
           setIsSubscribed(!!data);
