@@ -71,7 +71,7 @@ const TestPushButton = () => {
       }
 
       const reg = await navigator.serviceWorker.register("/sw-push.js");
-      const VAPID_PUBLIC_KEY = "BPEw1AhklkYgH1yJk9BrOmGhJfxTRGNMrHPpyBnLNd13gQpl8LB6TibiN0zd9XqJqXMTin7DidhxV9-mwjdOF6M";
+      const VAPID_PUBLIC_KEY = "BDsu-qSyCHV9dnTz6tD_V5VTym2BNVZ_qnQE81_LS5Of2XzJ4OdvznN_4AIc1J79xmaqrbOz-VoEn0M47pMNSSY";
       const padding = "=".repeat((4 - (VAPID_PUBLIC_KEY.length % 4)) % 4);
       const base64 = (VAPID_PUBLIC_KEY + padding).replace(/-/g, "+").replace(/_/g, "/");
       const rawData = window.atob(base64);

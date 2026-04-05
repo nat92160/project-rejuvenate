@@ -9,7 +9,7 @@ import {
 } from "@/lib/capacitorPush";
 import { toast } from "sonner";
 
-const VAPID_PUBLIC_KEY = "BPEw1AhklkYgH1yJk9BrOmGhJfxTRGNMrHPpyBnLNd13gQpl8LB6TibiN0zd9XqJqXMTin7DidhxV9-mwjdOF6M";
+const VAPID_PUBLIC_KEY = "BDsu-qSyCHV9dnTz6tD_V5VTym2BNVZ_qnQE81_LS5Of2XzJ4OdvznN_4AIc1J79xmaqrbOz-VoEn0M47pMNSSY";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
