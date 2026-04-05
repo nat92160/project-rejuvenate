@@ -286,18 +286,36 @@ const IndexContent = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const isPresidentDashboard = isPresident && activeTab === "dashboard";
+  // President sees fidele dashboard by default, can switch to president mode
+  const isPresidentDashboard = activeTab === "president-dashboard";
 
   const renderTabContent = () => {
-    if (isPresidentDashboard) {
-      return <Lazy><PresidentDashboard onLoginClick={() => setAuthOpen(true)} onSwitchToFidele={() => setActiveTab("fidele-home")} /></Lazy>;
+    if (activeTab === "president-dashboard") {
+      return <Lazy><PresidentDashboard onLoginClick={() => setAuthOpen(true)} onSwitchToFidele={() => setActiveTab("dashboard")} /></Lazy>;
     }
 
     switch (activeTab) {
-      case "fidele-home":
       case "dashboard":
         return (
-          <DashboardHome setActiveTab={setActiveTab} />
+          <>
+            {/* Bouton basculer vers interface président */}
+            {isPresident && (
+              <button
+                onClick={() => setActiveTab("president-dashboard")}
+                className="w-full mb-5 flex items-center justify-center gap-2.5 py-3.5 rounded-2xl border-none cursor-pointer transition-all active:scale-[0.98] hover:-translate-y-0.5"
+                style={{
+                  background: "var(--gradient-gold)",
+                  boxShadow: "var(--shadow-gold)",
+                  color: "hsl(var(--primary-foreground))",
+                }}
+              >
+                <span className="text-base">🏛️</span>
+                <span className="text-sm font-bold">Gérer ma synagogue</span>
+                <span className="text-xs opacity-70">→</span>
+              </button>
+            )}
+            <DashboardHome setActiveTab={setActiveTab} />
+          </>
         );
       case "zmanim": return <Lazy><ZmanimWidget /></Lazy>;
       case "chabbat": return <Lazy><><CountdownWidget /><ShabbatWidget /></></Lazy>;
