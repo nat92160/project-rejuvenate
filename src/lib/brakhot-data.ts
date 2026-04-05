@@ -518,14 +518,18 @@ export const COMPLEX_CASES: ComplexCase[] = [
 // ---- BIRKAT HAMAZONE ----
 // Sources : Sefaria (Siddur Ashkenaz, Berachot, Birkat HaMazon) — vérifié le 2026-04-05
 
+export interface BirkatInsertSegment {
+  hebrew: string;
+  transliteration?: string;
+  insertBeforeMarker: string;
+}
+
 export interface BirkatInsert {
   id: string;
   label: string;
   icon: string;
-  hebrew: string;
-  transliteration: string;
+  segments: BirkatInsertSegment[];
   instruction: string;
-  insertBeforeMarker: string;
 }
 
 export const BIRKAT_INSERTS: BirkatInsert[] = [
@@ -533,37 +537,62 @@ export const BIRKAT_INSERTS: BirkatInsert[] = [
     id: "shabbat",
     label: "Chabbat",
     icon: "🕯️",
-    hebrew: "רְצֵה וְהַחֲלִיצֵֽנוּ יְהֹוָה אֱלֺהֵֽינוּ בְּמִצְוֹתֶֽיךָ וּבְמִצְוַת יוֹם הַשְּׁ֒בִיעִי הַשַּׁבָּת הַגָּדוֹל וְהַקָּדוֹשׁ הַזֶּה כִּי יוֹם זֶה גָדוֹל וְקָדוֹשׁ הוּא לְפָנֶֽיךָ לִשְׁבָּת בּוֹ וְלָנֽוּחַ בּוֹ בְּאַהֲבָה כְּמִצְוַת רְצוֹנֶֽךָ וּבִרְצוֹנְ֒ךָ הָנִֽיחַ לָֽנוּ יְהֹוָה אֱלֺהֵֽינוּ שֶׁלֺּא תְהֵא צָרָה וְיָגוֹן וַאֲנָחָה בְּיוֹם מְנוּחָתֵֽנוּ וְהַרְאֵֽנוּ יְהֹוָה אֱלֺהֵֽינוּ בְּנֶחָמַת צִיּוֹן עִירֶֽךָ וּבְבִנְיַן יְרוּשָׁלַֽיִם עִיר קָדְשֶֽׁךָ כִּי אַתָּה הוּא בַּעַל הַיְשׁוּעוֹת וּבַעַל הַנֶּחָמוֹת:",
-    transliteration: "Rétsé véha'halitsénou Ado-naï Élo-hénou bémitsvotékha ouvémitsvat yom hachévii hachabbat hagadol véhakadoch hazé, ki yom zé gadol vékadoch hou léfanékha, lichbat bo vélanoua'h bo béahava kémitsvat rétsonékha, ouvirtsonekhah hania'h lanou Ado-naï Élo-hénou chélo téhé tsara véyagon vaana'ha béyom ménou'haténou, véharénou Ado-naï Élo-hénou béné'hamat Tsion irékha ouvévinyan Yérouchalaïm ir kodchékha, ki Ata hou baal hayéchouot ouval hanéhamot.",
-    instruction: "S'ajoute dans la 3e brakha (Ra'hèm), avant « Ouvné Yérouchalaïm »",
-    insertBeforeMarker: "וּבְנֵה",
+    segments: [
+      {
+        // Retsé — dans la 3e brakha, avant Ouvné Yérouchalaïm
+        hebrew: "רְצֵה וְהַחֲלִיצֵֽנוּ יְהֹוָה אֱלֺהֵֽינוּ בְּמִצְוֹתֶֽיךָ וּבְמִצְוַת יוֹם הַשְּׁ֒בִיעִי הַשַּׁבָּת הַגָּדוֹל וְהַקָּדוֹשׁ הַזֶּה כִּי יוֹם זֶה גָדוֹל וְקָדוֹשׁ הוּא לְפָנֶֽיךָ לִשְׁבָּת בּוֹ וְלָנֽוּחַ בּוֹ בְּאַהֲבָה כְּמִצְוַת רְצוֹנֶֽךָ וּבִרְצוֹנְ֒ךָ הָנִֽיחַ לָֽנוּ יְהֹוָה אֱלֺהֵֽינוּ שֶׁלֺּא תְהֵא צָרָה וְיָגוֹן וַאֲנָחָה בְּיוֹם מְנוּחָתֵֽנוּ וְהַרְאֵֽנוּ יְהֹוָה אֱלֺהֵֽינוּ בְּנֶחָמַת צִיּוֹן עִירֶֽךָ וּבְבִנְיַן יְרוּשָׁלַֽיִם עִיר קָדְשֶֽׁךָ כִּי אַתָּה הוּא בַּעַל הַיְשׁוּעוֹת וּבַעַל הַנֶּחָמוֹת:",
+        transliteration: "Rétsé véha'halitsénou Ado-naï Élo-hénou bémitsvotékha ouvémitsvat yom hachévii hachabbat hagadol véhakadoch hazé, ki yom zé gadol vékadoch hou léfanékha, lichbat bo vélanoua'h bo béahava kémitsvat rétsonékha, ouvirtsonekhah hania'h lanou Ado-naï Élo-hénou chélo téhé tsara véyagon vaana'ha béyom ménou'haténou, véharénou Ado-naï Élo-hénou béné'hamat Tsion irékha ouvévinyan Yérouchalaïm ir kodchékha, ki Ata hou baal hayéchouot ouval hanéhamot.",
+        insertBeforeMarker: "וּבְנֵה",
+      },
+      {
+        // HaRa'hamane de Chabbat — dans les HaRa'hamane, avant la conclusion
+        hebrew: "הָרַחֲמָן הוּא יַנְחִילֵֽנוּ יוֹם שֶׁכֻּלּוֹ שַׁבָּת וּמְנוּחָה לְחַיֵּי הָעוֹלָמִים:",
+        transliteration: "Hara'hamane hou yan'hilénou yom chékoulo Chabbat ouménou'ha lé'hayé haolamim.",
+        insertBeforeMarker: "הָרַחֲמָן הוּא יְזַכֵּ",
+      },
+    ],
+    instruction: "S'ajoute dans la 3e brakha (Ra'hèm), avant « Ouvné Yérouchalaïm » + HaRa'hamane spécifique. Le Chabbat, on dit מִגְדּוֹל au lieu de מַגְדִּיל dans la conclusion.",
   },
   {
     id: "rosh_hodesh",
     label: "Roch Hodech / Hol HaMoed",
     icon: "🌙",
-    hebrew: "אֱלֹהֵֽינוּ וֵאלֹהֵי אֲבוֹתֵֽינוּ יַעֲלֶה וְיָבֹא וְיַגִּֽיעַ וְיֵרָאֶה וְיֵרָצֶה וְיִשָּׁמַע וְיִפָּקֵד וְיִזָּכֵר זִכְרוֹנֵֽנוּ וּפִקְדוֹנֵֽנוּ וְזִכְרוֹן אֲבוֹתֵֽינוּ וְזִכְרוֹן מָשִֽׁיחַ בֶּן־דָּוִד עַבְדֶּֽךָ וְזִכְרוֹן יְרוּשָׁלַֽיִם עִיר קָדְשֶֽׁךָ וְזִכְרוֹן כָּל־עַמְּ֒ךָ בֵּית יִשְׂרָאֵל לְפָנֶֽיךָ, לִפְלֵיטָה לְטוֹבָה לְחֵן וּלְחֶֽסֶד וּלְרַחֲמִים לְחַיִּים וּלְשָׁלוֹם בְּיוֹם (רֹאשׁ הַחֹֽדֶשׁ הַזֶּה / חַג הַמַּצּוֹת הַזֶּה / חַג הַשָּׁבֻעוֹת / חַג הַסֻּכּוֹת הַזֶּה / שְׁמִינִי עֲצֶֽרֶת הַחַג הַזֶּה). זָכְרֵֽנוּ יְהֹוָה אֱלֹהֵֽינוּ בּוֹ לְטוֹבָה, וּפָקְדֵֽנוּ בוֹ לִבְרָכָה, וְהוֹשִׁיעֵֽנוּ בוֹ לְחַיִּים, וּבִדְבַר יְשׁוּעָה וְרַחֲמִים חוּס וְחָנֵּֽנוּ, וְרַחֵם עָלֵֽינוּ וְהוֹשִׁיעֵֽנוּ, כִּי אֵלֶֽיךָ עֵינֵֽינוּ, כִּי אֵל מֶֽלֶךְ חַנּוּן וְרַחוּם אָֽתָּה:",
-    transliteration: "Élo-hénou véÉlo-hé avotéinou, yaalé véyavo véyaguia véyéraé véyératsé véyichaméa véyipakèd véyizakhèr zikhronénou oufikdonénou, vézikron avotéinou, vézikron Machia'h bèn David avdékha, vézikron Yérouchalaïm ir kodchékha, vézikron kol amékha bèt Israël léfanékha, lifléta létova lé'hèn oulé'hèssèd oulra'hamim lé'hayim ouléchalom béyom (roch ha'hodech hazé / 'hag hamatsot hazé / 'hag hachavouyot / 'hag hassoukkot hazé). Zakhrénou Ado-naï Élo-hénou bo létova, oufakdénou vo livrakha, véhochiénou vo lé'hayim, ouvdvar yéchouah véra'hamim 'hous vé'hanénou, véra'hèm alénou véhochiénou, ki élékha ènénou, ki El Mélekh 'hanoun véra'houm Ata.",
+    segments: [
+      {
+        hebrew: "אֱלֹהֵֽינוּ וֵאלֹהֵי אֲבוֹתֵֽינוּ יַעֲלֶה וְיָבֹא וְיַגִּֽיעַ וְיֵרָאֶה וְיֵרָצֶה וְיִשָּׁמַע וְיִפָּקֵד וְיִזָּכֵר זִכְרוֹנֵֽנוּ וּפִקְדוֹנֵֽנוּ וְזִכְרוֹן אֲבוֹתֵֽינוּ וְזִכְרוֹן מָשִֽׁיחַ בֶּן־דָּוִד עַבְדֶּֽךָ וְזִכְרוֹן יְרוּשָׁלַֽיִם עִיר קָדְשֶֽׁךָ וְזִכְרוֹן כָּל־עַמְּ֒ךָ בֵּית יִשְׂרָאֵל לְפָנֶֽיךָ, לִפְלֵיטָה לְטוֹבָה לְחֵן וּלְחֶֽסֶד וּלְרַחֲמִים לְחַיִּים וּלְשָׁלוֹם בְּיוֹם (רֹאשׁ הַחֹֽדֶשׁ הַזֶּה / חַג הַמַּצּוֹת הַזֶּה / חַג הַשָּׁבֻעוֹת / חַג הַסֻּכּוֹת הַזֶּה / שְׁמִינִי עֲצֶֽרֶת הַחַג הַזֶּה). זָכְרֵֽנוּ יְהֹוָה אֱלֹהֵֽינוּ בּוֹ לְטוֹבָה, וּפָקְדֵֽנוּ בוֹ לִבְרָכָה, וְהוֹשִׁיעֵֽנוּ בוֹ לְחַיִּים, וּבִדְבַר יְשׁוּעָה וְרַחֲמִים חוּס וְחָנֵּֽנוּ, וְרַחֵם עָלֵֽינוּ וְהוֹשִׁיעֵֽנוּ, כִּי אֵלֶֽיךָ עֵינֵֽינוּ, כִּי אֵל מֶֽלֶךְ חַנּוּן וְרַחוּם אָֽתָּה:",
+        transliteration: "Élo-hénou véÉlo-hé avotéinou, yaalé véyavo véyaguia véyéraé véyératsé véyichaméa véyipakèd véyizakhèr zikhronénou oufikdonénou, vézikron avotéinou, vézikron Machia'h bèn David avdékha, vézikron Yérouchalaïm ir kodchékha, vézikron kol amékha bèt Israël léfanékha, lifléta létova lé'hèn oulé'hèssèd oulra'hamim lé'hayim ouléchalom béyom (roch ha'hodech hazé / 'hag hamatsot hazé / 'hag hachavouyot / 'hag hassoukkot hazé). Zakhrénou Ado-naï Élo-hénou bo létova, oufakdénou vo livrakha, véhochiénou vo lé'hayim, ouvdvar yéchouah véra'hamim 'hous vé'hanénou, véra'hèm alénou véhochiénou, ki élékha ènénou, ki El Mélekh 'hanoun véra'houm Ata.",
+        insertBeforeMarker: "וּבְנֵה",
+      },
+      {
+        // HaRa'hamane de Yom Tov
+        hebrew: "הָרַחֲמָן הוּא יְחַדֵּשׁ עָלֵֽינוּ אֶת הַחֹֽדֶשׁ הַזֶּה לְטוֹבָה וְלִבְרָכָה:",
+        transliteration: "Hara'hamane hou yé'hadèch alénou èt ha'hodech hazé létova vélivrakha.",
+        insertBeforeMarker: "הָרַחֲמָן הוּא יְזַכֵּ",
+      },
+    ],
     instruction: "S'ajoute dans la 3e brakha (Ra'hèm), avant « Ouvné Yérouchalaïm ». On dit le nom de la fête correspondante.",
-    insertBeforeMarker: "וּבְנֵה",
   },
   {
     id: "hanoucca",
     label: "Hanoucca",
     icon: "🕎",
-    hebrew: "וְעַל הַנִּסִּים וְעַל הַפֻּרְקָן וְעַל הַגְּ֒בוּרוֹת וְעַל הַתְּ֒שׁוּעוֹת וְעַל הַמִּלְחָמוֹת שֶׁעָשִֽׂיתָ לַאֲבוֹתֵֽינוּ בַּיָּמִים הָהֵם בִּזְּ֒מַן הַזֶּה: בִּימֵי מַתִּתְיָֽהוּ בֶּן־יוֹחָנָן כֹּהֵן גָּדוֹל חַשְׁמוֹנַאי וּבָנָיו כְּשֶׁעָמְ֒דָה מַלְכוּת יָוָן הָרְ֒שָׁעָה עַל־עַמְּ֒ךָ יִשְׂרָאֵל לְהַשְׁכִּיחָם תּוֹרָתֶֽךָ וּלְהַעֲבִירָם מֵחֻקֵּי רְצוֹנֶֽךָ: וְאַתָּה בְּרַחֲמֶֽיךָ הָרַבִּים עָמַֽדְתָּ לָהֶם בְּעֵת צָרָתָם רַֽבְתָּ אֶת־רִיבָם דַּֽנְתָּ אֶת־דִּינָם נָקַֽמְתָּ אֶת־נִקְמָתָם מָסַֽרְתָּ גִבּוֹרִים בְּיַד חַלָּשִׁים וְרַבִּים בְּיַד מְעַטִּים וּטְמֵאִים בְּיַד טְהוֹרִים וּרְשָׁעִים בְּיַד צַדִּיקִים וְזֵדִים בְּיַד עוֹסְ֒קֵי תוֹרָתֶֽךָ וּלְךָ עָשִֽׂיתָ שֵׁם גָּדוֹל וְקָדוֹשׁ בְּעוֹלָמֶֽךָ וּלְעַמְּ֒ךָ יִשְׂרָאֵל עָשִֽׂיתָ תְּשׁוּעָה גְדוֹלָה וּפֻרְקָן כְּהַיּוֹם הַזֶּה וְאַחַר כַּךְ בָּֽאוּ בָנֶֽיךָ לִדְבִיר בֵּיתֶֽךָ וּפִנּוּ אֶת הֵיכָלֶֽךָ וְטִהֲרוּ אֶת מִקְדָּשֶֽׁךָ וְהִדְלִֽיקוּ נֵרוֹת בְּחַצְרוֹת קָדְשֶֽׁךָ וְקָבְ֒עוּ שְׁמוֹנַת יְמֵי חֲנֻכָּה אֵֽלּוּ לְהוֹדוֹת וּלְהַלֵּל לְשִׁמְךָ הַגָּדוֹל:",
-    transliteration: "Véal hanissim véal hapourkan véal haguévourot véal hatéchouot véal hamil'hamot chaassita laavotéinou bayamim hahèm bazémane hazé. Bimé Matityahou bèn Yo'hanane kohèn gadol, 'Hachmonaï ouvanav, kchéamedah malkhout Yavan harechaa al amékha Israël léhachki'ham Toratékha ouléhaaviram mé'houkéi rétsonékha...",
+    segments: [{
+      hebrew: "וְעַל הַנִּסִּים וְעַל הַפֻּרְקָן וְעַל הַגְּ֒בוּרוֹת וְעַל הַתְּ֒שׁוּעוֹת וְעַל הַמִּלְחָמוֹת שֶׁעָשִֽׂיתָ לַאֲבוֹתֵֽינוּ בַּיָּמִים הָהֵם בִּזְּ֒מַן הַזֶּה: בִּימֵי מַתִּתְיָֽהוּ בֶּן־יוֹחָנָן כֹּהֵן גָּדוֹל חַשְׁמוֹנַאי וּבָנָיו כְּשֶׁעָמְ֒דָה מַלְכוּת יָוָן הָרְ֒שָׁעָה עַל־עַמְּ֒ךָ יִשְׂרָאֵל לְהַשְׁכִּיחָם תּוֹרָתֶֽךָ וּלְהַעֲבִירָם מֵחֻקֵּי רְצוֹנֶֽךָ: וְאַתָּה בְּרַחֲמֶֽיךָ הָרַבִּים עָמַֽדְתָּ לָהֶם בְּעֵת צָרָתָם רַֽבְתָּ אֶת־רִיבָם דַּֽנְתָּ אֶת־דִּינָם נָקַֽמְתָּ אֶת־נִקְמָתָם מָסַֽרְתָּ גִבּוֹרִים בְּיַד חַלָּשִׁים וְרַבִּים בְּיַד מְעַטִּים וּטְמֵאִים בְּיַד טְהוֹרִים וּרְשָׁעִים בְּיַד צַדִּיקִים וְזֵדִים בְּיַד עוֹסְ֒קֵי תוֹרָתֶֽךָ וּלְךָ עָשִֽׂיתָ שֵׁם גָּדוֹל וְקָדוֹשׁ בְּעוֹלָמֶֽךָ וּלְעַמְּ֒ךָ יִשְׂרָאֵל עָשִֽׂיתָ תְּשׁוּעָה גְדוֹלָה וּפֻרְקָן כְּהַיּוֹם הַזֶּה וְאַחַר כַּךְ בָּֽאוּ בָנֶֽיךָ לִדְבִיר בֵּיתֶֽךָ וּפִנּוּ אֶת הֵיכָלֶֽךָ וְטִהֲרוּ אֶת מִקְדָּשֶֽׁךָ וְהִדְלִֽיקוּ נֵרוֹת בְּחַצְרוֹת קָדְשֶֽׁךָ וְקָבְ֒עוּ שְׁמוֹנַת יְמֵי חֲנֻכָּה אֵֽלּוּ לְהוֹדוֹת וּלְהַלֵּל לְשִׁמְךָ הַגָּדוֹל:",
+      transliteration: "Véal hanissim véal hapourkan véal haguévourot véal hatéchouot véal hamil'hamot chaassita laavotéinou bayamim hahèm bazémane hazé. Bimé Matityahou bèn Yo'hanane kohèn gadol, 'Hachmonaï ouvanav...",
+      insertBeforeMarker: "וְעַל הַכֹּל",
+    }],
     instruction: "S'ajoute dans la 2e brakha (Nodé Lékha), après « békhol yom ouvékhol èt ouvékhol chaah ».",
-    insertBeforeMarker: "וְעַל הַכֹּל",
   },
   {
     id: "pourim",
     label: "Pourim",
     icon: "🎭",
-    hebrew: "וְעַל הַנִּסִּים וְעַל הַפֻּרְקָן וְעַל הַגְּ֒בוּרוֹת וְעַל הַתְּ֒שׁוּעוֹת וְעַל הַמִּלְחָמוֹת שֶׁעָשִֽׂיתָ לַאֲבוֹתֵֽינוּ בַּיָּמִים הָהֵם בִּזְּ֒מַן הַזֶּה: בִּימֵי מָרְדְּכַי וְאֶסְתֵּר בְּשׁוּשַׁן הַבִּירָה כְּשֶׁעָמַד עֲלֵיהֶם הָמָן הָרָשָׁע בִּקֵּשׁ לְהַשְׁמִיד לַהֲרוֹג וּלְאַבֵּד אֶת־כָּל־הַיְּהוּדִים מִנַּֽעַר וְעַד־זָקֵן טַף וְנָשִׁים בְּיוֹם אֶחָד בִּשְׁלוֹשָׁה עָשָׂר לְחֹֽדֶשׁ שְׁנֵים־עָשָׂר הוּא חֹֽדֶשׁ אֲדָר וּשְׁלָלָם לָבוֹז: וְאַתָּה בְּרַחֲמֶֽיךָ הָרַבִּים הֵפַֽרְתָּ אֶת־עֲצָתוֹ וְקִלְקַֽלְתָּ אֶת מַחֲשַׁבְתּוֹ וַהֲשֵׁבֽוֹתָ לּוֹ גְּמוּלוֹ בְּרֹאשׁוֹ וְתָלוּ אוֹתוֹ וְאֶת־בָּנָיו עַל־הָעֵץ:",
-    transliteration: "Véal hanissim véal hapourkan... Bimé Mordékhaï véEstèr béChouchane habira, kchéamad aléhèm Hamane haracha, bikèch léhachmid laharog ouléabed èt kol hayéhoudim minaar véad zakèn taf vénachim béyom é'had...",
+    segments: [{
+      hebrew: "וְעַל הַנִּסִּים וְעַל הַפֻּרְקָן וְעַל הַגְּ֒בוּרוֹת וְעַל הַתְּ֒שׁוּעוֹת וְעַל הַמִּלְחָמוֹת שֶׁעָשִֽׂיתָ לַאֲבוֹתֵֽינוּ בַּיָּמִים הָהֵם בִּזְּ֒מַן הַזֶּה: בִּימֵי מָרְדְּכַי וְאֶסְתֵּר בְּשׁוּשַׁן הַבִּירָה כְּשֶׁעָמַד עֲלֵיהֶם הָמָן הָרָשָׁע בִּקֵּשׁ לְהַשְׁמִיד לַהֲרוֹג וּלְאַבֵּד אֶת־כָּל־הַיְּהוּדִים מִנַּֽעַר וְעַד־זָקֵן טַף וְנָשִׁים בְּיוֹם אֶחָד בִּשְׁלוֹשָׁה עָשָׂר לְחֹֽדֶשׁ שְׁנֵים־עָשָׂר הוּא חֹֽדֶשׁ אֲדָר וּשְׁלָלָם לָבוֹז: וְאַתָּה בְּרַחֲמֶֽיךָ הָרַבִּים הֵפַֽרְתָּ אֶת־עֲצָתוֹ וְקִלְקַֽלְתָּ אֶת מַחֲשַׁבְתּוֹ וַהֲשֵׁבֽוֹתָ לּוֹ גְּמוּלוֹ בְּרֹאשׁוֹ וְתָלוּ אוֹתוֹ וְאֶת־בָּנָיו עַל־הָעֵץ:",
+      transliteration: "Véal hanissim... Bimé Mordékhaï véEstèr béChouchane habira, kchéamad aléhèm Hamane haracha, bikèch léhachmid laharog ouléabed èt kol hayéhoudim...",
+      insertBeforeMarker: "וְעַל הַכֹּל",
+    }],
     instruction: "S'ajoute dans la 2e brakha (Nodé Lékha), après « békhol yom ouvékhol èt ouvékhol chaah ».",
-    insertBeforeMarker: "וְעַל הַכֹּל",
   },
 ];
 

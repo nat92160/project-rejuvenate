@@ -1,13 +1,21 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { toHebrewLetter, isInstructionOnly } from "@/lib/utils";
 import ViewModeSelector from "@/components/ViewModeSelector";
+import LiturgicalContextBar from "@/components/siddour/LiturgicalContextBar";
+import { getLiturgicalContext, processAmidaVerses, type LiturgicalPeriod } from "@/lib/liturgicalContext";
 import type { ViewMode } from "@/hooks/useTransliteration";
 
 /** Known liturgical openings matched without niqqud/html for robust detection. */
 const KNOWN_OPENINGS = ["שמע ישראל", "אדני שפתי תפתח"];
 const SHEMA_SECONDARY = "ברוך שם כבוד מלכותו לעולם ועד";
+
+/** Detect if a section title relates to the Amida */
+function isAmidaSection(title: string): boolean {
+  const lower = title.toLowerCase();
+  return lower.includes("amida") || lower.includes("עמידה") || lower.includes("amidah");
+}
 
 function normalizeHebrewMatch(html: string): string {
   return html
@@ -82,6 +90,16 @@ const SiddourReader = ({
   const topRef = useRef<HTMLDivElement>(null);
   const prayerStartRef = useRef<HTMLSpanElement>(null);
 
+  // Liturgical context for Amida
+  const [litContext, setLitContext] = useState<LiturgicalPeriod>(() => getLiturgicalContext());
+  const showAmidaContext = content ? isAmidaSection(content.title) : false;
+
+  // Process Amida verses with liturgical context
+  const processedVerses = useMemo(() => {
+    if (!content || !showAmidaContext) return null;
+    return processAmidaVerses(content.hebrew, litContext);
+  }, [content, showAmidaContext, litContext]);
+
   // Detect the real prayer start index (first <b> verse, or first non-instruction)
   const prayerStartIdx = useMemo(
     () => content ? findPrayerStartIndex(content.hebrew) : 0,
@@ -136,6 +154,17 @@ const SiddourReader = ({
           {isFavorite ? "Favori" : "Épingler"}
         </button>
       </div>
+
+      {/* Liturgical context bar for Amida sections */}
+      {showAmidaContext && (
+        <div className="mb-4">
+          <LiturgicalContextBar
+            context={litContext}
+            onContextChange={setLitContext}
+            prayerMode={prayerMode}
+          />
+        </div>
+      )}
 
       {/* View mode selector */}
       <div className="mb-4">
@@ -201,7 +230,34 @@ const SiddourReader = ({
                   const isPrayerStart = i === prayerStartIdx;
                   const isPrelude = i < prayerStartIdx;
 
+                  // Liturgical processing for Amida
+                  const processed = processedVerses?.[i];
+                  const isSeasonalInactive = processed && !processed.isActive && !processed.isInstruction;
+                  const isSeasonalMarker = processed?.isSeasonalMarker;
+                  const isSeasonalActive = processed && processed.isActive && (processed.isSeasonalMarker || isSeasonalInactive === false);
+
                   if (isInstructionOnly(verse)) {
+                    // For Amida: style seasonal markers differently
+                    if (isSeasonalMarker) {
+                      return (
+                        <span
+                          key={i}
+                          className="verse-instruction"
+                          style={{
+                            display: "block",
+                            padding: "4px 8px",
+                            marginBlock: "4px",
+                            borderRadius: "6px",
+                            background: processed?.isActive
+                              ? "hsl(var(--gold) / 0.12)"
+                              : "transparent",
+                            opacity: processed?.isActive ? 1 : 0.35,
+                            fontWeight: processed?.isActive ? 700 : 400,
+                          }}
+                          dangerouslySetInnerHTML={{ __html: verse }}
+                        />
+                      );
+                    }
                     return (
                       <span
                         key={i}
@@ -222,8 +278,19 @@ const SiddourReader = ({
                   }
 
                   verseNum++;
+
+                  // Style for seasonally inactive verses (dim them)
+                  const seasonalStyle: React.CSSProperties = isSeasonalInactive
+                    ? { opacity: 0.25, fontSize: `${Math.max(fontSize - 4, 12)}px`, textDecoration: "line-through", textDecorationColor: "hsl(var(--muted-foreground) / 0.3)" }
+                    : {};
+
+                  // Highlight actively selected seasonal verse
+                  const activeSeasonalStyle: React.CSSProperties = (processed && processed.isActive && processed.isSeasonalMarker === false && processedVerses?.[i - 1]?.isSeasonalMarker)
+                    ? { background: "hsl(var(--gold) / 0.08)", borderRadius: "8px", padding: "4px 8px", borderRight: "3px solid hsl(var(--gold) / 0.4)" }
+                    : {};
+
                   return (
-                    <span key={i} ref={isPrayerStart ? prayerStartRef : undefined}>
+                    <span key={i} ref={isPrayerStart ? prayerStartRef : undefined} style={{ ...seasonalStyle, ...activeSeasonalStyle }}>
                       <span
                         style={{
                           fontSize: isPrayerStart ? `${fontSize + 8}px` : `${Math.max(fontSize - 3, 14)}px`,
