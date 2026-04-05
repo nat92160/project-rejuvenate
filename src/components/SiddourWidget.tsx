@@ -26,7 +26,7 @@ const OFFICES: { key: Office; label: string; icon: string }[] = [
   { key: "kaddish", label: "Kaddich", icon: "📜" },
 ];
 
-const CACHE_PREFIX = "siddour_v5_";
+const CACHE_PREFIX = "siddour_v6_";
 
 /** Detect the most relevant office based on current time */
 function detectOffice(): Office {
