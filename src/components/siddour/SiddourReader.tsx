@@ -26,15 +26,22 @@ function isShemaSecondaryLine(html: string): boolean {
 /**
  * Detect if a verse is an internal section title (prayer name / sub-heading).
  * These are short bold-only lines from Sefaria that act as prayer dividers.
+ * Matches: <b>title</b>, <big><b>title</b></big>, <b><big>title</big></b>
  */
 function isInternalSectionTitle(html: string): boolean {
   const trimmed = html.trim();
-  // Must be wrapped in <b> tags (entirely bold)
-  if (!trimmed.startsWith("<b>") || !trimmed.endsWith("</b>")) return false;
-  // Extract text content
-  const text = normalizeHebrewMatch(trimmed);
-  // Short enough to be a title (not a full verse), at least 2 chars
-  return text.length >= 2 && text.length <= 80;
+  // <big><b>...</b></big> pattern
+  if (/^<big><b>.*<\/b><\/big>$/.test(trimmed)) {
+    const text = normalizeHebrewMatch(trimmed);
+    return text.length >= 2 && text.length <= 80;
+  }
+  // Pure <b>...</b> pattern (no other tags mixed in)
+  if (/^<b>[^<]*(<[^b\/][^>]*>[^<]*<\/[^b][^>]*>)*[^<]*<\/b>$/.test(trimmed) || 
+      (trimmed.startsWith("<b>") && trimmed.endsWith("</b>") && !trimmed.includes("<small>"))) {
+    const text = normalizeHebrewMatch(trimmed);
+    return text.length >= 2 && text.length <= 80;
+  }
+  return false;
 }
 
 /**
