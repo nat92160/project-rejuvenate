@@ -305,16 +305,6 @@ const SiddourReader = ({
                     );
                   }
 
-                  if (isPrelude) {
-                    return (
-                      <span
-                        key={i}
-                        className="verse-prelude"
-                        dangerouslySetInnerHTML={{ __html: verse }}
-                      />
-                    );
-                  }
-
                   verseNum++;
                   return (
                     <span key={i} ref={isPrayerStart ? prayerStartRef : undefined}>
