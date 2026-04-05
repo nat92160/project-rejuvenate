@@ -97,11 +97,10 @@ const SIDDOUR_REFS: Record<string, Entry[]> = {
   ],
 
   kaddish: [
-    // No standalone kaddish in Edot HaMizrach index — use Ashkenaz refs as fallback
-    { ref: "Siddur_Ashkenaz,_Kaddish,_Half_Kaddish", title: "Demi-Kaddich", heTitle: "חצי קדיש" },
-    { ref: "Siddur_Ashkenaz,_Kaddish,_Mourner's_Kaddish", title: "Kaddich Yatom", heTitle: "קדיש יתום" },
-    { ref: "Siddur_Ashkenaz,_Kaddish,_Kaddish_Shalem", title: "Kaddich Chalem", heTitle: "קדיש שלם" },
-    { ref: "Siddur_Ashkenaz,_Kaddish,_Kaddish_d'Rabbanan", title: "Kaddich Dérabbanane", heTitle: "קדיש דרבנן" },
+    { ref: r("Kaddish","Half Kaddish"), title: "Demi-Kaddich", heTitle: "חצי קדיש" },
+    { ref: r("Kaddish","Mourner's Kaddish"), title: "Kaddich Yatom", heTitle: "קדיש יתום" },
+    { ref: r("Kaddish","Kaddish Shalem"), title: "Kaddich Chalem", heTitle: "קדיש שלם" },
+    { ref: r("Kaddish","Kaddish d'Rabbanan"), title: "Kaddich Dérabbanane", heTitle: "קדיש דרבנן" },
   ],
 };
 
