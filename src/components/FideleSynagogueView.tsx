@@ -415,18 +415,28 @@ const FideleSynagogueView = () => {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleSubscribe(syna.id)}
-                    disabled={subscribing === syna.id}
-                    className="shrink-0 rounded-xl border-none px-4 py-2 text-xs font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
-                    style={
-                      syna.isSubscribed
-                        ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
-                        : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
-                    }
-                  >
-                    {subscribing === syna.id ? "…" : syna.isSubscribed ? "✓ Suivi" : "+ S'abonner"}
-                  </button>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <button
+                      onClick={() => handleSubscribe(syna.id)}
+                      disabled={subscribing === syna.id}
+                      className="rounded-xl border-none px-4 py-2 text-xs font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                      style={
+                        syna.isSubscribed
+                          ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                          : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
+                      }
+                    >
+                      {subscribing === syna.id ? "…" : syna.isSubscribed ? "✓ Suivi" : "+ S'abonner"}
+                    </button>
+                    {syna.isSubscribed && (
+                      <button
+                        onClick={() => handleSubscribe(syna.id)}
+                        className="text-[10px] text-destructive/70 hover:text-destructive bg-transparent border-none cursor-pointer underline px-1"
+                      >
+                        Se désabonner
+                      </button>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             ))
@@ -492,18 +502,28 @@ const FideleSynagogueView = () => {
                             <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full" style={{ background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }}>⭐ Partenaire</span>
                             {syna.verified && <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">✅</span>}
                           </div>
-                          <button
-                            onClick={() => handleSubscribe(syna.id)}
-                            disabled={subscribing === syna.id}
-                            className="shrink-0 rounded-xl border-none px-3 py-1.5 text-[11px] font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
-                            style={
-                              directory.find(d => d.id === syna.id)?.isSubscribed
-                                ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
-                                : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
-                            }
-                          >
-                            {subscribing === syna.id ? "…" : directory.find(d => d.id === syna.id)?.isSubscribed ? "✓ Suivi" : "+ S'abonner"}
-                          </button>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <button
+                              onClick={() => handleSubscribe(syna.id)}
+                              disabled={subscribing === syna.id}
+                              className="rounded-xl border-none px-3 py-1.5 text-[11px] font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                              style={
+                                directory.find(d => d.id === syna.id)?.isSubscribed
+                                  ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                                  : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
+                              }
+                            >
+                              {subscribing === syna.id ? "…" : directory.find(d => d.id === syna.id)?.isSubscribed ? "✓ Suivi" : "+ S'abonner"}
+                            </button>
+                            {directory.find(d => d.id === syna.id)?.isSubscribed && (
+                              <button
+                                onClick={() => handleSubscribe(syna.id)}
+                                className="text-[10px] text-destructive/70 hover:text-destructive bg-transparent border-none cursor-pointer underline px-1"
+                              >
+                                Se désabonner
+                              </button>
+                            )}
+                          </div>
                         </div>
                         {syna.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {syna.address}</p>}
                         <span className="text-[11px] font-bold text-primary/80">📏 {distLabel}</span>
@@ -583,18 +603,28 @@ const FideleSynagogueView = () => {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="font-display text-sm font-bold leading-tight text-foreground">{gr.name}</h4>
-                        <button
-                          onClick={() => handleSubscribePlace(gr)}
-                          disabled={subscribing === gr.id}
-                          className="shrink-0 rounded-xl border-none px-3 py-1.5 text-[11px] font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
-                          style={
-                            subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name)
-                              ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
-                              : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
-                          }
-                        >
-                          {subscribing === gr.id ? "…" : subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name) ? "✓ Suivi" : "+ S'abonner"}
-                        </button>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <button
+                            onClick={() => handleSubscribePlace(gr)}
+                            disabled={subscribing === gr.id}
+                            className="rounded-xl border-none px-3 py-1.5 text-[11px] font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                            style={
+                              subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name)
+                                ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                                : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
+                            }
+                          >
+                            {subscribing === gr.id ? "…" : subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name) ? "✓ Suivi" : "+ S'abonner"}
+                          </button>
+                          {(subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name)) && (
+                            <button
+                              onClick={() => handleSubscribePlace(gr)}
+                              className="text-[10px] text-destructive/70 hover:text-destructive bg-transparent border-none cursor-pointer underline px-1"
+                            >
+                              Se désabonner
+                            </button>
+                          )}
+                        </div>
                       </div>
                       {gr.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {gr.address}</p>}
                       <div className="mt-1 flex items-center gap-2">
