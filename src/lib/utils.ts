@@ -26,24 +26,22 @@ export function toHebrewLetter(n: number): string {
 }
 
 /**
- * Check if a verse is a pure instruction (only <small> tags, no actual prayer text).
- * Returns true if the verse should be rendered as an instruction, not as prayer text.
- * Handles nested <small><small>...</small>...</small> and <big><b>...</b></big> title lines.
+ * Check if a verse is a pure instruction (only <small> tags with SHORT directive text).
+ * Returns true only for genuine liturgical instructions like "say quietly", "stand", etc.
+ * Long <small> blocks that contain actual prayer text should be rendered normally.
+ * NOTE: <big><b>...</b></big> section titles are NOT instructions — they are handled
+ * separately by isInternalSectionTitle in SiddourReader.
  */
 export function isInstructionOnly(html: string): boolean {
   const stripped = html.trim();
-  
-  // Pure <big><b>title</b></big> — section header, treat as instruction
-  if (/^<big><b>.*<\/b><\/big>$/.test(stripped)) return true;
-  
-  // Pure <small>...</small> with no text outside (may have nested small)
+
+  // Pure <small>...</small> — only if the plain-text content is short (a directive)
   if (stripped.startsWith("<small>") && stripped.endsWith("</small>")) {
     const inner = stripped.slice(7, -8);
-    // Single small block (no nested closing tag before end)
-    if (!inner.includes("</small>")) return true;
-    // Nested: <small><small>marker</small> text</small> — NOT instruction, it's conditional
-    // But <small><b>kedusha text...</b></small> IS instruction (Hazara)
-    if (inner.startsWith("<b>") || inner.startsWith("<small>")) return true;
+    const plainText = inner.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+    // Short directives (≤120 chars) like "אומר בלחש" are instructions
+    // Long text is actual prayer content wrapped in <small> by Sefaria
+    if (plainText.length <= 120) return true;
   }
   return false;
 }
