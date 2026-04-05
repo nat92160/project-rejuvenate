@@ -82,7 +82,7 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
   }, [chapter, clearTransliterations]);
 
   useEffect(() => {
-    if ((viewMode === "phonetic" || viewMode === "bilingual") && verses.length > 0 && transliterations.length === 0) {
+    if (viewMode === "phonetic" && verses.length > 0 && transliterations.length === 0) {
       fetchTransliteration(verses, `psalm_${chapter}`);
     }
   }, [viewMode, verses, transliterations.length, chapter, fetchTransliteration]);
@@ -126,17 +126,12 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
           {error && <div className="text-center py-10"><p className="text-sm text-destructive">{error}</p></div>}
           {!loading && !error && (
             <>
-              {(viewMode === "hebrew" || viewMode === "bilingual") && (
+               {viewMode === "hebrew" && (
                 <div dir="rtl" className="hebrew-reading-block" style={{ fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif", fontSize: `${fontSize}px`, lineHeight: 2.2, textAlign: "right", fontWeight: 600, color: "#111" }}>
                   {verses.map((verse, i) => (
                     <span key={i}>
                       <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
                       <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
-                      {viewMode === "bilingual" && transliterations[i] && (
-                        <p dir="ltr" className="my-1.5 leading-relaxed" style={{ fontSize: `${Math.max(fontSize - 4, 13)}px`, textAlign: "left", fontWeight: 400, color: "hsl(var(--gold-matte))", fontFamily: "'Lora', serif", fontStyle: "italic" }}>
-                          {transliterations[i]}
-                        </p>
-                      )}
                     </span>
                   ))}
                 </div>
