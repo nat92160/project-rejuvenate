@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Share2, Check, UserPlus, Flame } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import {
   getTodayOmerDay,
@@ -163,15 +164,18 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
         <div className="absolute bottom-2 left-1/4 text-xs opacity-25 animate-pulse" style={{ animationDelay: "1s" }}>⭐</div>
 
         <button
-          onClick={() => shareOmer(effectiveDay, shareCardRef.current)}
-          className="absolute top-4 right-4 p-2 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
+          onClick={async () => {
+            const shared = await shareOmer(effectiveDay, shareCardRef.current);
+            if (shared) toast.success("Partage envoyé !");
+          }}
+          className="absolute top-4 right-4 p-2.5 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
           style={{
-            background: "hsl(var(--gold) / 0.15)",
+            background: "hsl(var(--gold) / 0.2)",
             color: "hsl(var(--gold-matte))",
           }}
           title="Partager la Mitsva"
         >
-          <Share2 size={16} />
+          <Share2 size={18} />
         </button>
 
         <motion.div
@@ -309,8 +313,11 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
 
             <div className="flex gap-2 justify-center flex-wrap">
               <button
-                onClick={() => shareOmer(effectiveDay, shareCardRef.current)}
-                className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border transition-all active:scale-[0.97]"
+                onClick={async () => {
+                  const shared = await shareOmer(effectiveDay, shareCardRef.current);
+                  if (shared) toast.success("Partage envoyé !");
+                }}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer border transition-all active:scale-[0.97]"
                 style={{
                   borderColor: "hsl(var(--gold) / 0.3)",
                   color: "hsl(var(--gold-matte))",
