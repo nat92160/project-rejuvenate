@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
 import { toast } from "sonner";
+import { shareText } from "@/lib/shareUtils";
 import { Progress } from "@/components/ui/progress";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 import HazakCelebration from "@/components/HazakCelebration";
