@@ -106,7 +106,7 @@ const SiddourReader = ({
   litContext,
 }: SiddourReaderProps) => {
   const topRef = useRef<HTMLDivElement>(null);
-  const prayerStartRef = useRef<HTMLSpanElement>(null);
+  const prayerStartRef = useRef<HTMLParagraphElement>(null);
 
   // Detect the real prayer start index (first <b> verse, or first non-instruction)
   const prayerStartIdx = useMemo(
