@@ -229,16 +229,6 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
           )}
         </div>
 
-        <div className="text-xs font-bold text-foreground">
-          {weeks > 0 ? (
-            <span>
-              {weeks} semaine{weeks > 1 ? "s" : ""}
-              {days > 0 && ` et ${days} jour${days > 1 ? "s" : ""}`}
-            </span>
-          ) : (
-            <span>{days} jour{days > 1 ? "s" : ""}</span>
-          )}
-        </div>
 
         <div
           className="mt-2 inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
@@ -278,31 +268,6 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
           />
         </div>
 
-        <div className="flex justify-center gap-1.5 mt-3">
-          {Array.from({ length: 7 }).map((_, i) => {
-            const dotDay = (weeks * 7) + i + 1;
-            const isPast = dotDay < effectiveDay;
-            const isCurrent = dotDay === effectiveDay;
-            return (
-              <motion.div
-                key={i}
-                className="rounded-full"
-                style={{
-                  width: isCurrent ? "12px" : "8px",
-                  height: isCurrent ? "12px" : "8px",
-                  background: isCurrent
-                    ? `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`
-                    : isPast
-                    ? "hsl(var(--gold) / 0.4)"
-                    : "hsl(var(--muted))",
-                  boxShadow: isCurrent ? "0 0 8px hsl(var(--gold) / 0.5)" : "none",
-                }}
-                animate={isCurrent ? { scale: [1, 1.2, 1] } : {}}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-            );
-          })}
-        </div>
       </div>
 
       {/* Count button or congratulations */}
