@@ -1,13 +1,21 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { toHebrewLetter, isInstructionOnly } from "@/lib/utils";
 import ViewModeSelector from "@/components/ViewModeSelector";
+import LiturgicalContextBar from "@/components/siddour/LiturgicalContextBar";
+import { getLiturgicalContext, processAmidaVerses, type LiturgicalPeriod } from "@/lib/liturgicalContext";
 import type { ViewMode } from "@/hooks/useTransliteration";
 
 /** Known liturgical openings matched without niqqud/html for robust detection. */
 const KNOWN_OPENINGS = ["שמע ישראל", "אדני שפתי תפתח"];
 const SHEMA_SECONDARY = "ברוך שם כבוד מלכותו לעולם ועד";
+
+/** Detect if a section title relates to the Amida */
+function isAmidaSection(title: string): boolean {
+  const lower = title.toLowerCase();
+  return lower.includes("amida") || lower.includes("עמידה") || lower.includes("amidah");
+}
 
 function normalizeHebrewMatch(html: string): string {
   return html
