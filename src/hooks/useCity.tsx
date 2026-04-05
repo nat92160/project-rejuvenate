@@ -125,11 +125,11 @@ export function CityProvider({ children }: { children: ReactNode }) {
     setIsGeolocating(true);
     setLocationError(null);
 
-    // Safety timeout: if GPS never responds, unlock the button after 25s
+    // Safety timeout: if GPS never responds, unlock the button after 12s
     const safetyTimer = setTimeout(() => {
       setIsGeolocating(false);
       setLocationError("La localisation a pris trop de temps. Réessayez.");
-    }, 25000);
+    }, 12000);
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -141,7 +141,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
         try {
           realCityName = await Promise.race([
             reverseGeocode(latitude, longitude),
-            new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
           ]);
         } catch { /* use fallback */ }
 
@@ -180,7 +180,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
         setLocationError(getGeolocationErrorMessage(error));
         setIsGeolocating(false);
       },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 },
     );
   };
 
