@@ -230,11 +230,7 @@ const AnnoncesWidget = () => {
                       if (a.content) text += `${a.content}\n`;
                       text += `\n📅 ${formatDate(a.created_at)}`;
                       text += `\n\n✡️ Chabbat Chalom`;
-                      if (navigator.share) {
-                        try { await navigator.share({ text }); return; } catch {}
-                      }
-                      await navigator.clipboard?.writeText(text);
-                      toast.success("Copié dans le presse-papier !");
+                      await shareText(text, `📢 ${a.title}`);
                     }}
                     className="text-[10px] font-bold px-3 py-1.5 rounded-lg border border-border bg-card text-foreground cursor-pointer hover:bg-muted"
                   >

@@ -277,11 +277,7 @@ const EvenementsWidget = () => {
                           if (ev.location) text += `\n📍 ${ev.location}`;
                           if (ev.zoom_link) text += `\n🎥 ${ev.zoom_link}`;
                           text += `\n\n✡️ Chabbat Chalom`;
-                          if (navigator.share) {
-                            try { await navigator.share({ text }); return; } catch {}
-                          }
-                          await navigator.clipboard?.writeText(text);
-                          toast.success("Copié dans le presse-papier !");
+                          await shareText(text, ev.title);
                         }}
                         className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-border bg-card text-foreground cursor-pointer hover:bg-muted"
                       >

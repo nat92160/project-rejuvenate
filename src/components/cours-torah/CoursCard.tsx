@@ -75,11 +75,7 @@ const CoursCard = ({
     if (!isZoom && address) text += `\n📍 ${address}\n`;
     if (description) text += `\n${description}\n`;
     text += `\n✡️ Chabbat Chalom • ${cityName}`;
-    if (navigator.share) {
-      try { await navigator.share({ text }); return; } catch {}
-    }
-    await navigator.clipboard?.writeText(text);
-    toast.success("Lien copié dans le presse-papier !");
+    await shareText(text, `📚 ${title}`);
   };
 
   const handleAction = () => {

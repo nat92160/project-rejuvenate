@@ -232,7 +232,7 @@ const EspacePersonnelWidget = () => {
     toast.success("Date supprimée");
   };
 
-  const handleShare = (d: PersonalDate) => {
+  const handleShare = async (d: PersonalDate) => {
     const typeLabel = DATE_TYPES.find((t) => t.value === d.date_type)?.label || d.date_type;
     const hebStr = formatHebrewDate(d.hebrew_date_day, d.hebrew_date_month);
     const dateStr = d.civil_date
@@ -240,12 +240,7 @@ const EspacePersonnelWidget = () => {
       : "";
     const text = `${typeLabel} — ${d.hebrew_name}${hebStr ? `\n📜 ${hebStr}` : ""}${dateStr ? `\n📅 ${dateStr}` : ""}${d.notes ? `\n${d.notes}` : ""}\n\nPartagé via Chabbat Chalom`;
 
-    if (navigator.share) {
-      navigator.share({ title: `${typeLabel} — ${d.hebrew_name}`, text }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(text);
-      toast.success("Copié dans le presse-papier !");
-    }
+    await shareText(text, `${typeLabel} — ${d.hebrew_name}`);
   };
 
   if (!user) {
