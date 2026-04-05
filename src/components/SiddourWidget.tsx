@@ -16,31 +16,52 @@ type Office = "shacharit" | "hazara" | "additions_shacharit" | "minha" | "arvit"
 interface Section { index: number; title: string; heTitle: string; isHazara?: boolean; }
 interface SectionContent { hebrew: string[]; french: string[]; title: string; heTitle: string; isHazara?: boolean; }
 
-const OFFICES: { key: Office; label: string; icon: string }[] = [
-  { key: "shacharit", label: "Cha'harit", icon: "🌅" },
-  { key: "hazara", label: "Hazara", icon: "🔄" },
-  { key: "additions_shacharit", label: "Ajouts", icon: "➕" },
-  { key: "minha", label: "Min'ha", icon: "☀️" },
-  { key: "arvit", label: "Arvit", icon: "🌙" },
-  { key: "shabbat", label: "Chabbat", icon: "🕯️" },
-  { key: "shabbat_shacharit", label: "Chabbat Cha'harit", icon: "✡️" },
-  { key: "shabbat_mussaf", label: "Moussaf", icon: "📜" },
-  { key: "shabbat_minha", label: "Chabbat Min'ha", icon: "🌤️" },
-  { key: "havdala", label: "Havdala", icon: "🔥" },
-  { key: "rosh_hodesh", label: "Roch 'Hodech", icon: "🌙" },
-  { key: "fetes", label: "Fêtes", icon: "🎺" },
-  { key: "hanukkah", label: "'Hanouka", icon: "🕎" },
-  { key: "purim", label: "Pourim", icon: "🎭" },
-  { key: "taanit", label: "Jeûnes", icon: "🕊️" },
-  { key: "tikoun_hatsot", label: "Tikoun 'Hatsot", icon: "🌑" },
-  { key: "nissan", label: "Nissan", icon: "🌸" },
-  { key: "sefirat_haomer", label: "Séfirat HaOmer", icon: "🔢" },
-  { key: "birkat", label: "Birkat HaMazone", icon: "🍞" },
-  { key: "berakhot", label: "Brakhot", icon: "🙏" },
-  { key: "birkat_halevana", label: "Birkat HaLévana", icon: "🌕" },
-  { key: "bedtime_shema", label: "Chéma' du coucher", icon: "😴" },
-  { key: "mishnayot_shabbat", label: "Michnayot", icon: "📖" },
+const OFFICE_CATEGORIES = [
+  {
+    label: "📅 Quotidien",
+    offices: [
+      { key: "shacharit" as Office, label: "Cha'harit", icon: "🌅" },
+      { key: "minha" as Office, label: "Min'ha", icon: "☀️" },
+      { key: "arvit" as Office, label: "Arvit", icon: "🌙" },
+      { key: "bedtime_shema" as Office, label: "Chéma' du coucher", icon: "😴" },
+    ],
+  },
+  {
+    label: "🕯️ Chabbat",
+    offices: [
+      { key: "shabbat" as Office, label: "Kabbalat Chabbat", icon: "🕯️" },
+      { key: "shabbat_shacharit" as Office, label: "Cha'harit", icon: "✡️" },
+      { key: "shabbat_mussaf" as Office, label: "Moussaf", icon: "📜" },
+      { key: "shabbat_minha" as Office, label: "Min'ha", icon: "🌤️" },
+      { key: "havdala" as Office, label: "Havdala", icon: "🔥" },
+    ],
+  },
+  {
+    label: "🎺 Fêtes & Occasions",
+    offices: [
+      { key: "rosh_hodesh" as Office, label: "Roch 'Hodech", icon: "🌙" },
+      { key: "fetes" as Office, label: "Fêtes", icon: "🎺" },
+      { key: "hanukkah" as Office, label: "'Hanouka", icon: "🕎" },
+      { key: "purim" as Office, label: "Pourim", icon: "🎭" },
+      { key: "taanit" as Office, label: "Jeûnes", icon: "🕊️" },
+      { key: "nissan" as Office, label: "Nissan", icon: "🌸" },
+      { key: "sefirat_haomer" as Office, label: "Séfirat HaOmer", icon: "🔢" },
+    ],
+  },
+  {
+    label: "🙏 Brakhot & Compléments",
+    offices: [
+      { key: "birkat" as Office, label: "Birkat HaMazone", icon: "🍞" },
+      { key: "berakhot" as Office, label: "Brakhot", icon: "🙏" },
+      { key: "birkat_halevana" as Office, label: "Birkat HaLévana", icon: "🌕" },
+      { key: "additions_shacharit" as Office, label: "Ajouts Cha'harit", icon: "➕" },
+      { key: "tikoun_hatsot" as Office, label: "Tikoun 'Hatsot", icon: "🌑" },
+      { key: "mishnayot_shabbat" as Office, label: "Michnayot", icon: "📖" },
+    ],
+  },
 ];
+
+const OFFICES = OFFICE_CATEGORIES.flatMap(c => c.offices);
 
 const CACHE_PREFIX = "siddour_v9_sefarade_";
 
