@@ -6,10 +6,12 @@ import type { ViewMode } from "@/hooks/useTransliteration";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useSiddourBookmark } from "@/hooks/useSiddourBookmark";
 import { useSiddourFavorites } from "@/hooks/useSiddourFavorites";
+import { getLiturgicalContext, type LiturgicalPeriod } from "@/lib/liturgicalContext";
 import SiddourToc from "@/components/siddour/SiddourToc";
 import SiddourReader from "@/components/siddour/SiddourReader";
 import SiddourQuickJump from "@/components/siddour/SiddourQuickJump";
 import SiddourSearch from "@/components/siddour/SiddourSearch";
+import LiturgicalContextBar from "@/components/siddour/LiturgicalContextBar";
 
 type Office = "shacharit" | "additions_shacharit" | "minha" | "arvit" | "shabbat" | "shabbat_shacharit" | "shabbat_mussaf" | "shabbat_minha" | "havdala" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "tikoun_hatsot" | "nissan" | "sefirat_haomer" | "birkat" | "berakhot" | "birkat_halevana" | "bedtime_shema" | "mishnayot_shabbat";
 
@@ -65,10 +67,28 @@ const OFFICES = OFFICE_CATEGORIES.flatMap(c => c.offices);
 
 const CACHE_PREFIX = "siddour_v9_sefarade_";
 
-function detectOffice(): Office {
+function detectOffice(ctx?: LiturgicalPeriod): Office {
+  const litCtx = ctx || getLiturgicalContext();
   const h = new Date().getHours();
   const day = new Date().getDay();
-  if (day === 6 || (day === 5 && h >= 16)) return "shabbat";
+
+  // Festival/special period auto-detection
+  if (litCtx.hanoucca) return "hanukkah";
+  if (litCtx.pourim) return "purim";
+  if (litCtx.holHaMoedPessach || litCtx.holHaMoedSukkot) return "fetes";
+  if (litCtx.yomTov) return "fetes";
+  if (litCtx.roshHodesh && !litCtx.shabbat) return "rosh_hodesh";
+
+  // Shabbat
+  if (day === 6 || (day === 5 && h >= 16)) {
+    if (day === 6 && h >= 9 && h < 12) return "shabbat_shacharit";
+    if (day === 6 && h >= 12 && h < 14) return "shabbat_mussaf";
+    if (day === 6 && h >= 14 && h < 18) return "shabbat_minha";
+    if (day === 6 && h >= 18) return "havdala";
+    return "shabbat";
+  }
+
+  // Weekday
   if (h < 12) return "shacharit";
   if (h < 17) return "minha";
   return "arvit";
@@ -77,7 +97,8 @@ function detectOffice(): Office {
 interface SiddourWidgetProps { prayerMode?: boolean; initialOffice?: Office; }
 
 const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps) => {
-  const [office, setOffice] = useState<Office>(initialOffice || detectOffice);
+  const [litContext, setLitContext] = useState<LiturgicalPeriod>(() => getLiturgicalContext());
+  const [office, setOffice] = useState<Office>(initialOffice || (() => detectOffice(litContext)));
   const [sections, setSections] = useState<Section[]>([]);
   const [activeSection, setActiveSection] = useState<number | null>(null);
   const [content, setContent] = useState<SectionContent | null>(null);
@@ -175,7 +196,7 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
   useEffect(() => { if (bookmarkRestored) fetchToc(office); }, [office, fetchToc, bookmarkRestored]);
   useEffect(() => { if (activeSection !== null) fetchSection(office, activeSection); }, [activeSection, office, fetchSection]);
 
-  const suggestedOffice = useMemo(detectOffice, []);
+  const suggestedOffice = useMemo(() => detectOffice(litContext), [litContext]);
 
   const pmBg = prayerMode ? "#000" : undefined;
   const pmText = prayerMode ? "#e8e0d0" : undefined;
@@ -247,6 +268,13 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         ))}
       </div>
 
+      {/* Liturgical context bar */}
+      <LiturgicalContextBar
+        prayerMode={prayerMode}
+        context={litContext}
+        onContextChange={setLitContext}
+      />
+
       {/* Font size slider */}
       <div
         className="rounded-2xl border p-3"
@@ -291,6 +319,7 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
           </motion.div>
         ) : (
           <SiddourReader
+            litContext={litContext}
             content={content}
             loading={loading}
             fontSize={fontSize}
