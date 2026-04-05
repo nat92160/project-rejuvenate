@@ -410,53 +410,21 @@ interface DayTimelineProps {
 const DayTimeline = ({ day, festivalName, onCalendarClick, compact, isFirstDay = true, isLastDay = true }: DayTimelineProps) => {
   const isFast = day.type === "fast";
 
-  // === SIMPLIFIED "MAISON" LOGIC ===
-  // 🕯️ Allumage ONLY for:
-  // - Erev (1st night of the festival)
-  // - Friday (entering Shabbat)
-  // - Fasts ("Début")
-  // - Single-day standalone events
-  const showCandles = day.candles && (
-    isFast ||
-    day.type === "erev" ||
-    day.type === "yomtov" || // Yom Tov: candle lighting the eve before
-    day.dayOfWeek === 5 || // Friday
-    (isFirstDay && isLastDay) // single-day event
-  );
-
-  // ✨ Sortie ONLY for:
-  // - Saturday night (Shabbat ending) — ALWAYS
-  // - Last day of the festival (clôture définitive)
-  // - Fasts ("Fin")
-  // - Single-day standalone events
-  const showHavdalah = day.havdalah && (
-    isFast ||
-    isLastDay ||
-    day.isShabbat || day.dayOfWeek === 6 || // Saturday = always show Sortie
-    (isFirstDay && isLastDay) // single-day event
-  );
+  // After post-processing, candles/havdalah are already correctly assigned
+  // Just show what's present
+  const showCandles = !!day.candles;
+  const showHavdalah = !!day.havdalah;
 
   if (!showCandles && !showHavdalah && compact) return null;
 
-  // Detect if end/sortie is the next day: candles lit in evening (≥17h) means sortie is next day
-  const isNextDay = day.candles && day.havdalah && showCandles && showHavdalah && (() => {
-    const h = parseInt(day.candles!.split(":")[0], 10);
-    return !isNaN(h) && h >= 17;
-  })();
-
-  const candleIcon = isFast ? "⏰" : "🕯️";
   const isFromExisting = day.candleLightingType === "from-existing";
-  const candleLabel = isFast
-    ? "Début"
-    : isFromExisting
-    ? "Entrée (veille au soir)"
-    : "Allumage";
+  const candleIcon = isFast ? "⏰" : "🕯️";
+  const candleLabel = isFast ? "Début" : "Allumage";
   const havdalahIcon = isFast ? "✅" : "✨";
-  const baseSortieLabel = isFast ? "Fin" : "Sortie";
-  const havdalahLabel = isNextDay ? `${baseSortieLabel} (lendemain)` : baseSortieLabel;
+  const havdalahLabel = isFast ? "Fin" : "Sortie";
 
   return (
-    <div className={`flex items-center gap-4 flex-wrap ${compact ? "mt-2" : "mt-3"}`}>
+    <div className={`flex flex-col gap-1.5 ${compact ? "mt-2" : "mt-3"}`}>
       {showCandles && (
         <div className="flex items-center gap-2">
           <span className="text-xs">{candleIcon}</span>
@@ -467,6 +435,9 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact, isFirstDay =
           >
             {day.candles}
           </span>
+          {isFromExisting && (
+            <span className="text-[9px] text-muted-foreground italic">(flamme existante)</span>
+          )}
         </div>
       )}
       {showHavdalah && (
@@ -482,13 +453,15 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact, isFirstDay =
         </div>
       )}
       {(showCandles || showHavdalah) && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onCalendarClick(day); }}
-          className="ml-auto text-[10px] font-bold text-primary/60 hover:text-primary cursor-pointer bg-transparent border-none transition-colors px-2 py-1 rounded-lg hover:bg-primary/5"
-          title="Ajouter au calendrier"
-        >
-          📅 +Cal
-        </button>
+        <div className="flex justify-end">
+          <button
+            onClick={(e) => { e.stopPropagation(); onCalendarClick(day); }}
+            className="text-[10px] font-bold text-primary/60 hover:text-primary cursor-pointer bg-transparent border-none transition-colors px-2 py-1 rounded-lg hover:bg-primary/5"
+            title="Ajouter au calendrier"
+          >
+            📅 +Cal
+          </button>
+        </div>
       )}
     </div>
   );

@@ -251,6 +251,70 @@ function resolveYomTovCandles(
   return { lightingType: "none" };
 }
 
+/**
+ * Post-process group days so each day shows what happens THAT EVENING.
+ * 
+ * Standard approach (like Hebcal):
+ * - Erev day: 🕯️ Allumage (sunset - 18min) → entering 1st Yom Tov
+ * - Yom Tov followed by Yom Tov: 🕯️ Allumage (after Tzeit, from existing flame)
+ * - Hol HaMoed before Yom Tov: 🕯️ Allumage (sunset - 18min) → entering Yom Tov
+ * - Last Yom Tov day: ✨ Sortie (Tzeit) → festival ends
+ * - Shabbat (Saturday): ✨ Sortie (Tzeit)
+ * - Friday during festival: 🕯️ Allumage (sunset - 18min) → entering Shabbat
+ */
+function postProcessDayTimes(days: FestivalDay[], city: CityConfig) {
+  for (let i = 0; i < days.length; i++) {
+    const day = days[i];
+    const nextDay = days[i + 1];
+    const dt = new Date(day.date + "T12:00:00");
+
+    // Reset times — we'll recompute based on "this evening" logic
+    day.candles = undefined;
+    day.candleLightingType = "none";
+    day.havdalah = undefined;
+    day.havdalahType = undefined;
+
+    const isLastDay = i === days.length - 1;
+    const nextIsYomTov = nextDay && nextDay.type === "yomtov";
+    const nextIsShabbat = nextDay && nextDay.isShabbat;
+
+    // === CANDLE LIGHTING (this evening) ===
+    if (day.type === "erev") {
+      // Erev: standard candle lighting before sunset
+      day.candles = getKosherCandleLighting(city, dt);
+      day.candleLightingType = day.candles ? "erev" : "none";
+    } else if (day.dayOfWeek === 5 && !isLastDay) {
+      // Friday during festival → entering Shabbat, standard before sunset
+      day.candles = getKosherCandleLighting(city, dt);
+      day.candleLightingType = day.candles ? "erev" : "none";
+    } else if (nextIsYomTov && !nextIsShabbat) {
+      if (day.type === "yomtov") {
+        // Yom Tov → Yom Tov: light after Tzeit from existing flame
+        day.candles = getKosherHavdalah(city, dt);
+        day.candleLightingType = day.candles ? "from-existing" : "none";
+      } else if (day.type === "holhamoed") {
+        // Hol HaMoed → Yom Tov: standard candle lighting before sunset
+        day.candles = getKosherCandleLighting(city, dt);
+        day.candleLightingType = day.candles ? "erev" : "none";
+      }
+    }
+
+    // === HAVDALAH / SORTIE (this evening) ===
+    if (isLastDay && (day.type === "yomtov" || day.type === "single")) {
+      // Last day of festival: Sortie
+      day.havdalah = getKosherHavdalah(city, dt);
+      day.havdalahType = "sortie";
+    } else if (day.isShabbat || day.dayOfWeek === 6) {
+      // Shabbat ends Saturday evening
+      // But NOT if next day is Yom Tov (Shabbat flows into Yom Tov, no Havdalah standalone)
+      if (!nextIsYomTov) {
+        day.havdalah = getKosherHavdalah(city, dt);
+        day.havdalahType = "sortie";
+      }
+    }
+  }
+}
+
 // ─── Main fetch using @hebcal/core SDK (offline) ───
 
 export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard[]> {
@@ -455,6 +519,11 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
       if (!info || days.length === 0) continue;
 
       days.sort((a, b) => a.date.localeCompare(b.date));
+
+      // ─── Post-process: each day shows what happens THAT EVENING ───
+      // Like Hebcal: "Allumage" on a day means you light candles THAT evening
+      // to enter the next sacred day. "Sortie" means the festival ends THAT evening.
+      postProcessDayTimes(days, city);
 
       const firstDate = days[0].date;
       const lastDate = days[days.length - 1].date;
