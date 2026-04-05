@@ -288,15 +288,13 @@ function postProcessDayTimes(days: FestivalDay[], city: CityConfig) {
       day.candles = getKosherCandleLighting(city, dt);
       day.candleLightingType = day.candles ? "erev" : "none";
     } else if (nextIsYomTov && !nextIsShabbat) {
-      if (day.type === "yomtov") {
-        // Yom Tov → Yom Tov: light after Tzeit from existing flame
-        day.candles = getKosherHavdalah(city, dt);
-        day.candleLightingType = day.candles ? "from-existing" : "none";
-      } else if (day.type === "holhamoed") {
+      if (day.type === "holhamoed") {
         // Hol HaMoed → Yom Tov: standard candle lighting before sunset
         day.candles = getKosherCandleLighting(city, dt);
         day.candleLightingType = day.candles ? "erev" : "none";
       }
+      // Yom Tov → Yom Tov: no need to show again, user lights from existing flame
+      // (covered by the footnote in the UI)
     }
 
     // === HAVDALAH / SORTIE (this evening) ===
