@@ -34,17 +34,6 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    // Get all push subscriptions
-    const { data: subscriptions, error } = await supabase
-      .from("push_subscriptions")
-      .select("endpoint, p256dh, auth");
-
-    if (error || !subscriptions?.length) {
-      return new Response(
-        JSON.stringify({ message: "No subscriptions found", count: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     // Calculate today's Omer day
     const today = new Date();
@@ -60,32 +49,60 @@ Deno.serve(async (req) => {
     const title = `🌾 Séfirat HaOmer — Jour ${omerDay}`;
     const body = `N'oubliez pas de compter le Omer ce soir ! Jour ${omerDay} sur 49.`;
 
-    // Send push to all subscribers
     let sent = 0;
-    for (const sub of subscriptions) {
-      try {
-        const pushPayload = JSON.stringify({ title, body, url: "/" });
+    let total = 0;
 
-        // Use the send-push function to send notifications
-        const { error: pushError } = await supabase.functions.invoke("send-push", {
-          body: {
-            subscription: {
-              endpoint: sub.endpoint,
-              keys: { p256dh: sub.p256dh, auth: sub.auth },
+    // 1) Send to authenticated subscribers (push_subscriptions table)
+    const { data: authSubs } = await supabase
+      .from("push_subscriptions")
+      .select("endpoint, p256dh, auth");
+
+    if (authSubs?.length) {
+      total += authSubs.length;
+      for (const sub of authSubs) {
+        if (!sub.endpoint) continue;
+        try {
+          const { error: pushError } = await supabase.functions.invoke("send-push", {
+            body: {
+              subscription: {
+                endpoint: sub.endpoint,
+                keys: { p256dh: sub.p256dh, auth: sub.auth },
+              },
+              title,
+              body,
             },
-            title,
-            body,
-          },
-        });
+          });
+          if (!pushError) sent++;
+        } catch { /* skip */ }
+      }
+    }
 
-        if (!pushError) sent++;
-      } catch {
-        // Skip failed pushes
+    // 2) Send to guest Omer subscribers (omer_push_subscriptions table)
+    const { data: guestSubs } = await supabase
+      .from("omer_push_subscriptions")
+      .select("endpoint, p256dh, auth");
+
+    if (guestSubs?.length) {
+      total += guestSubs.length;
+      for (const sub of guestSubs) {
+        try {
+          const { error: pushError } = await supabase.functions.invoke("send-push", {
+            body: {
+              subscription: {
+                endpoint: sub.endpoint,
+                keys: { p256dh: sub.p256dh, auth: sub.auth },
+              },
+              title,
+              body,
+            },
+          });
+          if (!pushError) sent++;
+        } catch { /* skip */ }
       }
     }
 
     return new Response(
-      JSON.stringify({ message: `Omer reminder sent`, omerDay, sent, total: subscriptions.length }),
+      JSON.stringify({ message: `Omer reminder sent`, omerDay, sent, total }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
@@ -98,12 +115,8 @@ Deno.serve(async (req) => {
 
 // Simple Omer day calculation
 function getOmerDay(date: Date): number | null {
-  // Pesach 2026: April 2 (15 Nissan 5786)
-  // Omer starts evening of April 2 (16 Nissan) through May 21 (Erev Shavuot)
-  // We compute: which day of the Omer is today?
   const year = date.getFullYear();
   
-  // Known Pesach dates (first seder evening)
   const pesachDates: Record<number, string> = {
     2025: "2025-04-12",
     2026: "2026-04-01",
@@ -116,11 +129,9 @@ function getOmerDay(date: Date): number | null {
   const pesachStr = pesachDates[year];
   if (!pesachStr) return null;
 
-  // Omer starts the evening after the first seder (2nd night)
-  // Day 1 = 16 Nissan = day after first seder  
   const pesach = new Date(pesachStr + "T00:00:00");
   const omerStart = new Date(pesach);
-  omerStart.setDate(omerStart.getDate() + 1); // 16 Nissan
+  omerStart.setDate(omerStart.getDate() + 1);
 
   const todayMidnight = new Date(date);
   todayMidnight.setHours(0, 0, 0, 0);
@@ -128,7 +139,6 @@ function getOmerDay(date: Date): number | null {
   const diffMs = todayMidnight.getTime() - omerStart.getTime();
   const diffDays = Math.floor(diffMs / 86400000);
 
-  // Omer is days 0-48 (= day 1-49)
   if (diffDays < 0 || diffDays > 48) return null;
   return diffDays + 1;
 }
