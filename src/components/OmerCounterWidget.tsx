@@ -44,6 +44,7 @@ interface OmerCounterWidgetProps {
 
 const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = false }: OmerCounterWidgetProps) => {
   const { user, isAdmin } = useAuth();
+  const { isSubscribed: isPushSubscribed, subscribe: subscribePush, unsubscribe: unsubscribePush, supported: pushSupported } = useOmerPushSubscription();
   const [expanded, setExpanded] = useState(showInviteBanner);
   const realOmerDay = useMemo(() => getTodayOmerDay(), []);
   const currentYear = new Date().getFullYear();
