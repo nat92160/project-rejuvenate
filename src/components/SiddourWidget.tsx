@@ -13,33 +13,29 @@ import SiddourQuickJump from "@/components/siddour/SiddourQuickJump";
 import SiddourSearch from "@/components/siddour/SiddourSearch";
 import LiturgicalContextBar from "@/components/siddour/LiturgicalContextBar";
 
-type Office = "shacharit" | "additions_shacharit" | "minha" | "arvit" | "shabbat" | "shabbat_shacharit" | "shabbat_mussaf" | "shabbat_minha" | "havdala" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "tikoun_hatsot" | "nissan" | "sefirat_haomer" | "birkat" | "berakhot" | "birkat_halevana" | "bedtime_shema" | "mishnayot_shabbat";
+type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "tikoun_hatsot" | "nissan" | "birkat" | "berakhot" | "birkat_halevana" | "mishnayot_shabbat";
 
 interface Section { index: number; title: string; heTitle: string; isHazara?: boolean; }
 interface SectionContent { hebrew: string[]; french: string[]; title: string; heTitle: string; isHazara?: boolean; }
 
 const OFFICE_CATEGORIES = [
   {
-    label: "📅 Quotidien",
+    label: "Quotidien",
     offices: [
       { key: "shacharit" as Office, label: "Cha'harit", icon: "🌅" },
       { key: "minha" as Office, label: "Min'ha", icon: "☀️" },
       { key: "arvit" as Office, label: "Arvit", icon: "🌙" },
-      { key: "bedtime_shema" as Office, label: "Chéma' du coucher", icon: "😴" },
     ],
   },
   {
-    label: "🕯️ Chabbat",
+    label: "Chabbat",
     offices: [
-      { key: "shabbat" as Office, label: "Kabbalat Chabbat", icon: "🕯️" },
-      { key: "shabbat_shacharit" as Office, label: "Cha'harit", icon: "✡️" },
-      { key: "shabbat_mussaf" as Office, label: "Moussaf", icon: "📜" },
-      { key: "shabbat_minha" as Office, label: "Min'ha", icon: "🌤️" },
-      { key: "havdala" as Office, label: "Havdala", icon: "🔥" },
+      { key: "shabbat" as Office, label: "Chabbat complet", icon: "🕯️" },
+      { key: "mishnayot_shabbat" as Office, label: "Michnayot", icon: "📖" },
     ],
   },
   {
-    label: "🎺 Fêtes & Occasions",
+    label: "Fêtes & Occasions",
     offices: [
       { key: "rosh_hodesh" as Office, label: "Roch 'Hodech", icon: "🌙" },
       { key: "fetes" as Office, label: "Fêtes", icon: "🎺" },
@@ -47,18 +43,15 @@ const OFFICE_CATEGORIES = [
       { key: "purim" as Office, label: "Pourim", icon: "🎭" },
       { key: "taanit" as Office, label: "Jeûnes", icon: "🕊️" },
       { key: "nissan" as Office, label: "Nissan", icon: "🌸" },
-      { key: "sefirat_haomer" as Office, label: "Séfirat HaOmer", icon: "🔢" },
     ],
   },
   {
-    label: "🙏 Brakhot & Compléments",
+    label: "Brakhot & Prières",
     offices: [
       { key: "birkat" as Office, label: "Birkat HaMazone", icon: "🍞" },
       { key: "berakhot" as Office, label: "Brakhot", icon: "🙏" },
       { key: "birkat_halevana" as Office, label: "Birkat HaLévana", icon: "🌕" },
-      { key: "additions_shacharit" as Office, label: "Ajouts Cha'harit", icon: "➕" },
       { key: "tikoun_hatsot" as Office, label: "Tikoun 'Hatsot", icon: "🌑" },
-      { key: "mishnayot_shabbat" as Office, label: "Michnayot", icon: "📖" },
     ],
   },
 ];
@@ -81,10 +74,6 @@ function detectOffice(ctx?: LiturgicalPeriod): Office {
 
   // Shabbat
   if (day === 6 || (day === 5 && h >= 16)) {
-    if (day === 6 && h >= 9 && h < 12) return "shabbat_shacharit";
-    if (day === 6 && h >= 12 && h < 14) return "shabbat_mussaf";
-    if (day === 6 && h >= 14 && h < 18) return "shabbat_minha";
-    if (day === 6 && h >= 18) return "havdala";
     return "shabbat";
   }
 
@@ -222,43 +211,41 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
       style={prayerMode ? { background: pmBg, margin: "-1rem", padding: "1rem", minHeight: "100vh" } : undefined}
     >
       {/* Header */}
-      <div
-        className="rounded-2xl border border-primary/15 p-5 text-center"
-        style={{
-          background: prayerMode ? pmCard : "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))",
-          borderColor: pmBorder,
-        }}
-      >
-        <span className="text-3xl">📖</span>
-        <h3 className="mt-2 font-display text-lg font-bold" style={{ color: pmText }}>Siddour Complet</h3>
-        <p className="mt-1 text-xs" style={{ color: pmMuted }}>Rite Séfarade — Hébreu, Phonétique & Traduction</p>
+      <div className="text-center py-3">
+        <p
+          className="text-[11px] font-medium tracking-wide uppercase"
+          style={{ color: pmMuted || "hsl(var(--muted-foreground))", letterSpacing: "0.15em" }}
+        >
+          Siddour · Rite Séfarade
+        </p>
       </div>
 
-      {/* Office selector by category */}
-      <div className="space-y-2">
+      {/* Office selector — clean pill style */}
+      <div className="space-y-3">
         {OFFICE_CATEGORIES.map((cat) => (
           <div key={cat.label}>
-            <p className="text-[10px] font-bold uppercase tracking-wider mb-1 px-1" style={{ color: pmMuted || "hsl(var(--muted-foreground))" }}>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] mb-1.5 px-0.5" style={{ color: pmMuted || "hsl(var(--muted-foreground) / 0.6)" }}>
               {cat.label}
             </p>
-            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex gap-1.5 flex-wrap">
               {cat.offices.map((off) => {
-                const isSuggested = off.key === suggestedOffice && office !== off.key;
+                const isActive = office === off.key;
+                const isSuggested = off.key === suggestedOffice && !isActive;
                 return (
                   <button
                     key={off.key}
                     onClick={() => { setOffice(off.key); setActiveSection(null); setViewMode("hebrew"); }}
-                    className="shrink-0 flex items-center gap-1 rounded-xl border-none px-3 py-2 text-[10px] font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap relative"
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium transition-all cursor-pointer active:scale-95 whitespace-nowrap relative border"
                     style={{
-                      background: office === off.key ? "var(--gradient-gold)" : (prayerMode ? pmCard : "hsl(var(--muted))"),
-                      color: office === off.key ? "hsl(var(--primary-foreground))" : (prayerMode ? pmMuted : "hsl(var(--muted-foreground))"),
-                      boxShadow: office === off.key ? "var(--shadow-gold)" : "none",
+                      background: isActive ? "hsl(var(--gold))" : "transparent",
+                      color: isActive ? "hsl(var(--primary-foreground))" : (prayerMode ? "#bbb" : "hsl(var(--foreground) / 0.7)"),
+                      borderColor: isActive ? "transparent" : (prayerMode ? "rgba(255,255,255,0.08)" : "hsl(var(--border))"),
                     }}
                   >
-                    <span>{off.icon}</span>
+                    <span className="text-xs">{off.icon}</span>
                     <span>{off.label}</span>
                     {isSuggested && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: "hsl(var(--gold))" }} />
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(var(--gold))" }} />
                     )}
                   </button>
                 );
@@ -275,20 +262,11 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         onContextChange={setLitContext}
       />
 
-      {/* Font size slider */}
-      <div
-        className="rounded-2xl border p-3"
-        style={{
-          boxShadow: prayerMode ? "none" : "var(--shadow-card)",
-          background: prayerMode ? pmCard : "hsl(var(--card))",
-          borderColor: pmBorder || "hsl(var(--border))",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-bold" style={{ color: pmMuted }}>A-</span>
-          <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={36} step={1} className="flex-1" />
-          <span className="text-sm font-bold" style={{ color: pmMuted }}>A+</span>
-        </div>
+      {/* Font size — inline minimal */}
+      <div className="flex items-center gap-3 px-1">
+        <span className="text-[10px] font-medium" style={{ color: pmMuted || "hsl(var(--muted-foreground) / 0.5)" }}>A</span>
+        <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={36} step={1} className="flex-1" />
+        <span className="text-sm font-medium" style={{ color: pmMuted || "hsl(var(--muted-foreground) / 0.5)" }}>A</span>
       </div>
 
       {/* Quick Jump Bar */}
