@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import { toHebrewLetter, isInstructionOnly } from "@/lib/utils";
 import ViewModeSelector from "@/components/ViewModeSelector";
 import type { ViewMode } from "@/hooks/useTransliteration";
+import { processAmidaVerses, type LiturgicalPeriod } from "@/lib/liturgicalContext";
 
 /** Known liturgical openings matched without niqqud/html for robust detection. */
 const KNOWN_OPENINGS = ["שמע ישראל", "אדני שפתי ת֤תח"];
