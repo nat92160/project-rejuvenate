@@ -146,6 +146,15 @@ export const SEFARIA_PERIOD_MARKERS: Record<string, (ctx: LiturgicalPeriod) => b
   "בעשרת ימי תשובה": (ctx) => ctx.aseretYemeiTeshuva,
 };
 
+/**
+ * Process Amida verses with liturgical context.
+ * Handles several Sefaria patterns:
+ * 1. Pure marker: `<small>בקיץ:</small>` (standalone line)
+ * 2. Marker + text: `<small>בקיץ:</small> מוריד הטל`
+ * 3. Combined line: `<small>בקיץ:</small> מוריד הטל. <small>בחורף:</small> משיב הרוח`
+ * 4. Nested inline: `<small><small>בעשי"ת:</small> זכרנו...</small>` (conditional insert within a verse)
+ * 5. Hazara block: `<small>בחזרת הש"ץ אומרים</small>` followed by `<small>...</small>` (repetition-only)
+ */
 export function processAmidaVerses(
   verses: string[],
   ctx: LiturgicalPeriod
@@ -154,6 +163,73 @@ export function processAmidaVerses(
   let currentPeriodActive: boolean | null = null;
 
   for (const verse of verses) {
+    // ── Pattern 3: Combined line with multiple markers ──
+    // e.g. `<small>בקיץ:</small> מוריד הטל. <small>בחורף:</small> משיב הרוח`
+    const multiMarkerPattern = /<small>[^<]*<\/small>\s*[^<]+<small>[^<]*<\/small>/;
+    if (multiMarkerPattern.test(verse)) {
+      // Split into segments by <small>...</small> markers
+      const segments: { marker: string; text: string }[] = [];
+      const regex = /<small>(.*?)<\/small>\s*([^<]*)/g;
+      let m: RegExpExecArray | null;
+      while ((m = regex.exec(verse)) !== null) {
+        segments.push({ marker: m[1].replace(/:/g, '').trim(), text: m[2].trim() });
+      }
+
+      if (segments.length >= 2) {
+        let foundActive = false;
+        for (const seg of segments) {
+          for (const [marker, checker] of Object.entries(SEFARIA_PERIOD_MARKERS)) {
+            if (seg.marker.includes(marker) && checker(ctx) && seg.text) {
+              result.push({ html: seg.text, isActive: true, isSeasonalMarker: false, isInstruction: false });
+              foundActive = true;
+              break;
+            }
+          }
+        }
+        if (foundActive) continue;
+        // Fallback: show first segment
+        if (segments[0]?.text) {
+          result.push({ html: segments[0].text, isActive: true, isSeasonalMarker: false, isInstruction: false });
+        }
+        continue;
+      }
+    }
+
+    // ── Pattern 4: Inline conditional within a verse ──
+    // e.g. `...מגן אברהם: <small><small>בעשרת ימי תשובה אומרים:</small> זכרנו לחיים...</small> מלך עוזר...`
+    const inlineConditionalPattern = /<small><small>(.*?)<\/small>\s*(.*?)<\/small>/gs;
+    if (inlineConditionalPattern.test(verse)) {
+      inlineConditionalPattern.lastIndex = 0;
+      let processed = verse;
+      let hasConditional = false;
+      let m: RegExpExecArray | null;
+      while ((m = inlineConditionalPattern.exec(verse)) !== null) {
+        const markerText = m[1].replace(/:/g, '').trim();
+        const conditionalText = m[2].trim();
+        hasConditional = true;
+        let isActive = false;
+        for (const [marker, checker] of Object.entries(SEFARIA_PERIOD_MARKERS)) {
+          if (markerText.includes(marker)) {
+            isActive = checker(ctx);
+            break;
+          }
+        }
+        if (!isActive) {
+          // Remove the entire conditional block
+          processed = processed.replace(m[0], '');
+        } else {
+          // Keep only the text, remove the markers
+          processed = processed.replace(m[0], ` <b>${conditionalText}</b> `);
+        }
+      }
+      if (hasConditional) {
+        processed = processed.replace(/\s+/g, ' ').trim();
+        result.push({ html: processed, isActive: true, isSeasonalMarker: false, isInstruction: false });
+        continue;
+      }
+    }
+
+    // ── Pattern 1: Pure small marker line ──
     const pureSmallMatch = verse.match(/^<small>(.*?)<\/small>\s*$/s);
     if (pureSmallMatch) {
       const content = pureSmallMatch[1].replace(/:/g, '').trim();
@@ -175,29 +251,30 @@ export function processAmidaVerses(
       continue;
     }
 
-    const leadingConditionalMatch = verse.match(/^<small>(.*?)<\/small>\s*(.+)$/s);
-    if (leadingConditionalMatch) {
-      const markerContent = leadingConditionalMatch[1].replace(/:/g, '').trim();
-      const conditionalText = leadingConditionalMatch[2].trim();
+    // ── Pattern 2: Marker + text on same line ──
+    const leadingMatch = verse.match(/^<small>(.*?)<\/small>\s*(.+)$/s);
+    if (leadingMatch) {
+      const markerContent = leadingMatch[1].replace(/:/g, '').trim();
+      const textContent = leadingMatch[2].trim();
+      let matched = false;
 
       for (const [marker, checker] of Object.entries(SEFARIA_PERIOD_MARKERS)) {
         if (markerContent.includes(marker)) {
           result.push({
-            html: conditionalText,
+            html: textContent,
             isActive: checker(ctx),
             isSeasonalMarker: false,
             isInstruction: false,
           });
           currentPeriodActive = null;
+          matched = true;
           break;
         }
       }
-
-      if (result.length > 0 && result[result.length - 1].html === conditionalText) {
-        continue;
-      }
+      if (matched) continue;
     }
 
+    // ── Regular verse with pending period state ──
     if (currentPeriodActive !== null) {
       result.push({ html: verse, isActive: currentPeriodActive, isSeasonalMarker: false, isInstruction: false });
       currentPeriodActive = null;

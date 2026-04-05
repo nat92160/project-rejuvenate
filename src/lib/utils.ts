@@ -28,14 +28,22 @@ export function toHebrewLetter(n: number): string {
 /**
  * Check if a verse is a pure instruction (only <small> tags, no actual prayer text).
  * Returns true if the verse should be rendered as an instruction, not as prayer text.
+ * Handles nested <small><small>...</small>...</small> and <big><b>...</b></big> title lines.
  */
 export function isInstructionOnly(html: string): boolean {
   const stripped = html.trim();
-  // Pure <small>...</small> with no text outside
+  
+  // Pure <big><b>title</b></big> — section header, treat as instruction
+  if (/^<big><b>.*<\/b><\/big>$/.test(stripped)) return true;
+  
+  // Pure <small>...</small> with no text outside (may have nested small)
   if (stripped.startsWith("<small>") && stripped.endsWith("</small>")) {
-    // Check there's no text between </small> and <small> (i.e. only one small block)
-    const withoutOuter = stripped.slice(7, -8);
-    if (!withoutOuter.includes("</small>")) return true;
+    const inner = stripped.slice(7, -8);
+    // Single small block (no nested closing tag before end)
+    if (!inner.includes("</small>")) return true;
+    // Nested: <small><small>marker</small> text</small> — NOT instruction, it's conditional
+    // But <small><b>kedusha text...</b></small> IS instruction (Hazara)
+    if (inner.startsWith("<b>") || inner.startsWith("<small>")) return true;
   }
   return false;
 }
