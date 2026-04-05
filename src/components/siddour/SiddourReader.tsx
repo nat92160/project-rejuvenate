@@ -85,7 +85,7 @@ const SiddourReader = ({
 
   // Detect the real prayer start index (first <b> verse, or first non-instruction)
   const prayerStartIdx = useMemo(
-    () => content ? findPrayerStartIndex(content.hebrew) : 0,
+    () => (content?.hebrew?.length) ? findPrayerStartIndex(content.hebrew) : 0,
     [content]
   );
 
