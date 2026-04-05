@@ -1,13 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2/cors";
 
-// Channel handles (YouTube @handles) - we resolve IDs at runtime
+// Verified channel IDs — hardcoded to avoid incorrect search fallback
 const CHANNELS = [
-  { handle: "leaboratoire", name: "Rav Ron Chaya" },
-  { handle: "RavTouitou", name: "Rav Touitou" },
-  { handle: "ravbenchetrit", name: "Rav Benchetrit" },
-  { handle: "RavDynovisz", name: "Rav Dynovisz" },
-  { handle: "ravshoushana6704", name: "Rav Shoushana" },
+  { channelId: "UCg-9Mq99UZ_HKW5N7IHqbYw", name: "Rav Ron Chaya" },
+  { channelId: "UCgKxJNdzZ2Z4hXVeOMaPfAQ", name: "Rav Touitou" },
+  { channelId: "UCHyzZYlhnFRDIDPZxsYOnvA", name: "Rav Benchetrit" },
+  { channelId: "UCk-DIo0lyrsIYp9qJi_qyQg", name: "Rav Dynovisz" },
+  { channelId: "UCdANr5U8qBPvv_ZB36bhtuA", name: "Rav Shoushana" },
 ];
 
 const CACHE_DURATION_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -20,31 +20,6 @@ function parseDuration(iso: string): string {
   const s = parseInt(m[3] || "0");
   if (h > 0) return `${h}:${String(min).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   return `${min}:${String(s).padStart(2, "0")}`;
-}
-
-async function resolveChannelId(apiKey: string, handle: string): Promise<string | null> {
-  // Try forHandle first
-  const url = `https://www.googleapis.com/youtube/v3/channels?key=${apiKey}&forHandle=${handle}&part=id`;
-  console.log(`Resolving handle @${handle}...`);
-  const res = await fetch(url);
-  const data = await res.json();
-  if (data.items && data.items.length > 0) {
-    console.log(`Resolved @${handle} -> ${data.items[0].id}`);
-    return data.items[0].id;
-  }
-  console.error(`Failed to resolve @${handle}:`, JSON.stringify(data));
-  
-  // Fallback: search for channel
-  const searchUrl = `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&q=${encodeURIComponent(handle)}&type=channel&maxResults=1&part=snippet`;
-  const searchRes = await fetch(searchUrl);
-  const searchData = await searchRes.json();
-  if (searchData.items && searchData.items.length > 0) {
-    const id = searchData.items[0].id.channelId;
-    console.log(`Search resolved "${handle}" -> ${id}`);
-    return id;
-  }
-  console.error(`Search also failed for "${handle}":`, JSON.stringify(searchData));
-  return null;
 }
 
 Deno.serve(async (req) => {
