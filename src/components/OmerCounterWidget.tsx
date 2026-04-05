@@ -145,6 +145,7 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
         >
           ☀️ En journée, on peut lire le compte du Omer <strong>sans réciter la brakha</strong>. La brakha se dit le soir après la Shkiya.
         </div>
+      )}
 
       {/* Header */}
       <div
