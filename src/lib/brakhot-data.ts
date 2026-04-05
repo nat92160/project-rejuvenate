@@ -524,6 +524,7 @@ export interface BirkatInsert {
   hebrew: string;
   transliteration: string;
   instruction: string;
+  insertBeforeMarker: string; // Hebrew text marker — insert appears before the paragraph starting with this
 }
 
 export const BIRKAT_INSERTS: BirkatInsert[] = [
