@@ -11,36 +11,57 @@ import SiddourReader from "@/components/siddour/SiddourReader";
 import SiddourQuickJump from "@/components/siddour/SiddourQuickJump";
 import SiddourSearch from "@/components/siddour/SiddourSearch";
 
-type Office = "shacharit" | "hazara" | "additions_shacharit" | "minha" | "arvit" | "shabbat" | "shabbat_shacharit" | "shabbat_mussaf" | "shabbat_minha" | "havdala" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "tikoun_hatsot" | "nissan" | "sefirat_haomer" | "birkat" | "berakhot" | "birkat_halevana" | "bedtime_shema" | "mishnayot_shabbat";
+type Office = "shacharit" | "additions_shacharit" | "minha" | "arvit" | "shabbat" | "shabbat_shacharit" | "shabbat_mussaf" | "shabbat_minha" | "havdala" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "tikoun_hatsot" | "nissan" | "sefirat_haomer" | "birkat" | "berakhot" | "birkat_halevana" | "bedtime_shema" | "mishnayot_shabbat";
 
 interface Section { index: number; title: string; heTitle: string; isHazara?: boolean; }
 interface SectionContent { hebrew: string[]; french: string[]; title: string; heTitle: string; isHazara?: boolean; }
 
-const OFFICES: { key: Office; label: string; icon: string }[] = [
-  { key: "shacharit", label: "Cha'harit", icon: "🌅" },
-  { key: "hazara", label: "Hazara", icon: "🔄" },
-  { key: "additions_shacharit", label: "Ajouts", icon: "➕" },
-  { key: "minha", label: "Min'ha", icon: "☀️" },
-  { key: "arvit", label: "Arvit", icon: "🌙" },
-  { key: "shabbat", label: "Chabbat", icon: "🕯️" },
-  { key: "shabbat_shacharit", label: "Chabbat Cha'harit", icon: "✡️" },
-  { key: "shabbat_mussaf", label: "Moussaf", icon: "📜" },
-  { key: "shabbat_minha", label: "Chabbat Min'ha", icon: "🌤️" },
-  { key: "havdala", label: "Havdala", icon: "🔥" },
-  { key: "rosh_hodesh", label: "Roch 'Hodech", icon: "🌙" },
-  { key: "fetes", label: "Fêtes", icon: "🎺" },
-  { key: "hanukkah", label: "'Hanouka", icon: "🕎" },
-  { key: "purim", label: "Pourim", icon: "🎭" },
-  { key: "taanit", label: "Jeûnes", icon: "🕊️" },
-  { key: "tikoun_hatsot", label: "Tikoun 'Hatsot", icon: "🌑" },
-  { key: "nissan", label: "Nissan", icon: "🌸" },
-  { key: "sefirat_haomer", label: "Séfirat HaOmer", icon: "🔢" },
-  { key: "birkat", label: "Birkat HaMazone", icon: "🍞" },
-  { key: "berakhot", label: "Brakhot", icon: "🙏" },
-  { key: "birkat_halevana", label: "Birkat HaLévana", icon: "🌕" },
-  { key: "bedtime_shema", label: "Chéma' du coucher", icon: "😴" },
-  { key: "mishnayot_shabbat", label: "Michnayot", icon: "📖" },
+const OFFICE_CATEGORIES = [
+  {
+    label: "📅 Quotidien",
+    offices: [
+      { key: "shacharit" as Office, label: "Cha'harit", icon: "🌅" },
+      { key: "minha" as Office, label: "Min'ha", icon: "☀️" },
+      { key: "arvit" as Office, label: "Arvit", icon: "🌙" },
+      { key: "bedtime_shema" as Office, label: "Chéma' du coucher", icon: "😴" },
+    ],
+  },
+  {
+    label: "🕯️ Chabbat",
+    offices: [
+      { key: "shabbat" as Office, label: "Kabbalat Chabbat", icon: "🕯️" },
+      { key: "shabbat_shacharit" as Office, label: "Cha'harit", icon: "✡️" },
+      { key: "shabbat_mussaf" as Office, label: "Moussaf", icon: "📜" },
+      { key: "shabbat_minha" as Office, label: "Min'ha", icon: "🌤️" },
+      { key: "havdala" as Office, label: "Havdala", icon: "🔥" },
+    ],
+  },
+  {
+    label: "🎺 Fêtes & Occasions",
+    offices: [
+      { key: "rosh_hodesh" as Office, label: "Roch 'Hodech", icon: "🌙" },
+      { key: "fetes" as Office, label: "Fêtes", icon: "🎺" },
+      { key: "hanukkah" as Office, label: "'Hanouka", icon: "🕎" },
+      { key: "purim" as Office, label: "Pourim", icon: "🎭" },
+      { key: "taanit" as Office, label: "Jeûnes", icon: "🕊️" },
+      { key: "nissan" as Office, label: "Nissan", icon: "🌸" },
+      { key: "sefirat_haomer" as Office, label: "Séfirat HaOmer", icon: "🔢" },
+    ],
+  },
+  {
+    label: "🙏 Brakhot & Compléments",
+    offices: [
+      { key: "birkat" as Office, label: "Birkat HaMazone", icon: "🍞" },
+      { key: "berakhot" as Office, label: "Brakhot", icon: "🙏" },
+      { key: "birkat_halevana" as Office, label: "Birkat HaLévana", icon: "🌕" },
+      { key: "additions_shacharit" as Office, label: "Ajouts Cha'harit", icon: "➕" },
+      { key: "tikoun_hatsot" as Office, label: "Tikoun 'Hatsot", icon: "🌑" },
+      { key: "mishnayot_shabbat" as Office, label: "Michnayot", icon: "📖" },
+    ],
+  },
 ];
+
+const OFFICES = OFFICE_CATEGORIES.flatMap(c => c.offices);
 
 const CACHE_PREFIX = "siddour_v9_sefarade_";
 
@@ -114,8 +135,9 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
       const { data, error } = await supabase.functions.invoke("get-siddour", { body: { office: off } });
       if (error) throw error;
       if (data?.sections) {
-        setSections(data.sections);
-        try { localStorage.setItem(cacheKey, JSON.stringify(data.sections)); } catch { /* */ }
+        const filtered = data.sections.filter((s: Section) => !s.isHazara);
+        setSections(filtered);
+        try { localStorage.setItem(cacheKey, JSON.stringify(filtered)); } catch { /* */ }
       }
     } catch (err) { console.error("Error fetching siddour toc:", err); }
     setTocLoading(false);
@@ -191,29 +213,38 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         <p className="mt-1 text-xs" style={{ color: pmMuted }}>Rite Séfarade — Hébreu, Phonétique & Traduction</p>
       </div>
 
-      {/* Office selector */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        {OFFICES.map((off) => {
-          const isSuggested = off.key === suggestedOffice && office !== off.key;
-          return (
-            <button
-              key={off.key}
-              onClick={() => { setOffice(off.key); setActiveSection(null); setViewMode("hebrew"); }}
-              className="shrink-0 flex items-center gap-1 rounded-xl border-none px-3 py-2 text-[10px] font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap relative"
-              style={{
-                background: office === off.key ? "var(--gradient-gold)" : (prayerMode ? pmCard : "hsl(var(--muted))"),
-                color: office === off.key ? "hsl(var(--primary-foreground))" : (prayerMode ? pmMuted : "hsl(var(--muted-foreground))"),
-                boxShadow: office === off.key ? "var(--shadow-gold)" : "none",
-              }}
-            >
-              <span>{off.icon}</span>
-              <span>{off.label}</span>
-              {isSuggested && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: "hsl(var(--gold))" }} />
-              )}
-            </button>
-          );
-        })}
+      {/* Office selector by category */}
+      <div className="space-y-2">
+        {OFFICE_CATEGORIES.map((cat) => (
+          <div key={cat.label}>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-1 px-1" style={{ color: pmMuted || "hsl(var(--muted-foreground))" }}>
+              {cat.label}
+            </p>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {cat.offices.map((off) => {
+                const isSuggested = off.key === suggestedOffice && office !== off.key;
+                return (
+                  <button
+                    key={off.key}
+                    onClick={() => { setOffice(off.key); setActiveSection(null); setViewMode("hebrew"); }}
+                    className="shrink-0 flex items-center gap-1 rounded-xl border-none px-3 py-2 text-[10px] font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap relative"
+                    style={{
+                      background: office === off.key ? "var(--gradient-gold)" : (prayerMode ? pmCard : "hsl(var(--muted))"),
+                      color: office === off.key ? "hsl(var(--primary-foreground))" : (prayerMode ? pmMuted : "hsl(var(--muted-foreground))"),
+                      boxShadow: office === off.key ? "var(--shadow-gold)" : "none",
+                    }}
+                  >
+                    <span>{off.icon}</span>
+                    <span>{off.label}</span>
+                    {isSuggested && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: "hsl(var(--gold))" }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Font size slider */}
