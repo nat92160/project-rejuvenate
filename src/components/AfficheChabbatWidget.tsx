@@ -8,7 +8,7 @@ import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
 import { TimeInputRow } from "@/components/affiche-chabbat/TimeInputRow";
 import MasterPosterTemplate, { type PosterContentBlock } from "@/components/poster/MasterPosterTemplate";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
-import { exportPosterPng } from "@/components/poster/usePosterExport";
+import { sharePosterPng } from "@/components/poster/usePosterExport";
 
 type Theme = "tradition" | "moderne" | "chaud" | "prestige" | "blanc";
 type FontChoice = "greatvibes" | "playfairsc" | "playfair" | "lora";
