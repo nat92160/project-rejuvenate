@@ -400,7 +400,7 @@ const FideleSynagogueView = () => {
                     }
                     title={syna.isSubscribed ? "Se désabonner" : "S'abonner"}
                   >
-                    {subscribing === syna.id ? "…" : syna.isSubscribed ? "🔔" : "🔕"}
+                    {subscribing === syna.id ? "…" : syna.isSubscribed ? "⭐" : "☆"}
                   </button>
                 </div>
               </motion.div>
@@ -478,7 +478,7 @@ const FideleSynagogueView = () => {
                             }
                             title={directory.find(d => d.id === syna.id)?.isSubscribed ? "Se désabonner" : "S'abonner"}
                           >
-                            {subscribing === syna.id ? "…" : directory.find(d => d.id === syna.id)?.isSubscribed ? "🔔" : "🔕"}
+                            {subscribing === syna.id ? "…" : directory.find(d => d.id === syna.id)?.isSubscribed ? "⭐" : "☆"}
                           </button>
                         </div>
                         {syna.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {syna.address}</p>}
