@@ -229,16 +229,6 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
           )}
         </div>
 
-        <div className="text-xs font-bold text-foreground">
-          {weeks > 0 ? (
-            <span>
-              {weeks} semaine{weeks > 1 ? "s" : ""}
-              {days > 0 && ` et ${days} jour${days > 1 ? "s" : ""}`}
-            </span>
-          ) : (
-            <span>{days} jour{days > 1 ? "s" : ""}</span>
-          )}
-        </div>
 
         <div
           className="mt-2 inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
