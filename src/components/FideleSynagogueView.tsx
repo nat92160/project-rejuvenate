@@ -619,7 +619,7 @@ const FideleSynagogueView = () => {
                       </div>
                       {gr.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {gr.address}</p>}
                       <div className="mt-1 flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-primary/80">📏 {formatDistance(gr.distance)}</span>
+                        <span className="text-[11px] font-bold text-primary/80">📏 {!city._gps ? "≈ " : ""}{formatDistance(gr.distance)}</span>
                         {gr.travelDurationMinutes && (
                           <span className="text-[10px] text-muted-foreground">🚗 {formatTravelTime(gr.travelDurationMinutes)}</span>
                         )}
