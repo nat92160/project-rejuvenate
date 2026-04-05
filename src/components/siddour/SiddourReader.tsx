@@ -215,7 +215,7 @@ const SiddourReader = ({
             >
               {(() => {
                 let verseNum = 0;
-                return content.hebrew.map((verse, i) => {
+                return (content.hebrew || []).map((verse, i) => {
                   const isPrayerStart = i === prayerStartIdx;
                   const isPrelude = i < prayerStartIdx;
 
