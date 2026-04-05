@@ -268,12 +268,23 @@ const SiddourReader = ({
                   }
 
                   if (isPrelude) {
+                    // Add separator after last prelude verse
+                    const nextIsPrelude = (i + 1 < content.hebrew.length) && (i + 1 < prayerStartIdx) && !isInstructionOnly(content.hebrew[i + 1]);
+                    const isLastPrelude = !nextIsPrelude && (i + 1 === prayerStartIdx || (i + 1 < content.hebrew.length && !isInstructionOnly(content.hebrew[i + 1]) && i + 1 >= prayerStartIdx));
                     return (
-                      <span
-                        key={i}
-                        className="verse-prelude"
-                        dangerouslySetInnerHTML={{ __html: verse }}
-                      />
+                      <span key={i}>
+                        <span
+                          className="verse-prelude"
+                          dangerouslySetInnerHTML={{ __html: verse }}
+                        />
+                        {isLastPrelude && (
+                          <span className="block my-4 flex items-center justify-center gap-3" dir="ltr">
+                            <span className="block h-[1px] w-16" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--gold) / 0.3))" }} />
+                            <span style={{ color: "hsl(var(--gold) / 0.4)", fontSize: "10px" }}>✦</span>
+                            <span className="block h-[1px] w-16" style={{ background: "linear-gradient(270deg, transparent, hsl(var(--gold) / 0.3))" }} />
+                          </span>
+                        )}
+                      </span>
                     );
                   }
 
