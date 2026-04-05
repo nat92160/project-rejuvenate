@@ -21,38 +21,46 @@ interface SectionContent { hebrew: string[]; french: string[]; title: string; he
 
 const OFFICE_CATEGORIES = [
   {
+    id: "daily",
     label: "Quotidien",
+    icon: "📅",
     offices: [
-      { key: "shacharit" as Office, label: "Cha'harit", icon: "🌅" },
-      { key: "minha" as Office, label: "Min'ha", icon: "☀️" },
-      { key: "arvit" as Office, label: "Arvit", icon: "🌙" },
+      { key: "shacharit" as Office, label: "Cha'harit", icon: "🌅", desc: "Prière du matin" },
+      { key: "minha" as Office, label: "Min'ha", icon: "☀️", desc: "Prière de l'après-midi" },
+      { key: "arvit" as Office, label: "Arvit", icon: "🌙", desc: "Prière du soir" },
     ],
   },
   {
+    id: "shabbat",
     label: "Chabbat",
+    icon: "🕯️",
     offices: [
-      { key: "shabbat" as Office, label: "Chabbat complet", icon: "🕯️" },
-      { key: "mishnayot_shabbat" as Office, label: "Michnayot", icon: "📖" },
+      { key: "shabbat" as Office, label: "Chabbat complet", icon: "🕯️", desc: "Kabbalat Chabbat → Havdala" },
+      { key: "mishnayot_shabbat" as Office, label: "Michnayot", icon: "📖", desc: "Étude des repas de Chabbat" },
     ],
   },
   {
-    label: "Fêtes & Occasions",
+    id: "holidays",
+    label: "Fêtes",
+    icon: "🎺",
     offices: [
-      { key: "rosh_hodesh" as Office, label: "Roch 'Hodech", icon: "🌙" },
-      { key: "fetes" as Office, label: "Fêtes", icon: "🎺" },
-      { key: "hanukkah" as Office, label: "'Hanouka", icon: "🕎" },
-      { key: "purim" as Office, label: "Pourim", icon: "🎭" },
-      { key: "taanit" as Office, label: "Jeûnes", icon: "🕊️" },
-      { key: "nissan" as Office, label: "Nissan", icon: "🌸" },
+      { key: "rosh_hodesh" as Office, label: "Roch 'Hodech", icon: "🌙", desc: "Nouveau mois" },
+      { key: "fetes" as Office, label: "Fêtes", icon: "🎺", desc: "Pessa'h, Chavouot, Soukot" },
+      { key: "hanukkah" as Office, label: "'Hanouka", icon: "🕎", desc: "Allumage & Hallel" },
+      { key: "purim" as Office, label: "Pourim", icon: "🎭", desc: "Méguila & Séder" },
+      { key: "taanit" as Office, label: "Jeûnes", icon: "🕊️", desc: "Sélihot & deuil" },
+      { key: "nissan" as Office, label: "Nissan", icon: "🌸", desc: "Birkat HaIlanot" },
     ],
   },
   {
-    label: "Brakhot & Prières",
+    id: "brakhot",
+    label: "Brakhot",
+    icon: "🙏",
     offices: [
-      { key: "birkat" as Office, label: "Birkat HaMazone", icon: "🍞" },
-      { key: "berakhot" as Office, label: "Brakhot", icon: "🙏" },
-      { key: "birkat_halevana" as Office, label: "Birkat HaLévana", icon: "🌕" },
-      { key: "tikoun_hatsot" as Office, label: "Tikoun 'Hatsot", icon: "🌑" },
+      { key: "birkat" as Office, label: "Birkat HaMazone", icon: "🍞", desc: "Bénédiction du repas" },
+      { key: "berakhot" as Office, label: "Brakhot", icon: "🙏", desc: "Mariage, Brit, Téfila…" },
+      { key: "birkat_halevana" as Office, label: "Birkat HaLévana", icon: "🌕", desc: "Bénédiction de la lune" },
+      { key: "tikoun_hatsot" as Office, label: "Tikoun 'Hatsot", icon: "🌑", desc: "Prière de minuit" },
     ],
   },
 ];
