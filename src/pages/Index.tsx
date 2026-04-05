@@ -61,9 +61,9 @@ const Lazy = ({ children }: { children: React.ReactNode }) => (
 );
 
 const OmerGated = () => {
-  const { visible } = useOmerVisibility();
+  const { visible, isBeforeCountingTime } = useOmerVisibility();
   if (!visible) return null;
-  return <Lazy><OmerCounterWidget /></Lazy>;
+  return <Lazy><OmerCounterWidget isBeforeCountingTime={isBeforeCountingTime} /></Lazy>;
 };
 
 /* ─── Shabbat countdown (J-1 only, relative format) ─── */

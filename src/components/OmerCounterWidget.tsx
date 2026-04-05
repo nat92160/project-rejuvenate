@@ -37,6 +37,7 @@ function getStreakMessage(streak: number): string {
 
 interface OmerCounterWidgetProps {
   showInviteBanner?: boolean;
+  isBeforeCountingTime?: boolean;
 }
 
 const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps) => {
