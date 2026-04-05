@@ -354,6 +354,33 @@ const SiddourReader = ({
             </div>
           )}
 
+          {/* Translation view */}
+          {viewMode === "translation" && (
+            <div
+              dir="ltr"
+              style={{
+                fontFamily: "'Lora', serif",
+                fontSize: `${Math.max(fontSize - 2, 14)}px`,
+                lineHeight: 2,
+                textAlign: "left",
+                fontWeight: 400,
+                color: prayerMode ? "#ccc" : "#333",
+              }}
+            >
+              {content.french.length > 0 ? (
+                content.french.map((verse, i) => (
+                  verse && verse.trim() ? (
+                    <p key={i} className="mb-3" dangerouslySetInnerHTML={{ __html: verse }} />
+                  ) : null
+                ))
+              ) : (
+                <p className="text-center text-sm" style={{ color: pmMuted }}>
+                  La traduction n'est pas encore disponible pour cette section.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Section separator ornament */}
           <div className="flex items-center justify-center gap-4 mt-6 mb-4">
             <span className="block h-[1px] flex-1 max-w-[80px]" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--gold) / 0.2))" }} />
