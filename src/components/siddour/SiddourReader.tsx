@@ -267,7 +267,7 @@ const SiddourReader = ({
                     return (
                       <div
                         key={i}
-                        className="flex flex-col items-center gap-2 my-8 clear-both"
+                        className="flex flex-col items-center gap-1.5 mt-3 mb-4 clear-both"
                         style={{ display: "flex", direction: "rtl" }}
                       >
                         <div className="flex items-center gap-3 w-full">
