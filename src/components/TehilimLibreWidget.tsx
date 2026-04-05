@@ -93,9 +93,9 @@ const TehilimLibreWidget = ({ prayerMode = false }: TehilimLibreWidgetProps) => 
     if (selectedChapter !== null) fetchChapter(selectedChapter);
   }, [selectedChapter, fetchChapter]);
 
-  // Auto-fetch transliteration when switching to phonetic/bilingual mode
+  // Auto-fetch transliteration when switching to phonetic mode
   useEffect(() => {
-    if ((viewMode === "phonetic" || viewMode === "bilingual") && verses.length > 0 && transliterations.length === 0 && selectedChapter !== null) {
+    if (viewMode === "phonetic" && verses.length > 0 && transliterations.length === 0 && selectedChapter !== null) {
       fetchTransliteration(verses, `psalm_${selectedChapter}`);
     }
   }, [viewMode, verses, transliterations.length, selectedChapter, fetchTransliteration]);
