@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { shareText } from "@/lib/shareUtils";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 import HazakCelebration from "@/components/HazakCelebration";
 import { toHebrewLetter } from "@/lib/utils";
@@ -339,11 +340,7 @@ const TehilimJoinContent = () => {
     if (!chain) return;
     const shareUrl = `${window.location.origin}/tehilim/${chain.id}`;
     const text = `📖 Chaîne de Tehilim : ${chain.title}${chain.dedication ? `\n🙏 ${chain.dedication}` : ""}\n\n${totalClaimed}/150 réservés • ${totalCompleted} terminés\n\nChoisissez un psaume :\n${shareUrl}`;
-    if (navigator.share) {
-      try { await navigator.share({ text, url: shareUrl }); return; } catch {}
-    }
-    await navigator.clipboard?.writeText(text);
-    toast.success("Lien copié dans le presse-papier !");
+    await shareText(text, `📖 ${chain.title}`);
   };
 
   if (loading) {

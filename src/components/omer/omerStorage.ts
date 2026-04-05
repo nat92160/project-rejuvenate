@@ -172,25 +172,11 @@ export async function shareOmer(day: number, _cardElement?: HTMLElement | null):
   const text = getShareMessage(day);
   const title = `🌾 Omer Jour ${day} — Chabbat Chalom`;
   const url = getShareUrl();
+  const fullText = `${text}\n${url}`;
 
-  // 1) Try native Web Share API (preserves user gesture)
-  if (navigator.share) {
-    try {
-      await navigator.share({ title, text, url });
-      return true;
-    } catch (err: any) {
-      if (err?.name === "AbortError") return false;
-    }
-  }
-
-  // 2) Fallback: copy to clipboard + open WhatsApp
-  try {
-    await navigator.clipboard.writeText(`${text}\n${url}`);
-  } catch { /* silent */ }
-
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-  window.open(whatsappUrl, "_blank") || window.location.assign(whatsappUrl);
-  return true;
+  // Use the centralized share utility
+  const { shareText } = await import("@/lib/shareUtils");
+  return shareText(fullText, title);
 }
 
 // ─── Migration helper: push localStorage data to DB on first login ───

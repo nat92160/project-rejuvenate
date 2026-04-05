@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
 import { toast } from "sonner";
+import { shareText } from "@/lib/shareUtils";
 import { Progress } from "@/components/ui/progress";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 import HazakCelebration from "@/components/HazakCelebration";
@@ -530,11 +531,7 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
   const shareUrl = `${window.location.origin}/tehilim/${chain.id}`;
   const shareChain = async () => {
     const text = `📖 Chaîne de Tehilim : ${chain.title}${chain.dedication ? `\n🙏 ${chain.dedication}` : ""}\n\n${totalClaimed}/150 réservés • ${totalCompleted} terminés\n\nChoisissez un psaume :\n${shareUrl}`;
-    if (navigator.share) {
-      try { await navigator.share({ text }); return; } catch {}
-    }
-    await navigator.clipboard?.writeText(text);
-    toast.success("Lien copié dans le presse-papier !");
+    await shareText(text, `📖 ${chain.title}`);
   };
 
   // Unique participants
