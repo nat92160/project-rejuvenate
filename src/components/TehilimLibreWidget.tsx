@@ -334,7 +334,7 @@ const TehilimLibreWidget = ({ prayerMode = false }: TehilimLibreWidgetProps) => 
           <p className="text-center text-xs mb-6" style={{ color: pmMuted }}>Psaume {selectedChapter}</p>
 
           {/* Hebrew text */}
-          {(viewMode === "hebrew" || viewMode === "bilingual") && (
+           {viewMode === "hebrew" && (
             <div dir="rtl" className="hebrew-reading-block" style={{
               fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
               fontSize: `${fontSize}px`,
@@ -347,18 +347,6 @@ const TehilimLibreWidget = ({ prayerMode = false }: TehilimLibreWidgetProps) => 
                 <span key={i}>
                   <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
                   <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
-                  {viewMode === "bilingual" && transliterations[i] && (
-                    <p dir="ltr" className="my-2 leading-relaxed" style={{
-                      fontSize: `${Math.max(fontSize - 4, 13)}px`,
-                      textAlign: "left",
-                      fontWeight: 400,
-                      color: prayerMode ? "#b8a87a" : "hsl(var(--gold-matte))",
-                      fontFamily: "'Lora', serif",
-                      fontStyle: "italic",
-                    }}>
-                      {transliterations[i]}
-                    </p>
-                  )}
                 </span>
               ))}
             </div>
