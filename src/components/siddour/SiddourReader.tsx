@@ -242,7 +242,9 @@ const SiddourReader = ({
                         className={isPrayerStart ? "prayer-opening" : undefined}
                         dangerouslySetInnerHTML={{ __html: verse }}
                       />{" "}
+                    </span>
                   );
+                });
                 });
               })()}
             </div>
