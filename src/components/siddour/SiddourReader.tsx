@@ -261,17 +261,7 @@ const SiddourReader = ({
                   const isPrayerStart = i === prayerStartIdx;
                   const isPrelude = i < prayerStartIdx;
 
-                  if (isInstructionOnly(verse)) {
-                    return (
-                      <span
-                        key={i}
-                        className={isShemaSecondaryLine(verse) ? "verse-secondary" : "verse-instruction"}
-                        dangerouslySetInnerHTML={{ __html: verse }}
-                      />
-                    );
-                  }
-
-                  // Internal section title — render as a prayer divider
+                  // Internal section title — render as a prayer divider (check BEFORE instructions)
                   if (isInternalSectionTitle(verse)) {
                     const titleText = normalizeHebrewMatch(verse);
                     return (
@@ -302,6 +292,16 @@ const SiddourReader = ({
                           <span className="block h-[1px] flex-1" style={{ background: `linear-gradient(270deg, transparent, hsl(var(--gold) / 0.3))` }} />
                         </div>
                       </div>
+                    );
+                  }
+
+                  if (isInstructionOnly(verse)) {
+                    return (
+                      <span
+                        key={i}
+                        className={isShemaSecondaryLine(verse) ? "verse-secondary" : "verse-instruction"}
+                        dangerouslySetInnerHTML={{ __html: verse }}
+                      />
                     );
                   }
 
