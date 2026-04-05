@@ -264,6 +264,40 @@ const SiddourReader = ({
                     );
                   }
 
+                  // Internal section title — render as a prayer divider
+                  if (isInternalSectionTitle(verse)) {
+                    const titleText = normalizeHebrewMatch(verse);
+                    return (
+                      <div
+                        key={i}
+                        className="flex flex-col items-center gap-2 my-8 clear-both"
+                        style={{ display: "flex", direction: "rtl" }}
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <span className="block h-[1px] flex-1" style={{ background: `linear-gradient(90deg, transparent, hsl(var(--gold) / 0.3))` }} />
+                          <span className="text-[9px]" style={{ color: "hsl(var(--gold) / 0.4)" }}>✦</span>
+                          <span className="block h-[1px] flex-1" style={{ background: `linear-gradient(270deg, transparent, hsl(var(--gold) / 0.3))` }} />
+                        </div>
+                        <h3
+                          className="text-center font-bold px-4 py-1"
+                          style={{
+                            fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif",
+                            fontSize: `${Math.min(fontSize + 2, 32)}px`,
+                            color: prayerMode ? "#e8e0d0" : "hsl(var(--gold-matte))",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {titleText}
+                        </h3>
+                        <div className="flex items-center gap-3 w-full">
+                          <span className="block h-[1px] flex-1" style={{ background: `linear-gradient(90deg, transparent, hsl(var(--gold) / 0.3))` }} />
+                          <span className="text-[9px]" style={{ color: "hsl(var(--gold) / 0.4)" }}>✦</span>
+                          <span className="block h-[1px] flex-1" style={{ background: `linear-gradient(270deg, transparent, hsl(var(--gold) / 0.3))` }} />
+                        </div>
+                      </div>
+                    );
+                  }
+
                   if (isPrelude) {
                     return (
                       <span
