@@ -1,0 +1,1 @@
+DELETE FROM youtube_courses_cache WHERE channel_id = 'UCT2WDFM6FXOWRe2OZ3nYdjw';
