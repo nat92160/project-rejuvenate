@@ -90,6 +90,16 @@ const SiddourReader = ({
   const topRef = useRef<HTMLDivElement>(null);
   const prayerStartRef = useRef<HTMLSpanElement>(null);
 
+  // Liturgical context for Amida
+  const [litContext, setLitContext] = useState<LiturgicalPeriod>(() => getLiturgicalContext());
+  const showAmidaContext = content ? isAmidaSection(content.title) : false;
+
+  // Process Amida verses with liturgical context
+  const processedVerses = useMemo(() => {
+    if (!content || !showAmidaContext) return null;
+    return processAmidaVerses(content.hebrew, litContext);
+  }, [content, showAmidaContext, litContext]);
+
   // Detect the real prayer start index (first <b> verse, or first non-instruction)
   const prayerStartIdx = useMemo(
     () => content ? findPrayerStartIndex(content.hebrew) : 0,
