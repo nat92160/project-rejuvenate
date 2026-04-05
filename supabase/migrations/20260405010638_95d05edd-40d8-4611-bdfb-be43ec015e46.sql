@@ -1,0 +1,7 @@
+
+ALTER TABLE public.push_subscriptions 
+  ADD COLUMN push_type TEXT NOT NULL DEFAULT 'web',
+  ADD COLUMN device_token TEXT,
+  ALTER COLUMN endpoint DROP NOT NULL,
+  ALTER COLUMN p256dh DROP NOT NULL,
+  ALTER COLUMN auth DROP NOT NULL;
