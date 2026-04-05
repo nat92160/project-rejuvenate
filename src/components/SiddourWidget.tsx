@@ -162,7 +162,7 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
 
   // Auto-fetch transliteration
   useEffect(() => {
-    if ((viewMode === "phonetic" || viewMode === "bilingual") && content && content.hebrew.length > 0 && transliterations.length === 0) {
+    if (viewMode === "phonetic" && content && content.hebrew.length > 0 && transliterations.length === 0) {
       fetchTransliteration(content.hebrew, `siddour_${office}_${activeSection}`);
     }
   }, [viewMode, content, transliterations.length, office, activeSection, fetchTransliteration]);

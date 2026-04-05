@@ -275,7 +275,7 @@ const SiddourReader = ({
                           {transliterations[i]}
                         </p>
                       )}
-                      {viewMode === "bilingual" && content.french[i] && (
+                      {false && content.french[i] && (
                         <p
                           dir="ltr"
                           className="my-1 leading-relaxed"
