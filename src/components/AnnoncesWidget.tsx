@@ -85,8 +85,8 @@ const AnnoncesWidget = () => {
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
-  // Auto-export when posterAnnonce is set
-  const triggerExport = useCallback(async (annonce: Annonce) => {
+  // Auto-share when posterAnnonce is set
+  const triggerShare = useCallback(async (annonce: Annonce) => {
     setExportingId(annonce.id);
     setPosterAnnonce(annonce);
   }, []);
@@ -95,7 +95,8 @@ const AnnoncesWidget = () => {
     if (!posterAnnonce || !exportingId) return;
     const timer = requestAnimationFrame(() => {
       setTimeout(async () => {
-        await exportPosterPng(posterRef.current, `annonce-${posterAnnonce.title.replace(/\s+/g, "-").toLowerCase()}.png`);
+        const filename = `annonce-${posterAnnonce.title.replace(/\s+/g, "-").toLowerCase()}.png`;
+        await sharePosterPng(posterRef.current, filename, `📢 ${posterAnnonce.title}`);
         setExportingId(null);
         setPosterAnnonce(null);
       }, 100);
