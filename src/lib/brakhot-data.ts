@@ -596,10 +596,17 @@ export const BIRKAT_INSERTS: BirkatInsert[] = [
   },
 ];
 
+export interface BirkatParagraph {
+  hebrew: string;
+  transliteration?: string;
+  section?: string; // e.g. "zimoun", "brakha1", "brakha2", "brakha3", "brakha4", "harahamane", "conclusion"
+  role?: "leader" | "response"; // For Zimoun call-and-response
+}
+
 export interface BirkatVersion {
   id: string;
   name: string;
-  paragraphs: { hebrew: string; transliteration?: string }[];
+  paragraphs: BirkatParagraph[];
 }
 
 export const BIRKAT_HAMAZONE: BirkatVersion[] = [
