@@ -40,7 +40,7 @@ interface OmerCounterWidgetProps {
   isBeforeCountingTime?: boolean;
 }
 
-const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps) => {
+const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = false }: OmerCounterWidgetProps) => {
   const { user, isAdmin } = useAuth();
   const [expanded, setExpanded] = useState(showInviteBanner);
   const realOmerDay = useMemo(() => getTodayOmerDay(), []);
