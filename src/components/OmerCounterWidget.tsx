@@ -165,20 +165,45 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
         <div className="absolute top-3 right-6 text-sm opacity-20 animate-pulse" style={{ animationDelay: "0.5s" }}>✨</div>
         <div className="absolute bottom-2 left-1/4 text-xs opacity-25 animate-pulse" style={{ animationDelay: "1s" }}>⭐</div>
 
-        <button
-          onClick={async () => {
-            const shared = await shareOmer(effectiveDay, shareCardRef.current);
-            if (shared) toast.success("Partage envoyé !");
-          }}
-          className="absolute top-4 right-4 p-2.5 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
-          style={{
-            background: "hsl(var(--gold) / 0.2)",
-            color: "hsl(var(--gold-matte))",
-          }}
-          title="Partager la Mitsva"
-        >
-          <Share2 size={18} />
-        </button>
+        <div className="absolute top-4 right-4 flex gap-1.5">
+          {pushSupported && (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (isPushSubscribed) {
+                  await unsubscribePush();
+                  toast.success("🔕 Rappels désactivés");
+                } else {
+                  const ok = await subscribePush();
+                  if (ok) toast.success("🔔 Vous recevrez un rappel chaque soir !");
+                  else toast.error("Impossible d'activer les notifications");
+                }
+              }}
+              className="p-2.5 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
+              style={{
+                background: isPushSubscribed ? "hsl(var(--gold) / 0.3)" : "hsl(var(--gold) / 0.2)",
+                color: "hsl(var(--gold-matte))",
+              }}
+              title={isPushSubscribed ? "Désactiver les rappels" : "Activer les rappels quotidiens"}
+            >
+              {isPushSubscribed ? <BellOff size={16} /> : <Bell size={16} />}
+            </button>
+          )}
+          <button
+            onClick={async () => {
+              const shared = await shareOmer(effectiveDay, shareCardRef.current);
+              if (shared) toast.success("Partage envoyé !");
+            }}
+            className="p-2.5 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
+            style={{
+              background: "hsl(var(--gold) / 0.2)",
+              color: "hsl(var(--gold-matte))",
+            }}
+            title="Partager la Mitsva"
+          >
+            <Share2 size={18} />
+          </button>
+        </div>
 
         <motion.div
           className="text-4xl mb-2"
