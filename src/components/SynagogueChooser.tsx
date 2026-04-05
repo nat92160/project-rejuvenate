@@ -199,9 +199,13 @@ const SynagogueChooser = ({ onSelect }: Props) => {
   const handleSubscribe = async (synaId: string) => {
     if (!user) { toast.error("Connectez-vous pour choisir une synagogue"); return; }
     setSubscribing(synaId);
-    await supabase.from("synagogue_subscriptions").delete().eq("user_id", user.id);
-    await supabase.from("synagogue_subscriptions").insert({ user_id: user.id, synagogue_id: synaId } as any);
-    toast.success("🏛️ Synagogue définie ! Bienvenue dans votre communauté.");
+    if (subIds.includes(synaId)) {
+      await supabase.from("synagogue_subscriptions").delete().eq("user_id", user.id).eq("synagogue_id", synaId);
+      toast.success("Désabonné de cette synagogue");
+    } else {
+      await supabase.from("synagogue_subscriptions").insert({ user_id: user.id, synagogue_id: synaId } as any);
+      toast.success("🏛️ Abonné ! Vous recevrez les actualités de cette synagogue.");
+    }
     setSubscribing(null);
     onSelect?.();
   };
@@ -357,10 +361,10 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                     <button
                       onClick={(e) => { e.stopPropagation(); handleSubscribe(item.id); }}
                       disabled={subscribing === item.id}
-                      className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all active:scale-95 text-primary-foreground shrink-0 disabled:opacity-50"
-                      style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all active:scale-95 shrink-0 disabled:opacity-50 ${subIds.includes(item.id) ? "bg-muted text-muted-foreground" : "text-primary-foreground"}`}
+                      style={subIds.includes(item.id) ? {} : { background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
                     >
-                      {subscribing === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Ma Synagogue"}
+                      {subscribing === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : subIds.includes(item.id) ? "✓ Abonné" : "+ S'abonner"}
                     </button>
                   )}
                 </div>

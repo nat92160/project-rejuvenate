@@ -15,6 +15,12 @@ interface PersonalDate {
   created_at: string;
 }
 
+interface SubscribedSyna {
+  id: string;
+  synagogue_id: string;
+  name: string;
+}
+
 const DATE_TYPES = [
   { value: "azkarot", label: "Azkarot", icon: "🕯️" },
   { value: "hachkaba", label: "Hachkaba", icon: "🪦" },
@@ -58,6 +64,43 @@ function formatHebrewDate(day: number | null, month: string | null): string {
   return `${day} ${hebMonth}`;
 }
 
+/* ─── Notification Toggle Item ─── */
+const NotifToggle = ({
+  icon,
+  label,
+  description,
+  enabled,
+  loading,
+  onToggle,
+}: {
+  icon: string;
+  label: string;
+  description: string;
+  enabled: boolean;
+  loading: boolean;
+  onToggle: () => void;
+}) => (
+  <div className="flex items-center justify-between gap-3 py-2">
+    <div className="flex-1 min-w-0">
+      <h4 className="font-display text-sm font-bold text-foreground flex items-center gap-2">
+        {icon} {label}
+      </h4>
+      <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
+    </div>
+    <button
+      onClick={onToggle}
+      disabled={loading}
+      className="relative h-7 w-12 rounded-full border-none cursor-pointer transition-colors duration-200 shrink-0"
+      style={{ background: enabled ? "hsl(var(--gold))" : "hsl(var(--muted))" }}
+    >
+      <span
+        className="absolute top-0.5 block h-6 w-6 rounded-full bg-white shadow transition-transform duration-200"
+        style={{ transform: enabled ? "translateX(22px)" : "translateX(2px)" }}
+      />
+    </button>
+  </div>
+);
+
 const EspacePersonnelWidget = () => {
   const { user } = useAuth();
   const [dates, setDates] = useState<PersonalDate[]>([]);
@@ -71,39 +114,72 @@ const EspacePersonnelWidget = () => {
   const [formNotes, setFormNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Push notification toggle
-  const [pushEnabled, setPushEnabled] = useState(false);
+  // Subscribed synagogues
+  const [subscribedSynas, setSubscribedSynas] = useState<SubscribedSyna[]>([]);
+  const [unsubscribing, setUnsubscribing] = useState<string | null>(null);
+
+  // Notification preferences (stored in localStorage for now)
+  const [notifPrefs, setNotifPrefs] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("notif_prefs") || "{}");
+    } catch {
+      return {};
+    }
+  });
   const [pushLoading, setPushLoading] = useState(false);
   const pushSupported = "serviceWorker" in navigator && "PushManager" in window;
+  const pushGranted = pushSupported && "Notification" in window && Notification.permission === "granted";
 
-  useEffect(() => {
-    if (pushSupported && "Notification" in window) {
-      setPushEnabled(Notification.permission === "granted");
-    }
-  }, []);
-
-  const togglePush = async () => {
-    if (!pushSupported) {
-      toast.error("Les notifications ne sont pas supportées sur ce navigateur.");
-      return;
-    }
-    setPushLoading(true);
-    try {
-      if (pushEnabled) {
-        toast.info("Pour désactiver, modifiez les permissions dans les réglages de votre navigateur.");
-      } else {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-          setPushEnabled(true);
-          toast.success("✅ Alertes allumage activées !");
-        } else {
-          toast.error("Permission refusée. Activez les notifications dans les réglages du navigateur.");
-        }
+  const toggleNotifPref = async (key: string) => {
+    if (!pushGranted && !notifPrefs[key]) {
+      setPushLoading(true);
+      const permission = await Notification.requestPermission();
+      setPushLoading(false);
+      if (permission !== "granted") {
+        toast.error("Activez les notifications dans les réglages du navigateur.");
+        return;
       }
-    } catch {
-      toast.error("Erreur lors de l'activation.");
     }
-    setPushLoading(false);
+    const newPrefs = { ...notifPrefs, [key]: !notifPrefs[key] };
+    setNotifPrefs(newPrefs);
+    localStorage.setItem("notif_prefs", JSON.stringify(newPrefs));
+    toast.success(newPrefs[key] ? "✅ Notification activée" : "Notification désactivée");
+  };
+
+  // Fetch subscribed synagogues
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: subs } = await supabase
+        .from("synagogue_subscriptions")
+        .select("id, synagogue_id")
+        .eq("user_id", user.id);
+
+      if (subs && subs.length > 0) {
+        const synaIds = subs.map((s: any) => s.synagogue_id);
+        const { data: profiles } = await supabase
+          .from("synagogue_profiles")
+          .select("id, name")
+          .in("id", synaIds);
+
+        const nameMap = new Map((profiles || []).map((p: any) => [p.id, p.name]));
+        setSubscribedSynas(subs.map((s: any) => ({
+          id: s.id,
+          synagogue_id: s.synagogue_id,
+          name: nameMap.get(s.synagogue_id) || "Synagogue",
+        })));
+      } else {
+        setSubscribedSynas([]);
+      }
+    })();
+  }, [user]);
+
+  const handleUnsubscribe = async (subId: string, synaName: string) => {
+    setUnsubscribing(subId);
+    await supabase.from("synagogue_subscriptions").delete().eq("id", subId);
+    setSubscribedSynas(prev => prev.filter(s => s.id !== subId));
+    toast.success(`Désabonné de ${synaName}`);
+    setUnsubscribing(null);
   };
 
   useEffect(() => {
@@ -123,10 +199,7 @@ const EspacePersonnelWidget = () => {
   const handleAdd = async () => {
     if (!user || !formName.trim()) { toast.error("Entrez un nom"); return; }
     setSubmitting(true);
-
-    // Convert Hebrew date to civil for storage
     const civilDate = await hebrewToGregorian(formDay, formMonth, formYear);
-
     const { data, error } = await supabase
       .from("personal_dates")
       .insert({
@@ -188,31 +261,85 @@ const EspacePersonnelWidget = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-      {/* Push Notification Toggle */}
-      <div className="rounded-2xl bg-card p-4 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h4 className="font-display text-sm font-bold text-foreground flex items-center gap-2">🔔 Alerte Allumage</h4>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Recevoir un rappel 18 min avant l'allumage des bougies</p>
+
+      {/* ─── Mes Synagogues ─── */}
+      <div className="rounded-2xl bg-card p-4 border border-border space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
+        <h4 className="font-display text-sm font-bold text-foreground flex items-center gap-2">🏛️ Mes Synagogues</h4>
+        {subscribedSynas.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Aucun abonnement. Rendez-vous dans l'onglet <strong>Ma Communauté</strong> pour vous abonner.</p>
+        ) : (
+          <div className="space-y-2">
+            {subscribedSynas.map(s => (
+              <div key={s.id} className="flex items-center justify-between gap-3 py-2 px-3 rounded-xl bg-muted/30">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-base">🕍</span>
+                  <span className="text-sm font-semibold text-foreground truncate">{s.name}</span>
+                </div>
+                <button
+                  onClick={() => handleUnsubscribe(s.id, s.name)}
+                  disabled={unsubscribing === s.id}
+                  className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border-none cursor-pointer shrink-0 disabled:opacity-50"
+                >
+                  {unsubscribing === s.id ? "..." : "Se désabonner"}
+                </button>
+              </div>
+            ))}
           </div>
-          <button
-            onClick={togglePush}
-            disabled={pushLoading}
-            className="relative h-7 w-12 rounded-full border-none cursor-pointer transition-colors duration-200 shrink-0"
-            style={{ background: pushEnabled ? "hsl(var(--gold))" : "hsl(var(--muted))" }}
-          >
-            <span
-              className="absolute top-0.5 block h-6 w-6 rounded-full bg-white shadow transition-transform duration-200"
-              style={{ transform: pushEnabled ? "translateX(22px)" : "translateX(2px)" }}
-            />
-          </button>
-        </div>
+        )}
+      </div>
+
+      {/* ─── Notifications ─── */}
+      <div className="rounded-2xl bg-card p-4 border border-border space-y-1" style={{ boxShadow: "var(--shadow-card)" }}>
+        <h4 className="font-display text-sm font-bold text-foreground flex items-center gap-2 mb-2">🔔 Mes Notifications</h4>
+
+        <NotifToggle
+          icon="🕯️"
+          label="Allumage des bougies"
+          description="Rappel 18 min avant l'allumage"
+          enabled={!!notifPrefs.shabbat}
+          loading={pushLoading}
+          onToggle={() => toggleNotifPref("shabbat")}
+        />
+
+        <div className="border-t border-border" />
+
+        <NotifToggle
+          icon="🌾"
+          label="Compte du Omer"
+          description="Rappel chaque soir pour compter le Omer"
+          enabled={!!notifPrefs.omer}
+          loading={pushLoading}
+          onToggle={() => toggleNotifPref("omer")}
+        />
+
+        <div className="border-t border-border" />
+
+        <NotifToggle
+          icon="🕐"
+          label="Changement d'horaires"
+          description="Prévenu quand les horaires de ma synagogue changent"
+          enabled={!!notifPrefs.horaires}
+          loading={pushLoading}
+          onToggle={() => toggleNotifPref("horaires")}
+        />
+
+        <div className="border-t border-border" />
+
+        <NotifToggle
+          icon="📢"
+          label="Alertes de ma synagogue"
+          description="Annonces, événements et urgences communautaires"
+          enabled={!!notifPrefs.alertes}
+          loading={pushLoading}
+          onToggle={() => toggleNotifPref("alertes")}
+        />
+
         {!pushSupported && (
           <p className="text-[10px] text-destructive mt-2">⚠️ Notifications non supportées sur ce navigateur</p>
         )}
       </div>
 
-      {/* Header */}
+      {/* ─── Dates personnelles ─── */}
       <div className="rounded-2xl p-4 border border-primary/15" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}>
         <div className="flex items-center justify-between">
           <div>
@@ -231,7 +358,6 @@ const EspacePersonnelWidget = () => {
           <motion.div className="rounded-2xl bg-card p-5 border border-primary/20 overflow-hidden" style={{ boxShadow: "var(--shadow-card)" }}
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
             <div className="space-y-4">
-              {/* Type selector */}
               <div className="flex flex-wrap gap-2">
                 {DATE_TYPES.map((t) => (
                   <button key={t.value} onClick={() => setFormType(t.value)}
@@ -245,7 +371,6 @@ const EspacePersonnelWidget = () => {
                 ))}
               </div>
 
-              {/* Name */}
               <div>
                 <label className="text-xs font-bold text-muted-foreground mb-1.5 block">Nom hébraïque</label>
                 <input
@@ -257,7 +382,6 @@ const EspacePersonnelWidget = () => {
                 />
               </div>
 
-              {/* Hebrew date selectors */}
               <div>
                 <label className="text-xs font-bold text-muted-foreground mb-1.5 block">📜 Date hébraïque</label>
                 <div className="mobile-form-grid-3 gap-2">
@@ -288,7 +412,6 @@ const EspacePersonnelWidget = () => {
                 </div>
               </div>
 
-              {/* Notes */}
               <div>
                 <label className="text-xs font-bold text-muted-foreground mb-1.5 block">Notes (optionnel)</label>
                 <input
@@ -300,7 +423,6 @@ const EspacePersonnelWidget = () => {
                 />
               </div>
 
-              {/* Submit */}
               <button onClick={handleAdd} disabled={submitting || !formName.trim()}
                 className="w-full py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
                 style={{ background: "var(--gradient-gold)" }}>
