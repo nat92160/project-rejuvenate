@@ -11,30 +11,37 @@ import SiddourReader from "@/components/siddour/SiddourReader";
 import SiddourQuickJump from "@/components/siddour/SiddourQuickJump";
 import SiddourSearch from "@/components/siddour/SiddourSearch";
 
-type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "birkat" | "berakhot" | "tikoun_hatsot" | "nissan" | "mishnayot_shabbat" | "birkat_halevana";
+type Office = "shacharit" | "additions_shacharit" | "minha" | "arvit" | "shabbat" | "shabbat_shacharit" | "shabbat_moussaf" | "shabbat_minha" | "seoudot" | "havdala" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "berakhot" | "tikoun_hatsot" | "nissan" | "mishnayot_shabbat" | "birkat_halevana" | "chema_coucher" | "brakhot_diverses";
 
 interface Section { index: number; title: string; heTitle: string; }
 interface SectionContent { hebrew: string[]; french: string[]; title: string; heTitle: string; }
 
 const OFFICES: { key: Office; label: string; icon: string }[] = [
   { key: "shacharit", label: "Cha'harit", icon: "🌅" },
+  { key: "additions_shacharit", label: "Ajouts", icon: "📜" },
   { key: "minha", label: "Min'ha", icon: "🌇" },
   { key: "arvit", label: "Arvit", icon: "🌙" },
-  { key: "shabbat", label: "Chabbat", icon: "🕯️" },
+  { key: "shabbat", label: "Chabbat soir", icon: "🕯️" },
+  { key: "shabbat_shacharit", label: "Chabbat matin", icon: "☀️" },
+  { key: "shabbat_moussaf", label: "Moussaf Chabbat", icon: "📖" },
+  { key: "shabbat_minha", label: "Min'ha Chabbat", icon: "🌄" },
+  { key: "seoudot", label: "Séoudot", icon: "🍞" },
+  { key: "havdala", label: "Havdala", icon: "🔥" },
   { key: "rosh_hodesh", label: "Roch 'Hodech", icon: "🌙" },
   { key: "fetes", label: "Fêtes", icon: "🎺" },
   { key: "hanukkah", label: "'Hanouka", icon: "🕎" },
   { key: "purim", label: "Pourim", icon: "🎭" },
   { key: "taanit", label: "Jeûnes", icon: "🕊️" },
-  { key: "birkat", label: "Birkat", icon: "🍞" },
   { key: "berakhot", label: "Bérakhot", icon: "✡️" },
   { key: "tikoun_hatsot", label: "Tikoun 'Hatsot", icon: "🌑" },
   { key: "nissan", label: "Nissan", icon: "🌸" },
   { key: "mishnayot_shabbat", label: "Michnayot", icon: "📖" },
   { key: "birkat_halevana", label: "Birkat HaLévana", icon: "🌕" },
+  { key: "chema_coucher", label: "Chéma coucher", icon: "🛏️" },
+  { key: "brakhot_diverses", label: "Brakhot diverses", icon: "💍" },
 ];
 
-const CACHE_PREFIX = "siddour_v6_sefarade_";
+const CACHE_PREFIX = "siddour_v7_sefarade_";
 
 /** Detect the most relevant office based on current time */
 function detectOffice(): Office {
@@ -61,18 +68,14 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
   const { favorites, toggle: toggleFavorite, isFavorite } = useSiddourFavorites();
   const { save: saveBookmark, load: loadBookmark, restoreScroll, startAutoSave } = useSiddourBookmark();
 
-  // Wake lock while siddour is open
   useWakeLock(true);
 
-  // Track if we should auto-open the first section (deep-link from dashboard)
   const [autoOpenDone, setAutoOpenDone] = useState(false);
-
-  // Restore bookmark on mount (only if no initialOffice deep-link)
   const [bookmarkRestored, setBookmarkRestored] = useState(false);
+
   useEffect(() => {
     if (bookmarkRestored) return;
     if (initialOffice) {
-      // Deep-link: skip bookmark, will auto-open first section
       setBookmarkRestored(true);
       return;
     }
@@ -87,7 +90,6 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
     }
   }, [bookmarkRestored, loadBookmark, restoreScroll, initialOffice]);
 
-  // Auto-open first section when deep-linked from dashboard
   useEffect(() => {
     if (initialOffice && !autoOpenDone && sections.length > 0 && activeSection === null) {
       setActiveSection(0);
@@ -95,7 +97,6 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
     }
   }, [initialOffice, autoOpenDone, sections, activeSection]);
 
-  // Auto-save bookmark when reading
   useEffect(() => {
     if (activeSection !== null) startAutoSave(office, activeSection);
   }, [activeSection, office, startAutoSave]);
@@ -149,14 +150,12 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
   useEffect(() => { if (bookmarkRestored) fetchToc(office); }, [office, fetchToc, bookmarkRestored]);
   useEffect(() => { if (activeSection !== null) fetchSection(office, activeSection); }, [activeSection, office, fetchSection]);
 
-  // Auto-fetch transliteration
   useEffect(() => {
     if (viewMode === "phonetic" && content && content.hebrew.length > 0 && transliterations.length === 0) {
       fetchTransliteration(content.hebrew, `siddour_${office}_${activeSection}`);
     }
   }, [viewMode, content, transliterations.length, office, activeSection, fetchTransliteration]);
 
-  // Sort offices: detected first
   const suggestedOffice = useMemo(detectOffice, []);
 
   const pmBg = prayerMode ? "#000" : undefined;
@@ -183,7 +182,6 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
       className="space-y-4"
       style={prayerMode ? { background: pmBg, margin: "-1rem", padding: "1rem", minHeight: "100vh" } : undefined}
     >
-      {/* Header */}
       <div
         className="rounded-2xl border border-primary/15 p-5 text-center"
         style={{
@@ -193,10 +191,9 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
       >
         <span className="text-3xl">📖</span>
         <h3 className="mt-2 font-display text-lg font-bold" style={{ color: pmText }}>Siddour Complet</h3>
-        <p className="mt-1 text-xs" style={{ color: pmMuted }}>Navigation libre — Hébreu, Phonétique & Traduction</p>
+        <p className="mt-1 text-xs" style={{ color: pmMuted }}>Rite Séfarade — Edot HaMizra'h</p>
       </div>
 
-      {/* Office selector */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {OFFICES.map((off) => {
           const isSuggested = off.key === suggestedOffice && office !== off.key;
@@ -221,7 +218,6 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         })}
       </div>
 
-      {/* Font size slider */}
       <div
         className="rounded-2xl border p-3"
         style={{
@@ -237,7 +233,6 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         </div>
       </div>
 
-      {/* Quick Jump Bar - visible when reading */}
       {activeSection !== null && sections.length > 1 && (
         <SiddourQuickJump
           sections={sections}
@@ -247,13 +242,10 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         />
       )}
 
-      {/* Main content */}
       <AnimatePresence mode="wait">
         {activeSection === null ? (
           <motion.div key="toc" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-            {/* Search */}
             <SiddourSearch sections={sections} onSelect={handleSelectSection} prayerMode={prayerMode} />
-            {/* Table of Contents */}
             <SiddourToc
               sections={sections}
               loading={tocLoading}

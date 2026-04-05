@@ -3,113 +3,190 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-/* ── Siddur Edot HaMizrach (Séfarade – rite du Consistoire) ── */
+/* ── Siddur Edot HaMizrach (Séfarade) ── */
+const BASE = "Siddur_Edot_HaMizrach";
 const r = (...parts: string[]) =>
-  "Siddur_Edot_HaMizrach,_" + parts.map(p => p.replace(/ /g, '_')).join(',_');
+  BASE + ",_" + parts.map(p => p.replace(/ /g, '_')).join(',_');
 
 type Entry = { ref?: string; refs?: string[]; title: string; heTitle: string };
 
 const SIDDOUR_REFS: Record<string, Entry[]> = {
   shacharit: [
     { title: "Modé Ani", heTitle: "מודה אני", ref: r("Preparatory Prayers", "Modeh Ani") },
-    { title: "Nétilat Yadayim", heTitle: "נטילת ידים", ref: r("Preparatory Prayers", "Netilat Yadayim") },
     { title: "Birkot HaCha'har", heTitle: "ברכות השחר", ref: r("Preparatory Prayers", "Morning Blessings") },
-    { title: "Birkot HaTorah", heTitle: "ברכות התורה", ref: r("Preparatory Prayers", "Blessings on the Torah") },
-    { title: "Aqéda", heTitle: "עקדה", ref: r("Preparatory Prayers", "Akeda") },
-    { title: "Korbanot", heTitle: "קרבנות", ref: r("Preparatory Prayers", "Korbanot") },
-    { title: "Baroukh Chéamar", heTitle: "ברוך שאמר", ref: r("Pesukei DeZimrah", "Barukh She'amar") },
-    { title: "Achré", heTitle: "אשרי", ref: r("Pesukei DeZimrah", "Ashrei") },
-    { title: "Yichtaba'h", heTitle: "ישתבח", ref: r("Pesukei DeZimrah", "Yishtabah") },
-    { title: "Birkot Chéma", heTitle: "ברכות שמע", ref: r("Shema", "Blessings of the Shema") },
-    { title: "Chéma Israël", heTitle: "שמע ישראל", ref: r("Shema", "Shema") },
-    { title: "Amida de Cha'harit", heTitle: "עמידה", ref: r("Amidah") },
-    { title: "Ta'hanoun", heTitle: "תחנון", ref: r("Tachanun") },
-    { title: "Achré (fin)", heTitle: "אשרי", ref: r("Post Amidah", "Ashrei") },
-    { title: "Lamenatséa'h", heTitle: "למנצח", ref: r("Post Amidah", "Lamnatzeach") },
-    { title: "Ouva Letsiyon", heTitle: "ובא לציון", ref: r("Post Amidah", "Uva Letzion") },
-    { title: "Alénou", heTitle: "עלינו", ref: r("Post Amidah", "Aleinu") },
-    { title: "Chir Chel Yom", heTitle: "שיר של יום", ref: r("Post Amidah", "Song of the Day") },
+    { title: "Birkot HaTorah", heTitle: "ברכות התורה", ref: r("Preparatory Prayers", "Torah Blessings") },
+    { title: "Péti'hat Éliyahou", heTitle: "פתיחת אליהו", ref: r("Weekday Shacharit", "Petichat Eliyahu") },
+    { title: "Tsitsit & Téfiline", heTitle: "טלית ותפילין", refs: [r("Weekday Shacharit", "Order of Talit"), r("Weekday Shacharit", "Order of Tefillin")] },
+    { title: "Téfilat 'Hanna", heTitle: "תפילת חנה", ref: r("Weekday Shacharit", "Hanna's Prayer") },
+    { title: "Birkot Cha'har", heTitle: "תפילת השחר", ref: r("Weekday Shacharit", "Morning Prayer") },
+    { title: "Pittoum HaQétoret", heTitle: "פיטום הקטורת", ref: r("Weekday Shacharit", "Incense Offering") },
+    { title: "Hodou", heTitle: "הודו", ref: r("Weekday Shacharit", "Hodu") },
+    { title: "Péssouqé DéZimra", heTitle: "פסוקי דזמרה", ref: r("Weekday Shacharit", "Pesukei D'Zimra") },
+    { title: "Chéma Israël", heTitle: "שמע ישראל", ref: r("Weekday Shacharit", "The Shema") },
+    { title: "Amida de Cha'harit", heTitle: "עמידה", ref: r("Weekday Shacharit", "Amida") },
+    { title: "Vidouï / Ta'hanoun", heTitle: "וידוי / תחנון", ref: r("Weekday Shacharit", "Vidui") },
+    { title: "Qriat HaTorah", heTitle: "קריאת התורה", ref: r("Weekday Shacharit", "Torah Reading") },
+    { title: "Achré", heTitle: "אשרי", ref: r("Weekday Shacharit", "Ashrei") },
+    { title: "Ouva Letsiyon", heTitle: "ובא לציון", ref: r("Weekday Shacharit", "Uva LeSion") },
+    { title: "Bét Yaaqov", heTitle: "בית יעקב", ref: r("Weekday Shacharit", "Beit Yaakov") },
+    { title: "Chir Chel Yom", heTitle: "שיר של יום", ref: r("Weekday Shacharit", "Song of the Day") },
+    { title: "Kavé", heTitle: "קוה", ref: r("Weekday Shacharit", "Kaveh") },
+    { title: "Alénou", heTitle: "עלינו", ref: r("Weekday Shacharit", "Alenu") },
+  ],
+
+  additions_shacharit: [
+    { title: "13 Principes de Foi", heTitle: "י\"ג עיקרים", ref: r("Additions for Shacharit", "Thirteen Principles of Faith") },
+    { title: "10 Mémoriaux", heTitle: "עשר זכירות", ref: r("Additions for Shacharit", "Ten Remembrances") },
   ],
 
   minha: [
-    { title: "Achré", heTitle: "אשרי", ref: r("Mincha", "Ashrei") },
-    { title: "Amida de Min'ha", heTitle: "עמידה דמנחה", ref: r("Mincha", "Mincha Amidah") },
-    { title: "Ta'hanoun", heTitle: "תחנון", ref: r("Mincha", "Tachanun") },
-    { title: "Alénou", heTitle: "עלינו", ref: r("Mincha", "Aleinu") },
+    { title: "Qorbanot", heTitle: "קרבנות", ref: r("Weekday Mincha", "Offerings") },
+    { title: "Amida de Min'ha", heTitle: "עמידה דמנחה", ref: r("Weekday Mincha", "Amida") },
+    { title: "Vidouï", heTitle: "וידוי", ref: r("Weekday Mincha", "Vidui") },
+    { title: "Alénou", heTitle: "עלינו", ref: r("Weekday Mincha", "Alenu") },
   ],
 
   arvit: [
-    { title: "Chéma du soir", heTitle: "שמע דערבית", ref: r("Arvit", "Shema") },
-    { title: "Birkot Chéma du soir", heTitle: "ברכות שמע דערבית", ref: r("Arvit", "Blessings of the Shema") },
-    { title: "Amida de Arvit", heTitle: "עמידה דערבית", ref: r("Arvit", "Arvit Amidah") },
-    { title: "Alénou", heTitle: "עלינו", ref: r("Arvit", "Aleinu") },
+    { title: "Barékhou", heTitle: "ברכו", ref: r("Weekday Arvit", "Barchu") },
+    { title: "Chéma du soir", heTitle: "שמע דערבית", ref: r("Weekday Arvit", "The Shema") },
+    { title: "Amida de Arvit", heTitle: "עמידה דערבית", ref: r("Weekday Arvit", "Amidah") },
+    { title: "Alénou", heTitle: "עלינו", ref: r("Weekday Arvit", "Alenu") },
   ],
 
   shabbat: [
-    { title: "Chir HaChirim", heTitle: "שיר השירים", ref: r("Shabbat", "Shir HaShirim") },
-    { title: "Kabbalat Chabbat", heTitle: "קבלת שבת", ref: r("Shabbat", "Kabbalat Shabbat") },
-    { title: "Arvit de Chabbat", heTitle: "ערבית דשבת", ref: r("Shabbat", "Shabbat Arvit Amidah") },
-    { title: "Kiddouch du soir", heTitle: "קידוש ליל שבת", ref: r("Shabbat", "Kiddush for Shabbat Evening") },
-    { title: "Cha'harit de Chabbat", heTitle: "שחרית דשבת", ref: r("Shabbat", "Shabbat Shacharit Amidah") },
-    { title: "Moussaf de Chabbat", heTitle: "מוסף דשבת", ref: r("Shabbat", "Shabbat Musaf Amidah") },
-    { title: "Min'ha de Chabbat", heTitle: "מנחה דשבת", ref: r("Shabbat", "Shabbat Mincha Amidah") },
-    { title: "Séouda Chlichit", heTitle: "סעודה שלישית", ref: r("Shabbat", "Seudah Shlishit") },
-    { title: "Havdala", heTitle: "הבדלה", ref: r("Shabbat", "Havdalah") },
+    { title: "Allumage des bougies", heTitle: "הדלקת נרות שבת", ref: r("Shabbat Candle Lighting") },
+    { title: "Chir HaChirim", heTitle: "שיר השירים", ref: r("Song of Songs") },
+    { title: "Kabbalat Chabbat", heTitle: "קבלת שבת", ref: r("Kabbalat Shabbat") },
+    { title: "Arvit de Chabbat", heTitle: "ערבית דשבת", refs: [r("Shabbat Arvit", "Barchu"), r("Shabbat Arvit", "The Shema"), r("Shabbat Arvit", "Magen Avot"), r("Shabbat Arvit", "Alenu")] },
+    { title: "Chalom Alékhem", heTitle: "שלום עליכם", ref: r("Shabbat Evening", "Shalom Alekhem") },
+    { title: "Échét 'Hayil", heTitle: "אשת חיל", ref: r("Shabbat Evening", "Eshet Hayil") },
+    { title: "Kiddouch du soir", heTitle: "קידוש ליל שבת", ref: r("Shabbat Evening", "Kiddush") },
+    { title: "Birkhat HaBanim", heTitle: "ברכת הבנים", ref: r("Shabbat Evening", "Blessing of Children") },
+    { title: "Séouda Richona", heTitle: "סעודה ראשונה", ref: r("Shabbat Evening", "First Meal") },
+    { title: "Zémirot Chabbat", heTitle: "זמירות שבת", ref: r("Shabbat Evening", "Songs for Shabbat") },
+  ],
+
+  shabbat_shacharit: [
+    { title: "Téhilim de Chabbat", heTitle: "מזמורי שבת", ref: r("Shabbat Shacharit", "Psalms for Shabbat") },
+    { title: "Péssouqé DéZimra", heTitle: "פסוקי דזמרה דשבת", ref: r("Shabbat Shacharit", "Pesukei D'Zimra") },
+    { title: "Chéma de Chabbat", heTitle: "שמע דשבת", ref: r("Shabbat Shacharit", "The Shema") },
+    { title: "Amida de Chabbat", heTitle: "עמידה דשבת", ref: r("Shabbat Shacharit", "Amidah") },
+    { title: "Qriat HaTorah", heTitle: "קריאת התורה", ref: r("Shabbat Shacharit", "Torah Reading") },
+    { title: "HaGomél", heTitle: "הגומל", ref: r("Shabbat Shacharit", "HaGomel") },
+    { title: "Haftara", heTitle: "הפטרה", ref: r("Shabbat Shacharit", "Haftarah") },
+    { title: "Birkhat Ha'Hodech", heTitle: "ברכת החודש", ref: r("Shabbat Shacharit", "Birkat HaChodesh") },
+    { title: "Mi Chébérakh", heTitle: "מי שברך", ref: r("Shabbat Shacharit", "Mi Sheberach") },
+    { title: "Achré", heTitle: "אשרי", ref: r("Shabbat Shacharit", "Ashrei") },
+  ],
+
+  shabbat_moussaf: [
+    { title: "Amida de Moussaf", heTitle: "עמידת מוסף", ref: r("Shabbat Mussaf", "Amida") },
+    { title: "Pittoum HaQétoret", heTitle: "פיטום הקטורת", ref: r("Shabbat Mussaf", "Incense Offering") },
+    { title: "Alénou", heTitle: "עלינו", ref: r("Shabbat Mussaf", "Alenu") },
+  ],
+
+  shabbat_minha: [
+    { title: "Qorbanot", heTitle: "קרבנות", ref: r("Shabbat Mincha", "Offerings") },
+    { title: "Ouva Letsiyon", heTitle: "ובא לציון", ref: r("Shabbat Mincha", "Uva LeSion") },
+    { title: "Amida de Min'ha", heTitle: "עמידה דמנחה", ref: r("Shabbat Mincha", "Amida") },
+    { title: "Alénou", heTitle: "עלינו", ref: r("Shabbat Mincha", "Alenu") },
+  ],
+
+  seoudot: [
+    { title: "Kiddouch du jour", heTitle: "קידוש יום", ref: r("Daytime Meal", "Kiddush") },
+    { title: "Séouda du jour", heTitle: "סעודת יום", ref: r("Daytime Meal", "Daytime Meal") },
+    { title: "Séouda Chlichit", heTitle: "סעודה שלישית", ref: r("Third Meal") },
+    { title: "Birkat HaMazone", heTitle: "ברכת המזון", ref: r("Post Meal Blessing") },
+    { title: "Al HaMi'hya", heTitle: "על המחיה", ref: r("Al Hamihya") },
+  ],
+
+  havdala: [
+    { title: "Avant la Havdala", heTitle: "לפני הבדלה", ref: r("Havdalah", "Before Havdalah") },
+    { title: "Havdala", heTitle: "הבדלה", ref: r("Havdalah", "Havdala") },
+    { title: "Zémirot Motsa'é Chabbat", heTitle: "זמירות מוצאי שבת", ref: r("Havdalah", "Motzei Shabbat Songs") },
+    { title: "Vayitén Lékha", heTitle: "ויתן לך", ref: r("Havdalah", "Veyiten Lecha") },
+    { title: "Séouda Réviit", heTitle: "סעודה רביעית", ref: r("Havdalah", "Fourth Meal") },
   ],
 
   rosh_hodesh: [
-    { title: "Hallel", heTitle: "הלל", ref: r("Rosh Chodesh", "Hallel") },
-    { title: "Moussaf de Roch 'Hodech", heTitle: "מוסף דראש חודש", ref: r("Rosh Chodesh", "Rosh Chodesh Musaf Amidah") },
+    { title: "Roch 'Hodech", heTitle: "ראש חודש", ref: r("Rosh Hodesh", "Rosh Hodesh") },
+    { title: "Hallel", heTitle: "הלל", ref: r("Rosh Hodesh", "Hallel") },
+    { title: "Ouva Letsiyon", heTitle: "ובא לציון", ref: r("Rosh Hodesh", "Uva LeSion") },
+    { title: "Chir Chel Yom", heTitle: "שיר של יום", ref: r("Rosh Hodesh", "Song of the Day") },
+    { title: "Moussaf", heTitle: "מוסף דראש חודש", ref: r("Rosh Hodesh", "Mussaf") },
+    { title: "Barékhi Nafchi", heTitle: "ברכי נפשי", ref: r("Rosh Hodesh", "Barchi Nafshi") },
+    { title: "Alénou", heTitle: "עלינו", ref: r("Rosh Hodesh", "Alenu") },
   ],
 
   fetes: [
-    { title: "Amida des Fêtes", heTitle: "עמידה דיום טוב", ref: r("Festivals", "Festival Amidah") },
-    { title: "Hallel complet", heTitle: "הלל שלם", ref: r("Festivals", "Hallel") },
-    { title: "Moussaf des Fêtes", heTitle: "מוסף דיום טוב", ref: r("Festivals", "Festival Musaf Amidah") },
+    { title: "Prières des Fêtes", heTitle: "תפילות שלוש רגלים", ref: r("Prayers for Three Festivals", "Prayers for Three Festivals") },
+    { title: "Chir de Péssa'h", heTitle: "שיר לפסח", ref: r("Prayers for Three Festivals", "Song for Passover") },
+    { title: "Chir de Chavouot", heTitle: "שיר לשבועות", ref: r("Prayers for Three Festivals", "Song for Shavuot") },
+    { title: "Chir de Souccot", heTitle: "שיר לסוכות", ref: r("Prayers for Three Festivals", "Song for Sukkot") },
+    { title: "Chir de Chémini Atséret", heTitle: "שיר לשמיני עצרת", ref: r("Prayers for Three Festivals", "Song for Shemini Atzeret") },
+    { title: "Amida des Fêtes", heTitle: "עמידה דיום טוב", ref: r("Prayers for Three Festivals", "Amidah") },
+    { title: "Moussaf des Fêtes", heTitle: "מוסף דיום טוב", ref: r("Prayers for Three Festivals", "Mussaf") },
   ],
 
   hanukkah: [
-    { title: "Allumage des bougies", heTitle: "הדלקת נרות חנוכה", ref: r("Hanukkah", "Hanukkah Candle Lighting") },
-    { title: "Hanérot Halalou", heTitle: "הנרות הללו", ref: r("Hanukkah", "HaNerot Halalu") },
-    { title: "Maoz Tsour", heTitle: "מעוז צור", ref: r("Hanukkah", "Maoz Tzur") },
+    { title: "Allumage de la Ménora", heTitle: "הדלקת נרות חנוכה", ref: r("Hanukkah", "Menorah Lighting") },
+    { title: "Cha'harit de 'Hanouka", heTitle: "שחרית דחנוכה", ref: r("Hanukkah", "Shacharit") },
   ],
 
   purim: [
-    { title: "Méguilat Esther", heTitle: "מגילת אסתר", ref: r("Purim", "Megillat Esther") },
-    { title: "Al HaNissim", heTitle: "על הנסים", ref: r("Purim", "Al HaNissim") },
+    { title: "Chabbat Zakhor", heTitle: "שבת זכור", ref: r("Purim", "Shabbat Zachor") },
+    { title: "Méguilat Esther", heTitle: "מגילת אסתר", ref: r("Purim", "Megillah Reading") },
+    { title: "Jour de Pourim", heTitle: "יום פורים", ref: r("Purim", "Purim Day") },
   ],
 
   taanit: [
-    { title: "Séli'hot", heTitle: "סליחות", ref: r("Fast Days", "Selichot") },
-    { title: "Avinou Malkénou", heTitle: "אבינו מלכנו", ref: r("Fast Days", "Avinu Malkeinu") },
-    { title: "Lecture de la Torah (Jeûne)", heTitle: "קריאת התורה לתענית", ref: r("Fast Days", "Torah Reading for Fast Days") },
-  ],
-
-  birkat: [
-    { title: "Birkat HaMazone", heTitle: "ברכת המזון", ref: r("Birkat Hamazon") },
-    { title: "Chéva Brakhot", heTitle: "שבע ברכות", ref: r("Birkat Hamazon", "Seven Blessings") },
-    { title: "Bérakha Méèn Chaloch", heTitle: "ברכה מעין שלוש", ref: r("Birkat Hamazon", "Berakha Me'ein Shalosh") },
+    { title: "Tsôm Guédalia", heTitle: "צום גדליה", ref: r("Fast Days and Mourning", "Fast of Gedalya") },
+    { title: "10 Tévét", heTitle: "י' בטבת", ref: r("Fast Days and Mourning", "Tenth of Tevet") },
+    { title: "Taanit Esther", heTitle: "תענית אסתר", ref: r("Fast Days and Mourning", "Fast of Esther") },
+    { title: "17 Tamouz", heTitle: "י\"ז בתמוז", ref: r("Fast Days and Mourning", "Seventeenth of Tammuz") },
+    { title: "Avélout", heTitle: "אבלות", ref: r("Fast Days and Mourning", "Mourning") },
+    { title: "Qriat HaTorah (Jeûne)", heTitle: "קריאת התורה לתענית", ref: r("Fast Days and Mourning", "Torah Reading for Fast Days") },
   ],
 
   berakhot: [
-    { title: "Bénédictions diverses", heTitle: "ברכות שונות", ref: r("Berakhot") },
+    { title: "Bénédictions diverses", heTitle: "ברכות שונות", ref: r("Blessings on Enjoyments") },
   ],
 
   tikoun_hatsot: [
-    { title: "Tikoun 'Hatsot", heTitle: "תיקון חצות", ref: r("Tikkun Chatzot") },
+    { title: "Léchém Yi'houd", heTitle: "לשם יחוד", ref: r("The Midnight Rite", "LeShem Yichud") },
+    { title: "Tikoun Ra'hel", heTitle: "תיקון רחל", ref: r("The Midnight Rite", "Tikkun Rachel") },
+    { title: "Tikoun Léa", heTitle: "תיקון לאה", ref: r("The Midnight Rite", "Tikkun Leah") },
   ],
 
   nissan: [
-    { title: "Birkat HaIlanot", heTitle: "ברכת האילנות", ref: r("Nissan", "Birkat HaIlanot") },
-    { title: "Séfirat HaOmer", heTitle: "ספירת העומר", ref: r("Nissan", "Sefirat HaOmer") },
+    { title: "Birkat HaIlanot", heTitle: "ברכת האילנות", ref: r("Nissan", "Blessing of the Trees") },
+    { title: "Séfirat HaOmer", heTitle: "ספירת העומר", ref: r("Counting of the Omer") },
   ],
 
   mishnayot_shabbat: [
-    { title: "Pirké Avot", heTitle: "פרקי אבות", ref: r("Shabbat", "Pirkei Avot") },
+    { title: "Séouda Richona", heTitle: "סעודה ראשונה", ref: r("Mishna Study for Shabbat", "First Meal") },
+    { title: "Séouda Chnia", heTitle: "סעודה שנייה", ref: r("Mishna Study for Shabbat", "Second Meal") },
+    { title: "Séouda Chlichit", heTitle: "סעודה שלישית", ref: r("Mishna Study for Shabbat", "Third Meal") },
+    { title: "Pirqé Avot", heTitle: "פרקי אבות", ref: r("Mishna Study for Shabbat", "Pirkei Avot") },
   ],
 
   birkat_halevana: [
-    { title: "Birkat HaLévana", heTitle: "ברכת הלבנה", ref: r("Birkat HaLevana") },
+    { title: "Birkat HaLévana", heTitle: "ברכת הלבנה", ref: r("Blessing of the Moon") },
+  ],
+
+  chema_coucher: [
+    { title: "Chéma du coucher", heTitle: "קריאת שמע על המיטה", ref: r("Bedtime Shema") },
+  ],
+
+  brakhot_diverses: [
+    { title: "Mariage", heTitle: "נישואין", ref: r("Assorted Blessings and Prayers", "Marriage") },
+    { title: "Chéva Brakhot", heTitle: "שבע ברכות", ref: r("Assorted Blessings and Prayers", "Sheva Berachot") },
+    { title: "Brit Mila", heTitle: "ברית מילה", ref: r("Assorted Blessings and Prayers", "Brit Mila") },
+    { title: "Pidyon HaBen", heTitle: "פדיון הבן", ref: r("Assorted Blessings and Prayers", "Redeeming the First Born") },
+    { title: "Mézouza", heTitle: "מזוזה", ref: r("Assorted Blessings and Prayers", "Mezuza") },
+    { title: "Tévilat Kélim", heTitle: "טבילת כלים", ref: r("Assorted Blessings and Prayers", "Tevillat Kelim") },
+    { title: "Qéchét (Arc-en-ciel)", heTitle: "קשת", ref: r("Assorted Blessings and Prayers", "Rainbow") },
+    { title: "Téfilat HaDérékh", heTitle: "תפילת הדרך", ref: r("Assorted Blessings and Prayers", "Traveler's Prayer") },
   ],
 };
 
