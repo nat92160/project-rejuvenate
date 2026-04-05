@@ -67,7 +67,7 @@ const SynaInfoCard = ({ info }: Props) => {
             <h3 className="font-display text-base font-bold text-foreground leading-tight">{info.name}</h3>
             {distance && (
               <p className="mt-0.5 text-[11px] font-semibold" style={{ color: "hsl(var(--gold-matte))" }}>
-                📍 Vous êtes à {distance}
+                📍 Vous êtes à {!isGps ? "≈ " : ""}{distance}
               </p>
             )}
           </div>
