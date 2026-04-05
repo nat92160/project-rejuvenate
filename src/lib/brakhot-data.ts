@@ -621,10 +621,14 @@ export const BIRKAT_HAMAZONE: BirkatVersion[] = [
   },
   {
     id: "abregee",
-    name: "Version abrégée (voyage)",
+    name: "Version abrégée",
     paragraphs: [
       { hebrew: "בְּרִיךְ רַחֲמָנָא מַלְכָּא דְעָלְמָא מָרֵיהּ דְהַאי פִּתָּא.", transliteration: "Brikh Ra'hamana Malka déalma, Maréih déhaï pitta." },
-      { hebrew: "Cette formule abrégée est utilisée uniquement en cas d'urgence ou de voyage. Elle ne remplace pas le Birkat HaMazone complet dans des conditions normales." },
+      { hebrew: "בְּרִיךְ רַחֲמָנָא מַלְכָּא דְעָלְמָא מָרֵיהּ דְהַאי אַרְעָא.", transliteration: "Brikh Ra'hamana Malka déalma, Maréih déhaï araa." },
+      { hebrew: "בְּרִיךְ רַחֲמָנָא מַלְכָּא דְעָלְמָא דְיַהֲבָן לָן הַאי פִּתָּא.", transliteration: "Brikh Ra'hamana Malka déalma, déyahavan lane haï pitta." },
+      { hebrew: "בְּרִיךְ רַחֲמָנָא מַלְכָּא דְעָלְמָא רַחֲמָנָא דְעָנֵי לַעֲנִיֵּי, עֲנֵינָא.", transliteration: "Brikh Ra'hamana Malka déalma, Ra'hamana déané laaniyé, anéna." },
+      { hebrew: "בְּרִיךְ רַחֲמָנָא מַלְכָּא דְעָלְמָא דְיַהֲבָן לָן הַאי פִּתָּא וְהַאי יוֹמָא.", transliteration: "Brikh Ra'hamana Malka déalma, déyahavan lane haï pitta véhaï yoma." },
+      { hebrew: "⚠️ Cette formule abrégée en araméen est utilisée uniquement en cas d'urgence, de voyage ou lorsqu'on ne peut pas dire la version complète. Elle contient l'essentiel des 4 brakhot sous forme condensée. Elle ne remplace pas le Birkat HaMazone complet dans des conditions normales. Consultez votre Rav." },
     ],
   },
 ];

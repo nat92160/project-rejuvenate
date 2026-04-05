@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { BIRKAT_HAMAZONE } from "@/lib/brakhot-data";
+import { motion, AnimatePresence } from "framer-motion";
+import { BIRKAT_HAMAZONE, BIRKAT_INSERTS } from "@/lib/brakhot-data";
 
 interface Props {
   onBack: () => void;
@@ -8,7 +8,14 @@ interface Props {
 
 const BirkatHamazoneReader = ({ onBack }: Props) => {
   const [selectedVersion, setSelectedVersion] = useState("sefarade");
+  const [activeInserts, setActiveInserts] = useState<string[]>([]);
   const version = BIRKAT_HAMAZONE.find((v) => v.id === selectedVersion) || BIRKAT_HAMAZONE[0];
+
+  const toggleInsert = (id: string) => {
+    setActiveInserts((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
@@ -42,6 +49,78 @@ const BirkatHamazoneReader = ({ onBack }: Props) => {
           </button>
         ))}
       </div>
+
+      {/* Festival inserts toggle (only for sefarade/ashkenaze) */}
+      {selectedVersion !== "abregee" && (
+        <div className="rounded-xl border border-border p-3 space-y-2" style={{ background: "hsl(var(--muted) / 0.3)" }}>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            📅 Ajouts selon la période
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {BIRKAT_INSERTS.map((ins) => {
+              const isActive = activeInserts.includes(ins.id);
+              return (
+                <button
+                  key={ins.id}
+                  onClick={() => toggleInsert(ins.id)}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold border-none cursor-pointer transition-all"
+                  style={{
+                    background: isActive ? "hsl(var(--gold) / 0.18)" : "hsl(var(--muted))",
+                    color: isActive ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))",
+                    boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
+                  }}
+                >
+                  {ins.icon} {ins.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Active inserts display */}
+      <AnimatePresence>
+        {activeInserts.length > 0 && selectedVersion !== "abregee" && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden space-y-3"
+          >
+            {BIRKAT_INSERTS.filter((ins) => activeInserts.includes(ins.id)).map((ins) => (
+              <div
+                key={ins.id}
+                className="rounded-xl border p-4 space-y-2"
+                style={{
+                  background: "hsl(var(--gold) / 0.06)",
+                  borderColor: "hsl(var(--gold) / 0.2)",
+                }}
+              >
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(var(--gold-matte))" }}>
+                  {ins.icon} {ins.label}
+                </p>
+                <p className="text-[11px] text-muted-foreground italic mb-2">
+                  📍 {ins.instruction}
+                </p>
+                <p
+                  className="text-base leading-[2.4] font-semibold text-right"
+                  style={{
+                    direction: "rtl",
+                    fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+                    fontFeatureSettings: "'kern', 'mark', 'mkmk'",
+                    color: "hsl(var(--foreground))",
+                  }}
+                >
+                  {ins.hebrew}
+                </p>
+                {ins.transliteration && (
+                  <p className="text-xs text-muted-foreground italic">{ins.transliteration}</p>
+                )}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Reading mode */}
       <div
