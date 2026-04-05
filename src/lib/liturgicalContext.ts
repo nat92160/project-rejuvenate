@@ -154,10 +154,11 @@ export function processAmidaVerses(
   let currentPeriodActive: boolean | null = null;
 
   for (const verse of verses) {
-    const smallMatch = verse.match(/^<small>(.*?)<\/small>$/);
-    if (smallMatch) {
-      const content = smallMatch[1].replace(/:/g, '').trim();
+    const pureSmallMatch = verse.match(/^<small>(.*?)<\/small>\s*$/s);
+    if (pureSmallMatch) {
+      const content = pureSmallMatch[1].replace(/:/g, '').trim();
       let isMarker = false;
+
       for (const [marker, checker] of Object.entries(SEFARIA_PERIOD_MARKERS)) {
         if (content.includes(marker)) {
           currentPeriodActive = checker(ctx);
@@ -165,6 +166,7 @@ export function processAmidaVerses(
           break;
         }
       }
+
       if (isMarker) {
         result.push({ html: verse, isActive: currentPeriodActive!, isSeasonalMarker: true, isInstruction: false });
       } else {
@@ -173,19 +175,25 @@ export function processAmidaVerses(
       continue;
     }
 
-    const inlineSmallMatch = verse.match(/^<small>(.*?)<\/small>\s*(.*)/s);
-    if (inlineSmallMatch) {
-      const markerContent = inlineSmallMatch[1].replace(/:/g, '').trim();
-      let isMarker = false;
+    const leadingConditionalMatch = verse.match(/^<small>(.*?)<\/small>\s*(.+)$/s);
+    if (leadingConditionalMatch) {
+      const markerContent = leadingConditionalMatch[1].replace(/:/g, '').trim();
+      const conditionalText = leadingConditionalMatch[2].trim();
+
       for (const [marker, checker] of Object.entries(SEFARIA_PERIOD_MARKERS)) {
         if (markerContent.includes(marker)) {
-          currentPeriodActive = checker(ctx);
-          isMarker = true;
+          result.push({
+            html: conditionalText,
+            isActive: checker(ctx),
+            isSeasonalMarker: false,
+            isInstruction: false,
+          });
+          currentPeriodActive = null;
           break;
         }
       }
-      if (isMarker) {
-        result.push({ html: verse, isActive: currentPeriodActive!, isSeasonalMarker: true, isInstruction: false });
+
+      if (result.length > 0 && result[result.length - 1].html === conditionalText) {
         continue;
       }
     }
@@ -197,5 +205,6 @@ export function processAmidaVerses(
       result.push({ html: verse, isActive: true, isSeasonalMarker: false, isInstruction: false });
     }
   }
+
   return result;
 }
