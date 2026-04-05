@@ -319,6 +319,7 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
           </motion.div>
         ) : (
           <SiddourReader
+            litContext={litContext}
             content={content}
             loading={loading}
             fontSize={fontSize}
