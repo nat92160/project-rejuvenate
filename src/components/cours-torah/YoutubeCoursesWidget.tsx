@@ -21,6 +21,7 @@ const RAV_COLORS: Record<string, string> = {
   "Rav Touitou": "hsl(220, 60%, 50%)",
   "Rav Benchetrit": "hsl(160, 50%, 40%)",
   "Rav Dynovisz": "hsl(280, 50%, 50%)",
+  "Rav Shoushana": "hsl(10, 65%, 50%)",
 };
 
 function timeAgo(dateStr: string): string {
