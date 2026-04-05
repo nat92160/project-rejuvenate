@@ -146,17 +146,9 @@ const AfficheChabbatWidget = () => {
     bgColor: t.swatch[2] || "#FDFAF3",
   };
 
-  const handleExport = async () => {
-    await exportPosterPng(canvasRef.current, `affiche-chabbat-${city.name}.png`);
-  };
-
-  const sharePoster = async () => {
-    await handleExport();
-    const baseText = `Chabbat Chalom — ${synaProfile.name || synaName}\nAllumage : ${shabbatData?.candleLighting || ""}\nHavdala : ${shabbatData?.havdalah || ""}\nParacha : ${shabbatData?.parasha || ""}`;
-    try {
-      await navigator.clipboard.writeText(baseText);
-    } catch {}
-    toast.success("Affiche téléchargée et texte copié !");
+  const handleSharePoster = async () => {
+    const filename = `affiche-chabbat-${city.name}.png`;
+    await sharePosterPng(canvasRef.current, filename, `Chabbat Chalom — ${synaProfile.name || synaName}`);
   };
 
   const inputClass = "w-full px-4 py-4 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50";
