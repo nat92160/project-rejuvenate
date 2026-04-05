@@ -268,6 +268,24 @@ const EvenementsWidget = () => {
                         style={{ background: "var(--gradient-gold)" }}>
                         {exportingId === ev.id ? "⏳ Export..." : "📥 Télécharger PNG"}
                       </button>
+                      <button
+                        onClick={async () => {
+                          let text = `${evTc.emoji} ${ev.title}\n`;
+                          if (ev.description) text += `${ev.description}\n`;
+                          text += `\n📅 ${formatDate(ev.event_date)} à ${ev.event_time}`;
+                          if (ev.location) text += `\n📍 ${ev.location}`;
+                          if (ev.zoom_link) text += `\n🎥 ${ev.zoom_link}`;
+                          text += `\n\n✡️ Chabbat Chalom`;
+                          if (navigator.share) {
+                            try { await navigator.share({ text }); return; } catch {}
+                          }
+                          await navigator.clipboard?.writeText(text);
+                          toast.success("Copié dans le presse-papier !");
+                        }}
+                        className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-border bg-card text-foreground cursor-pointer hover:bg-muted"
+                      >
+                        📤 Partager
+                      </button>
                       {isPresident && user?.id === ev.creator_id && (
                         <button onClick={async () => {
                           if (!confirm("Supprimer cet événement ?")) return;

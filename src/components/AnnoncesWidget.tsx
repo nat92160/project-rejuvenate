@@ -223,6 +223,22 @@ const AnnoncesWidget = () => {
                     style={{ background: "var(--gradient-gold)" }}>
                     {exportingId === a.id ? "⏳ Export..." : "📥 Télécharger PNG"}
                   </button>
+                  <button
+                    onClick={async () => {
+                      let text = `📢 ${a.title}\n`;
+                      if (a.content) text += `${a.content}\n`;
+                      text += `\n📅 ${formatDate(a.created_at)}`;
+                      text += `\n\n✡️ Chabbat Chalom`;
+                      if (navigator.share) {
+                        try { await navigator.share({ text }); return; } catch {}
+                      }
+                      await navigator.clipboard?.writeText(text);
+                      toast.success("Copié dans le presse-papier !");
+                    }}
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border border-border bg-card text-foreground cursor-pointer hover:bg-muted"
+                  >
+                    📤 Partager
+                  </button>
                   {isPresident && user?.id === a.creator_id && (
                     <button onClick={() => handleDelete(a.id)}
                       className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border-none cursor-pointer">
