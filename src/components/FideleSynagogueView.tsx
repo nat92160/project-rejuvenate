@@ -418,15 +418,14 @@ const FideleSynagogueView = () => {
                   <button
                     onClick={() => handleSubscribe(syna.id)}
                     disabled={subscribing === syna.id}
-                    className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border-none cursor-pointer transition-all active:scale-90 disabled:opacity-50 text-base"
+                    className="shrink-0 rounded-xl border-none px-4 py-2 text-xs font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
                     style={
                       syna.isSubscribed
-                        ? { background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }
-                        : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                        ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                        : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
                     }
-                    title={syna.isSubscribed ? "Se désabonner" : "S'abonner"}
                   >
-                    {subscribing === syna.id ? "…" : syna.isSubscribed ? "⭐" : "☆"}
+                    {subscribing === syna.id ? "…" : syna.isSubscribed ? "✓ Suivi" : "+ S'abonner"}
                   </button>
                 </div>
               </motion.div>
