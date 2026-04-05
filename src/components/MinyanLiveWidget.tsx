@@ -56,7 +56,29 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
     setSubmitting(true);
     const { error } = await supabase.from("minyan_sessions").insert({ creator_id: user.id, synagogue_id: synagogueId, office_type: form.office_type, office_date: form.office_date, office_time: form.office_time, target_count: parseInt(form.target_count) || 10 } as any);
     if (error) toast.error("Erreur lors de la création du minyan.");
-    else { toast.success("✅ Session créée !"); setForm({ office_type: "shacharit", office_date: "", office_time: "", target_count: "10" }); onCreated(); }
+    else {
+      toast.success("✅ Session créée !");
+      // Send push notification if enabled
+      if (synagogueId) {
+        try {
+          const { data: setting } = await supabase.from("app_settings").select("value").eq("key", "notif_minyan").maybeSingle();
+          const enabled = !setting || setting.value === true || setting.value === "true";
+          if (enabled) {
+            const label = form.office_type === "shacharit" ? "Cha'harit" : form.office_type === "minha" ? "Min'ha" : "Arvit";
+            const dateStr = new Date(form.office_date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+            await supabase.functions.invoke("send-push", {
+              body: {
+                synagogue_id: synagogueId,
+                title: "🚨 Urgence Minyan",
+                body: `${label} le ${dateStr} à ${form.office_time?.slice(0, 5)} — inscrivez-vous !`,
+                sender_id: user.id,
+              },
+            });
+          }
+        } catch (e) { console.error("Push error:", e); }
+      }
+      setForm({ office_type: "shacharit", office_date: "", office_time: "", target_count: "10" }); onCreated();
+    }
     setSubmitting(false);
   };
 
