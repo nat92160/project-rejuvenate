@@ -230,13 +230,14 @@ const PrayerTimesWidget = () => {
         onClick={async () => {
           setExporting(true);
           await new Promise(r => setTimeout(r, 100));
-          await exportPosterPng(posterRef.current, `horaires-${profile.name?.replace(/\s+/g, "-").toLowerCase() || "synagogue"}.png`);
+          const filename = `horaires-${profile.name?.replace(/\s+/g, "-").toLowerCase() || "synagogue"}.png`;
+          await sharePosterPng(posterRef.current, filename, `Horaires — ${profile.name}`);
           setExporting(false);
         }}
         disabled={exporting}
         className="w-full cursor-pointer rounded-2xl border border-border bg-card py-4 text-sm font-bold text-foreground transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50"
       >
-        {exporting ? "Génération…" : "🖼️ Télécharger l'affiche PNG"}
+        {exporting ? "Génération…" : "📤 Partager l'affiche"}
       </button>
 
       {/* Hidden poster for PNG export */}

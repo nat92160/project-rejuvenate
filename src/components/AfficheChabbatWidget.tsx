@@ -377,7 +377,7 @@ const AfficheChabbatWidget = () => {
             <button onClick={save} disabled={saving} className="flex-1 py-4 rounded-xl font-bold text-sm bg-card text-foreground border border-border cursor-pointer active:scale-95 transition-transform disabled:opacity-50">
               {saving ? "💾…" : "💾 Sauvegarder"}
             </button>
-            <button onClick={handleExport} className="flex-1 py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>📥 Télécharger PNG</button>
+            <button onClick={handleSharePoster} className="flex-1 py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>📤 Partager l'Affiche</button>
           </div>
         </div>
       )}

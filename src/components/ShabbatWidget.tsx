@@ -117,12 +117,12 @@ const ShabbatWidget = () => {
 
           {/* Share button */}
           <button
-            onClick={handleExport}
+            onClick={handleShare}
             disabled={exporting}
             className="mt-3 w-full py-2.5 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground disabled:opacity-50 transition-all active:scale-95"
             style={{ background: "var(--gradient-gold)" }}
           >
-            {exporting ? "⏳ Génération..." : "🖼️ Générer l'image de Chabbat"}
+            {exporting ? "⏳ Génération..." : "📤 Partager l'image de Chabbat"}
           </button>
         </>
       ) : (
