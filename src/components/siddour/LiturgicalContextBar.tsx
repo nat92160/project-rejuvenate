@@ -12,8 +12,8 @@ interface Props {
 const OVERRIDE_OPTIONS = [
   { key: "mashivHaRouach" as const, label: "משיב הרוח", labelFr: "Hiver (Guévourot)", icon: "🌧️", group: "guevourot" },
   { key: "moridHaTal" as const, label: "מוריד הטל", labelFr: "Été (Guévourot)", icon: "☀️", group: "guevourot" },
-  { key: "vetenTalOuMatar" as const, label: "טל ומטר", labelFr: "Hiver (Birkat HaChanim)", icon: "🌧️", group: "barekh" },
-  { key: "vetenBerakha" as const, label: "ברכה", labelFr: "Été (Birkat HaChanim)", icon: "☀️", group: "barekh" },
+  { key: "vetenTalOuMatar" as const, label: "ברך עלינו", labelFr: "Hiver — Barekh Alénou", icon: "🌧️", group: "barekh" },
+  { key: "vetenBerakha" as const, label: "ברכנו", labelFr: "Été — Berekhenou", icon: "☀️", group: "barekh" },
   { key: "aseretYemeiTeshuva" as const, label: "עשי״ת", labelFr: "Asèrèt Yémé Téchouva", icon: "📜" },
   { key: "roshHodesh" as const, label: "ר״ח", labelFr: "Roch Hodech", icon: "🌙" },
   { key: "holHaMoed" as const, label: "חוה״מ", labelFr: "Hol HaMoed", icon: "🎪" },

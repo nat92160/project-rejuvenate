@@ -91,8 +91,8 @@ export function getLiturgicalContext(date: Date = new Date()): LiturgicalPeriod 
   const activeInserts: string[] = [];
   if (mashivHaRouach) activeInserts.push("משיב הרוח ומוריד הגשם");
   if (moridHaTal) activeInserts.push("מוריד הטל");
-  if (vetenTalOuMatarSimple) activeInserts.push("ותן טל ומטר");
-  if (vetenBerakha) activeInserts.push("ותן ברכה");
+  if (vetenTalOuMatarSimple) activeInserts.push("ברך עלינו — ותן טל ומטר");
+  if (vetenBerakha) activeInserts.push("ברכנו");
   if (aseretYemeiTeshuva) activeInserts.push("עשי״ת");
   if (roshHodesh) activeInserts.push("ראש חודש — יעלה ויבוא");
   if (holHaMoed) activeInserts.push("חול המועד — יעלה ויבוא");
