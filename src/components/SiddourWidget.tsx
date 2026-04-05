@@ -14,18 +14,7 @@ import SiddourSearch from "@/components/siddour/SiddourSearch";
 type Office = "shacharit" | "hazara" | "additions_shacharit" | "minha" | "arvit" | "shabbat" | "shabbat_shacharit" | "shabbat_mussaf" | "shabbat_minha" | "havdala" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "tikoun_hatsot" | "nissan" | "sefirat_haomer" | "birkat" | "berakhot" | "birkat_halevana" | "bedtime_shema" | "mishnayot_shabbat";
 
 interface Section { index: number; title: string; heTitle: string; isHazara?: boolean; }
-
-/** Full section data from the API */
-interface ApiSection {
-  title: string;
-  heTitle: string;
-  ref: string;
-  he: string[];
-  en: string[];
-  phonetic: string[];
-}
-
-interface SectionContent { hebrew: string[]; french: string[]; title: string; heTitle: string; isHazara?: boolean; phonetic?: string[]; }
+interface SectionContent { hebrew: string[]; french: string[]; title: string; heTitle: string; isHazara?: boolean; }
 
 const OFFICES: { key: Office; label: string; icon: string }[] = [
   { key: "shacharit", label: "Cha'harit", icon: "🌅" },
@@ -69,7 +58,6 @@ interface SiddourWidgetProps { prayerMode?: boolean; initialOffice?: Office; }
 const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps) => {
   const [office, setOffice] = useState<Office>(initialOffice || detectOffice);
   const [sections, setSections] = useState<Section[]>([]);
-  const [allSectionData, setAllSectionData] = useState<ApiSection[]>([]);
   const [activeSection, setActiveSection] = useState<number | null>(null);
   const [content, setContent] = useState<SectionContent | null>(null);
   const [loading, setLoading] = useState(false);
@@ -109,57 +97,61 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
     if (activeSection !== null) startAutoSave(office, activeSection);
   }, [activeSection, office, startAutoSave]);
 
-  // Fetch all sections for an office (single API call)
-  const fetchOffice = useCallback(async (off: Office) => {
+  // Fetch TOC for an office
+  const fetchToc = useCallback(async (off: Office) => {
     setTocLoading(true);
     setSections([]);
-    setAllSectionData([]);
     setActiveSection(null);
     setContent(null);
 
-    const cacheKey = `${CACHE_PREFIX}all_${off}`;
+    const cacheKey = `${CACHE_PREFIX}toc_${off}`;
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
-      try {
-        const parsed: ApiSection[] = JSON.parse(cached);
-        setAllSectionData(parsed);
-        setSections(parsed.map((s, i) => ({ index: i, title: s.title, heTitle: s.heTitle })));
-        setTocLoading(false);
-        return;
-      } catch { /* */ }
+      try { setSections(JSON.parse(cached)); setTocLoading(false); return; } catch { /* */ }
     }
 
     try {
       const { data, error } = await supabase.functions.invoke("get-siddour", { body: { office: off } });
       if (error) throw error;
-      if (data?.sections && Array.isArray(data.sections)) {
-        const apiSections: ApiSection[] = data.sections;
-        setAllSectionData(apiSections);
-        setSections(apiSections.map((s, i) => ({ index: i, title: s.title, heTitle: s.heTitle })));
-        try { localStorage.setItem(cacheKey, JSON.stringify(apiSections)); } catch { /* */ }
+      if (data?.sections) {
+        setSections(data.sections);
+        try { localStorage.setItem(cacheKey, JSON.stringify(data.sections)); } catch { /* */ }
       }
-    } catch (err) { console.error("Error fetching siddour:", err); }
+    } catch (err) { console.error("Error fetching siddour toc:", err); }
     setTocLoading(false);
   }, []);
 
-  // When a section is selected, build content from stored data
-  useEffect(() => {
-    if (activeSection === null || allSectionData.length === 0) {
-      if (activeSection === null) setContent(null);
-      return;
-    }
-    const sec = allSectionData[activeSection];
-    if (!sec) return;
-    setContent({
-      hebrew: sec.he,
-      french: sec.en,
-      title: sec.title,
-      heTitle: sec.heTitle,
-      phonetic: sec.phonetic,
-    });
-  }, [activeSection, allSectionData]);
+  // Fetch a specific section's content
+  const fetchSection = useCallback(async (off: Office, idx: number) => {
+    setLoading(true);
+    setContent(null);
 
-  useEffect(() => { if (bookmarkRestored) fetchOffice(office); }, [office, fetchOffice, bookmarkRestored]);
+    const cacheKey = `${CACHE_PREFIX}${off}_${idx}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try { setContent(JSON.parse(cached)); setLoading(false); return; } catch { /* */ }
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke("get-siddour", { body: { office: off, section: idx } });
+      if (error) throw error;
+      if (data?.hebrew) {
+        const c: SectionContent = {
+          hebrew: data.hebrew,
+          french: data.french || [],
+          title: data.title,
+          heTitle: data.heTitle,
+          isHazara: data.isHazara || false,
+        };
+        setContent(c);
+        try { localStorage.setItem(cacheKey, JSON.stringify(c)); } catch { /* */ }
+      }
+    } catch (err) { console.error("Error fetching section:", err); }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { if (bookmarkRestored) fetchToc(office); }, [office, fetchToc, bookmarkRestored]);
+  useEffect(() => { if (activeSection !== null) fetchSection(office, activeSection); }, [activeSection, office, fetchSection]);
 
   const suggestedOffice = useMemo(detectOffice, []);
 
@@ -269,11 +261,11 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         ) : (
           <SiddourReader
             content={content}
-            loading={tocLoading && !content}
+            loading={loading}
             fontSize={fontSize}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            transliterations={content?.phonetic || []}
+            transliterations={[]}
             translitLoading={false}
             onBack={handleBack}
             onPrev={() => activeSection > 0 && setActiveSection(activeSection - 1)}
