@@ -7,7 +7,7 @@ const CHANNELS = [
   { handle: "RavTouitou", name: "Rav Touitou" },
   { handle: "ravbenchetrit", name: "Rav Benchetrit" },
   { handle: "RavDynovisz", name: "Rav Dynovisz" },
-  { handle: "ravdavidshoushana", name: "Rav Shoushana" },
+  { handle: "ravshoushana6704", name: "Rav Shoushana" },
 ];
 
 const CACHE_DURATION_MS = 6 * 60 * 60 * 1000; // 6 hours
