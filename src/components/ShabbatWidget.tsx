@@ -18,12 +18,12 @@ const ShabbatWidget = () => {
     fetchShabbatTimes(city).then((d) => { setData(d); setLoading(false); });
   }, [city]);
 
-  const handleExport = useCallback(async () => {
+  const handleShare = useCallback(async () => {
     if (!data) return;
     setExporting(true);
     await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 100)));
     const filename = `chabbat-${city.name.replace(/[^a-zA-Z0-9]/g, "-")}.png`;
-    await exportPosterPng(posterRef.current, filename);
+    await sharePosterPng(posterRef.current, filename, `Chabbat Chalom — ${city.name}`);
     setExporting(false);
   }, [data, city]);
 
