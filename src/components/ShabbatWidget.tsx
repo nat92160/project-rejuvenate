@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
-import { exportPosterPng } from "@/components/poster/usePosterExport";
+import { sharePosterPng } from "@/components/poster/usePosterExport";
 import HalakhicDisclaimer from "@/components/zmanim/HalakhicDisclaimer";
 
 const ShabbatWidget = () => {
