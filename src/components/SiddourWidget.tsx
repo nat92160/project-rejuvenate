@@ -268,6 +268,13 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         ))}
       </div>
 
+      {/* Liturgical context bar */}
+      <LiturgicalContextBar
+        prayerMode={prayerMode}
+        context={litContext}
+        onContextChange={setLitContext}
+      />
+
       {/* Font size slider */}
       <div
         className="rounded-2xl border p-3"
