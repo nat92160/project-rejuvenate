@@ -211,43 +211,41 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
       style={prayerMode ? { background: pmBg, margin: "-1rem", padding: "1rem", minHeight: "100vh" } : undefined}
     >
       {/* Header */}
-      <div
-        className="rounded-2xl border border-primary/15 p-5 text-center"
-        style={{
-          background: prayerMode ? pmCard : "linear-gradient(135deg, hsl(var(--gold) / 0.08), hsl(var(--gold) / 0.02))",
-          borderColor: pmBorder,
-        }}
-      >
-        <span className="text-3xl">📖</span>
-        <h3 className="mt-2 font-display text-lg font-bold" style={{ color: pmText }}>Siddour Complet</h3>
-        <p className="mt-1 text-xs" style={{ color: pmMuted }}>Rite Séfarade — Hébreu, Phonétique & Traduction</p>
+      <div className="text-center py-3">
+        <p
+          className="text-[11px] font-medium tracking-wide uppercase"
+          style={{ color: pmMuted || "hsl(var(--muted-foreground))", letterSpacing: "0.15em" }}
+        >
+          Siddour · Rite Séfarade
+        </p>
       </div>
 
-      {/* Office selector by category */}
-      <div className="space-y-2">
+      {/* Office selector — clean pill style */}
+      <div className="space-y-3">
         {OFFICE_CATEGORIES.map((cat) => (
           <div key={cat.label}>
-            <p className="text-[10px] font-bold uppercase tracking-wider mb-1 px-1" style={{ color: pmMuted || "hsl(var(--muted-foreground))" }}>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] mb-1.5 px-0.5" style={{ color: pmMuted || "hsl(var(--muted-foreground) / 0.6)" }}>
               {cat.label}
             </p>
-            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex gap-1.5 flex-wrap">
               {cat.offices.map((off) => {
-                const isSuggested = off.key === suggestedOffice && office !== off.key;
+                const isActive = office === off.key;
+                const isSuggested = off.key === suggestedOffice && !isActive;
                 return (
                   <button
                     key={off.key}
                     onClick={() => { setOffice(off.key); setActiveSection(null); setViewMode("hebrew"); }}
-                    className="shrink-0 flex items-center gap-1 rounded-xl border-none px-3 py-2 text-[10px] font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap relative"
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium transition-all cursor-pointer active:scale-95 whitespace-nowrap relative border"
                     style={{
-                      background: office === off.key ? "var(--gradient-gold)" : (prayerMode ? pmCard : "hsl(var(--muted))"),
-                      color: office === off.key ? "hsl(var(--primary-foreground))" : (prayerMode ? pmMuted : "hsl(var(--muted-foreground))"),
-                      boxShadow: office === off.key ? "var(--shadow-gold)" : "none",
+                      background: isActive ? "hsl(var(--gold))" : "transparent",
+                      color: isActive ? "hsl(var(--primary-foreground))" : (prayerMode ? "#bbb" : "hsl(var(--foreground) / 0.7)"),
+                      borderColor: isActive ? "transparent" : (prayerMode ? "rgba(255,255,255,0.08)" : "hsl(var(--border))"),
                     }}
                   >
-                    <span>{off.icon}</span>
+                    <span className="text-xs">{off.icon}</span>
                     <span>{off.label}</span>
                     {isSuggested && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: "hsl(var(--gold))" }} />
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(var(--gold))" }} />
                     )}
                   </button>
                 );
@@ -264,20 +262,11 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         onContextChange={setLitContext}
       />
 
-      {/* Font size slider */}
-      <div
-        className="rounded-2xl border p-3"
-        style={{
-          boxShadow: prayerMode ? "none" : "var(--shadow-card)",
-          background: prayerMode ? pmCard : "hsl(var(--card))",
-          borderColor: pmBorder || "hsl(var(--border))",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-bold" style={{ color: pmMuted }}>A-</span>
-          <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={36} step={1} className="flex-1" />
-          <span className="text-sm font-bold" style={{ color: pmMuted }}>A+</span>
-        </div>
+      {/* Font size — inline minimal */}
+      <div className="flex items-center gap-3 px-1">
+        <span className="text-[10px] font-medium" style={{ color: pmMuted || "hsl(var(--muted-foreground) / 0.5)" }}>A</span>
+        <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={36} step={1} className="flex-1" />
+        <span className="text-sm font-medium" style={{ color: pmMuted || "hsl(var(--muted-foreground) / 0.5)" }}>A</span>
       </div>
 
       {/* Quick Jump Bar */}
