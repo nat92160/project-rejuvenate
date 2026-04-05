@@ -135,8 +135,9 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
       const { data, error } = await supabase.functions.invoke("get-siddour", { body: { office: off } });
       if (error) throw error;
       if (data?.sections) {
-        setSections(data.sections);
-        try { localStorage.setItem(cacheKey, JSON.stringify(data.sections)); } catch { /* */ }
+        const filtered = data.sections.filter((s: Section) => !s.isHazara);
+        setSections(filtered);
+        try { localStorage.setItem(cacheKey, JSON.stringify(filtered)); } catch { /* */ }
       }
     } catch (err) { console.error("Error fetching siddour toc:", err); }
     setTocLoading(false);
