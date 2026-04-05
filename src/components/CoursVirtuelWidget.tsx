@@ -137,8 +137,12 @@ const CoursVirtuelWidget = () => {
           ))}
         </div>
       )}
+
+      {/* YouTube Courses Aggregator */}
+      <YoutubeCoursesWidget />
     </motion.div>
   );
+};
 };
 
 export default CoursVirtuelWidget;
