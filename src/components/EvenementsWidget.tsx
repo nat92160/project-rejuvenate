@@ -263,25 +263,11 @@ const EvenementsWidget = () => {
                     )}
                     <div className="flex flex-wrap gap-2 mt-3">
                       <button
-                        onClick={() => triggerExport(ev)}
+                        onClick={() => triggerShare(ev)}
                         disabled={exportingId === ev.id}
                         className="text-[10px] font-bold px-2.5 py-1 rounded-full border-none cursor-pointer text-primary-foreground disabled:opacity-50"
                         style={{ background: "var(--gradient-gold)" }}>
-                        {exportingId === ev.id ? "⏳ Export..." : "📥 Télécharger PNG"}
-                      </button>
-                      <button
-                        onClick={async () => {
-                          let text = `${evTc.emoji} ${ev.title}\n`;
-                          if (ev.description) text += `${ev.description}\n`;
-                          text += `\n📅 ${formatDate(ev.event_date)} à ${ev.event_time}`;
-                          if (ev.location) text += `\n📍 ${ev.location}`;
-                          if (ev.zoom_link) text += `\n🎥 ${ev.zoom_link}`;
-                          text += `\n\n✡️ Chabbat Chalom`;
-                          await shareText(text, ev.title);
-                        }}
-                        className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-border bg-card text-foreground cursor-pointer hover:bg-muted"
-                      >
-                        📤 Partager
+                        {exportingId === ev.id ? "⏳ Génération..." : "📤 Partager l'Affiche"}
                       </button>
                       {isPresident && user?.id === ev.creator_id && (
                         <button onClick={async () => {
