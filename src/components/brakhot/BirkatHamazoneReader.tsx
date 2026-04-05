@@ -40,18 +40,19 @@ const BirkatHamazoneReader = ({ onBack }: Props) => {
     }> = [];
 
     for (const para of version.paragraphs) {
-      // Check if any insert should be placed before this paragraph
-      const insertsHere = activeInsertData.filter((ins) =>
-        para.hebrew.startsWith(ins.insertBeforeMarker)
-      );
-      for (const ins of insertsHere) {
-        result.push({
-          hebrew: ins.hebrew,
-          transliteration: ins.transliteration,
-          isInsert: true,
-          insertLabel: `${ins.icon} ${ins.label}`,
-          insertIcon: ins.icon,
-        });
+      // Check all segments of all active inserts for this paragraph
+      for (const ins of activeInsertData) {
+        for (const seg of ins.segments) {
+          if (para.hebrew.startsWith(seg.insertBeforeMarker)) {
+            result.push({
+              hebrew: seg.hebrew,
+              transliteration: seg.transliteration,
+              isInsert: true,
+              insertLabel: `${ins.icon} ${ins.label}`,
+              insertIcon: ins.icon,
+            });
+          }
+        }
       }
       result.push({ ...para, isInsert: false, insertLabel: "" });
     }
@@ -181,6 +182,7 @@ const BirkatHamazoneReader = ({ onBack }: Props) => {
       <div className="rounded-xl p-3 border border-primary/15 text-center" style={{ background: "hsl(var(--gold) / 0.04)" }}>
         <p className="text-[11px] text-muted-foreground">
           ⚠️ Le Birkat HaMazone est obligatoire après avoir mangé du pain (≥27g).
+          <br />Le Chabbat et Yom Tov, on dit « מִגְדּוֹל » au lieu de « מַגְדִּיל » dans la conclusion.
           <br />En cas de doute sur le nossakh, consultez votre Rav.
         </p>
       </div>
