@@ -210,6 +210,35 @@ const SynagogueChooser = ({ onSelect }: Props) => {
     onSelect?.();
   };
 
+  const [subscribedPlaceNames, setSubscribedPlaceNames] = useState<Set<string>>(new Set());
+
+  const handleSubscribePlace = async (place: ExternalSyna) => {
+    if (!user) { toast.error("Connectez-vous pour vous abonner"); return; }
+    setSubscribing(place.id);
+    const { error } = await supabase.rpc("subscribe_to_place", {
+      _user_id: user.id,
+      _place_name: place.name,
+      _place_address: place.address || null,
+      _place_lat: place.lat,
+      _place_lng: place.lon,
+      _google_place_id: place.id,
+    });
+    if (error) {
+      console.error("subscribe_to_place error:", error);
+      toast.error("Erreur lors de l'abonnement");
+    } else {
+      toast.success("⭐ Abonné !");
+      setSubscribedPlaceNames(prev => new Set(prev).add(place.name));
+    }
+    setSubscribing(null);
+    onSelect?.();
+  };
+
+  const isPlaceSubscribed = (item: SynaItem) => {
+    if (item.source === "partner") return subIds.includes(item.id);
+    return subscribedPlaceNames.has(item.name);
+  };
+
   const scrollToCard = (id: string) => {
     setSelectedId(id);
     const el = document.getElementById(`syna-card-${id}`);
@@ -357,16 +386,14 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                     </div>
                   ) : <div />}
 
-                  {isPartner && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleSubscribe(item.id); }}
-                      disabled={subscribing === item.id}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all active:scale-95 shrink-0 disabled:opacity-50 ${subIds.includes(item.id) ? "bg-muted text-muted-foreground" : "text-primary-foreground"}`}
-                      style={subIds.includes(item.id) ? {} : { background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
-                    >
-                      {subscribing === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : subIds.includes(item.id) ? "✓ Abonné" : "+ S'abonner"}
-                    </button>
-                  )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); isPartner ? handleSubscribe(item.id) : handleSubscribePlace(item as ExternalSyna); }}
+                    disabled={subscribing === item.id}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all active:scale-95 shrink-0 disabled:opacity-50 ${isPlaceSubscribed(item) ? "bg-muted text-muted-foreground" : "text-primary-foreground"}`}
+                    style={isPlaceSubscribed(item) ? {} : { background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+                  >
+                    {subscribing === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isPlaceSubscribed(item) ? "✓ Abonné" : "+ S'abonner"}
+                  </button>
                 </div>
 
                 {/* Edit horaires button */}
