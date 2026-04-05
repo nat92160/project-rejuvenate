@@ -24,6 +24,20 @@ function isShemaSecondaryLine(html: string): boolean {
 }
 
 /**
+ * Detect if a verse is an internal section title (prayer name / sub-heading).
+ * These are short bold-only lines from Sefaria that act as prayer dividers.
+ */
+function isInternalSectionTitle(html: string): boolean {
+  const trimmed = html.trim();
+  // Must be wrapped in <b> tags (entirely bold)
+  if (!trimmed.startsWith("<b>") || !trimmed.endsWith("</b>")) return false;
+  // Extract text content
+  const text = normalizeHebrewMatch(trimmed);
+  // Short enough to be a title (not a full verse), at least 2 chars
+  return text.length >= 2 && text.length <= 80;
+}
+
+/**
  * Detect the true liturgical start.
  * 1. Explicit sacred openings (Shema / Amida)
  * 2. First bold verse
