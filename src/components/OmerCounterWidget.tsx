@@ -135,6 +135,17 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
         </div>
       )}
 
+      {isBeforeCountingTime && !counted && (
+        <div
+          className="px-5 py-2.5 text-center text-xs font-medium"
+          style={{
+            background: "linear-gradient(135deg, hsl(38 92% 50% / 0.12), hsl(38 92% 50% / 0.05))",
+            color: "hsl(var(--foreground))",
+          }}
+        >
+          ☀️ En journée, on peut lire le compte du Omer <strong>sans réciter la brakha</strong>. La brakha se dit le soir après la Shkiya.
+        </div>
+
       {/* Header */}
       <div
         className="p-5 text-center relative overflow-hidden"
