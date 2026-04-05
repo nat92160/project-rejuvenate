@@ -26,6 +26,14 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Check if admin has disabled this notification
+    const { data: setting } = await supabase.from("app_settings").select("value").eq("key", "notif_omer").maybeSingle();
+    if (setting && (setting.value === false || setting.value === "false")) {
+      return new Response(
+        JSON.stringify({ skipped: true, reason: "Disabled by admin" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     // Get all push subscriptions
     const { data: subscriptions, error } = await supabase
       .from("push_subscriptions")

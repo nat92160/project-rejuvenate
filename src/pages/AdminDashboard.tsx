@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -50,9 +50,32 @@ interface SynaItem {
   created_at: string;
 }
 
+const NOTIF_SETTINGS = [
+  { key: "notif_chabbat", icon: "🕯️", label: "Rappel Chabbat", desc: "Push 18 min avant l'allumage des bougies chaque vendredi" },
+  { key: "notif_omer", icon: "🌾", label: "Rappel Omer", desc: "Push quotidien pendant les 49 jours du Omer" },
+  { key: "notif_minyan", icon: "🚨", label: "Urgence Minyan", desc: "Push quand un nouveau minyan est créé dans une synagogue" },
+  { key: "notif_tehilim", icon: "📖", label: "Chaîne Tehilim", desc: "Push quand une nouvelle chaîne de Tehilim est lancée" },
+];
+
 const SettingsTab = () => {
   const { masterEnabled } = useOmerVisibility();
   const [toggling, setToggling] = useState(false);
+  const [notifStates, setNotifStates] = useState<Record<string, boolean>>({});
+  const [notifLoading, setNotifLoading] = useState<Record<string, boolean>>({});
+  const [initialLoaded, setInitialLoaded] = useState(false);
+
+  // Load notification settings from app_settings
+  useEffect(() => {
+    if (initialLoaded) return;
+    (async () => {
+      const { data } = await supabase.from("app_settings").select("key, value").in("key", NOTIF_SETTINGS.map(n => n.key));
+      const states: Record<string, boolean> = {};
+      NOTIF_SETTINGS.forEach(n => { states[n.key] = true; }); // default ON
+      (data || []).forEach((row: any) => { states[row.key] = row.value === true || row.value === "true"; });
+      setNotifStates(states);
+      setInitialLoaded(true);
+    })();
+  }, [initialLoaded]);
 
   const handleToggle = async (checked: boolean) => {
     setToggling(true);
@@ -60,6 +83,17 @@ const SettingsTab = () => {
     if (error) toast.error("Erreur de mise à jour");
     else toast.success(checked ? "🌾 Omer activé pour tous !" : "Omer masqué (lien direct toujours actif)");
     setToggling(false);
+  };
+
+  const handleNotifToggle = async (key: string, checked: boolean) => {
+    setNotifLoading(prev => ({ ...prev, [key]: true }));
+    const { error } = await supabase.from("app_settings").upsert({ key, value: checked as any, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    if (error) toast.error("Erreur de mise à jour");
+    else {
+      setNotifStates(prev => ({ ...prev, [key]: checked }));
+      toast.success(checked ? "🔔 Notification activée" : "🔕 Notification désactivée");
+    }
+    setNotifLoading(prev => ({ ...prev, [key]: false }));
   };
 
   return (
@@ -79,6 +113,32 @@ const SettingsTab = () => {
         {!masterEnabled && (
           <p className="text-xs text-muted-foreground mt-2">🔒 Visible uniquement via /omer ou pour les admins</p>
         )}
+      </div>
+
+      {/* Notification toggles */}
+      <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+        <h3 className="font-bold text-foreground mb-1">🔔 Notifications Push</h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Activez ou désactivez chaque type de notification push pour l'ensemble des utilisateurs.
+        </p>
+        <div className="space-y-4">
+          {NOTIF_SETTINGS.map(n => (
+            <div key={n.key} className="flex items-center justify-between gap-3 py-2 border-b border-border last:border-b-0">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{n.icon}</span>
+                  <span className="text-sm font-bold text-foreground">{n.label}</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5 ml-7">{n.desc}</p>
+              </div>
+              <Switch
+                checked={notifStates[n.key] ?? true}
+                onCheckedChange={(checked) => handleNotifToggle(n.key, checked)}
+                disabled={notifLoading[n.key]}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

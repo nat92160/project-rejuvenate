@@ -271,15 +271,35 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
 
   const doCreate = async (creatorId: string) => {
     setCreating(true);
-    const { error } = await supabase.from("tehilim_chains").insert({
+    const { data: insertedData, error } = await supabase.from("tehilim_chains").insert({
       creator_id: creatorId,
       synagogue_id: synagogueId || null,
       title,
       dedication: dedication || null,
       dedication_type: dedicationType,
-    });
+    }).select().single();
     if (error) { toast.error("Erreur lors de la création."); console.error(error); }
-    else { toast.success("✅ Chaîne de Tehilim créée !"); }
+    else {
+      toast.success("✅ Chaîne de Tehilim créée !");
+      // Send push notification if enabled and linked to a synagogue
+      if (synagogueId) {
+        try {
+          const { data: setting } = await supabase.from("app_settings").select("value").eq("key", "notif_tehilim").maybeSingle();
+          const enabled = !setting || setting.value === true || setting.value === "true";
+          if (enabled) {
+            const dedLabel = dedication ? ` — ${dedication}` : "";
+            await supabase.functions.invoke("send-push", {
+              body: {
+                synagogue_id: synagogueId,
+                title: "📖 Nouvelle chaîne de Tehilim",
+                body: `${title}${dedLabel} — participez maintenant !`,
+                sender_id: creatorId !== "00000000-0000-0000-0000-000000000000" ? creatorId : undefined,
+              },
+            });
+          }
+        } catch (e) { console.error("Push error:", e); }
+      }
+    }
     setCreating(false); onCreated();
   };
 
