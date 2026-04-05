@@ -394,7 +394,9 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                       {isPartner && !item.verified && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">Non vérifié</span>}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs font-semibold" style={{ color: "hsl(var(--gold-matte))" }}>{formatDistance(dist)}</span>
+                      <span className="text-xs font-semibold" style={{ color: "hsl(var(--gold-matte))" }}>
+                        {!city._gps ? "≈ " : ""}{formatDistance(dist)}
+                      </span>
                       {item.address && <span className="text-[11px] text-muted-foreground truncate">· {item.address}</span>}
                     </div>
                     {fresh && (
