@@ -196,7 +196,7 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
   useEffect(() => { if (bookmarkRestored) fetchToc(office); }, [office, fetchToc, bookmarkRestored]);
   useEffect(() => { if (activeSection !== null) fetchSection(office, activeSection); }, [activeSection, office, fetchSection]);
 
-  const suggestedOffice = useMemo(detectOffice, []);
+  const suggestedOffice = useMemo(() => detectOffice(litContext), [litContext]);
 
   const pmBg = prayerMode ? "#000" : undefined;
   const pmText = prayerMode ? "#e8e0d0" : undefined;
