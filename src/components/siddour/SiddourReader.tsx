@@ -224,7 +224,19 @@ const SiddourReader = ({
             >
               {(() => {
                 let verseNum = 0;
-                return (content.hebrew || []).map((verse, i) => {
+                const verses = content.hebrew || [];
+                const processed = processedVerses;
+
+                return verses.map((verse, i) => {
+                  // If we have liturgical processing, skip inactive seasonal verses
+                  if (processed && processed[i]) {
+                    const pv = processed[i];
+                    if (!pv.isActive) return null; // Hide inactive seasonal variant
+                    if (pv.isSeasonalMarker) return null; // Hide marker labels
+                    // Use processed HTML (may have conditional inserts resolved)
+                    verse = pv.html;
+                  }
+
                   const isPrayerStart = i === prayerStartIdx;
                   const isPrelude = i < prayerStartIdx;
 
@@ -269,37 +281,6 @@ const SiddourReader = ({
                         className={isPrayerStart ? "prayer-opening" : undefined}
                         dangerouslySetInnerHTML={{ __html: verse }}
                       />{" "}
-                      {false && transliterations[i] && (
-                        <p
-                          dir="ltr"
-                          className="my-2 leading-relaxed"
-                          style={{
-                            fontSize: `${Math.max(fontSize - 4, 13)}px`,
-                            textAlign: "left",
-                            fontWeight: 400,
-                            color: prayerMode ? "#b8a87a" : "hsl(var(--gold-matte))",
-                            fontFamily: "'Lora', serif",
-                            fontStyle: "italic",
-                          }}
-                        >
-                          {transliterations[i]}
-                        </p>
-                      )}
-                      {false && content.french[i] && (
-                        <p
-                          dir="ltr"
-                          className="my-1 leading-relaxed"
-                          style={{
-                            fontSize: `${Math.max(fontSize - 6, 12)}px`,
-                            textAlign: "left",
-                            fontWeight: 400,
-                            color: prayerMode ? "#888" : "#666",
-                            fontFamily: "'Lora', serif",
-                            fontStyle: "italic",
-                          }}
-                          dangerouslySetInnerHTML={{ __html: content.french[i] }}
-                        />
-                      )}
                     </span>
                   );
                 });
