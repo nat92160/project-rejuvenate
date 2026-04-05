@@ -6,10 +6,12 @@ import type { ViewMode } from "@/hooks/useTransliteration";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useSiddourBookmark } from "@/hooks/useSiddourBookmark";
 import { useSiddourFavorites } from "@/hooks/useSiddourFavorites";
+import { getLiturgicalContext, type LiturgicalPeriod } from "@/lib/liturgicalContext";
 import SiddourToc from "@/components/siddour/SiddourToc";
 import SiddourReader from "@/components/siddour/SiddourReader";
 import SiddourQuickJump from "@/components/siddour/SiddourQuickJump";
 import SiddourSearch from "@/components/siddour/SiddourSearch";
+import LiturgicalContextBar from "@/components/siddour/LiturgicalContextBar";
 
 type Office = "shacharit" | "additions_shacharit" | "minha" | "arvit" | "shabbat" | "shabbat_shacharit" | "shabbat_mussaf" | "shabbat_minha" | "havdala" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "tikoun_hatsot" | "nissan" | "sefirat_haomer" | "birkat" | "berakhot" | "birkat_halevana" | "bedtime_shema" | "mishnayot_shabbat";
 
