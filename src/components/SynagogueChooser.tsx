@@ -386,14 +386,24 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                     </div>
                   ) : <div />}
 
-                  <button
-                    onClick={(e) => { e.stopPropagation(); isPartner ? handleSubscribe(item.id) : handleSubscribePlace(item as ExternalSyna); }}
-                    disabled={subscribing === item.id}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all active:scale-95 shrink-0 disabled:opacity-50 ${isPlaceSubscribed(item) ? "bg-muted text-muted-foreground" : "text-primary-foreground"}`}
-                    style={isPlaceSubscribed(item) ? {} : { background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
-                  >
-                    {subscribing === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isPlaceSubscribed(item) ? "✓ Abonné" : "+ S'abonner"}
-                  </button>
+                  <div className="flex flex-col items-end gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); isPartner ? handleSubscribe(item.id) : handleSubscribePlace(item as ExternalSyna); }}
+                      disabled={subscribing === item.id}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all active:scale-95 shrink-0 disabled:opacity-50 ${isPlaceSubscribed(item) ? "bg-muted text-muted-foreground" : "text-primary-foreground"}`}
+                      style={isPlaceSubscribed(item) ? {} : { background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+                    >
+                      {subscribing === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isPlaceSubscribed(item) ? "✓ Suivi" : "+ S'abonner"}
+                    </button>
+                    {isPlaceSubscribed(item) && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); isPartner ? handleSubscribe(item.id) : handleSubscribePlace(item as ExternalSyna); }}
+                        className="text-[10px] text-destructive/70 hover:text-destructive bg-transparent border-none cursor-pointer underline px-1"
+                      >
+                        Se désabonner
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Edit horaires button */}
