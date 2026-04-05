@@ -8,7 +8,7 @@ import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
 import { TimeInputRow } from "@/components/affiche-chabbat/TimeInputRow";
 import MasterPosterTemplate, { type PosterContentBlock } from "@/components/poster/MasterPosterTemplate";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
-import { exportPosterPng } from "@/components/poster/usePosterExport";
+import { sharePosterPng } from "@/components/poster/usePosterExport";
 
 type Theme = "tradition" | "moderne" | "chaud" | "prestige" | "blanc";
 type FontChoice = "greatvibes" | "playfairsc" | "playfair" | "lora";
@@ -146,17 +146,9 @@ const AfficheChabbatWidget = () => {
     bgColor: t.swatch[2] || "#FDFAF3",
   };
 
-  const handleExport = async () => {
-    await exportPosterPng(canvasRef.current, `affiche-chabbat-${city.name}.png`);
-  };
-
-  const sharePoster = async () => {
-    await handleExport();
-    const baseText = `Chabbat Chalom — ${synaProfile.name || synaName}\nAllumage : ${shabbatData?.candleLighting || ""}\nHavdala : ${shabbatData?.havdalah || ""}\nParacha : ${shabbatData?.parasha || ""}`;
-    try {
-      await navigator.clipboard.writeText(baseText);
-    } catch {}
-    toast.success("Affiche téléchargée et texte copié !");
+  const handleSharePoster = async () => {
+    const filename = `affiche-chabbat-${city.name}.png`;
+    await sharePosterPng(canvasRef.current, filename, `Chabbat Chalom — ${synaProfile.name || synaName}`);
   };
 
   const inputClass = "w-full px-4 py-4 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50";
@@ -385,7 +377,7 @@ const AfficheChabbatWidget = () => {
             <button onClick={save} disabled={saving} className="flex-1 py-4 rounded-xl font-bold text-sm bg-card text-foreground border border-border cursor-pointer active:scale-95 transition-transform disabled:opacity-50">
               {saving ? "💾…" : "💾 Sauvegarder"}
             </button>
-            <button onClick={handleExport} className="flex-1 py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>📥 Télécharger PNG</button>
+            <button onClick={handleSharePoster} className="flex-1 py-4 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer active:scale-95 transition-transform" style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>📤 Partager l'Affiche</button>
           </div>
         </div>
       )}

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes, ShabbatTimes } from "@/lib/hebcal";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
-import { exportPosterPng } from "@/components/poster/usePosterExport";
+import { sharePosterPng } from "@/components/poster/usePosterExport";
 import HalakhicDisclaimer from "@/components/zmanim/HalakhicDisclaimer";
 
 const ShabbatWidget = () => {
@@ -18,12 +18,12 @@ const ShabbatWidget = () => {
     fetchShabbatTimes(city).then((d) => { setData(d); setLoading(false); });
   }, [city]);
 
-  const handleExport = useCallback(async () => {
+  const handleShare = useCallback(async () => {
     if (!data) return;
     setExporting(true);
     await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 100)));
     const filename = `chabbat-${city.name.replace(/[^a-zA-Z0-9]/g, "-")}.png`;
-    await exportPosterPng(posterRef.current, filename);
+    await sharePosterPng(posterRef.current, filename, `Chabbat Chalom — ${city.name}`);
     setExporting(false);
   }, [data, city]);
 
@@ -117,12 +117,12 @@ const ShabbatWidget = () => {
 
           {/* Share button */}
           <button
-            onClick={handleExport}
+            onClick={handleShare}
             disabled={exporting}
             className="mt-3 w-full py-2.5 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground disabled:opacity-50 transition-all active:scale-95"
             style={{ background: "var(--gradient-gold)" }}
           >
-            {exporting ? "⏳ Génération..." : "🖼️ Générer l'image de Chabbat"}
+            {exporting ? "⏳ Génération..." : "📤 Partager l'image de Chabbat"}
           </button>
         </>
       ) : (

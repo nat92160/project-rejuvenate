@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { shareText } from "@/lib/shareUtils";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import type { SynaProfile } from "@/components/poster/MasterPosterTemplate";
-import { exportPosterPng } from "@/components/poster/usePosterExport";
+import { sharePosterPng } from "@/components/poster/usePosterExport";
 import { normalizeCourseType } from "@/lib/courseType";
 
 interface CoursCardProps {
@@ -61,9 +61,10 @@ const CoursCard = ({
     bgColor: isZoom ? "#EFF6FF" : "#F0FDF4",
   };
 
-  const handleExportPng = async () => {
+  const handleSharePng = async () => {
     setExporting(true);
-    await exportPosterPng(posterRef.current, `cours-${title.replace(/\s+/g, "-").toLowerCase()}.png`);
+    const filename = `cours-${title.replace(/\s+/g, "-").toLowerCase()}.png`;
+    await sharePosterPng(posterRef.current, filename, `📚 ${title}`);
     setExporting(false);
   };
 
@@ -153,21 +154,14 @@ const CoursCard = ({
         </button>
       </div>
 
-      {/* Actions */}
       <div className="flex flex-wrap gap-2 mt-2 px-1">
         <button
-          onClick={handleExportPng}
+          onClick={handleSharePng}
           disabled={exporting}
           className="text-[11px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground disabled:opacity-50"
           style={{ background: "var(--gradient-gold)" }}
         >
-          {exporting ? "⏳ Génération..." : "📥 Générer l'Affiche Pro"}
-        </button>
-        <button
-          onClick={handleShare}
-          className="text-[11px] font-bold px-3 py-1.5 rounded-lg border border-border bg-card text-foreground cursor-pointer hover:bg-muted"
-        >
-          📤 Partager
+          {exporting ? "⏳ Génération..." : "📤 Partager l'Affiche"}
         </button>
         {isOwner && (
           <button

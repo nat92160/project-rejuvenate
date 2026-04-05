@@ -5,9 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { toast } from "sonner";
-import { shareText } from "@/lib/shareUtils";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
-import { exportPosterPng } from "@/components/poster/usePosterExport";
+import { sharePosterPng } from "@/components/poster/usePosterExport";
 
 interface Annonce {
   id: string;
@@ -86,8 +85,8 @@ const AnnoncesWidget = () => {
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
-  // Auto-export when posterAnnonce is set
-  const triggerExport = useCallback(async (annonce: Annonce) => {
+  // Auto-share when posterAnnonce is set
+  const triggerShare = useCallback(async (annonce: Annonce) => {
     setExportingId(annonce.id);
     setPosterAnnonce(annonce);
   }, []);
@@ -96,7 +95,8 @@ const AnnoncesWidget = () => {
     if (!posterAnnonce || !exportingId) return;
     const timer = requestAnimationFrame(() => {
       setTimeout(async () => {
-        await exportPosterPng(posterRef.current, `annonce-${posterAnnonce.title.replace(/\s+/g, "-").toLowerCase()}.png`);
+        const filename = `annonce-${posterAnnonce.title.replace(/\s+/g, "-").toLowerCase()}.png`;
+        await sharePosterPng(posterRef.current, filename, `📢 ${posterAnnonce.title}`);
         setExportingId(null);
         setPosterAnnonce(null);
       }, 100);
@@ -218,23 +218,11 @@ const AnnoncesWidget = () => {
                 )}
                 <div className="flex flex-wrap gap-2 mt-4 pl-0 sm:pl-[52px]">
                   <button
-                    onClick={() => triggerExport(a)}
+                    onClick={() => triggerShare(a)}
                     disabled={exportingId === a.id}
                     className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground disabled:opacity-50"
                     style={{ background: "var(--gradient-gold)" }}>
-                    {exportingId === a.id ? "⏳ Export..." : "📥 Télécharger PNG"}
-                  </button>
-                  <button
-                    onClick={async () => {
-                      let text = `📢 ${a.title}\n`;
-                      if (a.content) text += `${a.content}\n`;
-                      text += `\n📅 ${formatDate(a.created_at)}`;
-                      text += `\n\n✡️ Chabbat Chalom`;
-                      await shareText(text, `📢 ${a.title}`);
-                    }}
-                    className="text-[10px] font-bold px-3 py-1.5 rounded-lg border border-border bg-card text-foreground cursor-pointer hover:bg-muted"
-                  >
-                    📤 Partager
+                    {exportingId === a.id ? "⏳ Génération..." : "📤 Partager l'Affiche"}
                   </button>
                   {isPresident && user?.id === a.creator_id && (
                     <button onClick={() => handleDelete(a.id)}
