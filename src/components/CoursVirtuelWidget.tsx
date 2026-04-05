@@ -143,6 +143,5 @@ const CoursVirtuelWidget = () => {
     </motion.div>
   );
 };
-};
 
 export default CoursVirtuelWidget;
