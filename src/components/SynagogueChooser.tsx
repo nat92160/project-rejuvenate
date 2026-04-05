@@ -386,16 +386,14 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                     </div>
                   ) : <div />}
 
-                  {isPartner && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleSubscribe(item.id); }}
-                      disabled={subscribing === item.id}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all active:scale-95 shrink-0 disabled:opacity-50 ${subIds.includes(item.id) ? "bg-muted text-muted-foreground" : "text-primary-foreground"}`}
-                      style={subIds.includes(item.id) ? {} : { background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
-                    >
-                      {subscribing === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : subIds.includes(item.id) ? "✓ Abonné" : "+ S'abonner"}
-                    </button>
-                  )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); isPartner ? handleSubscribe(item.id) : handleSubscribePlace(item as ExternalSyna); }}
+                    disabled={subscribing === item.id}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all active:scale-95 shrink-0 disabled:opacity-50 ${isPlaceSubscribed(item) ? "bg-muted text-muted-foreground" : "text-primary-foreground"}`}
+                    style={isPlaceSubscribed(item) ? {} : { background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+                  >
+                    {subscribing === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isPlaceSubscribed(item) ? "✓ Abonné" : "+ S'abonner"}
+                  </button>
                 </div>
 
                 {/* Edit horaires button */}
