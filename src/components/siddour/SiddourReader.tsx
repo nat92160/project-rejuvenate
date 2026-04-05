@@ -259,7 +259,7 @@ const SiddourReader = ({
                         className={isPrayerStart ? "prayer-opening" : undefined}
                         dangerouslySetInnerHTML={{ __html: verse }}
                       />{" "}
-                      {viewMode === "bilingual" && transliterations[i] && (
+                      {false && transliterations[i] && (
                         <p
                           dir="ltr"
                           className="my-2 leading-relaxed"
