@@ -210,6 +210,35 @@ const SynagogueChooser = ({ onSelect }: Props) => {
     onSelect?.();
   };
 
+  const [subscribedPlaceNames, setSubscribedPlaceNames] = useState<Set<string>>(new Set());
+
+  const handleSubscribePlace = async (place: ExternalSyna) => {
+    if (!user) { toast.error("Connectez-vous pour vous abonner"); return; }
+    setSubscribing(place.id);
+    const { error } = await supabase.rpc("subscribe_to_place", {
+      _user_id: user.id,
+      _place_name: place.name,
+      _place_address: place.address || null,
+      _place_lat: place.lat,
+      _place_lng: place.lon,
+      _google_place_id: place.id,
+    });
+    if (error) {
+      console.error("subscribe_to_place error:", error);
+      toast.error("Erreur lors de l'abonnement");
+    } else {
+      toast.success("⭐ Abonné !");
+      setSubscribedPlaceNames(prev => new Set(prev).add(place.name));
+    }
+    setSubscribing(null);
+    onSelect?.();
+  };
+
+  const isPlaceSubscribed = (item: SynaItem) => {
+    if (item.source === "partner") return subIds.includes(item.id);
+    return subscribedPlaceNames.has(item.name);
+  };
+
   const scrollToCard = (id: string) => {
     setSelectedId(id);
     const el = document.getElementById(`syna-card-${id}`);
