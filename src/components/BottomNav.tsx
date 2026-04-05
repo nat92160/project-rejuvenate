@@ -265,9 +265,7 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                     Mes widgets favoris ({selectedTabs.length}/{MAX_TABS})
                   </h2>
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    {mode === "president"
-                      ? "Configuration du bandeau en mode Président"
-                      : "Configuration du bandeau en mode Fidèle"}
+                    Configuration du bandeau
                   </p>
                 </div>
 
