@@ -230,7 +230,34 @@ const SiddourReader = ({
                   const isPrayerStart = i === prayerStartIdx;
                   const isPrelude = i < prayerStartIdx;
 
+                  // Liturgical processing for Amida
+                  const processed = processedVerses?.[i];
+                  const isSeasonalInactive = processed && !processed.isActive && !processed.isInstruction;
+                  const isSeasonalMarker = processed?.isSeasonalMarker;
+                  const isSeasonalActive = processed && processed.isActive && (processed.isSeasonalMarker || isSeasonalInactive === false);
+
                   if (isInstructionOnly(verse)) {
+                    // For Amida: style seasonal markers differently
+                    if (isSeasonalMarker) {
+                      return (
+                        <span
+                          key={i}
+                          className="verse-instruction"
+                          style={{
+                            display: "block",
+                            padding: "4px 8px",
+                            marginBlock: "4px",
+                            borderRadius: "6px",
+                            background: processed?.isActive
+                              ? "hsl(var(--gold) / 0.12)"
+                              : "transparent",
+                            opacity: processed?.isActive ? 1 : 0.35,
+                            fontWeight: processed?.isActive ? 700 : 400,
+                          }}
+                          dangerouslySetInnerHTML={{ __html: verse }}
+                        />
+                      );
+                    }
                     return (
                       <span
                         key={i}
@@ -251,8 +278,19 @@ const SiddourReader = ({
                   }
 
                   verseNum++;
+
+                  // Style for seasonally inactive verses (dim them)
+                  const seasonalStyle: React.CSSProperties = isSeasonalInactive
+                    ? { opacity: 0.25, fontSize: `${Math.max(fontSize - 4, 12)}px`, textDecoration: "line-through", textDecorationColor: "hsl(var(--muted-foreground) / 0.3)" }
+                    : {};
+
+                  // Highlight actively selected seasonal verse
+                  const activeSeasonalStyle: React.CSSProperties = (processed && processed.isActive && processed.isSeasonalMarker === false && processedVerses?.[i - 1]?.isSeasonalMarker)
+                    ? { background: "hsl(var(--gold) / 0.08)", borderRadius: "8px", padding: "4px 8px", borderRight: "3px solid hsl(var(--gold) / 0.4)" }
+                    : {};
+
                   return (
-                    <span key={i} ref={isPrayerStart ? prayerStartRef : undefined}>
+                    <span key={i} ref={isPrayerStart ? prayerStartRef : undefined} style={{ ...seasonalStyle, ...activeSeasonalStyle }}>
                       <span
                         style={{
                           fontSize: isPrayerStart ? `${fontSize + 8}px` : `${Math.max(fontSize - 3, 14)}px`,
