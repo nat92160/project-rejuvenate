@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { ChevronRight } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import type { ViewMode } from "@/hooks/useTransliteration";
 import { useWakeLock } from "@/hooks/useWakeLock";
