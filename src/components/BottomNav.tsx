@@ -39,7 +39,7 @@ const loadTabsForMode = (mode: BottomNavMode) => {
 const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
   const { dbRole } = useAuth();
   const { city } = useCity();
-  const mode: BottomNavMode = dbRole === "president" ? "president" : "fidele";
+  const mode: BottomNavMode = "fidele";
   const [showMore, setShowMore] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [selectedTabs, setSelectedTabs] = useState<string[]>(() => loadTabsForMode(mode));
