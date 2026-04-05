@@ -71,12 +71,7 @@ Deno.serve(async (req) => {
 
     for (const channel of CHANNELS) {
       try {
-        // Resolve channel ID from handle
-        const channelId = await resolveChannelId(YOUTUBE_API_KEY, channel.handle);
-        if (!channelId) {
-          console.error(`Skipping ${channel.name}: could not resolve channel ID`);
-          continue;
-        }
+        const channelId = channel.channelId;
 
         // Get uploads playlist
         const channelUrl = `https://www.googleapis.com/youtube/v3/channels?key=${YOUTUBE_API_KEY}&id=${channelId}&part=contentDetails`;
