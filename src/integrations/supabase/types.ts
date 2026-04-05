@@ -1027,6 +1027,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      subscribe_to_place: {
+        Args: {
+          _google_place_id?: string
+          _place_address?: string
+          _place_lat?: number
+          _place_lng?: number
+          _place_name: string
+          _user_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "fidele" | "president" | "guest" | "admin"

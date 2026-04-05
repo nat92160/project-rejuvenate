@@ -258,6 +258,9 @@ const FideleSynagogueView = () => {
 
   const totalNearbyCount = nearbyPartners.length + externalGoogleResults.length;
 
+  // Track which Google places are subscribed (by place name match)
+  const [subscribedPlaceNames, setSubscribedPlaceNames] = useState<Set<string>>(new Set());
+
   const handleSubscribe = async (synaId: string) => {
     if (!user) { toast.error("Connectez-vous pour vous abonner"); return; }
     setSubscribing(synaId);
@@ -267,10 +270,33 @@ const FideleSynagogueView = () => {
       toast.success("Désabonné");
     } else {
       await supabase.from("synagogue_subscriptions").insert({ user_id: user.id, synagogue_id: synaId } as any);
-      toast.success("🔔 Abonné ! Vous recevrez les actualités de cette synagogue.");
+      toast.success("⭐ Abonné !");
     }
     await fetchDirectory();
     await fetchContent();
+    setSubscribing(null);
+  };
+
+  const handleSubscribePlace = async (place: { id: string; name: string; address?: string; lat: number; lon: number }) => {
+    if (!user) { toast.error("Connectez-vous pour vous abonner"); return; }
+    setSubscribing(place.id);
+    const { error } = await supabase.rpc("subscribe_to_place", {
+      _user_id: user.id,
+      _place_name: place.name,
+      _place_address: place.address || null,
+      _place_lat: place.lat,
+      _place_lng: place.lon,
+      _google_place_id: place.id,
+    });
+    if (error) {
+      console.error("subscribe_to_place error:", error);
+      toast.error("Erreur lors de l'abonnement");
+    } else {
+      toast.success("⭐ Abonné !");
+      setSubscribedPlaceNames(prev => new Set(prev).add(place.name));
+      await fetchDirectory();
+      await fetchContent();
+    }
     setSubscribing(null);
   };
 
@@ -557,7 +583,22 @@ const FideleSynagogueView = () => {
                       🕍
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-display text-sm font-bold leading-tight text-foreground">{gr.name}</h4>
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-display text-sm font-bold leading-tight text-foreground">{gr.name}</h4>
+                        <button
+                          onClick={() => handleSubscribePlace(gr)}
+                          disabled={subscribing === gr.id}
+                          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-none cursor-pointer transition-all active:scale-90 disabled:opacity-50 text-base"
+                          style={
+                            subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name)
+                              ? { background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }
+                              : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                          }
+                          title="S'abonner"
+                        >
+                          {subscribing === gr.id ? "…" : subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name) ? "⭐" : "☆"}
+                        </button>
+                      </div>
                       {gr.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {gr.address}</p>}
                       <div className="mt-1 flex items-center gap-2">
                         <span className="text-[11px] font-bold text-primary/80">📏 {formatDistance(gr.distance)}</span>
