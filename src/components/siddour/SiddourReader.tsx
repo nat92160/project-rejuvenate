@@ -199,7 +199,7 @@ const SiddourReader = ({
           )}
 
           {/* Hebrew text */}
-          {(viewMode === "hebrew" || viewMode === "bilingual") && (
+          {viewMode === "hebrew" && (
             <div
               dir="rtl"
               className="hebrew-reading-block"
@@ -259,7 +259,7 @@ const SiddourReader = ({
                         className={isPrayerStart ? "prayer-opening" : undefined}
                         dangerouslySetInnerHTML={{ __html: verse }}
                       />{" "}
-                      {viewMode === "bilingual" && transliterations[i] && (
+                      {false && transliterations[i] && (
                         <p
                           dir="ltr"
                           className="my-2 leading-relaxed"
@@ -275,7 +275,7 @@ const SiddourReader = ({
                           {transliterations[i]}
                         </p>
                       )}
-                      {viewMode === "bilingual" && content.french[i] && (
+                      {false && content.french[i] && (
                         <p
                           dir="ltr"
                           className="my-1 leading-relaxed"
