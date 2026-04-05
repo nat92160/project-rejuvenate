@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Slider } from "@/components/ui/slider";
-import { useTransliteration, type ViewMode } from "@/hooks/useTransliteration";
+import type { ViewMode } from "@/hooks/useTransliteration";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useSiddourBookmark } from "@/hooks/useSiddourBookmark";
 import { useSiddourFavorites } from "@/hooks/useSiddourFavorites";
@@ -11,40 +11,53 @@ import SiddourReader from "@/components/siddour/SiddourReader";
 import SiddourQuickJump from "@/components/siddour/SiddourQuickJump";
 import SiddourSearch from "@/components/siddour/SiddourSearch";
 
-type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "birkat" | "berakhot" | "tikoun_hatsot" | "nissan" | "mishnayot_shabbat" | "birkat_halevana" | "shabbat_special";
+type Office = "shacharit" | "hazara" | "additions_shacharit" | "minha" | "arvit" | "shabbat" | "shabbat_shacharit" | "shabbat_mussaf" | "shabbat_minha" | "havdala" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "tikoun_hatsot" | "nissan" | "sefirat_haomer" | "birkat" | "berakhot" | "birkat_halevana" | "bedtime_shema" | "mishnayot_shabbat";
 
 interface Section { index: number; title: string; heTitle: string; isHazara?: boolean; }
-interface SectionContent { hebrew: string[]; french: string[]; title: string; heTitle: string; isHazara?: boolean; }
+
+/** Full section data from the API */
+interface ApiSection {
+  title: string;
+  heTitle: string;
+  ref: string;
+  he: string[];
+  en: string[];
+  phonetic: string[];
+}
+
+interface SectionContent { hebrew: string[]; french: string[]; title: string; heTitle: string; isHazara?: boolean; phonetic?: string[]; }
 
 const OFFICES: { key: Office; label: string; icon: string }[] = [
-  // ── Prières quotidiennes ──
   { key: "shacharit", label: "Cha'harit", icon: "🌅" },
-  { key: "minha", label: "Min'ha", icon: "🌇" },
+  { key: "hazara", label: "Hazara", icon: "🔄" },
+  { key: "additions_shacharit", label: "Ajouts", icon: "➕" },
+  { key: "minha", label: "Min'ha", icon: "☀️" },
   { key: "arvit", label: "Arvit", icon: "🌙" },
-  // ── Chabbat & fêtes ──
   { key: "shabbat", label: "Chabbat", icon: "🕯️" },
+  { key: "shabbat_shacharit", label: "Chabbat Cha'harit", icon: "✡️" },
+  { key: "shabbat_mussaf", label: "Moussaf", icon: "📜" },
+  { key: "shabbat_minha", label: "Chabbat Min'ha", icon: "🌤️" },
+  { key: "havdala", label: "Havdala", icon: "🔥" },
   { key: "rosh_hodesh", label: "Roch 'Hodech", icon: "🌙" },
   { key: "fetes", label: "Fêtes", icon: "🎺" },
-  // ── Fêtes spéciales ──
   { key: "hanukkah", label: "'Hanouka", icon: "🕎" },
   { key: "purim", label: "Pourim", icon: "🎭" },
   { key: "taanit", label: "Jeûnes", icon: "🕊️" },
-  // ── Berakhot & Birkat ──
-  { key: "birkat", label: "Birkat HaMazone", icon: "🍞" },
-  { key: "berakhot", label: "Bénédictions", icon: "✡️" },
-  // ── Suppléments ──
   { key: "tikoun_hatsot", label: "Tikoun 'Hatsot", icon: "🌑" },
   { key: "nissan", label: "Nissan", icon: "🌸" },
-  { key: "mishnayot_shabbat", label: "Michnayot", icon: "📖" },
+  { key: "sefirat_haomer", label: "Séfirat HaOmer", icon: "🔢" },
+  { key: "birkat", label: "Birkat HaMazone", icon: "🍞" },
+  { key: "berakhot", label: "Brakhot", icon: "🙏" },
   { key: "birkat_halevana", label: "Birkat HaLévana", icon: "🌕" },
+  { key: "bedtime_shema", label: "Chéma' du coucher", icon: "😴" },
+  { key: "mishnayot_shabbat", label: "Michnayot", icon: "📖" },
 ];
 
-const CACHE_PREFIX = "siddour_v8_sefarade_";
+const CACHE_PREFIX = "siddour_v9_sefarade_";
 
-/** Detect the most relevant office based on current time */
 function detectOffice(): Office {
   const h = new Date().getHours();
-  const day = new Date().getDay(); // 0=Sun, 6=Sat
+  const day = new Date().getDay();
   if (day === 6 || (day === 5 && h >= 16)) return "shabbat";
   if (h < 12) return "shacharit";
   if (h < 17) return "minha";
@@ -56,31 +69,24 @@ interface SiddourWidgetProps { prayerMode?: boolean; initialOffice?: Office; }
 const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps) => {
   const [office, setOffice] = useState<Office>(initialOffice || detectOffice);
   const [sections, setSections] = useState<Section[]>([]);
+  const [allSectionData, setAllSectionData] = useState<ApiSection[]>([]);
   const [activeSection, setActiveSection] = useState<number | null>(null);
   const [content, setContent] = useState<SectionContent | null>(null);
   const [loading, setLoading] = useState(false);
   const [tocLoading, setTocLoading] = useState(true);
   const [fontSize, setFontSize] = useState(24);
   const [viewMode, setViewMode] = useState<ViewMode>("hebrew");
-  const { transliterations, loading: translitLoading, fetchTransliteration, clearTransliterations } = useTransliteration();
   const { favorites, toggle: toggleFavorite, isFavorite } = useSiddourFavorites();
   const { save: saveBookmark, load: loadBookmark, restoreScroll, startAutoSave } = useSiddourBookmark();
 
-  // Wake lock while siddour is open
   useWakeLock(true);
 
-  // Track if we should auto-open the first section (deep-link from dashboard)
   const [autoOpenDone, setAutoOpenDone] = useState(false);
-
-  // Restore bookmark on mount (only if no initialOffice deep-link)
   const [bookmarkRestored, setBookmarkRestored] = useState(false);
+
   useEffect(() => {
     if (bookmarkRestored) return;
-    if (initialOffice) {
-      // Deep-link: skip bookmark, will auto-open first section
-      setBookmarkRestored(true);
-      return;
-    }
+    if (initialOffice) { setBookmarkRestored(true); return; }
     const bm = loadBookmark();
     if (bm) {
       setOffice(bm.office as Office);
@@ -92,7 +98,6 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
     }
   }, [bookmarkRestored, loadBookmark, restoreScroll, initialOffice]);
 
-  // Auto-open first section when deep-linked from dashboard
   useEffect(() => {
     if (initialOffice && !autoOpenDone && sections.length > 0 && activeSection === null) {
       setActiveSection(0);
@@ -100,74 +105,62 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
     }
   }, [initialOffice, autoOpenDone, sections, activeSection]);
 
-  // Auto-save bookmark when reading
   useEffect(() => {
     if (activeSection !== null) startAutoSave(office, activeSection);
   }, [activeSection, office, startAutoSave]);
 
-  const fetchToc = useCallback(async (off: Office) => {
+  // Fetch all sections for an office (single API call)
+  const fetchOffice = useCallback(async (off: Office) => {
     setTocLoading(true);
     setSections([]);
+    setAllSectionData([]);
     setActiveSection(null);
     setContent(null);
 
-    const cacheKey = `${CACHE_PREFIX}toc_${off}`;
+    const cacheKey = `${CACHE_PREFIX}all_${off}`;
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
-      try { setSections(JSON.parse(cached)); setTocLoading(false); return; } catch { /* */ }
+      try {
+        const parsed: ApiSection[] = JSON.parse(cached);
+        setAllSectionData(parsed);
+        setSections(parsed.map((s, i) => ({ index: i, title: s.title, heTitle: s.heTitle })));
+        setTocLoading(false);
+        return;
+      } catch { /* */ }
     }
 
     try {
       const { data, error } = await supabase.functions.invoke("get-siddour", { body: { office: off } });
       if (error) throw error;
-      if (data?.sections) {
-        setSections(data.sections);
-        try { localStorage.setItem(cacheKey, JSON.stringify(data.sections)); } catch { /* */ }
+      if (data?.sections && Array.isArray(data.sections)) {
+        const apiSections: ApiSection[] = data.sections;
+        setAllSectionData(apiSections);
+        setSections(apiSections.map((s, i) => ({ index: i, title: s.title, heTitle: s.heTitle })));
+        try { localStorage.setItem(cacheKey, JSON.stringify(apiSections)); } catch { /* */ }
       }
-    } catch (err) { console.error("Error fetching siddour toc:", err); }
+    } catch (err) { console.error("Error fetching siddour:", err); }
     setTocLoading(false);
   }, []);
 
-  const fetchSection = useCallback(async (off: Office, idx: number) => {
-    setLoading(true);
-    setContent(null);
-    clearTransliterations();
-
-    const cacheKey = `${CACHE_PREFIX}${off}_${idx}`;
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      try { setContent(JSON.parse(cached)); setLoading(false); return; } catch { /* */ }
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke("get-siddour", { body: { office: off, section: idx } });
-      if (error) throw error;
-      if (data?.hebrew) {
-        const c: SectionContent = {
-          hebrew: data.hebrew,
-          french: data.french || [],
-          title: data.title,
-          heTitle: data.heTitle,
-          isHazara: data.isHazara || false,
-        };
-        setContent(c);
-        try { localStorage.setItem(cacheKey, JSON.stringify(c)); } catch { /* */ }
-      }
-    } catch (err) { console.error("Error fetching section:", err); }
-    setLoading(false);
-  }, [clearTransliterations]);
-
-  useEffect(() => { if (bookmarkRestored) fetchToc(office); }, [office, fetchToc, bookmarkRestored]);
-  useEffect(() => { if (activeSection !== null) fetchSection(office, activeSection); }, [activeSection, office, fetchSection]);
-
-  // Auto-fetch transliteration
+  // When a section is selected, build content from stored data
   useEffect(() => {
-    if (viewMode === "phonetic" && content && content.hebrew.length > 0 && transliterations.length === 0) {
-      fetchTransliteration(content.hebrew, `siddour_${office}_${activeSection}`);
+    if (activeSection === null || allSectionData.length === 0) {
+      if (activeSection === null) setContent(null);
+      return;
     }
-  }, [viewMode, content, transliterations.length, office, activeSection, fetchTransliteration]);
+    const sec = allSectionData[activeSection];
+    if (!sec) return;
+    setContent({
+      hebrew: sec.he,
+      french: sec.en,
+      title: sec.title,
+      heTitle: sec.heTitle,
+      phonetic: sec.phonetic,
+    });
+  }, [activeSection, allSectionData]);
 
-  // Sort offices: detected first
+  useEffect(() => { if (bookmarkRestored) fetchOffice(office); }, [office, fetchOffice, bookmarkRestored]);
+
   const suggestedOffice = useMemo(detectOffice, []);
 
   const pmBg = prayerMode ? "#000" : undefined;
@@ -184,8 +177,7 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
   const handleBack = useCallback(() => {
     setActiveSection(null);
     setContent(null);
-    clearTransliterations();
-  }, [clearTransliterations]);
+  }, []);
 
   return (
     <motion.div
@@ -207,7 +199,7 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         <p className="mt-1 text-xs" style={{ color: pmMuted }}>Rite Séfarade — Hébreu, Phonétique & Traduction</p>
       </div>
 
-      {/* Office selector — horizontal scrollable chips */}
+      {/* Office selector */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {OFFICES.map((off) => {
           const isSuggested = off.key === suggestedOffice && office !== off.key;
@@ -248,7 +240,7 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         </div>
       </div>
 
-      {/* Quick Jump Bar - visible when reading */}
+      {/* Quick Jump Bar */}
       {activeSection !== null && sections.length > 1 && (
         <SiddourQuickJump
           sections={sections}
@@ -262,9 +254,7 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
       <AnimatePresence mode="wait">
         {activeSection === null ? (
           <motion.div key="toc" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-            {/* Search */}
             <SiddourSearch sections={sections} onSelect={handleSelectSection} prayerMode={prayerMode} />
-            {/* Table of Contents */}
             <SiddourToc
               sections={sections}
               loading={tocLoading}
@@ -279,12 +269,12 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
         ) : (
           <SiddourReader
             content={content}
-            loading={loading}
+            loading={tocLoading && !content}
             fontSize={fontSize}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            transliterations={transliterations}
-            translitLoading={translitLoading}
+            transliterations={content?.phonetic || []}
+            translitLoading={false}
             onBack={handleBack}
             onPrev={() => activeSection > 0 && setActiveSection(activeSection - 1)}
             onNext={() => activeSection < sections.length - 1 && setActiveSection(activeSection + 1)}
