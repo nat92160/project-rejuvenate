@@ -53,16 +53,18 @@ export function useOmerVisibility({ isDirectLink = false }: { isDirectLink?: boo
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Geo-temporal check: is it Omer period AND within 2h before Shkiya?
+  // Check if we're in the Omer period
+  const [inOmerPeriod, setInOmerPeriod] = useState(false);
+  // Check if it's before counting time (daytime = sans brakha)
+  const [isBeforeCountingTime, setIsBeforeCountingTime] = useState(false);
+
   useEffect(() => {
     const check = () => {
       try {
-        // Use Jerusalem as default fallback
         let lat = 31.7683;
         let lng = 35.2137;
         let tz = "Asia/Jerusalem";
 
-        // Try to get user city from localStorage
         try {
           const stored = localStorage.getItem("calj_gps_city");
           if (stored) {
@@ -72,61 +74,48 @@ export function useOmerVisibility({ isDirectLink = false }: { isDirectLink?: boo
               lng = parsed.lng;
               tz = parsed.tz;
             }
-          } else {
-            const cityKey = localStorage.getItem("calj_city");
-            if (cityKey) {
-              // We can't import CITIES directly here without circular deps risk,
-              // but the common case is covered by gps_city above.
-              // For non-GPS users, we'll use a simple approach.
-            }
           }
         } catch { /* use Jerusalem default */ }
 
         const now = new Date();
-
-        // Check if we're in Omer period using JewishCalendar
         const jCal = new JewishCalendar(now);
         const omerDay = jCal.getDayOfOmer();
 
         if (omerDay <= 0) {
-          setGeoVisible(false);
+          setInOmerPeriod(false);
+          setIsBeforeCountingTime(false);
           return;
         }
 
-        // We're in the Omer period — check if within 2h before Shkiya
+        setInOmerPeriod(true);
+
+        // Determine if we're before sunset (counting time) → sans brakha note
         const geoLocation = new GeoLocation("User", lat, lng, 0, tz);
         const czc = new ComplexZmanimCalendar(geoLocation);
         czc.setDate(now);
 
         const sunset = czc.getSunset();
         if (!sunset) {
-          // Can't determine sunset — show the widget to be safe
-          setGeoVisible(true);
+          setIsBeforeCountingTime(false);
           return;
         }
 
         const sunsetDate = sunset instanceof Date ? sunset : (sunset as any).toJSDate?.() ?? new Date(sunset as any);
-        const sunsetMs = sunsetDate.getTime();
-        const nowMs = now.getTime();
-        const twoHoursBefore = sunsetMs - (2 * 60 * 60 * 1000);
-
-        // Show if we're within 2h before sunset or after sunset (evening counting time)
-        setGeoVisible(nowMs >= twoHoursBefore);
+        setIsBeforeCountingTime(now.getTime() < sunsetDate.getTime());
       } catch {
-        // On error, show the widget to be safe
-        setGeoVisible(true);
+        setInOmerPeriod(true);
+        setIsBeforeCountingTime(false);
       }
     };
 
     check();
-    // Re-check every 5 minutes
     const interval = setInterval(check, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const visible = isDirectLink || isAdmin || (masterEnabled && geoVisible);
+  const visible = isDirectLink || isAdmin || (masterEnabled && inOmerPeriod);
 
-  return { visible, masterEnabled, loading, geoVisible };
+  return { visible, masterEnabled, loading, inOmerPeriod, isBeforeCountingTime };
 }
 
 /**

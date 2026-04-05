@@ -37,9 +37,10 @@ function getStreakMessage(streak: number): string {
 
 interface OmerCounterWidgetProps {
   showInviteBanner?: boolean;
+  isBeforeCountingTime?: boolean;
 }
 
-const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps) => {
+const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = false }: OmerCounterWidgetProps) => {
   const { user, isAdmin } = useAuth();
   const [expanded, setExpanded] = useState(showInviteBanner);
   const realOmerDay = useMemo(() => getTodayOmerDay(), []);
@@ -131,6 +132,18 @@ const OmerCounterWidget = ({ showInviteBanner = false }: OmerCounterWidgetProps)
           }}
         >
           ✨ Vous avez reçu ce rappel d'un ami. Ne manquez plus un seul soir : inscrivez-vous pour recevoir vos notifications personnalisées.
+        </div>
+      )}
+
+      {isBeforeCountingTime && !counted && (
+        <div
+          className="px-5 py-2.5 text-center text-xs font-medium"
+          style={{
+            background: "linear-gradient(135deg, hsl(38 92% 50% / 0.12), hsl(38 92% 50% / 0.05))",
+            color: "hsl(var(--foreground))",
+          }}
+        >
+          ☀️ En journée, on peut lire le compte du Omer <strong>sans réciter la brakha</strong>. La brakha se dit le soir après la Shkiya.
         </div>
       )}
 
