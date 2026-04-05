@@ -11,7 +11,7 @@ import SiddourReader from "@/components/siddour/SiddourReader";
 import SiddourQuickJump from "@/components/siddour/SiddourQuickJump";
 import SiddourSearch from "@/components/siddour/SiddourSearch";
 
-type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "hallel" | "birkat" | "kaddish";
+type Office = "shacharit" | "minha" | "arvit" | "shabbat" | "rosh_hodesh" | "fetes" | "hanukkah" | "purim" | "taanit" | "birkat" | "berakhot" | "tikoun_hatsot" | "nissan" | "mishnayot_shabbat" | "birkat_halevana";
 
 interface Section { index: number; title: string; heTitle: string; }
 interface SectionContent { hebrew: string[]; french: string[]; title: string; heTitle: string; }
@@ -21,12 +21,20 @@ const OFFICES: { key: Office; label: string; icon: string }[] = [
   { key: "minha", label: "Min'ha", icon: "🌇" },
   { key: "arvit", label: "Arvit", icon: "🌙" },
   { key: "shabbat", label: "Chabbat", icon: "🕯️" },
-  { key: "hallel", label: "Hallel", icon: "🎶" },
+  { key: "rosh_hodesh", label: "Roch 'Hodech", icon: "🌙" },
+  { key: "fetes", label: "Fêtes", icon: "🎺" },
+  { key: "hanukkah", label: "'Hanouka", icon: "🕎" },
+  { key: "purim", label: "Pourim", icon: "🎭" },
+  { key: "taanit", label: "Jeûnes", icon: "🕊️" },
   { key: "birkat", label: "Birkat", icon: "🍞" },
-  { key: "kaddish", label: "Kaddich", icon: "📜" },
+  { key: "berakhot", label: "Bérakhot", icon: "✡️" },
+  { key: "tikoun_hatsot", label: "Tikoun 'Hatsot", icon: "🌑" },
+  { key: "nissan", label: "Nissan", icon: "🌸" },
+  { key: "mishnayot_shabbat", label: "Michnayot", icon: "📖" },
+  { key: "birkat_halevana", label: "Birkat HaLévana", icon: "🌕" },
 ];
 
-const CACHE_PREFIX = "siddour_v6_";
+const CACHE_PREFIX = "siddour_v6_sefarade_";
 
 /** Detect the most relevant office based on current time */
 function detectOffice(): Office {
