@@ -973,6 +973,51 @@ export type Database = {
         }
         Relationships: []
       }
+      youtube_courses_cache: {
+        Row: {
+          channel_id: string
+          channel_name: string
+          created_at: string
+          description: string
+          duration: string | null
+          id: string
+          published_at: string
+          thumbnail_url: string
+          title: string
+          updated_at: string
+          video_id: string
+          view_count: number | null
+        }
+        Insert: {
+          channel_id: string
+          channel_name: string
+          created_at?: string
+          description?: string
+          duration?: string | null
+          id?: string
+          published_at: string
+          thumbnail_url?: string
+          title: string
+          updated_at?: string
+          video_id: string
+          view_count?: number | null
+        }
+        Update: {
+          channel_id?: string
+          channel_name?: string
+          created_at?: string
+          description?: string
+          duration?: string | null
+          id?: string
+          published_at?: string
+          thumbnail_url?: string
+          title?: string
+          updated_at?: string
+          video_id?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       zoom_tokens: {
         Row: {
           access_token: string
