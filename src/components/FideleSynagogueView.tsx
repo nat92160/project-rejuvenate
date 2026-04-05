@@ -583,8 +583,22 @@ const FideleSynagogueView = () => {
                       🕍
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-display text-sm font-bold leading-tight text-foreground">{gr.name}</h4>
-                      {gr.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {gr.address}</p>}
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-display text-sm font-bold leading-tight text-foreground">{gr.name}</h4>
+                        <button
+                          onClick={() => handleSubscribePlace(gr)}
+                          disabled={subscribing === gr.id}
+                          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-none cursor-pointer transition-all active:scale-90 disabled:opacity-50 text-base"
+                          style={
+                            subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name)
+                              ? { background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }
+                              : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                          }
+                          title="S'abonner"
+                        >
+                          {subscribing === gr.id ? "…" : subscribedPlaceNames.has(gr.name) || directory.some(d => d.isSubscribed && d.name === gr.name) ? "⭐" : "☆"}
+                        </button>
+                      </div>
                       <div className="mt-1 flex items-center gap-2">
                         <span className="text-[11px] font-bold text-primary/80">📏 {formatDistance(gr.distance)}</span>
                         {gr.travelDurationMinutes && (
