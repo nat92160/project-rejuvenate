@@ -316,12 +316,34 @@ const SynagogueChooser = ({ onSelect }: Props) => {
         )}
       </div>
 
-      {/* Results count */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          {loading ? "Recherche en cours..." : `${allItems.length} synagogue${allItems.length > 1 ? "s" : ""} trouvée${allItems.length > 1 ? "s" : ""}`}
-        </p>
-        {city.name && <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">{city.name}</span>}
+      {/* Results count + GPS accuracy notice */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {loading ? "Recherche en cours..." : `${allItems.length} synagogue${allItems.length > 1 ? "s" : ""} trouvée${allItems.length > 1 ? "s" : ""}`}
+          </p>
+          {city.name && <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">{city.name}</span>}
+        </div>
+        {!city._gps && !loading && allItems.length > 0 && (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-[11px]"
+            style={{ background: "hsl(38 92% 50% / 0.08)", color: "hsl(38 92% 50%)" }}
+          >
+            <Navigation className="w-3.5 h-3.5 shrink-0" />
+            <span>
+              Distances approximatives (centre de {city.name?.replace("📍 ", "")}).{" "}
+              <button
+                onClick={geolocate}
+                disabled={isGeolocating}
+                className="font-bold underline cursor-pointer bg-transparent border-none p-0"
+                style={{ color: "inherit" }}
+              >
+                {isGeolocating ? "Localisation..." : "Activer le GPS"}
+              </button>{" "}
+              pour des distances précises.
+            </span>
+          </div>
+        )}
       </div>
 
       {/* List */}
@@ -372,7 +394,9 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                       {isPartner && !item.verified && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">Non vérifié</span>}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs font-semibold" style={{ color: "hsl(var(--gold-matte))" }}>{formatDistance(dist)}</span>
+                      <span className="text-xs font-semibold" style={{ color: "hsl(var(--gold-matte))" }}>
+                        {!city._gps ? "≈ " : ""}{formatDistance(dist)}
+                      </span>
                       {item.address && <span className="text-[11px] text-muted-foreground truncate">· {item.address}</span>}
                     </div>
                     {fresh && (

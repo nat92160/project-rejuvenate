@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Phone, MapPin, Navigation, Mail, Building2 } from "lucide-react";
+import { useCity } from "@/hooks/useCity";
 
 interface SynaInfo {
   name: string;
@@ -16,34 +17,23 @@ interface Props {
 }
 
 const SynaInfoCard = ({ info }: Props) => {
-  const [userLat, setUserLat] = useState<number | null>(null);
-  const [userLng, setUserLng] = useState<number | null>(null);
+  const { city } = useCity();
   const [distance, setDistance] = useState<string | null>(null);
+  const isGps = !!city._gps;
 
   useEffect(() => {
     if (!info.latitude || !info.longitude) return;
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => {
-        setUserLat(pos.coords.latitude);
-        setUserLng(pos.coords.longitude);
-      },
-      () => {}
-    );
-  }, [info.latitude, info.longitude]);
-
-  useEffect(() => {
-    if (userLat == null || userLng == null || !info.latitude || !info.longitude) return;
     const R = 6371;
-    const dLat = ((info.latitude - userLat) * Math.PI) / 180;
-    const dLon = ((info.longitude - userLng) * Math.PI) / 180;
+    const dLat = ((info.latitude - city.lat) * Math.PI) / 180;
+    const dLon = ((info.longitude - city.lng) * Math.PI) / 180;
     const a =
       Math.sin(dLat / 2) ** 2 +
-      Math.cos((userLat * Math.PI) / 180) *
+      Math.cos((city.lat * Math.PI) / 180) *
         Math.cos((info.latitude * Math.PI) / 180) *
         Math.sin(dLon / 2) ** 2;
     const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     setDistance(d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`);
-  }, [userLat, userLng, info.latitude, info.longitude]);
+  }, [city.lat, city.lng, info.latitude, info.longitude]);
 
   const mapsUrl = info.latitude && info.longitude
     ? `https://www.google.com/maps/dir/?api=1&destination=${info.latitude},${info.longitude}`
@@ -77,7 +67,7 @@ const SynaInfoCard = ({ info }: Props) => {
             <h3 className="font-display text-base font-bold text-foreground leading-tight">{info.name}</h3>
             {distance && (
               <p className="mt-0.5 text-[11px] font-semibold" style={{ color: "hsl(var(--gold-matte))" }}>
-                📍 Vous êtes à {distance}
+                📍 Vous êtes à {!isGps ? "≈ " : ""}{distance}
               </p>
             )}
           </div>
