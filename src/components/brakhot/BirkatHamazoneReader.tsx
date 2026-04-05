@@ -55,10 +55,11 @@ const BirkatHamazoneReader = ({ onBack }: Props) => {
         {version.paragraphs.map((para, i) => (
           <div key={i} className="space-y-2">
             <p
-              className="text-lg leading-[2.2] font-semibold text-right"
+              className="text-lg leading-[2.4] font-semibold text-right"
               style={{
                 direction: "rtl",
-                fontFamily: "'David Libre', serif",
+                fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+                fontFeatureSettings: "'kern', 'mark', 'mkmk'",
                 color: "hsl(var(--foreground))",
               }}
             >
