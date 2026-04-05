@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { ChevronRight } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import type { ViewMode } from "@/hooks/useTransliteration";
 import { useWakeLock } from "@/hooks/useWakeLock";
@@ -20,38 +21,46 @@ interface SectionContent { hebrew: string[]; french: string[]; title: string; he
 
 const OFFICE_CATEGORIES = [
   {
+    id: "daily",
     label: "Quotidien",
+    icon: "📅",
     offices: [
-      { key: "shacharit" as Office, label: "Cha'harit", icon: "🌅" },
-      { key: "minha" as Office, label: "Min'ha", icon: "☀️" },
-      { key: "arvit" as Office, label: "Arvit", icon: "🌙" },
+      { key: "shacharit" as Office, label: "Cha'harit", icon: "🌅", desc: "Prière du matin" },
+      { key: "minha" as Office, label: "Min'ha", icon: "☀️", desc: "Prière de l'après-midi" },
+      { key: "arvit" as Office, label: "Arvit", icon: "🌙", desc: "Prière du soir" },
     ],
   },
   {
+    id: "shabbat",
     label: "Chabbat",
+    icon: "🕯️",
     offices: [
-      { key: "shabbat" as Office, label: "Chabbat complet", icon: "🕯️" },
-      { key: "mishnayot_shabbat" as Office, label: "Michnayot", icon: "📖" },
+      { key: "shabbat" as Office, label: "Chabbat complet", icon: "🕯️", desc: "Kabbalat Chabbat → Havdala" },
+      { key: "mishnayot_shabbat" as Office, label: "Michnayot", icon: "📖", desc: "Étude des repas de Chabbat" },
     ],
   },
   {
-    label: "Fêtes & Occasions",
+    id: "holidays",
+    label: "Fêtes",
+    icon: "🎺",
     offices: [
-      { key: "rosh_hodesh" as Office, label: "Roch 'Hodech", icon: "🌙" },
-      { key: "fetes" as Office, label: "Fêtes", icon: "🎺" },
-      { key: "hanukkah" as Office, label: "'Hanouka", icon: "🕎" },
-      { key: "purim" as Office, label: "Pourim", icon: "🎭" },
-      { key: "taanit" as Office, label: "Jeûnes", icon: "🕊️" },
-      { key: "nissan" as Office, label: "Nissan", icon: "🌸" },
+      { key: "rosh_hodesh" as Office, label: "Roch 'Hodech", icon: "🌙", desc: "Nouveau mois" },
+      { key: "fetes" as Office, label: "Fêtes", icon: "🎺", desc: "Pessa'h, Chavouot, Soukot" },
+      { key: "hanukkah" as Office, label: "'Hanouka", icon: "🕎", desc: "Allumage & Hallel" },
+      { key: "purim" as Office, label: "Pourim", icon: "🎭", desc: "Méguila & Séder" },
+      { key: "taanit" as Office, label: "Jeûnes", icon: "🕊️", desc: "Sélihot & deuil" },
+      { key: "nissan" as Office, label: "Nissan", icon: "🌸", desc: "Birkat HaIlanot" },
     ],
   },
   {
-    label: "Brakhot & Prières",
+    id: "brakhot",
+    label: "Brakhot",
+    icon: "🙏",
     offices: [
-      { key: "birkat" as Office, label: "Birkat HaMazone", icon: "🍞" },
-      { key: "berakhot" as Office, label: "Brakhot", icon: "🙏" },
-      { key: "birkat_halevana" as Office, label: "Birkat HaLévana", icon: "🌕" },
-      { key: "tikoun_hatsot" as Office, label: "Tikoun 'Hatsot", icon: "🌑" },
+      { key: "birkat" as Office, label: "Birkat HaMazone", icon: "🍞", desc: "Bénédiction du repas" },
+      { key: "berakhot" as Office, label: "Brakhot", icon: "🙏", desc: "Mariage, Brit, Téfila…" },
+      { key: "birkat_halevana" as Office, label: "Birkat HaLévana", icon: "🌕", desc: "Bénédiction de la lune" },
+      { key: "tikoun_hatsot" as Office, label: "Tikoun 'Hatsot", icon: "🌑", desc: "Prière de minuit" },
     ],
   },
 ];
@@ -94,6 +103,10 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
   const [loading, setLoading] = useState(false);
   const [tocLoading, setTocLoading] = useState(true);
   const [fontSize, setFontSize] = useState(24);
+  const [activeCategory, setActiveCategory] = useState(() => {
+    const currentOffice = initialOffice || detectOffice(getLiturgicalContext());
+    return OFFICE_CATEGORIES.find(c => c.offices.some(o => o.key === currentOffice))?.id || "daily";
+  });
   const [viewMode, setViewMode] = useState<ViewMode>("hebrew");
   const { favorites, toggle: toggleFavorite, isFavorite } = useSiddourFavorites();
   const { save: saveBookmark, load: loadBookmark, restoreScroll, startAutoSave } = useSiddourBookmark();
@@ -210,50 +223,88 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
       className="space-y-4"
       style={prayerMode ? { background: pmBg, margin: "-1rem", padding: "1rem", minHeight: "100vh" } : undefined}
     >
-      {/* Header */}
-      <div className="text-center py-3">
-        <p
-          className="text-[11px] font-medium tracking-wide uppercase"
-          style={{ color: pmMuted || "hsl(var(--muted-foreground))", letterSpacing: "0.15em" }}
-        >
-          Siddour · Rite Séfarade
-        </p>
+      {/* ── Category Tabs (segmented control) ── */}
+      <div
+        className="flex rounded-xl p-0.5 gap-0.5"
+        style={{
+          background: prayerMode ? "rgba(255,255,255,0.04)" : "hsl(var(--muted))",
+        }}
+      >
+        {OFFICE_CATEGORIES.map((cat) => {
+          const isActive = activeCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className="flex-1 flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-semibold cursor-pointer transition-all active:scale-[0.97]"
+              style={{
+                background: isActive
+                  ? (prayerMode ? "rgba(255,255,255,0.1)" : "hsl(var(--background))")
+                  : "transparent",
+                color: isActive
+                  ? (prayerMode ? "#e8e0d0" : "hsl(var(--foreground))")
+                  : (prayerMode ? "#666" : "hsl(var(--muted-foreground))"),
+                boxShadow: isActive ? "0 1px 3px hsl(var(--foreground) / 0.08)" : "none",
+                border: "none",
+              }}
+            >
+              <span className="text-xs">{cat.icon}</span>
+              <span className="hidden min-[380px]:inline">{cat.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Office selector — clean pill style */}
-      <div className="space-y-3">
-        {OFFICE_CATEGORIES.map((cat) => (
-          <div key={cat.label}>
-            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] mb-1.5 px-0.5" style={{ color: pmMuted || "hsl(var(--muted-foreground) / 0.6)" }}>
-              {cat.label}
-            </p>
-            <div className="flex gap-1.5 flex-wrap">
-              {cat.offices.map((off) => {
-                const isActive = office === off.key;
-                const isSuggested = off.key === suggestedOffice && !isActive;
-                return (
-                  <button
-                    key={off.key}
-                    onClick={() => { setOffice(off.key); setActiveSection(null); setViewMode("hebrew"); }}
-                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium transition-all cursor-pointer active:scale-95 whitespace-nowrap relative border"
-                    style={{
-                      background: isActive ? "hsl(var(--gold))" : "transparent",
-                      color: isActive ? "hsl(var(--primary-foreground))" : (prayerMode ? "#bbb" : "hsl(var(--foreground) / 0.7)"),
-                      borderColor: isActive ? "transparent" : (prayerMode ? "rgba(255,255,255,0.08)" : "hsl(var(--border))"),
-                    }}
-                  >
-                    <span className="text-xs">{off.icon}</span>
-                    <span>{off.label}</span>
+      {/* ── Offices grid for active category ── */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeCategory}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.15 }}
+          className="grid gap-1.5"
+          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}
+        >
+          {OFFICE_CATEGORIES.find(c => c.id === activeCategory)?.offices.map((off) => {
+            const isActive = office === off.key;
+            const isSuggested = off.key === suggestedOffice && !isActive;
+            return (
+              <button
+                key={off.key}
+                onClick={() => { setOffice(off.key); setActiveSection(null); setViewMode("hebrew"); }}
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left cursor-pointer transition-all active:scale-[0.97] border"
+                style={{
+                  background: isActive
+                    ? (prayerMode ? "rgba(255,215,0,0.1)" : "hsl(var(--gold) / 0.08)")
+                    : "transparent",
+                  borderColor: isActive
+                    ? "hsl(var(--gold) / 0.3)"
+                    : (prayerMode ? "rgba(255,255,255,0.06)" : "hsl(var(--border) / 0.5)"),
+                }}
+              >
+                <span className="text-lg">{off.icon}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[12px] font-semibold truncate" style={{ color: isActive ? "hsl(var(--gold-matte))" : (prayerMode ? "#ccc" : "hsl(var(--foreground))") }}>
+                      {off.label}
+                    </span>
                     {isSuggested && (
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(var(--gold))" }} />
+                      <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-full" style={{ background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }}>
+                        now
+                      </span>
                     )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
+                  </div>
+                  <p className="text-[10px] truncate" style={{ color: prayerMode ? "#777" : "hsl(var(--muted-foreground) / 0.6)" }}>
+                    {off.desc}
+                  </p>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-30" style={{ color: prayerMode ? "#555" : "hsl(var(--muted-foreground))" }} />
+              </button>
+            );
+          })}
+        </motion.div>
+      </AnimatePresence>
 
       {/* Liturgical context bar */}
       <LiturgicalContextBar
