@@ -2,6 +2,38 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import OmerCounterWidget from "@/components/OmerCounterWidget";
 import { getTodayOmerDay, getOmerPeriodDates } from "@/components/omer/omerData";
 import AuthModal from "@/components/AuthModal";
+import { useOmerPushSubscription } from "@/hooks/useOmerPushSubscription";
+import { Bell } from "lucide-react";
+import { toast } from "sonner";
+
+const OmerPushButton = () => {
+  const { isSubscribed, subscribe, unsubscribe, supported, loading } = useOmerPushSubscription();
+  if (!supported || loading) return null;
+  return (
+    <button
+      onClick={async () => {
+        if (isSubscribed) {
+          await unsubscribe();
+          toast.success("🔕 Rappels désactivés");
+        } else {
+          const ok = await subscribe();
+          if (ok) toast.success("🔔 Rappel activé !");
+          else toast.error("Impossible d'activer les notifications");
+        }
+      }}
+      className="mt-4 px-6 py-2.5 rounded-xl text-sm font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
+      style={{
+        background: isSubscribed
+          ? "hsl(var(--gold) / 0.15)"
+          : "linear-gradient(135deg, hsl(var(--gold)), hsl(var(--gold-matte)))",
+        color: isSubscribed ? "hsl(var(--gold-matte))" : "hsl(var(--card))",
+      }}
+    >
+      <Bell size={14} className="inline mr-1.5 -mt-0.5" />
+      {isSubscribed ? "🔕 Rappels activés" : "🔔 Recevoir un rappel chaque soir"}
+    </button>
+  );
+};
 
 const OmerLanding = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -97,15 +129,17 @@ const OmerLanding = () => {
             <p className="text-xs text-muted-foreground mt-3">
               Inscrivez-vous pour recevoir un rappel dès le premier soir !
             </p>
+            <OmerPushButton />
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("open-auth-modal"))}
-              className="mt-4 px-6 py-2.5 rounded-xl text-sm font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
+              className="mt-2 px-6 py-2 rounded-xl text-xs font-medium cursor-pointer border transition-all active:scale-[0.97]"
               style={{
-                background: "linear-gradient(135deg, hsl(var(--gold)), hsl(var(--gold-matte)))",
-                color: "hsl(var(--card))",
+                borderColor: "hsl(var(--gold) / 0.3)",
+                color: "hsl(var(--gold-matte))",
+                background: "hsl(var(--gold) / 0.08)",
               }}
             >
-              ✨ S'inscrire gratuitement
+              Créer un compte
             </button>
           </div>
         )}

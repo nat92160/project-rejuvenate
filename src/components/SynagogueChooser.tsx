@@ -181,6 +181,14 @@ const SynagogueChooser = ({ onSelect }: Props) => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Auto-geolocate on mount if no GPS position yet (improves distance accuracy)
+  useEffect(() => {
+    if (!city._gps && !isGeolocating) {
+      geolocate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const allItems: SynaItem[] = useMemo(() => {
     let list: SynaItem[] = [...partners, ...externals];
     if (search.trim()) {

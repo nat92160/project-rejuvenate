@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Share2, Check, UserPlus, Flame } from "lucide-react";
+import { Share2, Check, UserPlus, Flame, Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useOmerPushSubscription } from "@/hooks/useOmerPushSubscription";
 import {
   getTodayOmerDay,
   getOmerPeriodDates,
@@ -43,6 +44,7 @@ interface OmerCounterWidgetProps {
 
 const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = false }: OmerCounterWidgetProps) => {
   const { user, isAdmin } = useAuth();
+  const { isSubscribed: isPushSubscribed, subscribe: subscribePush, unsubscribe: unsubscribePush, supported: pushSupported } = useOmerPushSubscription();
   const [expanded, setExpanded] = useState(showInviteBanner);
   const realOmerDay = useMemo(() => getTodayOmerDay(), []);
   const currentYear = new Date().getFullYear();
@@ -163,20 +165,45 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
         <div className="absolute top-3 right-6 text-sm opacity-20 animate-pulse" style={{ animationDelay: "0.5s" }}>✨</div>
         <div className="absolute bottom-2 left-1/4 text-xs opacity-25 animate-pulse" style={{ animationDelay: "1s" }}>⭐</div>
 
-        <button
-          onClick={async () => {
-            const shared = await shareOmer(effectiveDay, shareCardRef.current);
-            if (shared) toast.success("Partage envoyé !");
-          }}
-          className="absolute top-4 right-4 p-2.5 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
-          style={{
-            background: "hsl(var(--gold) / 0.2)",
-            color: "hsl(var(--gold-matte))",
-          }}
-          title="Partager la Mitsva"
-        >
-          <Share2 size={18} />
-        </button>
+        <div className="absolute top-4 right-4 flex gap-1.5">
+          {pushSupported && (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (isPushSubscribed) {
+                  await unsubscribePush();
+                  toast.success("🔕 Rappels désactivés");
+                } else {
+                  const ok = await subscribePush();
+                  if (ok) toast.success("🔔 Vous recevrez un rappel chaque soir !");
+                  else toast.error("Impossible d'activer les notifications");
+                }
+              }}
+              className="p-2.5 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
+              style={{
+                background: isPushSubscribed ? "hsl(var(--gold) / 0.3)" : "hsl(var(--gold) / 0.2)",
+                color: "hsl(var(--gold-matte))",
+              }}
+              title={isPushSubscribed ? "Désactiver les rappels" : "Activer les rappels quotidiens"}
+            >
+              {isPushSubscribed ? <BellOff size={16} /> : <Bell size={16} />}
+            </button>
+          )}
+          <button
+            onClick={async () => {
+              const shared = await shareOmer(effectiveDay, shareCardRef.current);
+              if (shared) toast.success("Partage envoyé !");
+            }}
+            className="p-2.5 rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
+            style={{
+              background: "hsl(var(--gold) / 0.2)",
+              color: "hsl(var(--gold-matte))",
+            }}
+            title="Partager la Mitsva"
+          >
+            <Share2 size={18} />
+          </button>
+        </div>
 
         <motion.div
           className="text-4xl mb-2"
@@ -327,7 +354,24 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
                 <Share2 size={12} className="inline mr-1.5 -mt-0.5" />
                 Partager avec un ami
               </button>
-              {!user && (
+              {!user && pushSupported && !isPushSubscribed && (
+                <button
+                  onClick={async () => {
+                    const ok = await subscribePush();
+                    if (ok) toast.success("🔔 Rappel activé ! Vous serez notifié chaque soir.");
+                    else toast.error("Impossible d'activer les notifications");
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
+                  style={{
+                    background: `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`,
+                    color: "hsl(var(--card))",
+                  }}
+                >
+                  <Bell size={12} className="inline mr-1.5 -mt-0.5" />
+                  🔔 Recevoir un rappel chaque soir
+                </button>
+              )}
+              {!user && !pushSupported && (
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("open-auth-modal"))}
                   className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
