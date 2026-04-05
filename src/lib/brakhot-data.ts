@@ -429,6 +429,49 @@ export const BRAKHOT_DATA: BrakhaCategory[] = [
       },
     ],
   },
+  {
+    id: "evenements",
+    label: "Événements & Voyage",
+    icon: "✈️",
+    items: [
+      {
+        name: "Téfilat HaDérèkh (Voyage)",
+        icon: "🛣️",
+        rishona: {
+          hebrew: "יְהִי רָצוֹן מִלְּפָנֶיךָ ה' אֱלֹהֵינוּ וֵאלֹהֵי אֲבוֹתֵינוּ, שֶׁתּוֹלִיכֵנוּ לְשָׁלוֹם, וְתַצְעִידֵנוּ לְשָׁלוֹם, וְתִסְמְכֵנוּ לְשָׁלוֹם, וְתַדְרִיכֵנוּ לְשָׁלוֹם, וְתַגִּיעֵנוּ לִמְחוֹז חֶפְצֵנוּ לְחַיִּים וּלְשִׂמְחָה וּלְשָׁלוֹם. וְתַצִּילֵנוּ מִכַּף כָּל אוֹיֵב וְאוֹרֵב וְלִסְטִים וְחַיּוֹת רָעוֹת בַּדֶּרֶךְ, וּמִכָּל מִינֵי פֻּרְעָנִיּוֹת הַמִּתְרַגְּשׁוֹת לָבוֹא לָעוֹלָם. וְתִשְׁלַח בְּרָכָה בְּכָל מַעֲשֵׂה יָדֵינוּ, וְתִתְּנֵנוּ לְחֵן וּלְחֶסֶד וּלְרַחֲמִים בְּעֵינֶיךָ וּבְעֵינֵי כָל רוֹאֵינוּ, וְתִשְׁמַע קוֹל תַּחֲנוּנֵינוּ, כִּי אֵל שׁוֹמֵעַ תְּפִלָּה וְתַחֲנוּן אָתָּה. בָּרוּךְ אַתָּה ה', שׁוֹמֵעַ תְּפִלָּה.",
+          transliteration: "Yéhi ratson miléfanékha Ado-naï Élo-hénou véÉlo-hé avotéinou, chétolikhénou léchalom, vétatsiédénou léchalom, vétismkhénou léchalom, vétadrikhénou léchalom, vétagiénou lim'hoz 'heftsènou lé'hayim oulésim'ha ouléchalom. Vétatsilénou mikaf kol oyèv véorèv vélistim vé'hayot raot badérèkh, oumikhol miné fouraniout hamitragchot lavo laolam. Vétichla'h bérakha békhol maassé yadénou, vétitérénou lé'hèn oulé'hèssèd oulra'hamim béèynékha ouvéèyné kol roénou, vétichma kol ta'hanounénou, ki El choméa téfila véta'hanoun Ata. Baroukh Ata Ado-naï, choméa téfila.",
+          translation: "Que ce soit Ta volonté… de nous conduire en paix, de nous guider, de nous soutenir et de nous faire arriver à destination en vie, en joie et en paix. Sauve-nous de tout ennemi, embuscade, brigands et bêtes sauvages sur la route… Béni sois-Tu Éternel, Qui écoute la prière.",
+        },
+        aharona: { name: "—", hebrew: "", transliteration: "", translation: "" },
+        shiur: "Se dit une fois par trajet, après avoir quitté la ville (au-delà de 72 minutes de marche). On peut la dire debout ou assis.",
+        keywords: ["voyage", "route", "avion", "train", "voiture", "départ", "travel", "tefila", "derekh", "derech"],
+      },
+      {
+        name: "Birkat HaGomel (rescapé)",
+        icon: "🙏",
+        rishona: {
+          hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הַגּוֹמֵל לְחַיָּבִים טוֹבוֹת, שֶׁגְּמָלַנִי כָּל טוֹב.",
+          transliteration: "Baroukh Ata Ado-naï Élo-hénou Mélekh haolam, hagomel lé'hayavim tovot, chéguémalani kol tov.",
+          translation: "Béni sois-Tu… Qui accorde des bienfaits à ceux qui en sont redevables, et m'a accordé tout bien.",
+        },
+        aharona: { name: "Réponse de l'assemblée", hebrew: "מִי שֶׁגְּמָלְךָ כָּל טוֹב, הוּא יִגְמָלְךָ כָּל טוֹב. סֶלָה.", transliteration: "Mi chéguémalkha kol tov, hou yigmalkha kol tov. Séla.", translation: "Que Celui qui t'a accordé tout bien, continue à t'accorder tout bien. Séla." },
+        shiur: "Se dit devant un Séfer Torah après : voyage en avion/mer, maladie grave, accouchement, libération de prison. Doit être dit dans les 3 jours.",
+        keywords: ["gomel", "hagomel", "rescapé", "guérison", "accouchement", "avion", "voyage", "maladie"],
+      },
+      {
+        name: "Chéhé'héyanou (nouveauté)",
+        icon: "🎉",
+        rishona: {
+          hebrew: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, שֶׁהֶחֱיָנוּ וְקִיְּמָנוּ וְהִגִּיעָנוּ לַזְּמַן הַזֶּה.",
+          transliteration: "Baroukh Ata Ado-naï Élo-hénou Mélekh haolam, chéhé'héyanou vékiyémanou véhiguianou lazémane hazé.",
+          translation: "Béni sois-Tu… Qui nous a fait vivre, nous a maintenus et nous a fait parvenir à ce moment.",
+        },
+        aharona: { name: "—", hebrew: "", transliteration: "", translation: "" },
+        shiur: "Se dit pour : un fruit nouveau de la saison, un vêtement neuf important, l'entrée d'une fête (Yom Tov), retrouvailles après 30 jours.",
+        keywords: ["chehecheyanu", "shehecheyanu", "nouveau", "fête", "fruit", "vêtement", "joie"],
+      },
+    ],
+  },
 ];
 
 // ---- CAS COMPLEXES ----
@@ -473,6 +516,58 @@ export const COMPLEX_CASES: ComplexCase[] = [
 ];
 
 // ---- BIRKAT HAMAZONE ----
+
+export interface BirkatInsert {
+  id: string;
+  label: string;
+  icon: string;
+  hebrew: string;
+  transliteration: string;
+  instruction: string;
+}
+
+export const BIRKAT_INSERTS: BirkatInsert[] = [
+  {
+    id: "shabbat",
+    label: "Chabbat",
+    icon: "🕯️",
+    hebrew: "רְצֵה וְהַחֲלִיצֵנוּ ה' אֱלֹהֵינוּ בְּמִצְוֹתֶיךָ וּבְמִצְוַת יוֹם הַשְּׁבִיעִי הַשַּׁבָּת הַגָּדוֹל וְהַקָּדוֹשׁ הַזֶּה, כִּי יוֹם זֶה גָּדוֹל וְקָדוֹשׁ הוּא לְפָנֶיךָ, לִשְׁבָּת בּוֹ וְלָנוּחַ בּוֹ בְּאַהֲבָה כְּמִצְוַת רְצוֹנֶךָ. וּבִרְצוֹנְךָ הָנִיחַ לָנוּ ה' אֱלֹהֵינוּ, שֶׁלֹּא תְהֵא צָרָה וְיָגוֹן וַאֲנָחָה בְּיוֹם מְנוּחָתֵנוּ. וְהַרְאֵנוּ ה' אֱלֹהֵינוּ בְּנֶחָמַת צִיּוֹן עִירֶךָ, וּבְבִנְיַן יְרוּשָׁלַיִם עִיר קָדְשֶׁךָ, כִּי אַתָּה הוּא בַּעַל הַיְשׁוּעוֹת וּבַעַל הַנֶּחָמוֹת.",
+    transliteration: "Rétsé véha'halitsénou Ado-naï Élo-hénou bémitsvotékha ouvémitsvat yom hachévii hachabbat hagadol véhakadoch hazé, ki yom zé gadol vékadoch hou léfanékha, lichbat bo vélanoua'h bo béahava kémitsvat rétsonékha...",
+    instruction: "S'ajoute dans la 3e brakha (Ra'hèm), avant « Ouvné Yérouchalaïm »",
+  },
+  {
+    id: "rosh_hodesh",
+    label: "Roch Hodech",
+    icon: "🌙",
+    hebrew: "יַעֲלֶה וְיָבֹא וְיַגִּיעַ וְיֵרָאֶה וְיֵרָצֶה וְיִשָּׁמַע וְיִפָּקֵד וְיִזָּכֵר זִכְרוֹנֵנוּ וּפִקְדוֹנֵנוּ, וְזִכְרוֹן אֲבוֹתֵינוּ, וְזִכְרוֹן מָשִׁיחַ בֶּן דָּוִד עַבְדֶּךָ, וְזִכְרוֹן יְרוּשָׁלַיִם עִיר קָדְשֶׁךָ, וְזִכְרוֹן כָּל עַמְּךָ בֵּית יִשְׂרָאֵל לְפָנֶיךָ, לִפְלֵטָה לְטוֹבָה, לְחֵן וּלְחֶסֶד וּלְרַחֲמִים, לְחַיִּים וּלְשָׁלוֹם, בְּיוֹם רֹאשׁ הַחֹדֶשׁ הַזֶּה. זָכְרֵנוּ ה' אֱלֹהֵינוּ בּוֹ לְטוֹבָה, וּפָקְדֵנוּ בוֹ לִבְרָכָה, וְהוֹשִׁיעֵנוּ בוֹ לְחַיִּים טוֹבִים.",
+    transliteration: "Yaalé véyavo véyaguia véyéraé véyératsé véyichaméa véyipakèd véyizakhèr zikhronénou oufikdonénou, vézikron avotéinou, vézikron Machia'h bèn David avdékha, vézikron Yérouchalaïm ir kodchékha, vézikron kol amkha bèt Israël léfanékha, lifléta létova, lé'hèn oulé'hèssèd oulra'hamim, lé'hayim ouléchalom, béyom roch ha'hodèch hazé...",
+    instruction: "S'ajoute dans la 3e brakha (Ra'hèm), avant « Ouvné Yérouchalaïm ». On remplace « béyom roch ha'hodèch » par le nom de la fête concernée.",
+  },
+  {
+    id: "yom_tov",
+    label: "Yom Tov (fêtes)",
+    icon: "🎉",
+    hebrew: "יַעֲלֶה וְיָבֹא וְיַגִּיעַ וְיֵרָאֶה וְיֵרָצֶה וְיִשָּׁמַע וְיִפָּקֵד וְיִזָּכֵר זִכְרוֹנֵנוּ וּפִקְדוֹנֵנוּ, וְזִכְרוֹן אֲבוֹתֵינוּ, וְזִכְרוֹן מָשִׁיחַ בֶּן דָּוִד עַבְדֶּךָ, וְזִכְרוֹן יְרוּשָׁלַיִם עִיר קָדְשֶׁךָ, וְזִכְרוֹן כָּל עַמְּךָ בֵּית יִשְׂרָאֵל לְפָנֶיךָ, לִפְלֵטָה לְטוֹבָה, לְחֵן וּלְחֶסֶד וּלְרַחֲמִים, לְחַיִּים וּלְשָׁלוֹם, בְּיוֹם חַג (הַמַּצּוֹת / הַשָּׁבוּעוֹת / הַסֻּכּוֹת) הַזֶּה.",
+    transliteration: "Yaalé véyavo... béyom 'hag (hamatsot / hachavouyot / hassoukkot) hazé.",
+    instruction: "Même texte que Roch Hodech mais on dit le nom de la fête : Pessa'h (hamatsot), Chavouot (hachavouyot), Souccot (hassoukkot).",
+  },
+  {
+    id: "hanoucca",
+    label: "Hanoucca",
+    icon: "🕎",
+    hebrew: "עַל הַנִּסִּים וְעַל הַפֻּרְקָן וְעַל הַגְּבוּרוֹת וְעַל הַתְּשׁוּעוֹת וְעַל הַמִּלְחָמוֹת שֶׁעָשִׂיתָ לַאֲבוֹתֵינוּ בַּיָּמִים הָהֵם בַּזְּמַן הַזֶּה. בִּימֵי מַתִּתְיָהוּ בֶּן יוֹחָנָן כֹּהֵן גָּדוֹל, חַשְׁמוֹנָאִי וּבָנָיו, כְּשֶׁעָמְדָה מַלְכוּת יָוָן הָרְשָׁעָה עַל עַמְּךָ יִשְׂרָאֵל לְהַשְׁכִּיחָם תּוֹרָתֶךָ וּלְהַעֲבִירָם מֵחֻקֵּי רְצוֹנֶךָ. וְאַתָּה בְּרַחֲמֶיךָ הָרַבִּים עָמַדְתָּ לָהֶם בְּעֵת צָרָתָם, רַבְתָּ אֶת רִיבָם, דַּנְתָּ אֶת דִּינָם, נָקַמְתָּ אֶת נִקְמָתָם, מָסַרְתָּ גִבּוֹרִים בְּיַד חַלָּשִׁים, וְרַבִּים בְּיַד מְעַטִּים, וּטְמֵאִים בְּיַד טְהוֹרִים, וּרְשָׁעִים בְּיַד צַדִּיקִים, וְזֵדִים בְּיַד עוֹסְקֵי תוֹרָתֶךָ. וּלְךָ עָשִׂיתָ שֵׁם גָּדוֹל וְקָדוֹשׁ בְּעוֹלָמֶךָ, וּלְעַמְּךָ יִשְׂרָאֵל עָשִׂיתָ תְּשׁוּעָה גְדוֹלָה וּפֻרְקָן כְּהַיּוֹם הַזֶּה. וְאַחַר כָּךְ בָּאוּ בָנֶיךָ לִדְבִיר בֵּיתֶךָ, וּפִנּוּ אֶת הֵיכָלֶךָ, וְטִהֲרוּ אֶת מִקְדָּשֶׁךָ, וְהִדְלִיקוּ נֵרוֹת בְּחַצְרוֹת קָדְשֶׁךָ, וְקָבְעוּ שְׁמוֹנַת יְמֵי חֲנֻכָּה אֵלּוּ לְהוֹדוֹת וּלְהַלֵּל לְשִׁמְךָ הַגָּדוֹל.",
+    transliteration: "Al hanissim véal hapourkan véal haguévourot véal hatéchouot véal hamil'hamot chaassita laavotéinou bayamim hahèm bazémane hazé. Bimé Matityahou bèn Yo'hanane kohèn gadol, 'Hachmonaï ouvanav...",
+    instruction: "S'ajoute dans la 2e brakha (Nodé Lékha), après « békhol yom ouvékhol èt ouvékhol chaah ».",
+  },
+  {
+    id: "pourim",
+    label: "Pourim",
+    icon: "🎭",
+    hebrew: "עַל הַנִּסִּים וְעַל הַפֻּרְקָן וְעַל הַגְּבוּרוֹת וְעַל הַתְּשׁוּעוֹת וְעַל הַמִּלְחָמוֹת שֶׁעָשִׂיתָ לַאֲבוֹתֵינוּ בַּיָּמִים הָהֵם בַּזְּמַן הַזֶּה. בִּימֵי מָרְדְּכַי וְאֶסְתֵּר בְּשׁוּשַׁן הַבִּירָה, כְּשֶׁעָמַד עֲלֵיהֶם הָמָן הָרָשָׁע, בִּקֵּשׁ לְהַשְׁמִיד לַהֲרוֹג וּלְאַבֵּד אֶת כָּל הַיְּהוּדִים מִנַּעַר וְעַד זָקֵן טַף וְנָשִׁים בְּיוֹם אֶחָד, בִּשְׁלוֹשָׁה עָשָׂר לְחֹדֶשׁ שְׁנֵים עָשָׂר הוּא חֹדֶשׁ אֲדָר, וּשְׁלָלָם לָבוֹז. וְאַתָּה בְּרַחֲמֶיךָ הָרַבִּים הֵפַרְתָּ אֶת עֲצָתוֹ, וְקִלְקַלְתָּ אֶת מַחֲשַׁבְתּוֹ, וַהֲשֵׁבוֹתָ לּוֹ גְּמוּלוֹ בְּרֹאשׁוֹ, וְתָלוּ אוֹתוֹ וְאֶת בָּנָיו עַל הָעֵץ.",
+    transliteration: "Al hanissim véal hapourkan... Bimé Mordékhaï véEstèr béChouchane habira, kchéamad aléhèm Hamane haracha, bikèch léhachmid laharog ouléabed èt kol hayéhoudim minaar véad zakèn taf vénachim béyom é'had...",
+    instruction: "S'ajoute dans la 2e brakha (Nodé Lékha), après « békhol yom ouvékhol èt ouvékhol chaah ».",
+  },
+];
 
 export interface BirkatVersion {
   id: string;
@@ -526,10 +621,14 @@ export const BIRKAT_HAMAZONE: BirkatVersion[] = [
   },
   {
     id: "abregee",
-    name: "Version abrégée (voyage)",
+    name: "Version abrégée",
     paragraphs: [
       { hebrew: "בְּרִיךְ רַחֲמָנָא מַלְכָּא דְעָלְמָא מָרֵיהּ דְהַאי פִּתָּא.", transliteration: "Brikh Ra'hamana Malka déalma, Maréih déhaï pitta." },
-      { hebrew: "Cette formule abrégée est utilisée uniquement en cas d'urgence ou de voyage. Elle ne remplace pas le Birkat HaMazone complet dans des conditions normales." },
+      { hebrew: "בְּרִיךְ רַחֲמָנָא מַלְכָּא דְעָלְמָא מָרֵיהּ דְהַאי אַרְעָא.", transliteration: "Brikh Ra'hamana Malka déalma, Maréih déhaï araa." },
+      { hebrew: "בְּרִיךְ רַחֲמָנָא מַלְכָּא דְעָלְמָא דְיַהֲבָן לָן הַאי פִּתָּא.", transliteration: "Brikh Ra'hamana Malka déalma, déyahavan lane haï pitta." },
+      { hebrew: "בְּרִיךְ רַחֲמָנָא מַלְכָּא דְעָלְמָא רַחֲמָנָא דְעָנֵי לַעֲנִיֵּי, עֲנֵינָא.", transliteration: "Brikh Ra'hamana Malka déalma, Ra'hamana déané laaniyé, anéna." },
+      { hebrew: "בְּרִיךְ רַחֲמָנָא מַלְכָּא דְעָלְמָא דְיַהֲבָן לָן הַאי פִּתָּא וְהַאי יוֹמָא.", transliteration: "Brikh Ra'hamana Malka déalma, déyahavan lane haï pitta véhaï yoma." },
+      { hebrew: "⚠️ Cette formule abrégée en araméen est utilisée uniquement en cas d'urgence, de voyage ou lorsqu'on ne peut pas dire la version complète. Elle contient l'essentiel des 4 brakhot sous forme condensée. Elle ne remplace pas le Birkat HaMazone complet dans des conditions normales. Consultez votre Rav." },
     ],
   },
 ];
