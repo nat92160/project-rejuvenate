@@ -199,9 +199,13 @@ const SynagogueChooser = ({ onSelect }: Props) => {
   const handleSubscribe = async (synaId: string) => {
     if (!user) { toast.error("Connectez-vous pour choisir une synagogue"); return; }
     setSubscribing(synaId);
-    await supabase.from("synagogue_subscriptions").delete().eq("user_id", user.id);
-    await supabase.from("synagogue_subscriptions").insert({ user_id: user.id, synagogue_id: synaId } as any);
-    toast.success("🏛️ Synagogue définie ! Bienvenue dans votre communauté.");
+    if (subIds.includes(synaId)) {
+      await supabase.from("synagogue_subscriptions").delete().eq("user_id", user.id).eq("synagogue_id", synaId);
+      toast.success("Désabonné de cette synagogue");
+    } else {
+      await supabase.from("synagogue_subscriptions").insert({ user_id: user.id, synagogue_id: synaId } as any);
+      toast.success("🏛️ Abonné ! Vous recevrez les actualités de cette synagogue.");
+    }
     setSubscribing(null);
     onSelect?.();
   };
