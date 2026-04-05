@@ -320,7 +320,7 @@ const SiddourReader = ({
                 (() => {
                   let verseNum = 0;
                   let firstFound = false;
-                  return content.hebrew.map((verse, i) => {
+                  return (content.hebrew || []).map((verse, i) => {
                     if (isInstructionOnly(verse)) return null;
                     verseNum++;
                     if (!transliterations[i]) return null;
