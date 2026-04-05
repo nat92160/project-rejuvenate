@@ -495,15 +495,14 @@ const FideleSynagogueView = () => {
                           <button
                             onClick={() => handleSubscribe(syna.id)}
                             disabled={subscribing === syna.id}
-                            className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-none cursor-pointer transition-all active:scale-90 disabled:opacity-50"
+                            className="shrink-0 rounded-xl border-none px-3 py-1.5 text-[11px] font-bold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
                             style={
                               directory.find(d => d.id === syna.id)?.isSubscribed
-                                ? { background: "hsl(var(--gold) / 0.15)", color: "hsl(var(--gold-matte))" }
-                                : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                                ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                                : { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }
                             }
-                            title={directory.find(d => d.id === syna.id)?.isSubscribed ? "Se désabonner" : "S'abonner"}
                           >
-                            {subscribing === syna.id ? "…" : directory.find(d => d.id === syna.id)?.isSubscribed ? "⭐" : "☆"}
+                            {subscribing === syna.id ? "…" : directory.find(d => d.id === syna.id)?.isSubscribed ? "✓ Suivi" : "+ S'abonner"}
                           </button>
                         </div>
                         {syna.address && <p className="mt-1 text-[11px] text-muted-foreground">📍 {syna.address}</p>}
