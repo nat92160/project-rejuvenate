@@ -34,12 +34,12 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
 
   const handleToggle = (key: keyof LiturgicalPeriod) => {
     const newOverrides = { ...manualOverrides };
-    const currentValue = context[key];
+    const currentValue = !!(context as any)[key];
 
     // Toggle grouped options
     if (key === "mashivHaRouach") {
       newOverrides.mashivHaRouach = !currentValue;
-      newOverrides.moridHaTal = currentValue; // inverse
+      newOverrides.moridHaTal = currentValue;
     } else if (key === "moridHaTal") {
       newOverrides.moridHaTal = !currentValue;
       newOverrides.mashivHaRouach = currentValue;
