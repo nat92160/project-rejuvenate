@@ -168,24 +168,29 @@ function getSefiratDay(day: number): { attribute: string; within: string } {
   return { attribute: SEFIROT[dayIdx], within: SEFIROT[weekIdx] };
 }
 
-export async function shareOmer(day: number, _cardElement?: HTMLElement | null) {
+export async function shareOmer(day: number, _cardElement?: HTMLElement | null): Promise<boolean> {
   const text = getShareMessage(day);
   const title = `🌾 Omer Jour ${day} — Chabbat Chalom`;
   const url = getShareUrl();
 
-  // 1) Try native Web Share API immediately (preserves user gesture)
+  // 1) Try native Web Share API (preserves user gesture)
   if (navigator.share) {
     try {
       await navigator.share({ title, text, url });
-      return;
-    } catch {
-      // User cancelled or API failed — fall through
+      return true;
+    } catch (err: any) {
+      if (err?.name === "AbortError") return false;
     }
   }
 
-  // 2) Fallback: open WhatsApp with text
+  // 2) Fallback: copy to clipboard + open WhatsApp
+  try {
+    await navigator.clipboard.writeText(`${text}\n${url}`);
+  } catch { /* silent */ }
+
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
   window.open(whatsappUrl, "_blank") || window.location.assign(whatsappUrl);
+  return true;
 }
 
 // ─── Migration helper: push localStorage data to DB on first login ───
