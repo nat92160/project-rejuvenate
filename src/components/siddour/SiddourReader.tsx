@@ -73,6 +73,7 @@ interface SiddourReaderProps {
   isFavorite: boolean;
   onToggleFavorite: () => void;
   prayerMode?: boolean;
+  litContext?: LiturgicalPeriod;
 }
 
 const SiddourReader = ({
