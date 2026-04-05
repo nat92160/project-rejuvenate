@@ -82,7 +82,7 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
   }, [chapter, clearTransliterations]);
 
   useEffect(() => {
-    if ((viewMode === "phonetic" || viewMode === "bilingual") && verses.length > 0 && transliterations.length === 0) {
+    if (viewMode === "phonetic" && verses.length > 0 && transliterations.length === 0) {
       fetchTransliteration(verses, `psalm_${chapter}`);
     }
   }, [viewMode, verses, transliterations.length, chapter, fetchTransliteration]);
