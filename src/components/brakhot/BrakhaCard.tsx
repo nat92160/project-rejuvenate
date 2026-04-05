@@ -65,13 +65,16 @@ const BrakhaCard = ({ item, isExpanded, isFavorite, onToggle, onToggleFavorite }
                     Brakha A'harona (finale) — {item.aharona.name}
                   </p>
                   {item.aharona.hebrew !== "Voir section Birkat HaMazone complète" ? (
-                    <>
-                      <p
-                        className="text-sm leading-loose font-semibold text-right mb-2"
-                        style={{ direction: "rtl", fontFamily: "'David Libre', serif" }}
-                      >
-                        {item.aharona.hebrew}
-                      </p>
+                    <p
+                      className="text-base leading-[2.4] font-semibold text-right mb-2"
+                      style={{
+                        direction: "rtl",
+                        fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+                        fontFeatureSettings: "'kern', 'mark', 'mkmk'",
+                      }}
+                    >
+                      {item.aharona.hebrew}
+                    </p>
                       {item.aharona.transliteration && (
                         <p className="text-xs text-foreground italic mb-1">{item.aharona.transliteration}</p>
                       )}
