@@ -50,6 +50,77 @@ interface SynaItem {
   created_at: string;
 }
 
+const TestPushButton = () => {
+  const [sending, setSending] = useState(false);
+
+  const handleTestPush = async () => {
+    setSending(true);
+    try {
+      // Register SW and get subscription
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        toast.error("Les notifications push ne sont pas supportées sur ce navigateur");
+        setSending(false);
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        toast.error("Permission de notification refusée");
+        setSending(false);
+        return;
+      }
+
+      const reg = await navigator.serviceWorker.register("/sw-push.js");
+      const VAPID_PUBLIC_KEY = "BPEw1AhklkYgH1yJk9BrOmGhJfxTRGNMrHPpyBnLNd13gQpl8LB6TibiN0zd9XqJqXMTin7DidhxV9-mwjdOF6M";
+      const padding = "=".repeat((4 - (VAPID_PUBLIC_KEY.length % 4)) % 4);
+      const base64 = (VAPID_PUBLIC_KEY + padding).replace(/-/g, "+").replace(/_/g, "/");
+      const rawData = window.atob(base64);
+      const applicationServerKey = Uint8Array.from(rawData, (char) => char.charCodeAt(0));
+
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: applicationServerKey as unknown as BufferSource });
+      }
+
+      const key = sub.getKey("p256dh");
+      const auth = sub.getKey("auth");
+      if (!key || !auth) { toast.error("Clés push manquantes"); setSending(false); return; }
+
+      const toBase64url = (buf: ArrayBuffer) =>
+        btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+      // Call send-push directly with inline subscription (bypass synagogue filtering)
+      const { data, error } = await supabase.functions.invoke("send-push-test", {
+        body: {
+          endpoint: sub.endpoint,
+          p256dh: toBase64url(key),
+          auth: toBase64url(auth),
+          title: "🧪 Test Push — CalJ",
+          body: "Si vous voyez ceci, les notifications fonctionnent ! ✅",
+        },
+      });
+
+      if (error) throw error;
+      toast.success("✅ Notification de test envoyée !");
+    } catch (err) {
+      console.error("Test push error:", err);
+      toast.error("Erreur lors de l'envoi du test");
+    }
+    setSending(false);
+  };
+
+  return (
+    <button
+      onClick={handleTestPush}
+      disabled={sending}
+      className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50 transition-all active:scale-[0.98]"
+      style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+    >
+      {sending ? "⏳ Envoi en cours…" : "📲 Envoyer une notification test"}
+    </button>
+  );
+};
+
 const NOTIF_SETTINGS = [
   { key: "notif_chabbat", icon: "🕯️", label: "Rappel Chabbat", desc: "Push 18 min avant l'allumage des bougies chaque vendredi" },
   { key: "notif_omer", icon: "🌾", label: "Rappel Omer", desc: "Push quotidien pendant les 49 jours du Omer" },
@@ -139,6 +210,15 @@ const SettingsTab = () => {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Test push button */}
+      <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+        <h3 className="font-bold text-foreground mb-1">🧪 Test Push</h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Envoyez-vous une notification push de test pour vérifier que tout fonctionne.
+        </p>
+        <TestPushButton />
       </div>
     </div>
   );
