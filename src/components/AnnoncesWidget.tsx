@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { toast } from "sonner";
+import { shareText } from "@/lib/shareUtils";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import { exportPosterPng } from "@/components/poster/usePosterExport";
 
