@@ -364,7 +364,7 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                       className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer transition-all active:scale-95 text-primary-foreground shrink-0 disabled:opacity-50"
                       style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
                     >
-                      {subscribing === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Ma Synagogue"}
+                      {subscribing === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : subIds.includes(item.id) ? "✓ Abonné" : "+ S'abonner"}
                     </button>
                   )}
                 </div>
