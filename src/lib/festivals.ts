@@ -456,6 +456,11 @@ export async function fetchFestivalCards(city: CityConfig): Promise<FestivalCard
 
       days.sort((a, b) => a.date.localeCompare(b.date));
 
+      // ─── Post-process: each day shows what happens THAT EVENING ───
+      // Like Hebcal: "Allumage" on a day means you light candles THAT evening
+      // to enter the next sacred day. "Sortie" means the festival ends THAT evening.
+      postProcessDayTimes(days, city);
+
       const firstDate = days[0].date;
       const lastDate = days[days.length - 1].date;
       const firstDt = new Date(firstDate + "T12:00:00");
