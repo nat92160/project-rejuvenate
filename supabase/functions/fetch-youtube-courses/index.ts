@@ -7,7 +7,7 @@ const CHANNELS = [
   { handle: "RavTouitou", name: "Rav Touitou" },
   { handle: "ravbenchetrit", name: "Rav Benchetrit" },
   { handle: "RavDynovisz", name: "Rav Dynovisz" },
-  { handle: "ravdavidshoushana", name: "Rav Shoushana" },
+  { handle: "ravshoushana6704", name: "Rav Shoushana" },
 ];
 
 const CACHE_DURATION_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -53,6 +53,9 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const url = new URL(req.url);
+    const force = url.searchParams.get("force") === "true";
+
     const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
     if (!YOUTUBE_API_KEY) {
       return new Response(JSON.stringify({ error: "YOUTUBE_API_KEY not configured" }), {
@@ -65,25 +68,27 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check if cache is fresh
-    const { data: latestCache } = await supabase
-      .from("youtube_courses_cache")
-      .select("updated_at")
-      .order("updated_at", { ascending: false })
-      .limit(1);
+    // Check if cache is fresh (skip if force=true)
+    if (!force) {
+      const { data: latestCache } = await supabase
+        .from("youtube_courses_cache")
+        .select("updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(1);
 
-    const now = Date.now();
-    if (latestCache && latestCache.length > 0) {
-      const lastUpdate = new Date(latestCache[0].updated_at).getTime();
-      if (now - lastUpdate < CACHE_DURATION_MS) {
-        const { data: cached } = await supabase
-          .from("youtube_courses_cache")
-          .select("*")
-          .order("published_at", { ascending: false })
-          .limit(100);
-        return new Response(JSON.stringify({ source: "cache", data: cached || [] }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      const now = Date.now();
+      if (latestCache && latestCache.length > 0) {
+        const lastUpdate = new Date(latestCache[0].updated_at).getTime();
+        if (now - lastUpdate < CACHE_DURATION_MS) {
+          const { data: cached } = await supabase
+            .from("youtube_courses_cache")
+            .select("*")
+            .order("published_at", { ascending: false })
+            .limit(100);
+          return new Response(JSON.stringify({ source: "cache", data: cached || [] }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
     }
 
