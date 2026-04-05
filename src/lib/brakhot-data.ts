@@ -553,6 +553,7 @@ export const BIRKAT_INSERTS: BirkatInsert[] = [
     hebrew: "יַעֲלֶה וְיָבֹא וְיַגִּיעַ וְיֵרָאֶה וְיֵרָצֶה וְיִשָּׁמַע וְיִפָּקֵד וְיִזָּכֵר זִכְרוֹנֵנוּ וּפִקְדוֹנֵנוּ, וְזִכְרוֹן אֲבוֹתֵינוּ, וְזִכְרוֹן מָשִׁיחַ בֶּן דָּוִד עַבְדֶּךָ, וְזִכְרוֹן יְרוּשָׁלַיִם עִיר קָדְשֶׁךָ, וְזִכְרוֹן כָּל עַמְּךָ בֵּית יִשְׂרָאֵל לְפָנֶיךָ, לִפְלֵטָה לְטוֹבָה, לְחֵן וּלְחֶסֶד וּלְרַחֲמִים, לְחַיִּים וּלְשָׁלוֹם, בְּיוֹם חַג (הַמַּצּוֹת / הַשָּׁבוּעוֹת / הַסֻּכּוֹת) הַזֶּה.",
     transliteration: "Yaalé véyavo... béyom 'hag (hamatsot / hachavouyot / hassoukkot) hazé.",
     instruction: "Même texte que Roch Hodech mais on dit le nom de la fête : Pessa'h (hamatsot), Chavouot (hachavouyot), Souccot (hassoukkot).",
+    insertBeforeMarker: "וּבְנֵה יְרוּשָׁלַיִם",
   },
   {
     id: "hanoucca",
