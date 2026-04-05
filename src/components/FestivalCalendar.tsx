@@ -419,6 +419,7 @@ const DayTimeline = ({ day, festivalName, onCalendarClick, compact, isFirstDay =
   const showCandles = day.candles && (
     isFast ||
     day.type === "erev" ||
+    day.type === "yomtov" || // Yom Tov: candle lighting the eve before
     day.dayOfWeek === 5 || // Friday
     (isFirstDay && isLastDay) // single-day event
   );
