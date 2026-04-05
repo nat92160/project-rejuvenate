@@ -245,7 +245,6 @@ const SiddourReader = ({
                     </span>
                   );
                 });
-                });
               })()}
             </div>
           )}
