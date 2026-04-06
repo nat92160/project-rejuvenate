@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { shareText } from "@/lib/shareUtils";
-import { isNativePlatform, requestNativePushPermission } from "@/lib/capacitorPush";
+import { isNativePlatform, requestNativePushPermission, registerNativePush } from "@/lib/capacitorPush";
 
 interface PersonalDate {
   id: string;
