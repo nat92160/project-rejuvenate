@@ -149,6 +149,33 @@ const EspacePersonnelWidget = () => {
         return;
       }
     }
+
+    // Register native device token in push_subscriptions for each subscribed synagogue
+    if (native && user && !notifPrefs[key]) {
+      try {
+        const deviceToken = await registerNativePush();
+        if (deviceToken && subscribedSynas.length > 0) {
+          for (const syna of subscribedSynas) {
+            await (supabase.from("push_subscriptions") as any).upsert(
+              {
+                user_id: user.id,
+                synagogue_id: syna.synagogue_id,
+                push_type: "native",
+                device_token: deviceToken,
+                endpoint: null,
+                p256dh: null,
+                auth: null,
+              },
+              { onConflict: "user_id,synagogue_id,push_type" }
+            );
+          }
+          console.log("[EspacePush] Native token registered for", subscribedSynas.length, "synagogues");
+        }
+      } catch (err) {
+        console.error("[EspacePush] Error registering native token:", err);
+      }
+    }
+
     const newPrefs = { ...notifPrefs, [key]: !notifPrefs[key] };
     setNotifPrefs(newPrefs);
     localStorage.setItem("notif_prefs", JSON.stringify(newPrefs));
