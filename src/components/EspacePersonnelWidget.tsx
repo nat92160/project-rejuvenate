@@ -82,25 +82,38 @@ const NotifToggle = ({
   loading: boolean;
   onToggle: () => void;
 }) => (
-  <div className="flex items-center justify-between gap-3 py-2">
+  <button
+    type="button"
+    onClick={onToggle}
+    disabled={loading}
+    className="flex items-center justify-between gap-3 py-3 px-1 w-full text-left border-none bg-transparent cursor-pointer disabled:opacity-50 active:bg-muted/30 rounded-xl transition-colors -mx-1"
+    style={{ minHeight: 52, WebkitTapHighlightColor: "transparent" }}
+  >
     <div className="flex-1 min-w-0">
       <h4 className="font-display text-sm font-bold text-foreground flex items-center gap-2">
         {icon} {label}
       </h4>
       <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
     </div>
-    <button
-      onClick={onToggle}
-      disabled={loading}
-      className="relative h-7 w-12 rounded-full border-none cursor-pointer transition-colors duration-200 shrink-0"
-      style={{ background: enabled ? "hsl(var(--gold))" : "hsl(var(--muted))" }}
+    <span
+      className="relative shrink-0 rounded-full transition-colors duration-200"
+      style={{
+        width: 52,
+        height: 32,
+        background: enabled ? "hsl(var(--gold))" : "hsl(var(--muted))",
+      }}
+      aria-hidden="true"
     >
       <span
-        className="absolute top-0.5 block h-6 w-6 rounded-full bg-white shadow transition-transform duration-200"
-        style={{ transform: enabled ? "translateX(22px)" : "translateX(2px)" }}
+        className="absolute top-[3px] block rounded-full bg-white shadow transition-transform duration-200"
+        style={{
+          width: 26,
+          height: 26,
+          transform: enabled ? "translateX(23px)" : "translateX(3px)",
+        }}
       />
-    </button>
-  </div>
+    </span>
+  </button>
 );
 
 const EspacePersonnelWidget = () => {
