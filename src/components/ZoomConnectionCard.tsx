@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, ExternalLink, Unplug } from "lucide-react";
+import { ZOOM_REDIRECT_URI } from "@/lib/zoom";
 
 interface ZoomConnectionStatus {
   connected: boolean;
@@ -53,11 +54,8 @@ export function useZoomConnection() {
     }
 
     try {
-      // The redirect URI points back to our app with a special route
-      const redirectUri = `${window.location.origin}/zoom-callback`;
-
       const { data, error } = await supabase.functions.invoke("zoom-user-oauth", {
-        body: { action: "authorize", userId: user.id, redirectUri },
+        body: { action: "authorize", userId: user.id, redirectUri: ZOOM_REDIRECT_URI },
       });
 
       if (error || !data?.success) {
@@ -65,7 +63,6 @@ export function useZoomConnection() {
         return;
       }
 
-      // Redirect user to Zoom OAuth
       window.location.href = data.authUrl;
     } catch {
       toast.error("Erreur lors de la connexion Zoom.");
@@ -89,8 +86,6 @@ export function useZoomConnection() {
   return { ...status, startOAuth, disconnect, refresh: checkStatus };
 }
 
-// ── Zoom Connection Card UI ──
-
 export const ZoomConnectionCard = () => {
   const { connected, zoomEmail, expired, loading, startOAuth, disconnect } = useZoomConnection();
 
@@ -110,9 +105,7 @@ export const ZoomConnectionCard = () => {
           <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
           <div className="min-w-0">
             <p className="text-sm font-bold text-foreground">Zoom connecté</p>
-            {zoomEmail && (
-              <p className="text-xs text-muted-foreground truncate">{zoomEmail}</p>
-            )}
+            {zoomEmail && <p className="text-xs text-muted-foreground truncate">{zoomEmail}</p>}
           </div>
         </div>
         <p className="text-[11px] text-muted-foreground">

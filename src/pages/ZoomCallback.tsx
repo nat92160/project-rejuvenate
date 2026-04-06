@@ -1,19 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { ZOOM_REDIRECT_URI } from "@/lib/zoom";
 
 const ZoomCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
+  const hasStartedExchange = useRef(false);
 
   useEffect(() => {
     const code = searchParams.get("code");
     const state = searchParams.get("state");
+    let redirectTimer: number | undefined;
 
     if (!code || !state) {
       setStatus("error");
@@ -21,12 +22,16 @@ const ZoomCallback = () => {
       return;
     }
 
+    if (hasStartedExchange.current) {
+      return;
+    }
+
+    hasStartedExchange.current = true;
+
     const exchangeCode = async () => {
       try {
-        const redirectUri = `${window.location.origin}/zoom-callback`;
-
         const { data, error } = await supabase.functions.invoke("zoom-user-oauth", {
-          body: { action: "callback", code, state, redirectUri },
+          body: { action: "callback", code, state, redirectUri: ZOOM_REDIRECT_URI },
         });
 
         if (error || !data?.success) {
@@ -37,17 +42,21 @@ const ZoomCallback = () => {
 
         setStatus("success");
         setMessage(data.zoomEmail ? `Connecté en tant que ${data.zoomEmail}` : "Compte Zoom connecté !");
-
-        // Redirect home after 2s
-        setTimeout(() => navigate("/", { replace: true }), 2000);
+        redirectTimer = window.setTimeout(() => navigate("/", { replace: true }), 2000);
       } catch {
         setStatus("error");
         setMessage("Erreur inattendue. Veuillez réessayer.");
       }
     };
 
-    exchangeCode();
-  }, [searchParams, navigate, user?.id]);
+    void exchangeCode();
+
+    return () => {
+      if (redirectTimer) {
+        window.clearTimeout(redirectTimer);
+      }
+    };
+  }, [navigate, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
