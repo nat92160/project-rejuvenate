@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
+import { Capacitor } from "@capacitor/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,7 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { supabase } from "@/integrations/supabase/client";
-import { isNativePlatform, registerNativePush, requestNativePushPermission } from "@/lib/capacitorPush";
+import { registerNativePush, requestNativePushPermission } from "@/lib/capacitorPush";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import MinyanJoin from "./pages/MinyanJoin.tsx";
@@ -37,15 +38,44 @@ function AppInner() {
 
   const { user, loading } = useAuth();
   const nativePushBootstrappedRef = useRef<string | null>(null);
+  const nativePlatform = Capacitor.isNativePlatform();
+
+  console.log("[App] isNativePlatform:", nativePlatform);
+  console.log("[App] user:", user?.id ?? null);
+  console.log("[App] loading:", loading);
 
   useEffect(() => {
-    if (!isNativePlatform() || loading || !user) return;
-    if (nativePushBootstrappedRef.current === user.id) return;
-
-    nativePushBootstrappedRef.current = user.id;
-
     const bootstrapNativePush = async () => {
       try {
+        console.log("[App] Bootstrap push start");
+        console.log("[App] Bootstrap conditions", {
+          isNativePlatform: nativePlatform,
+          userId: user?.id ?? null,
+          loading,
+        });
+
+        if (!nativePlatform) {
+          console.log("[App] Skipping native push bootstrap: not a native platform");
+          return;
+        }
+
+        if (loading) {
+          console.log("[App] Skipping native push bootstrap: auth still loading");
+          return;
+        }
+
+        if (!user) {
+          console.log("[App] Skipping native push bootstrap: no authenticated user");
+          return;
+        }
+
+        if (nativePushBootstrappedRef.current === user.id) {
+          console.log("[App] Skipping native push bootstrap: already bootstrapped for user", user.id);
+          return;
+        }
+
+        nativePushBootstrappedRef.current = user.id;
+
         console.log("[App] Native platform detected, requesting push permission...");
         const granted = await requestNativePushPermission();
         console.log("[App] Native push permission granted:", granted);
@@ -81,8 +111,13 @@ function AppInner() {
       }
     };
 
-    void bootstrapNativePush();
-  }, [loading, user]);
+    try {
+      void bootstrapNativePush();
+    } catch (error) {
+      console.error("[App] Failed to invoke native push bootstrap:", error);
+      nativePushBootstrappedRef.current = null;
+    }
+  }, [loading, nativePlatform, user]);
 
   return (
     <TooltipProvider>
