@@ -25,99 +25,134 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService.tsx"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2, // 2 minutes before data is considered stale
-      gcTime: 1000 * 60 * 10,   // 10 minutes garbage collection
-      refetchOnWindowFocus: true, // Re-fetch when user returns to tab
+      staleTime: 1000 * 60 * 2,
+      gcTime: 1000 * 60 * 10,
+      refetchOnWindowFocus: true,
       retry: 2,
     },
   },
 });
 
+/**
+ * Save the native push token to push_subscriptions.
+ * Uses a raw SQL upsert via rpc to handle NULL synagogue_id correctly
+ * (PostgreSQL NULL ≠ NULL in unique constraints).
+ */
+async function saveNativePushToken(userId: string, deviceToken: string) {
+  // Use .insert() with manual conflict handling since NULL synagogue_id
+  // doesn't work with onConflict. First try to find existing row.
+  const { data: existing } = await supabase
+    .from("push_subscriptions")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("push_type", "native")
+    .is("synagogue_id", null)
+    .maybeSingle();
+
+  if (existing) {
+    // Update existing row
+    const { error } = await supabase
+      .from("push_subscriptions")
+      .update({ device_token: deviceToken } as never)
+      .eq("id", existing.id);
+    if (error) {
+      console.error("[App] Failed to update native push token:", error);
+      return false;
+    }
+  } else {
+    // Insert new row
+    const { error } = await supabase
+      .from("push_subscriptions")
+      .insert({
+        user_id: userId,
+        synagogue_id: null,
+        push_type: "native",
+        device_token: deviceToken,
+        endpoint: null,
+        p256dh: null,
+        auth: null,
+      } as never);
+    if (error) {
+      console.error("[App] Failed to insert native push token:", error);
+      return false;
+    }
+  }
+  return true;
+}
+
 function AppInner() {
   useServiceWorkerUpdate();
 
   const { user, loading } = useAuth();
-  const nativePushBootstrappedRef = useRef<string | null>(null);
-  const nativePlatform = Capacitor.isNativePlatform();
+  const permissionRequestedRef = useRef(false);
+  const tokenSavedForUserRef = useRef<string | null>(null);
+  const deviceTokenRef = useRef<string | null>(null);
 
-  console.log("[App] isNativePlatform:", nativePlatform);
-  console.log("[App] user:", user?.id ?? null);
-  console.log("[App] loading:", loading);
+  const isNative = Capacitor.isNativePlatform();
 
+  // ─── STEP 1: Request push permission IMMEDIATELY on native, no auth needed ───
   useEffect(() => {
-    const bootstrapNativePush = async () => {
-      try {
-        console.log("[App] Bootstrap push start");
-        console.log("[App] Bootstrap conditions", {
-          isNativePlatform: nativePlatform,
-          userId: user?.id ?? null,
-          loading,
-        });
-
-        if (!nativePlatform) {
-          console.log("[App] Skipping native push bootstrap: not a native platform");
-          return;
-        }
-
-        if (loading) {
-          console.log("[App] Skipping native push bootstrap: auth still loading");
-          return;
-        }
-
-        if (!user) {
-          console.log("[App] Skipping native push bootstrap: no authenticated user");
-          return;
-        }
-
-        if (nativePushBootstrappedRef.current === user.id) {
-          console.log("[App] Skipping native push bootstrap: already bootstrapped for user", user.id);
-          return;
-        }
-
-        nativePushBootstrappedRef.current = user.id;
-
-        console.log("[App] Native platform detected, requesting push permission...");
-        const granted = await requestNativePushPermission();
-        console.log("[App] Native push permission granted:", granted);
-        if (!granted) return;
-
-        console.log("[App] Registering native push token at app startup...");
-        const deviceToken = await registerNativePush();
-        if (!deviceToken) return;
-
-        const { error } = await supabase.from("push_subscriptions").upsert(
-          {
-            user_id: user.id,
-            synagogue_id: null,
-            push_type: "native",
-            device_token: deviceToken,
-            endpoint: null,
-            p256dh: null,
-            auth: null,
-          } as never,
-          { onConflict: "user_id,synagogue_id,push_type" }
-        );
-
-        if (error) {
-          console.error("[App] Failed to save native push token:", error);
-          nativePushBootstrappedRef.current = null;
-          return;
-        }
-
-        console.log("[App] Native push token saved successfully.");
-      } catch (error) {
-        console.error("[App] Native push bootstrap failed:", error);
-        nativePushBootstrappedRef.current = null;
-      }
-    };
-
-    try {
-      void bootstrapNativePush();
-    } catch (error) {
-      console.error("[App] Failed to invoke native push bootstrap:", error);
-      nativePushBootstrappedRef.current = null;
+    if (!isNative) {
+      console.log("[App] Not native platform, skipping push setup");
+      return;
     }
-  }, [loading, nativePlatform, user]);
+    if (permissionRequestedRef.current) return;
+    permissionRequestedRef.current = true;
+
+    console.log("[App] 🔔 Native platform detected! Requesting push permission NOW (no auth needed)...");
+
+    (async () => {
+      try {
+        const granted = await requestNativePushPermission();
+        console.log("[App] 🔔 Push permission result:", granted);
+
+        if (!granted) {
+          console.warn("[App] Push permission denied by user");
+          return;
+        }
+
+        console.log("[App] 🔔 Permission granted, registering for push token...");
+        const token = await registerNativePush();
+        console.log("[App] 🔔 Got device token:", token?.substring(0, 20) + "...");
+        deviceTokenRef.current = token;
+
+        // If user is already logged in, save immediately
+        if (user && token) {
+          console.log("[App] 🔔 User already logged in, saving token now...");
+          const saved = await saveNativePushToken(user.id, token);
+          if (saved) {
+            tokenSavedForUserRef.current = user.id;
+            console.log("[App] ✅ Native push token saved for user", user.id);
+          }
+        } else {
+          console.log("[App] 🔔 No user yet, token will be saved after login");
+        }
+      } catch (err) {
+        console.error("[App] ❌ Push bootstrap error:", err);
+      }
+    })();
+  }, [isNative]); // Only depends on isNative, NOT on user/loading
+
+  // ─── STEP 2: Save token when user becomes available (after login) ───
+  useEffect(() => {
+    if (!isNative || loading || !user) return;
+    if (!deviceTokenRef.current) return;
+    if (tokenSavedForUserRef.current === user.id) return;
+
+    console.log("[App] 🔔 User now available, saving pending push token...");
+
+    (async () => {
+      try {
+        const saved = await saveNativePushToken(user.id, deviceTokenRef.current!);
+        if (saved) {
+          tokenSavedForUserRef.current = user.id;
+          console.log("[App] ✅ Native push token saved after login for user", user.id);
+        }
+      } catch (err) {
+        console.error("[App] ❌ Failed to save push token after login:", err);
+      }
+    })();
+  }, [isNative, loading, user]);
 
   return (
     <TooltipProvider>
