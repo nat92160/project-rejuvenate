@@ -547,7 +547,7 @@ export type Database = {
           longitude: number | null
           p256dh: string | null
           push_type: string
-          synagogue_id: string
+          synagogue_id: string | null
           timezone: string | null
           user_id: string
         }
@@ -561,7 +561,7 @@ export type Database = {
           longitude?: number | null
           p256dh?: string | null
           push_type?: string
-          synagogue_id: string
+          synagogue_id?: string | null
           timezone?: string | null
           user_id: string
         }
@@ -575,7 +575,7 @@ export type Database = {
           longitude?: number | null
           p256dh?: string | null
           push_type?: string
-          synagogue_id?: string
+          synagogue_id?: string | null
           timezone?: string | null
           user_id?: string
         }
