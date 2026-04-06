@@ -1,4 +1,4 @@
-import appLogoIcon from "@/assets/chabbat-chalom-logo-ui.webp";
+import appLogoIcon from "@/assets/chabbat-chalom-logo-ui.png";
 
 const StarOfDavid = ({ size = 80 }: { size?: number }) => (
   <img
