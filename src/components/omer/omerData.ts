@@ -34,12 +34,14 @@ export function getOmerBlessing(day: number): { hebrew: string; phonetic: string
     }
   }
 
-  const hebrew = `בָּרוּךְ אַתָּה יְיָ אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו, וְצִוָּנוּ עַל סְפִירַת הָעֹמֶר. הַיּוֹם ${dayWord}${weeksPhrase} לָעֹמֶר.`;
+  const HARACHAMAN = "הָרַחֲמָן הוּא יַחֲזִיר עֲבוֹדַת בֵּית הַמִּקְדָּשׁ לִמְקוֹמָהּ, בִּמְהֵרָה בְיָמֵינוּ, אָמֵן סֶלָה.";
+
+  const hebrew = `בָּרוּךְ אַתָּה יְיָ אֱלֹהֵֽינוּ מֶֽלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָֽׁנוּ בְּמִצְוֹתָיו, וְצִוָּֽנוּ עַל סְפִירַת הָעֹֽמֶר.\n\nהַיּוֹם ${dayWord}${weeksPhrase} לָעֹֽמֶר.\n\n${HARACHAMAN}`;
 
   const dayPhonetic = day === 1 ? "yom é'had" : `${day} yamim`;
-  const phonetic = `Baroukh Ata Ado-naï Élo-hénou Mélekh HaOlam, Achère Kiddéchanou Bémitsvotav, Vétsivanou Al Séfirat HaOmer. HaYom ${dayPhonetic}${weeks > 0 ? `, chéhem ${weeks} chavouo${weeks > 1 ? "t" : "a"} vé${days} yamim` : ""} laOmer.`;
+  const phonetic = `Baroukh Ata Ado-naï Élo-hénou Mélekh HaOlam, Achère Kiddéchanou Bémitsvotav, Vétsivanou Al Séfirat HaOmer.\n\nHaYom ${dayPhonetic}${weeks > 0 ? `, chéhem ${weeks} chavouo${weeks > 1 ? "t" : "a"} vé${days} yamim` : ""} laOmer.\n\nHara'haman Hou Ya'hazir Avodat Beit Hamikdach Limekomah Bimhera Veyaménou, Amen Séla.`;
 
-  const french = `Béni sois-Tu Éternel notre D.ieu Roi du monde, qui nous a sanctifiés par Ses commandements et nous a ordonné le compte du Omer. Aujourd'hui ${day}${day === 1 ? "er" : ""} jour${weeks > 0 ? `, soit ${weeks} semaine${weeks > 1 ? "s" : ""} et ${days} jour${days > 1 ? "s" : ""}` : ""} du Omer.`;
+  const french = `Béni sois-Tu Éternel notre D.ieu Roi du monde, qui nous a sanctifiés par Ses commandements et nous a ordonné le compte du Omer.\n\nAujourd'hui ${day}${day === 1 ? "er" : ""} jour${weeks > 0 ? `, soit ${weeks} semaine${weeks > 1 ? "s" : ""} et ${days} jour${days > 1 ? "s" : ""}` : ""} du Omer.\n\nQue le Miséricordieux rétablisse le service du Temple en son lieu, rapidement de nos jours, Amen Séla.`;
 
   return { hebrew, phonetic, french };
 }
