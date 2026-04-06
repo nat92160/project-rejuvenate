@@ -46,12 +46,17 @@ Deno.serve(async (req) => {
 
       // State = userId (encrypted in production you'd use a JWT, here we use base64)
       const state = btoa(JSON.stringify({ userId, ts: Date.now() }));
+      const codeChallenge = body.codeChallenge as string | undefined;
       
-      const authUrl = `https://zoom.us/oauth/authorize?` +
+      let authUrl = `https://zoom.us/oauth/authorize?` +
         `response_type=code&` +
         `client_id=${ZOOM_CLIENT_ID}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=${encodeURIComponent(state)}`;
+
+      if (codeChallenge) {
+        authUrl += `&code_challenge=${encodeURIComponent(codeChallenge)}&code_challenge_method=S256`;
+      }
 
       return new Response(
         JSON.stringify({ success: true, authUrl }),
