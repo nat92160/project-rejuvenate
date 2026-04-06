@@ -86,9 +86,12 @@ export function useOmerPushSubscription() {
     // ─── Native push path ───
     if (native) {
       try {
+        console.log("[OmerPush] Native path: requesting permission...");
         const granted = await requestNativePushPermission();
+        console.log("[OmerPush] Permission granted:", granted);
         if (!granted) return false;
         const deviceToken = await registerNativePush();
+        console.log("[OmerPush] Device token received:", deviceToken ? "yes" : "no");
         if (!deviceToken) return false;
 
         const { error } = await (supabase
@@ -105,13 +108,13 @@ export function useOmerPushSubscription() {
             { onConflict: "endpoint" }
           );
 
-        if (error) { console.error("Omer native push sub error:", error); return false; }
+        if (error) { console.error("[OmerPush] DB upsert error:", error); return false; }
         localStorage.setItem("omer_native_push", "true");
         localStorage.setItem("omer_native_token", deviceToken);
         setIsSubscribed(true);
         return true;
       } catch (err) {
-        console.error("Omer native push error:", err);
+        console.error("[OmerPush] Native push error:", err);
         return false;
       }
     }
