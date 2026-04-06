@@ -1,11 +1,13 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
+import { supabase } from "@/integrations/supabase/client";
+import { isNativePlatform, registerNativePush, requestNativePushPermission } from "@/lib/capacitorPush";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import MinyanJoin from "./pages/MinyanJoin.tsx";
@@ -32,6 +34,55 @@ const queryClient = new QueryClient({
 
 function AppInner() {
   useServiceWorkerUpdate();
+
+  const { user, loading } = useAuth();
+  const nativePushBootstrappedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isNativePlatform() || loading || !user) return;
+    if (nativePushBootstrappedRef.current === user.id) return;
+
+    nativePushBootstrappedRef.current = user.id;
+
+    const bootstrapNativePush = async () => {
+      try {
+        console.log("[App] Native platform detected, requesting push permission...");
+        const granted = await requestNativePushPermission();
+        console.log("[App] Native push permission granted:", granted);
+        if (!granted) return;
+
+        console.log("[App] Registering native push token at app startup...");
+        const deviceToken = await registerNativePush();
+        if (!deviceToken) return;
+
+        const { error } = await supabase.from("push_subscriptions").upsert(
+          {
+            user_id: user.id,
+            synagogue_id: null,
+            push_type: "native",
+            device_token: deviceToken,
+            endpoint: null,
+            p256dh: null,
+            auth: null,
+          } as never,
+          { onConflict: "user_id,synagogue_id,push_type" }
+        );
+
+        if (error) {
+          console.error("[App] Failed to save native push token:", error);
+          nativePushBootstrappedRef.current = null;
+          return;
+        }
+
+        console.log("[App] Native push token saved successfully.");
+      } catch (error) {
+        console.error("[App] Native push bootstrap failed:", error);
+        nativePushBootstrappedRef.current = null;
+      }
+    };
+
+    void bootstrapNativePush();
+  }, [loading, user]);
 
   return (
     <TooltipProvider>
