@@ -355,6 +355,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
 
             {zoomSource === "auto" ? (
               <div className="space-y-3">
+                <ZoomConnectionCard />
                 <div className="rounded-xl border border-border bg-card p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
