@@ -46,12 +46,17 @@ Deno.serve(async (req) => {
 
       // State = userId (encrypted in production you'd use a JWT, here we use base64)
       const state = btoa(JSON.stringify({ userId, ts: Date.now() }));
+      const codeChallenge = body.codeChallenge as string | undefined;
       
-      const authUrl = `https://zoom.us/oauth/authorize?` +
+      let authUrl = `https://zoom.us/oauth/authorize?` +
         `response_type=code&` +
         `client_id=${ZOOM_CLIENT_ID}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=${encodeURIComponent(state)}`;
+
+      if (codeChallenge) {
+        authUrl += `&code_challenge=${encodeURIComponent(codeChallenge)}&code_challenge_method=S256`;
+      }
 
       return new Response(
         JSON.stringify({ success: true, authUrl }),
@@ -62,7 +67,7 @@ Deno.serve(async (req) => {
     // ── ACTION: callback ──
     // Exchange authorization code for tokens and store them
     if (action === "callback") {
-      const { code, state, redirectUri } = body;
+      const { code, state, redirectUri, codeVerifier } = body as Record<string, string>;
 
       if (!code || !state || !redirectUri) {
         return new Response(
@@ -98,12 +103,16 @@ Deno.serve(async (req) => {
 
       // Exchange code for tokens
       const credentials = btoa(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`);
-      const tokenParams = new URLSearchParams({
+      const tokenParamsObj: Record<string, string> = {
         grant_type: "authorization_code",
         code,
         redirect_uri: redirectUri,
-      });
-      console.log("Token exchange params:", { redirect_uri: redirectUri, code_length: code.length, client_id: ZOOM_CLIENT_ID });
+      };
+      if (codeVerifier) {
+        tokenParamsObj.code_verifier = codeVerifier;
+      }
+      const tokenParams = new URLSearchParams(tokenParamsObj);
+      console.log("Token exchange params:", { redirect_uri: redirectUri, code_length: code.length, client_id: ZOOM_CLIENT_ID, has_pkce: !!codeVerifier });
       
       const tokenResp = await fetch("https://zoom.us/oauth/token", {
         method: "POST",

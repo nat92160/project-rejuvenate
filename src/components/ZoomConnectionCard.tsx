@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, ExternalLink, Unplug } from "lucide-react";
-import { ZOOM_REDIRECT_URI } from "@/lib/zoom";
+import { ZOOM_REDIRECT_URI, generateCodeVerifier, generateCodeChallenge, storePkceVerifier } from "@/lib/zoom";
 
 interface ZoomConnectionStatus {
   connected: boolean;
@@ -54,8 +54,12 @@ export function useZoomConnection() {
     }
 
     try {
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+      storePkceVerifier(codeVerifier);
+
       const { data, error } = await supabase.functions.invoke("zoom-user-oauth", {
-        body: { action: "authorize", userId: user.id, redirectUri: ZOOM_REDIRECT_URI },
+        body: { action: "authorize", userId: user.id, redirectUri: ZOOM_REDIRECT_URI, codeChallenge },
       });
 
       if (error || !data?.success) {
