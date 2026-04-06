@@ -72,9 +72,9 @@ Deno.serve(async (req) => {
       if (!lat || !lng) {
         const fallbackTz = tz || "Europe/Paris";
         try {
-          const localHour = getLocalHour(now, fallbackTz);
-          // Send at ~20:30 local time (±5 min window handled by cron interval)
-          return localHour >= 20 && localHour < 21;
+          const localTime = getLocalHourMin(now, fallbackTz);
+          // Send at ~21:30 local time (±5 min window handled by cron interval)
+          return localTime.hour === 21 && localTime.min >= 25 && localTime.min < 35;
         } catch {
           return false;
         }
@@ -181,9 +181,10 @@ function getOmerDay(date: Date): number | null {
   return diffDays + 1;
 }
 
-function getLocalHour(date: Date, tz: string): number {
-  const str = date.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false });
-  return parseInt(str, 10);
+function getLocalHourMin(date: Date, tz: string): { hour: number; min: number } {
+  const h = parseInt(date.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false }), 10);
+  const m = parseInt(date.toLocaleString("en-US", { timeZone: tz, minute: "numeric" }), 10);
+  return { hour: h, min: m };
 }
 
 /**
