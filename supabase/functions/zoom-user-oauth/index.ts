@@ -103,12 +103,16 @@ Deno.serve(async (req) => {
 
       // Exchange code for tokens
       const credentials = btoa(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`);
-      const tokenParams = new URLSearchParams({
+      const tokenParamsObj: Record<string, string> = {
         grant_type: "authorization_code",
         code,
         redirect_uri: redirectUri,
-      });
-      console.log("Token exchange params:", { redirect_uri: redirectUri, code_length: code.length, client_id: ZOOM_CLIENT_ID });
+      };
+      if (codeVerifier) {
+        tokenParamsObj.code_verifier = codeVerifier;
+      }
+      const tokenParams = new URLSearchParams(tokenParamsObj);
+      console.log("Token exchange params:", { redirect_uri: redirectUri, code_length: code.length, client_id: ZOOM_CLIENT_ID, has_pkce: !!codeVerifier });
       
       const tokenResp = await fetch("https://zoom.us/oauth/token", {
         method: "POST",

@@ -54,8 +54,12 @@ export function useZoomConnection() {
     }
 
     try {
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+      storePkceVerifier(codeVerifier);
+
       const { data, error } = await supabase.functions.invoke("zoom-user-oauth", {
-        body: { action: "authorize", userId: user.id, redirectUri: ZOOM_REDIRECT_URI },
+        body: { action: "authorize", userId: user.id, redirectUri: ZOOM_REDIRECT_URI, codeChallenge },
       });
 
       if (error || !data?.success) {

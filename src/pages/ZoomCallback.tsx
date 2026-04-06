@@ -39,8 +39,9 @@ const ZoomCallback = () => {
 
     const exchangeCode = async () => {
       try {
+        const codeVerifier = consumePkceVerifier();
         const { data, error } = await supabase.functions.invoke("zoom-user-oauth", {
-          body: { action: "callback", code, state, redirectUri: ZOOM_REDIRECT_URI },
+          body: { action: "callback", code, state, redirectUri: ZOOM_REDIRECT_URI, codeVerifier },
         });
 
         if (error || !data?.success) {
