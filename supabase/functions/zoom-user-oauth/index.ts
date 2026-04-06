@@ -35,7 +35,6 @@ Deno.serve(async (req) => {
     // ── ACTION: authorize ──
     // Returns the Zoom OAuth URL the frontend should redirect to
     if (action === "authorize") {
-      const body = await req.json();
       const { userId, redirectUri } = body;
 
       if (!userId || !redirectUri) {
@@ -63,7 +62,6 @@ Deno.serve(async (req) => {
     // ── ACTION: callback ──
     // Exchange authorization code for tokens and store them
     if (action === "callback") {
-      const body = await req.json();
       const { code, state, redirectUri } = body;
 
       if (!code || !state || !redirectUri) {
@@ -165,7 +163,6 @@ Deno.serve(async (req) => {
     // ── ACTION: status ──
     // Check if current user has connected Zoom
     if (action === "status") {
-      const body = await req.json();
       const { userId } = body;
 
       if (!userId) {
@@ -201,7 +198,6 @@ Deno.serve(async (req) => {
 
     // ── ACTION: disconnect ──
     if (action === "disconnect") {
-      const body = await req.json();
       const { userId } = body;
 
       if (!userId) {
@@ -222,7 +218,6 @@ Deno.serve(async (req) => {
     // ── ACTION: refresh ──
     // Refresh an expired access token (internal use)
     if (action === "refresh") {
-      const body = await req.json();
       const { userId } = body;
 
       if (!userId) {
@@ -288,7 +283,6 @@ Deno.serve(async (req) => {
 
     // ── ACTION: create-meeting (per-user) ──
     if (action === "create-meeting") {
-      const body = await req.json();
       const { userId, title, duration, start_time, timezone, passcode, usePmi } = body;
 
       if (!userId) {
@@ -406,7 +400,6 @@ Deno.serve(async (req) => {
 
     // ── ACTION: get-pmi (per-user) ──
     if (action === "get-pmi") {
-      const body = await req.json();
       const { userId } = body;
 
       if (!userId) {
