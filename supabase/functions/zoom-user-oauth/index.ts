@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     // ── ACTION: callback ──
     // Exchange authorization code for tokens and store them
     if (action === "callback") {
-      const { code, state, redirectUri } = body;
+      const { code, state, redirectUri, codeVerifier } = body as Record<string, string>;
 
       if (!code || !state || !redirectUri) {
         return new Response(
