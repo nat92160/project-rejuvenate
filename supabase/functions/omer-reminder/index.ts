@@ -72,9 +72,9 @@ Deno.serve(async (req) => {
       if (!lat || !lng) {
         const fallbackTz = tz || "Europe/Paris";
         try {
-          const localHour = getLocalHour(now, fallbackTz);
-          // Send at ~20:30 local time (±5 min window handled by cron interval)
-          return localHour >= 20 && localHour < 21;
+          const localTime = getLocalHourMin(now, fallbackTz);
+          // Send at ~21:30 local time (±5 min window handled by cron interval)
+          return localTime.hour === 21 && localTime.min >= 25 && localTime.min < 35;
         } catch {
           return false;
         }
