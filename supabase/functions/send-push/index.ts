@@ -218,11 +218,13 @@ async function encryptPayload(
 
 // ─── APNs JWT for native push ─────────────────────────────
 async function createApnsJwt(): Promise<string | null> {
-  const keyId = Deno.env.get("APNS_KEY_ID");
-  const teamId = Deno.env.get("APNS_TEAM_ID");
+  const keyId = Deno.env.get("APNS_KEY_ID") || Deno.env.get("ID_CLÉ_APNS");
+  const teamId = Deno.env.get("APNS_TEAM_ID") || Deno.env.get("ID_ÉQUIPE_APNS");
   const authKeyBase64 = Deno.env.get("APNS_AUTH_KEY_BASE64");
 
+  console.log("[APNs] keyId found:", !!keyId, "teamId found:", !!teamId, "authKey found:", !!authKeyBase64);
   if (!keyId || !teamId || !authKeyBase64) {
+    console.error("[APNs] Missing credentials - keyId:", !!keyId, "teamId:", !!teamId, "authKeyBase64:", !!authKeyBase64);
     return null;
   }
 
@@ -307,7 +309,7 @@ async function sendApnsPush(
   body: string,
   apnsJwt: string
 ): Promise<boolean> {
-  const bundleId = Deno.env.get("APNS_BUNDLE_ID") || "com.chabbatchalom.app";
+  const bundleId = Deno.env.get("APNS_BUNDLE_ID") || Deno.env.get("ID_DE_LOT_APNS") || "com.chabbatchalom.app";
   const isProduction = Deno.env.get("APNS_PRODUCTION") !== "false";
   const host = isProduction
     ? "https://api.push.apple.com"

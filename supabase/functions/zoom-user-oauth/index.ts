@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     const action = url.searchParams.get("action") || (body.action as string) || null;
 
     const ZOOM_CLIENT_ID = Deno.env.get("ZOOM_CLIENT_ID");
-    const ZOOM_CLIENT_SECRET = Deno.env.get("ZOOM_CLIENT_SECRET");
+    const ZOOM_CLIENT_SECRET = Deno.env.get("ZOOM_CLIENT_SECRET") || Deno.env.get("SECRET_DU_CLIENT_ZOOM");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
