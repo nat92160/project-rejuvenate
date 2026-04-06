@@ -194,29 +194,43 @@ const EspacePersonnelWidget = () => {
 
   const toggleNotifPref = async (key: string) => {
     const isEnabling = !notifPrefs[key];
+    const nextPrefs = { ...notifPrefs, [key]: isEnabling };
 
-    if (!pushGranted && isEnabling) {
+    setNotifPrefs(nextPrefs);
+    localStorage.setItem("notif_prefs", JSON.stringify(nextPrefs));
+
+    if (!isEnabling) {
+      toast.success("Notification désactivée");
+      return;
+    }
+
+    if (!pushGranted) {
       setPushLoading(true);
       let permission: string;
-      if (native) {
-        const granted = await requestNativePushPermission();
-        permission = granted ? "granted" : "denied";
-      } else {
-        permission = await Notification.requestPermission();
+
+      try {
+        if (native) {
+          const granted = await requestNativePushPermission();
+          permission = granted ? "granted" : "denied";
+        } else {
+          permission = await Notification.requestPermission();
+        }
+      } finally {
+        setPushLoading(false);
       }
-      setPushLoading(false);
+
       if (permission !== "granted") {
+        const revertedPrefs = { ...nextPrefs, [key]: false };
+        setNotifPrefs(revertedPrefs);
+        localStorage.setItem("notif_prefs", JSON.stringify(revertedPrefs));
         toast.error("Activez les notifications dans les réglages de votre appareil.");
         return;
       }
     }
 
-    const newPrefs = { ...notifPrefs, [key]: isEnabling };
-    setNotifPrefs(newPrefs);
-    localStorage.setItem("notif_prefs", JSON.stringify(newPrefs));
-    toast.success(newPrefs[key] ? "✅ Notification activée" : "Notification désactivée");
+    toast.success("✅ Notification activée");
 
-    if (native && user && isEnabling) {
+    if (native && user) {
       void syncNativePushToken();
     }
   };
