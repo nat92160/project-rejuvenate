@@ -39,7 +39,8 @@ const ZoomCallback = () => {
 
         if (error || !data?.success) {
           setStatus("error");
-          setMessage(data?.error || "Échec de la connexion Zoom.");
+          const zoomDetails = data?.details ? " (Zoom: " + data.details + ")" : "";
+          setMessage((data?.error || "Échec de la connexion Zoom.") + zoomDetails);
           return;
         }
 

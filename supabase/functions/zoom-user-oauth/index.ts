@@ -113,8 +113,8 @@ Deno.serve(async (req) => {
         console.error("Zoom token exchange failed:", tokenResp.status, err);
         console.error("Used redirect_uri:", redirectUri);
         return new Response(
-          JSON.stringify({ error: "Failed to exchange authorization code", details: err, zoomStatus: tokenResp.status }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ success: false, error: "Failed to exchange authorization code", details: err, zoomStatus: tokenResp.status }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
