@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { ZOOM_REDIRECT_URI } from "@/lib/zoom";
+
+const ZOOM_CODE_KEY = "zoom_code_exchanged";
 
 const ZoomCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
-  const hasStartedExchange = useRef(false);
 
   useEffect(() => {
     const code = searchParams.get("code");
@@ -22,11 +23,13 @@ const ZoomCallback = () => {
       return;
     }
 
-    if (hasStartedExchange.current) {
+    // Robust guard: use sessionStorage to prevent double exchange
+    // (survives React remounts, strict mode, SW replays)
+    const alreadyExchanged = sessionStorage.getItem(ZOOM_CODE_KEY);
+    if (alreadyExchanged === code) {
       return;
     }
-
-    hasStartedExchange.current = true;
+    sessionStorage.setItem(ZOOM_CODE_KEY, code);
 
     const exchangeCode = async () => {
       try {

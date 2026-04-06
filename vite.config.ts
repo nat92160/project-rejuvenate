@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ["icons/icon-192.png", "icons/icon-512.png", "placeholder.svg"],
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        navigateFallbackDenylist: [/^\/~oauth/],
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/zoom-callback/],
         // Skip waiting on new SW install for faster updates
         skipWaiting: false,
         clientsClaim: true,
