@@ -181,9 +181,10 @@ function getOmerDay(date: Date): number | null {
   return diffDays + 1;
 }
 
-function getLocalHour(date: Date, tz: string): number {
-  const str = date.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false });
-  return parseInt(str, 10);
+function getLocalHourMin(date: Date, tz: string): { hour: number; min: number } {
+  const h = parseInt(date.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false }), 10);
+  const m = parseInt(date.toLocaleString("en-US", { timeZone: tz, minute: "numeric" }), 10);
+  return { hour: h, min: m };
 }
 
 /**
