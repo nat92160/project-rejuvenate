@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { shareText } from "@/lib/shareUtils";
+import { isNativePlatform, requestNativePushPermission } from "@/lib/capacitorPush";
 
 interface PersonalDate {
   id: string;
@@ -128,16 +129,23 @@ const EspacePersonnelWidget = () => {
     }
   });
   const [pushLoading, setPushLoading] = useState(false);
-  const pushSupported = "serviceWorker" in navigator && "PushManager" in window;
-  const pushGranted = pushSupported && "Notification" in window && Notification.permission === "granted";
+  const native = isNativePlatform();
+  const pushSupported = native || ("serviceWorker" in navigator && "PushManager" in window);
+  const pushGranted = native || (pushSupported && "Notification" in window && Notification.permission === "granted");
 
   const toggleNotifPref = async (key: string) => {
     if (!pushGranted && !notifPrefs[key]) {
       setPushLoading(true);
-      const permission = await Notification.requestPermission();
+      let permission: string;
+      if (native) {
+        const granted = await requestNativePushPermission();
+        permission = granted ? "granted" : "denied";
+      } else {
+        permission = await Notification.requestPermission();
+      }
       setPushLoading(false);
       if (permission !== "granted") {
-        toast.error("Activez les notifications dans les réglages du navigateur.");
+        toast.error("Activez les notifications dans les réglages de votre appareil.");
         return;
       }
     }
