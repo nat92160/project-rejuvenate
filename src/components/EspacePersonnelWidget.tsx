@@ -154,12 +154,29 @@ const EspacePersonnelWidget = () => {
     if (native && user && !notifPrefs[key]) {
       try {
         const deviceToken = await registerNativePush();
-        if (deviceToken && subscribedSynas.length > 0) {
-          for (const syna of subscribedSynas) {
+        if (deviceToken) {
+          if (subscribedSynas.length > 0) {
+            for (const syna of subscribedSynas) {
+              await (supabase.from("push_subscriptions") as any).upsert(
+                {
+                  user_id: user.id,
+                  synagogue_id: syna.synagogue_id,
+                  push_type: "native",
+                  device_token: deviceToken,
+                  endpoint: null,
+                  p256dh: null,
+                  auth: null,
+                },
+                { onConflict: "user_id,synagogue_id,push_type" }
+              );
+            }
+            console.log("[EspacePush] Native token registered for", subscribedSynas.length, "synagogues");
+          } else {
+            // No synagogue subscriptions — still persist token with null synagogue_id
             await (supabase.from("push_subscriptions") as any).upsert(
               {
                 user_id: user.id,
-                synagogue_id: syna.synagogue_id,
+                synagogue_id: null,
                 push_type: "native",
                 device_token: deviceToken,
                 endpoint: null,
@@ -168,8 +185,8 @@ const EspacePersonnelWidget = () => {
               },
               { onConflict: "user_id,synagogue_id,push_type" }
             );
+            console.log("[EspacePush] Native token registered without synagogue");
           }
-          console.log("[EspacePush] Native token registered for", subscribedSynas.length, "synagogues");
         }
       } catch (err) {
         console.error("[EspacePush] Error registering native token:", err);
