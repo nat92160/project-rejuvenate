@@ -333,21 +333,30 @@ export type Database = {
           created_at: string
           endpoint: string
           id: string
+          latitude: number | null
+          longitude: number | null
           p256dh: string
+          timezone: string | null
         }
         Insert: {
           auth: string
           created_at?: string
           endpoint: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           p256dh: string
+          timezone?: string | null
         }
         Update: {
           auth?: string
           created_at?: string
           endpoint?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           p256dh?: string
+          timezone?: string | null
         }
         Relationships: []
       }
@@ -534,9 +543,12 @@ export type Database = {
           device_token: string | null
           endpoint: string | null
           id: string
+          latitude: number | null
+          longitude: number | null
           p256dh: string | null
           push_type: string
           synagogue_id: string
+          timezone: string | null
           user_id: string
         }
         Insert: {
@@ -545,9 +557,12 @@ export type Database = {
           device_token?: string | null
           endpoint?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           p256dh?: string | null
           push_type?: string
           synagogue_id: string
+          timezone?: string | null
           user_id: string
         }
         Update: {
@@ -556,9 +571,12 @@ export type Database = {
           device_token?: string | null
           endpoint?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           p256dh?: string | null
           push_type?: string
           synagogue_id?: string
+          timezone?: string | null
           user_id?: string
         }
         Relationships: [
