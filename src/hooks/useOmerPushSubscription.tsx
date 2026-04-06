@@ -74,6 +74,24 @@ export function useOmerPushSubscription() {
       const auth = sub.getKey("auth");
       if (!key || !auth) return false;
 
+      // Grab user location for tzeit-based reminders
+      let lat: number | null = null;
+      let lng: number | null = null;
+      let tz = "Europe/Paris";
+      try {
+        const stored = localStorage.getItem("calj_gps_city");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.lat && parsed.lng) { lat = parsed.lat; lng = parsed.lng; }
+          if (parsed.tz) tz = parsed.tz;
+        }
+      } catch { /* use defaults */ }
+
+      // Fallback: try Intl timezone
+      if (tz === "Europe/Paris") {
+        try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch {}
+      }
+
       const { error } = await (supabase
         .from("omer_push_subscriptions" as any) as any)
         .upsert(
@@ -81,6 +99,9 @@ export function useOmerPushSubscription() {
             endpoint: sub.endpoint,
             p256dh: toBase64url(key),
             auth: toBase64url(auth),
+            latitude: lat,
+            longitude: lng,
+            timezone: tz,
           },
           { onConflict: "endpoint" }
         );
