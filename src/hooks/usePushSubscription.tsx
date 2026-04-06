@@ -128,7 +128,7 @@ export function usePushSubscription(synagogueId: string) {
             p256dh: null,
             auth: null,
           } as never,
-          { onConflict: "user_id,synagogue_id" }
+          { onConflict: "user_id,synagogue_id,push_type" }
         );
 
         if (error) {
@@ -179,7 +179,7 @@ export function usePushSubscription(synagogueId: string) {
           push_type: "web",
           device_token: null,
         } as never,
-        { onConflict: "user_id,endpoint,synagogue_id" }
+        { onConflict: "user_id,synagogue_id,push_type" }
       );
 
       if (error) {
