@@ -13,7 +13,10 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const action = url.searchParams.get("action");
+    const bodyText = await req.text();
+    let body: Record<string, unknown> = {};
+    try { body = bodyText ? JSON.parse(bodyText) : {}; } catch { body = {}; }
+    const action = url.searchParams.get("action") || (body.action as string) || null;
 
     const ZOOM_CLIENT_ID = Deno.env.get("ZOOM_CLIENT_ID");
     const ZOOM_CLIENT_SECRET = Deno.env.get("ZOOM_CLIENT_SECRET");
