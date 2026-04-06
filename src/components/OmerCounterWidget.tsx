@@ -176,7 +176,7 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
                 } else {
                   const ok = await subscribePush();
                   if (ok) toast.success("🔔 Vous recevrez un rappel chaque soir !");
-                  else toast.error("Impossible d'activer les notifications");
+                  else toast.error("Autorisez les notifications dans les réglages de votre appareil pour recevoir les rappels.");
                 }
               }}
               className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full border-none cursor-pointer transition-all hover:scale-110 active:scale-95"
