@@ -25,8 +25,10 @@ const config: CapacitorConfig = {
       style: 'LIGHT',
       backgroundColor: '#F8F6F0',
     },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
     Geolocation: {
-      // iOS Info.plist usage descriptions
       NSLocationWhenInUseUsageDescription:
         'Autorisez la localisation pour recevoir vos horaires d\'allumage et de sortie des étoiles précis selon votre ville.',
       NSLocationAlwaysUsageDescription:

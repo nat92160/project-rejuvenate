@@ -109,14 +109,21 @@ export function usePushSubscription(synagogueId: string) {
 
   // --- SUBSCRIBE ---
   const subscribe = useCallback(async () => {
-    if (!user) return false;
+    if (!user) {
+      console.warn("[Push] No user, skipping subscribe");
+      return false;
+    }
 
     if (native) {
       try {
+        console.log("[Push] Native platform detected, requesting permission...");
         const granted = await requestNativePushPermission();
+        console.log("[Push] Permission granted:", granted);
         if (!granted) return false;
 
+        console.log("[Push] Registering for native push...");
         const deviceToken = await registerNativePush();
+        console.log("[Push] Got device token:", deviceToken?.substring(0, 20) + "...");
 
         const { error } = await supabase.from("push_subscriptions").upsert(
           {
@@ -132,14 +139,15 @@ export function usePushSubscription(synagogueId: string) {
         );
 
         if (error) {
-          console.error("Native push sub save error:", error);
+          console.error("[Push] Native push sub save error:", error);
           return false;
         }
 
+        console.log("[Push] Native subscription saved successfully!");
         setIsSubscribed(true);
         return true;
       } catch (err) {
-        console.error("Native push subscribe error:", err);
+        console.error("[Push] Native push subscribe error:", err);
         return false;
       }
     }
