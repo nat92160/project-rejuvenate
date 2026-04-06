@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { isNativePlatform } from "@/lib/capacitorPush";
+import { isNativePlatform, requestNativePushPermission, registerNativePush } from "@/lib/capacitorPush";
 
 const VAPID_PUBLIC_KEY = "BNYI9Tgykt3mNibxS99dEslhBuB7Ek-69xf0AyPT9iXcSfzA_K_D-amPMuM4F9s3y0lS9g7GDOXF_Va63XcIeIM";
 
@@ -18,9 +18,27 @@ function toBase64url(buf: ArrayBuffer) {
     .replace(/=+$/, "");
 }
 
+function getLocationData() {
+  let lat: number | null = null;
+  let lng: number | null = null;
+  let tz = "Europe/Paris";
+  try {
+    const stored = localStorage.getItem("calj_gps_city");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.lat && parsed.lng) { lat = parsed.lat; lng = parsed.lng; }
+      if (parsed.tz) tz = parsed.tz;
+    }
+  } catch { /* use defaults */ }
+  if (tz === "Europe/Paris") {
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch {}
+  }
+  return { lat, lng, tz };
+}
+
 /**
  * Push subscription for Omer reminders — works WITHOUT authentication.
- * Uses the `omer_push_subscriptions` table (no user_id required).
+ * Supports both Web Push (guests on browser) and Native Push (iOS/Android).
  */
 export function useOmerPushSubscription() {
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -28,21 +46,27 @@ export function useOmerPushSubscription() {
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const native = isNativePlatform();
 
-  // Only web push supported for guests
-  const supported = !native && "serviceWorker" in navigator && "PushManager" in window;
+  const webSupported = !native && "serviceWorker" in navigator && "PushManager" in window;
+  const supported = native || webSupported;
 
-  // Register SW
+  // Register SW (web only)
   useEffect(() => {
-    if (!supported) { setLoading(false); return; }
+    if (native) {
+      // Check localStorage for native subscription state
+      setIsSubscribed(localStorage.getItem("omer_native_push") === "true");
+      setLoading(false);
+      return;
+    }
+    if (!webSupported) { setLoading(false); return; }
     navigator.serviceWorker
       .register("/sw-push.js")
       .then((reg) => setSwRegistration(reg))
       .catch(() => setLoading(false));
-  }, [supported]);
+  }, [native, webSupported]);
 
-  // Check existing subscription
+  // Check existing web subscription
   useEffect(() => {
-    if (!swRegistration) { setLoading(false); return; }
+    if (native || !swRegistration) { if (!native) setLoading(false); return; }
     swRegistration.pushManager.getSubscription().then(async (sub) => {
       if (sub) {
         const { data } = await (supabase
@@ -54,9 +78,45 @@ export function useOmerPushSubscription() {
       }
       setLoading(false);
     });
-  }, [swRegistration]);
+  }, [swRegistration, native]);
 
   const subscribe = useCallback(async () => {
+    const { lat, lng, tz } = getLocationData();
+
+    // ─── Native push path ───
+    if (native) {
+      try {
+        const granted = await requestNativePushPermission();
+        if (!granted) return false;
+        const deviceToken = await registerNativePush();
+        if (!deviceToken) return false;
+
+        const { error } = await (supabase
+          .from("omer_push_subscriptions" as any) as any)
+          .upsert(
+            {
+              endpoint: `apns://${deviceToken}`,
+              p256dh: "native",
+              auth: "native",
+              latitude: lat,
+              longitude: lng,
+              timezone: tz,
+            },
+            { onConflict: "endpoint" }
+          );
+
+        if (error) { console.error("Omer native push sub error:", error); return false; }
+        localStorage.setItem("omer_native_push", "true");
+        localStorage.setItem("omer_native_token", deviceToken);
+        setIsSubscribed(true);
+        return true;
+      } catch (err) {
+        console.error("Omer native push error:", err);
+        return false;
+      }
+    }
+
+    // ─── Web push path ───
     if (!swRegistration) return false;
     try {
       const permission = await Notification.requestPermission();
@@ -73,24 +133,6 @@ export function useOmerPushSubscription() {
       const key = sub.getKey("p256dh");
       const auth = sub.getKey("auth");
       if (!key || !auth) return false;
-
-      // Grab user location for tzeit-based reminders
-      let lat: number | null = null;
-      let lng: number | null = null;
-      let tz = "Europe/Paris";
-      try {
-        const stored = localStorage.getItem("calj_gps_city");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed.lat && parsed.lng) { lat = parsed.lat; lng = parsed.lng; }
-          if (parsed.tz) tz = parsed.tz;
-        }
-      } catch { /* use defaults */ }
-
-      // Fallback: try Intl timezone
-      if (tz === "Europe/Paris") {
-        try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch {}
-      }
 
       const { error } = await (supabase
         .from("omer_push_subscriptions" as any) as any)
@@ -113,9 +155,23 @@ export function useOmerPushSubscription() {
       console.error("Omer push subscribe error:", err);
       return false;
     }
-  }, [swRegistration]);
+  }, [swRegistration, native]);
 
   const unsubscribe = useCallback(async () => {
+    if (native) {
+      const token = localStorage.getItem("omer_native_token");
+      if (token) {
+        await (supabase
+          .from("omer_push_subscriptions" as any)
+          .delete() as any)
+          .eq("endpoint", `apns://${token}`);
+      }
+      localStorage.removeItem("omer_native_push");
+      localStorage.removeItem("omer_native_token");
+      setIsSubscribed(false);
+      return;
+    }
+
     if (!swRegistration) return;
     const sub = await swRegistration.pushManager.getSubscription();
     if (sub) {
@@ -125,7 +181,7 @@ export function useOmerPushSubscription() {
         .eq("endpoint", sub.endpoint);
     }
     setIsSubscribed(false);
-  }, [swRegistration]);
+  }, [swRegistration, native]);
 
   return { isSubscribed, subscribe, unsubscribe, loading, supported };
 }
