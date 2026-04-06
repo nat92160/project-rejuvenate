@@ -263,6 +263,17 @@ const EspacePersonnelWidget = () => {
     })();
   }, [user]);
 
+  // Auto-sync native push token on mount (independent of toggle state)
+  useEffect(() => {
+    if (!native || !user) return;
+    // Wait a tick so subscribedSynas is populated from the effect above
+    const timer = setTimeout(() => {
+      void syncNativePushToken();
+    }, 2000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [native, user, subscribedSynas]);
+
   const handleUnsubscribe = async (subId: string, synaName: string) => {
     setUnsubscribing(subId);
     await supabase.from("synagogue_subscriptions").delete().eq("id", subId);
