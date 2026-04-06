@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.chabbatchalom.app',
+  appId: 'com.chabbatchalom.15app',
   appName: 'Chabbat Chalom',
   webDir: 'dist',
   // server block removed for App Store production build
