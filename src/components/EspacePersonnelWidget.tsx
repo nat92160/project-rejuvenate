@@ -133,8 +133,56 @@ const EspacePersonnelWidget = () => {
   const pushSupported = native || ("serviceWorker" in navigator && "PushManager" in window);
   const pushGranted = native || (pushSupported && "Notification" in window && Notification.permission === "granted");
 
+  const syncNativePushToken = async () => {
+    if (!native || !user) return;
+
+    try {
+      const deviceToken = await registerNativePush();
+      if (!deviceToken) return;
+
+      const payloads =
+        subscribedSynas.length > 0
+          ? subscribedSynas.map((syna) => ({
+              user_id: user.id,
+              synagogue_id: syna.synagogue_id,
+              push_type: "native",
+              device_token: deviceToken,
+              endpoint: null,
+              p256dh: null,
+              auth: null,
+            }))
+          : [
+              {
+                user_id: user.id,
+                synagogue_id: null,
+                push_type: "native",
+                device_token: deviceToken,
+                endpoint: null,
+                p256dh: null,
+                auth: null,
+              },
+            ];
+
+      const { error } = await (supabase.from("push_subscriptions") as any).upsert(payloads, {
+        onConflict: "user_id,synagogue_id,push_type",
+      });
+
+      if (error) throw error;
+
+      console.log(
+        "[EspacePush] Native token synced for",
+        subscribedSynas.length > 0 ? subscribedSynas.length : "no synagogue",
+        "subscription(s)"
+      );
+    } catch (err) {
+      console.error("[EspacePush] Error registering native token:", err);
+    }
+  };
+
   const toggleNotifPref = async (key: string) => {
-    if (!pushGranted && !notifPrefs[key]) {
+    const isEnabling = !notifPrefs[key];
+
+    if (!pushGranted && isEnabling) {
       setPushLoading(true);
       let permission: string;
       if (native) {
@@ -150,53 +198,14 @@ const EspacePersonnelWidget = () => {
       }
     }
 
-    // Register native device token in push_subscriptions for each subscribed synagogue
-    if (native && user && !notifPrefs[key]) {
-      try {
-        const deviceToken = await registerNativePush();
-        if (deviceToken) {
-          if (subscribedSynas.length > 0) {
-            for (const syna of subscribedSynas) {
-              await (supabase.from("push_subscriptions") as any).upsert(
-                {
-                  user_id: user.id,
-                  synagogue_id: syna.synagogue_id,
-                  push_type: "native",
-                  device_token: deviceToken,
-                  endpoint: null,
-                  p256dh: null,
-                  auth: null,
-                },
-                { onConflict: "user_id,synagogue_id,push_type" }
-              );
-            }
-            console.log("[EspacePush] Native token registered for", subscribedSynas.length, "synagogues");
-          } else {
-            // No synagogue subscriptions — still persist token with null synagogue_id
-            await (supabase.from("push_subscriptions") as any).upsert(
-              {
-                user_id: user.id,
-                synagogue_id: null,
-                push_type: "native",
-                device_token: deviceToken,
-                endpoint: null,
-                p256dh: null,
-                auth: null,
-              },
-              { onConflict: "user_id,synagogue_id,push_type" }
-            );
-            console.log("[EspacePush] Native token registered without synagogue");
-          }
-        }
-      } catch (err) {
-        console.error("[EspacePush] Error registering native token:", err);
-      }
-    }
-
-    const newPrefs = { ...notifPrefs, [key]: !notifPrefs[key] };
+    const newPrefs = { ...notifPrefs, [key]: isEnabling };
     setNotifPrefs(newPrefs);
     localStorage.setItem("notif_prefs", JSON.stringify(newPrefs));
     toast.success(newPrefs[key] ? "✅ Notification activée" : "Notification désactivée");
+
+    if (native && user && isEnabling) {
+      void syncNativePushToken();
+    }
   };
 
   // Fetch subscribed synagogues
