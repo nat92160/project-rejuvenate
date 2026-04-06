@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, ExternalLink, Unplug } from "lucide-react";
-import { ZOOM_REDIRECT_URI } from "@/lib/zoom";
+import { ZOOM_REDIRECT_URI, generateCodeVerifier, generateCodeChallenge, storePkceVerifier } from "@/lib/zoom";
 
 interface ZoomConnectionStatus {
   connected: boolean;
