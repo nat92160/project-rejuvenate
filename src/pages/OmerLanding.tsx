@@ -18,7 +18,7 @@ const OmerPushButton = () => {
         } else {
           const ok = await subscribe();
           if (ok) toast.success("🔔 Rappel activé !");
-          else toast.error("Impossible d'activer les notifications");
+          else toast.error("Autorisez les notifications dans les réglages de votre appareil pour recevoir les rappels.");
         }
       }}
       className="mt-4 px-6 py-2.5 rounded-xl text-sm font-bold cursor-pointer border-none transition-all active:scale-[0.97]"
