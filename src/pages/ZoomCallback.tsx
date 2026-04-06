@@ -45,6 +45,7 @@ const ZoomCallback = () => {
 
         setStatus("success");
         setMessage(data.zoomEmail ? `Connecté en tant que ${data.zoomEmail}` : "Compte Zoom connecté !");
+        sessionStorage.removeItem(ZOOM_CODE_KEY);
         redirectTimer = window.setTimeout(() => navigate("/", { replace: true }), 2000);
       } catch {
         setStatus("error");
