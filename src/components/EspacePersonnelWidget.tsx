@@ -153,9 +153,25 @@ const EspacePersonnelWidget = () => {
       const deviceToken = await registerNativePush();
       if (!deviceToken) return;
 
-      const payloads =
-        subscribedSynas.length > 0
-          ? subscribedSynas.map((syna) => ({
+      // For each subscribed synagogue, upsert with the real synagogue_id
+      for (const syna of subscribedSynas) {
+        const { data: existing } = await supabase
+          .from("push_subscriptions")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("synagogue_id", syna.synagogue_id)
+          .eq("push_type", "native")
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from("push_subscriptions")
+            .update({ device_token: deviceToken } as never)
+            .eq("id", existing.id);
+        } else {
+          await supabase
+            .from("push_subscriptions")
+            .insert({
               user_id: user.id,
               synagogue_id: syna.synagogue_id,
               push_type: "native",
@@ -163,29 +179,42 @@ const EspacePersonnelWidget = () => {
               endpoint: null,
               p256dh: null,
               auth: null,
-            }))
-          : [
-              {
-                user_id: user.id,
-                synagogue_id: null,
-                push_type: "native",
-                device_token: deviceToken,
-                endpoint: null,
-                p256dh: null,
-                auth: null,
-              },
-            ];
+            } as never);
+        }
+      }
 
-      const { error } = await (supabase.from("push_subscriptions") as any).upsert(payloads, {
-        onConflict: "user_id,synagogue_id,push_type",
-      });
+      // Also upsert a row with NULL synagogue_id (for global notifications)
+      const { data: globalRow } = await supabase
+        .from("push_subscriptions")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("push_type", "native")
+        .is("synagogue_id", null)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (globalRow) {
+        await supabase
+          .from("push_subscriptions")
+          .update({ device_token: deviceToken } as never)
+          .eq("id", globalRow.id);
+      } else {
+        await supabase
+          .from("push_subscriptions")
+          .insert({
+            user_id: user.id,
+            synagogue_id: null,
+            push_type: "native",
+            device_token: deviceToken,
+            endpoint: null,
+            p256dh: null,
+            auth: null,
+          } as never);
+      }
 
       console.log(
         "[EspacePush] Native token synced for",
-        subscribedSynas.length > 0 ? subscribedSynas.length : "no synagogue",
-        "subscription(s)"
+        subscribedSynas.length,
+        "synagogue(s) + global"
       );
     } catch (err) {
       console.error("[EspacePush] Error registering native token:", err);
