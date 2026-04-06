@@ -92,24 +92,28 @@ Deno.serve(async (req) => {
 
       // Exchange code for tokens
       const credentials = btoa(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`);
+      const tokenParams = new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: redirectUri,
+      });
+      console.log("Token exchange params:", { redirect_uri: redirectUri, code_length: code.length, client_id: ZOOM_CLIENT_ID });
+      
       const tokenResp = await fetch("https://zoom.us/oauth/token", {
         method: "POST",
         headers: {
           Authorization: `Basic ${credentials}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({
-          grant_type: "authorization_code",
-          code,
-          redirect_uri: redirectUri,
-        }),
+        body: tokenParams,
       });
 
       if (!tokenResp.ok) {
         const err = await tokenResp.text();
         console.error("Zoom token exchange failed:", err);
+        console.error("Used redirect_uri:", redirectUri);
         return new Response(
-          JSON.stringify({ error: "Failed to exchange authorization code" }),
+          JSON.stringify({ error: "Failed to exchange authorization code", detail: err }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
