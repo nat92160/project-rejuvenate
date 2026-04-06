@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
@@ -11,6 +11,7 @@ const ZoomCallback = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
+  const hasStartedExchangeRef = useRef(false);
 
   useEffect(() => {
     const code = searchParams.get("code");
@@ -22,6 +23,11 @@ const ZoomCallback = () => {
       setMessage("Paramètres manquants. Veuillez réessayer la connexion Zoom.");
       return;
     }
+
+    if (hasStartedExchangeRef.current) {
+      return;
+    }
+    hasStartedExchangeRef.current = true;
 
     // Robust guard: use sessionStorage to prevent double exchange
     // (survives React remounts, strict mode, SW replays)
