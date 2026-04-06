@@ -71,6 +71,12 @@ Deno.serve(async (req) => {
         );
       }
 
+      console.info("Zoom callback received:", {
+        code_prefix: String(code).slice(0, 6),
+        redirect_uri: redirectUri,
+        timestamp: new Date().toISOString(),
+      });
+
       // Decode state to get userId
       let userId: string;
       try {
