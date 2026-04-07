@@ -409,6 +409,7 @@ Deno.serve(async (req) => {
     let sent = 0;
     const staleIds: string[] = [];
     let apnsJwtCreated = false;
+    const apnsErrors: { status: number; body: string; host: string }[] = [];
 
     // --- Send Web Push ---
     for (const sub of webSubs) {
@@ -449,13 +450,17 @@ Deno.serve(async (req) => {
       apnsJwtCreated = !!apnsJwt;
       if (apnsJwt) {
         for (const sub of nativeSubs) {
-          const success = await sendApnsPush(
+          const result = await sendApnsPush(
             sub.device_token!,
             pushTitle,
             pushBody,
             apnsJwt
           );
-          if (success) sent++;
+          if (result.success) {
+            sent++;
+          } else if (result.error) {
+            apnsErrors.push(result.error);
+          }
         }
       } else {
         console.warn("APNs credentials not configured — skipping native push");
@@ -467,7 +472,7 @@ Deno.serve(async (req) => {
       await supabase.from("push_subscriptions").delete().in("id", staleIds);
     }
 
-    return new Response(JSON.stringify({ sent, cleaned: staleIds.length, debug: { totalSubs: subs.length, webSubs: webSubs.length, nativeSubs: nativeSubs.length, apnsJwtCreated } }), {
+    return new Response(JSON.stringify({ sent, cleaned: staleIds.length, debug: { totalSubs: subs.length, webSubs: webSubs.length, nativeSubs: nativeSubs.length, apnsJwtCreated, apnsErrors } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
