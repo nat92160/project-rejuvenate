@@ -310,7 +310,7 @@ async function sendApnsPush(
   apnsJwt: string
 ): Promise<boolean> {
   const bundleId = Deno.env.get("APNS_BUNDLE_ID") || Deno.env.get("ID_DE_LOT_APNS") || "com.chabbatchalom.15app";
-  const isProduction = false;
+  const isProduction = Deno.env.get("APNS_PRODUCTION") !== "false";
   const host = isProduction
     ? "https://api.push.apple.com"
     : "https://api.sandbox.push.apple.com";
