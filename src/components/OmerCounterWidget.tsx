@@ -323,7 +323,7 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
               animate={{ scale: 1, opacity: 1 }}
               className="text-sm font-bold text-foreground"
             >
-              {getStreakMessage(streak)}
+              {getStreakMessage(omerDay ?? 1)}
             </motion.div>
 
             {streak > 1 && !user && (
