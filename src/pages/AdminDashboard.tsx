@@ -227,7 +227,7 @@ const SettingsTab = () => {
 const AdminDashboard = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "simulator" | "settings">("requests");
+  const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "settings">("requests");
   const [requests, setRequests] = useState<PresidentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
