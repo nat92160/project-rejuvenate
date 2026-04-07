@@ -19,8 +19,8 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
     <div
       ref={ref}
       style={{
-        width: 540,
-        minHeight: 960,
+        width: 720,
+        minHeight: 480,
         background: CREAM,
         fontFamily: "'Lora', 'Georgia', serif",
         color: NAVY,
