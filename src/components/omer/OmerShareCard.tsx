@@ -40,56 +40,53 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
         background: `linear-gradient(90deg, ${GOLD}, ${GOLD_LIGHT}, ${GOLD})`,
       }} />
 
-      {/* Header - using table layout for perfect vertical centering */}
+      {/* Header panel with two horizontal lines and centered Jour */}
       <div style={{
-        display: "table", width: "100%", marginBottom: 12, marginTop: 6,
+        position: "relative",
+        marginBottom: 14, marginTop: 8,
+        paddingTop: 8, paddingBottom: 8,
       }}>
-        <div style={{ display: "table-row" }}>
-          <div style={{
-            display: "table-cell", verticalAlign: "middle", textAlign: "right",
-            paddingRight: 16,
+        {/* Top horizontal gold line */}
+        <div style={{
+          position: "absolute", top: 0, left: 24, right: 24,
+          height: 1, background: `${GOLD}55`,
+        }} />
+        {/* Bottom horizontal gold line */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 24, right: 24,
+          height: 1, background: `${GOLD}55`,
+        }} />
+
+        {/* Content row */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          minHeight: 56,
+        }}>
+          {/* Left: SÉFIRAT HAOMER */}
+          <span style={{
+            fontSize: 10, letterSpacing: 4, fontWeight: 700,
+            textTransform: "uppercase" as const, color: GOLD,
+            position: "absolute", left: 28,
           }}>
-            <span style={{
-              fontSize: 10, letterSpacing: 4, fontWeight: 700,
-              textTransform: "uppercase" as const, color: GOLD,
-            }}>
-              Séfirat HaOmer
-            </span>
-          </div>
-          <div style={{
-            display: "table-cell", verticalAlign: "middle",
-            width: 2, background: GOLD,
+            Séfirat HaOmer
+          </span>
+
+          {/* Center: Jour N — 50% larger (54px) */}
+          <span style={{
+            fontFamily: "'Playfair Display', 'Georgia', serif",
+            fontSize: 54, fontWeight: 900, color: NAVY,
+            lineHeight: "1",
           }}>
-            <div style={{ width: 2, height: 32 }} />
-          </div>
-          <div style={{
-            display: "table-cell", verticalAlign: "middle", textAlign: "center",
-            paddingLeft: 16, paddingRight: 16,
+            Jour {day}
+          </span>
+
+          {/* Right: Sefira attribute */}
+          <span style={{
+            fontSize: 13, fontWeight: 700, color: GOLD,
+            position: "absolute", right: 28,
           }}>
-            <span style={{
-              fontFamily: "'Playfair Display', 'Georgia', serif",
-              fontSize: 36, fontWeight: 900, color: NAVY,
-              lineHeight: "1",
-            }}>
-              Jour {day}
-            </span>
-          </div>
-          <div style={{
-            display: "table-cell", verticalAlign: "middle",
-            width: 2, background: GOLD,
-          }}>
-            <div style={{ width: 2, height: 32 }} />
-          </div>
-          <div style={{
-            display: "table-cell", verticalAlign: "middle", textAlign: "left",
-            paddingLeft: 16,
-          }}>
-            <span style={{
-              fontSize: 13, fontWeight: 700, color: GOLD,
-            }}>
-              {sefira.attribute} · {sefira.within}
-            </span>
-          </div>
+            {sefira.attribute} · {sefira.within}
+          </span>
         </div>
       </div>
 
