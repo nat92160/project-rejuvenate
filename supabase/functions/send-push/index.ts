@@ -308,7 +308,7 @@ async function sendApnsPush(
   title: string,
   body: string,
   apnsJwt: string
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: { status: number; body: string; host: string } }> {
   const bundleId = Deno.env.get("APNS_BUNDLE_ID") || Deno.env.get("ID_DE_LOT_APNS") || "com.chabbatchalom.15app";
   const isProduction = Deno.env.get("APNS_PRODUCTION") !== "false";
   const host = isProduction
@@ -336,14 +336,14 @@ async function sendApnsPush(
       body: JSON.stringify(apnsPayload),
     });
 
-    if (res.status === 200) return true;
+    if (res.status === 200) return { success: true };
     
     const errText = await res.text();
     console.error(`APNs error for ${deviceToken}: ${res.status} ${errText}`);
-    return false;
+    return { success: false, error: { status: res.status, body: errText, host } };
   } catch (e) {
     console.error(`APNs fetch error for ${deviceToken}:`, e);
-    return false;
+    return { success: false, error: { status: 0, body: String(e), host } };
   }
 }
 
@@ -409,6 +409,7 @@ Deno.serve(async (req) => {
     let sent = 0;
     const staleIds: string[] = [];
     let apnsJwtCreated = false;
+    const apnsErrors: { status: number; body: string; host: string }[] = [];
 
     // --- Send Web Push ---
     for (const sub of webSubs) {
@@ -449,13 +450,17 @@ Deno.serve(async (req) => {
       apnsJwtCreated = !!apnsJwt;
       if (apnsJwt) {
         for (const sub of nativeSubs) {
-          const success = await sendApnsPush(
+          const result = await sendApnsPush(
             sub.device_token!,
             pushTitle,
             pushBody,
             apnsJwt
           );
-          if (success) sent++;
+          if (result.success) {
+            sent++;
+          } else if (result.error) {
+            apnsErrors.push(result.error);
+          }
         }
       } else {
         console.warn("APNs credentials not configured — skipping native push");
@@ -467,7 +472,7 @@ Deno.serve(async (req) => {
       await supabase.from("push_subscriptions").delete().in("id", staleIds);
     }
 
-    return new Response(JSON.stringify({ sent, cleaned: staleIds.length, debug: { totalSubs: subs.length, webSubs: webSubs.length, nativeSubs: nativeSubs.length, apnsJwtCreated } }), {
+    return new Response(JSON.stringify({ sent, cleaned: staleIds.length, debug: { totalSubs: subs.length, webSubs: webSubs.length, nativeSubs: nativeSubs.length, apnsJwtCreated, apnsErrors } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
