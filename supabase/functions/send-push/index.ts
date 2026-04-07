@@ -308,7 +308,7 @@ async function sendApnsPush(
   title: string,
   body: string,
   apnsJwt: string
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: { status: number; body: string; host: string } }> {
   const bundleId = Deno.env.get("APNS_BUNDLE_ID") || Deno.env.get("ID_DE_LOT_APNS") || "com.chabbatchalom.15app";
   const isProduction = Deno.env.get("APNS_PRODUCTION") !== "false";
   const host = isProduction
@@ -336,14 +336,14 @@ async function sendApnsPush(
       body: JSON.stringify(apnsPayload),
     });
 
-    if (res.status === 200) return true;
+    if (res.status === 200) return { success: true };
     
     const errText = await res.text();
     console.error(`APNs error for ${deviceToken}: ${res.status} ${errText}`);
-    return false;
+    return { success: false, error: { status: res.status, body: errText, host } };
   } catch (e) {
     console.error(`APNs fetch error for ${deviceToken}:`, e);
-    return false;
+    return { success: false, error: { status: 0, body: String(e), host } };
   }
 }
 
