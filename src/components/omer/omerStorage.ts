@@ -168,13 +168,54 @@ function getSefiratDay(day: number): { attribute: string; within: string } {
   return { attribute: SEFIROT[dayIdx], within: SEFIROT[weekIdx] };
 }
 
-export async function shareOmer(day: number, _cardElement?: HTMLElement | null): Promise<boolean> {
-  const text = getShareMessage(day);
+export async function shareOmer(day: number, cardElement?: HTMLElement | null): Promise<boolean> {
   const title = `🌾 Omer Jour ${day} — Chabbat Chalom`;
-  const url = getShareUrl();
-  const fullText = `${text}\n${url}`;
 
-  // Use the centralized share utility
+  // Try to generate an image from the card element
+  if (cardElement) {
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(cardElement, {
+        scale: 2,
+        backgroundColor: null,
+        useCORS: true,
+        logging: false,
+      });
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/png")
+      );
+
+      if (blob) {
+        const file = new File([blob], `omer-jour-${day}.png`, { type: "image/png" });
+
+        // Try native share with file
+        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+          await navigator.share({
+            title,
+            text: `🌾 Séfirat HaOmer — Jour ${day}/49\n👉 ${getShareUrl()}`,
+            files: [file],
+          });
+          return true;
+        }
+
+        // Fallback: download the image
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `omer-jour-${day}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+        return true;
+      }
+    } catch (err) {
+      console.error("[OmerShare] Image generation failed:", err);
+    }
+  }
+
+  // Fallback: share as text
+  const text = getShareMessage(day);
+  const fullText = `${text}\n${getShareUrl()}`;
   const { shareText } = await import("@/lib/shareUtils");
   return shareText(fullText, title);
 }

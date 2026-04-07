@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { getSefiratDay, getWeeksAndDays } from "@/components/omer/omerData";
+import { getSefiratDay, getWeeksAndDays, getOmerBlessing } from "@/components/omer/omerData";
 
 interface OmerShareCardProps {
   day: number;
@@ -8,25 +8,21 @@ interface OmerShareCardProps {
 const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, ref) => {
   const { weeks, days } = getWeeksAndDays(day);
   const sefira = getSefiratDay(day);
-  const progress = (day / 49) * 100;
-
-  const weekStr = weeks > 0
-    ? `${weeks} semaine${weeks > 1 ? "s" : ""}${days > 0 ? ` et ${days} jour${days > 1 ? "s" : ""}` : ""}`
-    : `${days} jour${days > 1 ? "s" : ""}`;
+  const blessing = getOmerBlessing(day);
 
   return (
     <div
       ref={ref}
       style={{
         width: 540,
-        minHeight: 720,
+        minHeight: 960,
         background: "linear-gradient(160deg, #0A1628 0%, #162544 40%, #1A1A3E 70%, #0D0D2B 100%)",
         fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
         color: "#FFFFFF",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: "48px 40px 36px",
+        padding: "36px 32px 28px",
         position: "relative",
         overflow: "hidden",
         boxSizing: "border-box",
@@ -45,103 +41,140 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
       }} />
 
       {/* Top ornament */}
-      <div style={{ fontSize: 14, letterSpacing: 8, color: "#C9A45C", opacity: 0.6, marginBottom: 8 }}>
+      <div style={{ fontSize: 12, letterSpacing: 8, color: "#C9A45C", opacity: 0.6, marginBottom: 6 }}>
         ✦ ✦ ✦
       </div>
 
       {/* Title */}
       <div style={{
-        fontSize: 11, letterSpacing: 6, fontWeight: 700, textTransform: "uppercase",
-        color: "#C9A45C", marginBottom: 24,
+        fontSize: 10, letterSpacing: 6, fontWeight: 700, textTransform: "uppercase",
+        color: "#C9A45C", marginBottom: 16,
       }}>
         Séfirat HaOmer
       </div>
 
       {/* Day number - hero */}
       <div style={{
-        fontSize: 96, fontWeight: 900, lineHeight: 1,
+        fontSize: 72, fontWeight: 900, lineHeight: 1,
         background: "linear-gradient(135deg, #D4AF63 0%, #C9A45C 40%, #E8D5A3 60%, #C9A45C 100%)",
         WebkitBackgroundClip: "text",
         WebkitTextFillColor: "transparent",
-        marginBottom: 4,
+        marginBottom: 2,
         textShadow: "none",
       }}>
         {day}
-      </div>
-
-      {/* Day label */}
-      <div style={{
-        fontSize: 16, fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 20,
-      }}>
-        {weekStr}
       </div>
 
       {/* Séfira badge */}
       <div style={{
         background: "linear-gradient(135deg, rgba(201,164,92,0.2), rgba(201,164,92,0.08))",
         border: "1px solid rgba(201,164,92,0.3)",
-        borderRadius: 24, padding: "10px 24px",
-        fontSize: 14, fontWeight: 700, color: "#E8D5A3",
-        letterSpacing: 1, marginBottom: 32,
+        borderRadius: 20, padding: "8px 20px",
+        fontSize: 12, fontWeight: 700, color: "#E8D5A3",
+        letterSpacing: 1, marginTop: 10, marginBottom: 20,
       }}>
         {sefira.attribute} dans {sefira.within}
       </div>
 
-      {/* Progress bar */}
-      <div style={{ width: "100%", marginBottom: 8 }}>
+      {/* Prayer text — Hebrew */}
+      {/* Divider */}
+      <div style={{
+        width: 80, height: 1,
+        background: "linear-gradient(90deg, transparent, #C9A45C, transparent)",
+        marginBottom: 20,
+      }} />
+
+      <div style={{
+        width: "100%",
+        background: "rgba(201,164,92,0.06)",
+        border: "1px solid rgba(201,164,92,0.15)",
+        borderRadius: 16,
+        padding: "20px 24px",
+        marginBottom: 16,
+      }}>
         <div style={{
-          display: "flex", justifyContent: "space-between", marginBottom: 6,
+          fontSize: 9, letterSpacing: 4, fontWeight: 700, textTransform: "uppercase",
+          color: "#C9A45C", textAlign: "center", marginBottom: 12,
         }}>
-          <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>Progression</span>
-          <span style={{ fontSize: 10, fontWeight: 700, color: "#C9A45C" }}>{day}/49</span>
+          בְּרָכָה וּסְפִירָה
         </div>
         <div style={{
-          height: 6, borderRadius: 3, background: "rgba(255,255,255,0.08)", overflow: "hidden",
+          fontFamily: "'David Libre', 'Frank Ruhl Libre', 'Times New Roman', serif",
+          fontSize: 17,
+          lineHeight: 2,
+          direction: "rtl" as const,
+          textAlign: "right" as const,
+          color: "#F0E6D0",
+          whiteSpace: "pre-wrap" as const,
         }}>
-          <div style={{
-            width: `${progress}%`, height: "100%", borderRadius: 3,
-            background: "linear-gradient(90deg, #C9A45C, #E8D5A3)",
-          }} />
+          {blessing.hebrew}
         </div>
       </div>
 
-      {/* Week dots */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 36, marginTop: 8 }}>
-        {Array.from({ length: 7 }).map((_, i) => {
-          const dotDay = weeks * 7 + i + 1;
-          const isPast = dotDay < day;
-          const isCurrent = dotDay === day;
-          return (
-            <div key={i} style={{
-              width: isCurrent ? 12 : 8, height: isCurrent ? 12 : 8, borderRadius: "50%",
-              background: isCurrent
-                ? "linear-gradient(135deg, #C9A45C, #E8D5A3)"
-                : isPast ? "rgba(201,164,92,0.4)" : "rgba(255,255,255,0.1)",
-              boxShadow: isCurrent ? "0 0 8px rgba(201,164,92,0.5)" : "none",
-              transition: "all 0.3s",
-            }} />
-          );
-        })}
+      {/* Phonetic */}
+      <div style={{
+        width: "100%",
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 12,
+        padding: "14px 20px",
+        marginBottom: 12,
+      }}>
+        <div style={{
+          fontSize: 8, letterSpacing: 3, fontWeight: 700, textTransform: "uppercase",
+          color: "rgba(255,255,255,0.4)", marginBottom: 8,
+        }}>
+          Phonétique
+        </div>
+        <div style={{
+          fontSize: 13, lineHeight: 1.8, fontStyle: "italic",
+          color: "rgba(255,255,255,0.7)", whiteSpace: "pre-wrap" as const,
+        }}>
+          {blessing.phonetic}
+        </div>
+      </div>
+
+      {/* Translation */}
+      <div style={{
+        width: "100%",
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 12,
+        padding: "14px 20px",
+        marginBottom: 20,
+      }}>
+        <div style={{
+          fontSize: 8, letterSpacing: 3, fontWeight: 700, textTransform: "uppercase",
+          color: "rgba(255,255,255,0.4)", marginBottom: 8,
+        }}>
+          Traduction
+        </div>
+        <div style={{
+          fontSize: 12, lineHeight: 1.7,
+          color: "rgba(255,255,255,0.6)", whiteSpace: "pre-wrap" as const,
+        }}>
+          {blessing.french}
+        </div>
       </div>
 
       {/* Divider */}
       <div style={{
         width: 60, height: 1,
         background: "linear-gradient(90deg, transparent, #C9A45C, transparent)",
-        marginBottom: 28,
+        marginBottom: 16,
       }} />
 
-      {/* CTA */}
+      {/* CTA */} 
       <div style={{
         fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.6)",
-        textAlign: "center", lineHeight: 1.6, marginBottom: 20,
+        textAlign: "center", lineHeight: 1.6, marginBottom: 12,
       }}>
         Comptez le Omer chaque soir avec nous
       </div>
 
       <div style={{
         background: "linear-gradient(135deg, #C9A45C, #D4AF63)",
-        borderRadius: 14, padding: "12px 32px",
+        borderRadius: 12, padding: "10px 28px",
         fontSize: 13, fontWeight: 800, color: "#0A1628",
         letterSpacing: 0.5,
       }}>
@@ -149,7 +182,7 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
       </div>
 
       {/* Bottom branding */}
-      <div style={{ marginTop: "auto", paddingTop: 28, textAlign: "center" as const }}>
+      <div style={{ marginTop: "auto", paddingTop: 16, textAlign: "center" as const }}>
         <div style={{ fontSize: 10, letterSpacing: 3, color: "rgba(255,255,255,0.25)", fontWeight: 600 }}>
           CHABBAT CHALOM
         </div>
