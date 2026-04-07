@@ -8,7 +8,10 @@ interface OmerShareCardProps {
 const NAVY = "#001F3F";
 const GOLD = "#996515";
 const GOLD_LIGHT = "#C9A45C";
+const GOLD_DARK = "#7A5010";
 const CREAM = "#FAF6EF";
+const TEXT_BODY = "#5C4A2E";
+const TEXT_LIGHT = "#8A7451";
 
 const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, ref) => {
   const sefira = getSefiratDay(day);
@@ -21,7 +24,7 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
         width: 600,
         background: CREAM,
         fontFamily: "'Lora', 'Georgia', serif",
-        color: NAVY,
+        color: GOLD_DARK,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -37,10 +40,10 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
         background: `linear-gradient(90deg, ${GOLD}, ${GOLD_LIGHT}, ${GOLD})`,
       }} />
 
-      {/* Header row: title + day */}
+      {/* Header row */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "center",
-        gap: 16, marginBottom: 6, marginTop: 4,
+        gap: 16, marginBottom: 8, marginTop: 4,
       }}>
         <div style={{
           fontSize: 9, letterSpacing: 5, fontWeight: 700, textTransform: "uppercase",
@@ -48,79 +51,81 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
         }}>
           Séfirat HaOmer
         </div>
-        <div style={{
-          width: 1, height: 16, background: `${GOLD}44`,
-        }} />
+        <div style={{ width: 1, height: 16, background: `${GOLD}44` }} />
         <div style={{
           fontFamily: "'Playfair Display', 'Georgia', serif",
-          fontSize: 32, fontWeight: 900, color: NAVY, lineHeight: 1,
+          fontSize: 32, fontWeight: 900, color: GOLD_DARK, lineHeight: 1,
         }}>
           Jour {day}
         </div>
       </div>
 
-      {/* Séfira */}
+      {/* Séfira badge */}
       <div style={{
-        background: NAVY, borderRadius: 20, padding: "6px 18px",
-        fontSize: 11, fontWeight: 700, color: GOLD_LIGHT,
+        background: `linear-gradient(135deg, ${GOLD}, ${GOLD_LIGHT})`,
+        borderRadius: 20, padding: "6px 18px",
+        fontSize: 11, fontWeight: 700, color: "#FFFFFF",
         letterSpacing: 0.5, marginBottom: 16,
       }}>
         {sefira.attribute} · {sefira.within}
       </div>
 
-      {/* Hebrew — compact */}
+      {/* Hebrew */}
       <div style={{
         width: "100%", background: "#FFFFFF",
-        border: `1px solid ${GOLD}22`, borderRadius: 12,
+        border: `1px solid ${GOLD}33`, borderRadius: 12,
         padding: "14px 18px", marginBottom: 10,
       }}>
         <div style={{
           fontFamily: "'David Libre', 'Frank Ruhl Libre', 'Times New Roman', serif",
           fontSize: 15, lineHeight: 1.9,
           direction: "rtl" as const, textAlign: "right" as const,
-          color: NAVY, whiteSpace: "pre-wrap" as const,
+          color: GOLD_DARK, whiteSpace: "pre-wrap" as const,
+          wordBreak: "break-word" as const,
         }}>
           {blessing.hebrew}
         </div>
       </div>
 
-      {/* Phonetic + Translation side by side */}
+      {/* Phonetic */}
       <div style={{
-        width: "100%", display: "flex", gap: 8, marginBottom: 16,
+        width: "100%",
+        background: `${GOLD}08`, border: `1px solid ${GOLD}1A`,
+        borderRadius: 10, padding: "10px 14px", marginBottom: 8,
       }}>
         <div style={{
-          flex: 1, background: `${NAVY}06`, border: `1px solid ${NAVY}0D`,
-          borderRadius: 10, padding: "10px 14px",
+          fontSize: 7, letterSpacing: 2, fontWeight: 700, textTransform: "uppercase",
+          color: GOLD, marginBottom: 6,
         }}>
-          <div style={{
-            fontSize: 7, letterSpacing: 2, fontWeight: 700, textTransform: "uppercase",
-            color: GOLD, marginBottom: 6,
-          }}>
-            Phonétique
-          </div>
-          <div style={{
-            fontSize: 11, lineHeight: 1.7, fontStyle: "italic",
-            color: `${NAVY}AA`, whiteSpace: "pre-wrap" as const,
-          }}>
-            {blessing.phonetic}
-          </div>
+          Phonétique
         </div>
         <div style={{
-          flex: 1, background: `${NAVY}06`, border: `1px solid ${NAVY}0D`,
-          borderRadius: 10, padding: "10px 14px",
+          fontSize: 11, lineHeight: 1.7, fontStyle: "italic",
+          color: TEXT_LIGHT, whiteSpace: "pre-wrap" as const,
+          wordBreak: "break-word" as const,
         }}>
-          <div style={{
-            fontSize: 7, letterSpacing: 2, fontWeight: 700, textTransform: "uppercase",
-            color: GOLD, marginBottom: 6,
-          }}>
-            Traduction
-          </div>
-          <div style={{
-            fontSize: 11, lineHeight: 1.7,
-            color: `${NAVY}88`, whiteSpace: "pre-wrap" as const,
-          }}>
-            {blessing.french}
-          </div>
+          {blessing.phonetic}
+        </div>
+      </div>
+
+      {/* Translation */}
+      <div style={{
+        width: "100%",
+        background: `${GOLD}08`, border: `1px solid ${GOLD}1A`,
+        borderRadius: 10, padding: "10px 14px", marginBottom: 16,
+      }}>
+        <div style={{
+          fontSize: 7, letterSpacing: 2, fontWeight: 700, textTransform: "uppercase",
+          color: GOLD, marginBottom: 6,
+        }}>
+          Traduction
+        </div>
+        <div style={{
+          fontSize: 11, lineHeight: 1.7,
+          color: TEXT_BODY, whiteSpace: "pre-wrap" as const,
+          wordBreak: "break-word" as const,
+        }}>
+          {blessing.french}
         </div>
       </div>
 
@@ -133,8 +138,9 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
           CHABBAT CHALOM
         </div>
         <div style={{
-          background: NAVY, borderRadius: 8, padding: "6px 16px",
-          fontSize: 11, fontWeight: 800, color: GOLD_LIGHT,
+          background: `linear-gradient(135deg, ${GOLD}, ${GOLD_LIGHT})`,
+          borderRadius: 8, padding: "6px 16px",
+          fontSize: 11, fontWeight: 800, color: "#FFFFFF",
         }}>
           chabbat-chalom.com/omer
         </div>
