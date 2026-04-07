@@ -42,21 +42,22 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
 
       {/* Header */}
       <div style={{
-        display: "flex", alignItems: "center", justifyContent: "center",
+        display: "flex", alignItems: "baseline", justifyContent: "center",
         gap: 14, marginBottom: 10, marginTop: 2,
       }}>
-        <span style={{ fontSize: 9, letterSpacing: 3, fontWeight: 700, textTransform: "uppercase" as const, color: GOLD }}>
+        <span style={{ fontSize: 9, letterSpacing: 3, fontWeight: 700, textTransform: "uppercase" as const, color: GOLD, alignSelf: "center" }}>
           Séfirat HaOmer
         </span>
-        <span style={{ width: 1, height: 18, background: `${GOLD}44`, display: "inline-block" }} />
+        <span style={{ width: 1, height: 24, background: `${GOLD}44`, display: "inline-block", alignSelf: "center" }} />
         <span style={{
           fontFamily: "'Playfair Display', 'Georgia', serif",
-          fontSize: 32, fontWeight: 900, color: NAVY, lineHeight: 1,
+          fontSize: 32, fontWeight: 900, color: NAVY, lineHeight: "1",
+          verticalAlign: "baseline",
         }}>
           Jour {day}
         </span>
-        <span style={{ width: 1, height: 18, background: `${GOLD}44`, display: "inline-block" }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: GOLD }}>
+        <span style={{ width: 1, height: 24, background: `${GOLD}44`, display: "inline-block", alignSelf: "center" }} />
+        <span style={{ fontSize: 12, fontWeight: 700, color: GOLD, alignSelf: "center" }}>
           {sefira.attribute} · {sefira.within}
         </span>
       </div>
