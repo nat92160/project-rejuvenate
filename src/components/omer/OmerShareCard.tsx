@@ -112,15 +112,6 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
         </div>
       </LightBlock>
 
-      {/* Translation */}
-      <LightBlock title="Traduction">
-        <div style={{
-          fontSize: 11, lineHeight: 1.7,
-          color: TEXT_BODY, whiteSpace: "pre-wrap", wordBreak: "break-word",
-        }}>
-          {blessing.french}
-        </div>
-      </LightBlock>
 
       {/* Footer */}
       <div style={{
