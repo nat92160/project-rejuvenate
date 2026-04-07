@@ -227,7 +227,7 @@ const SettingsTab = () => {
 const AdminDashboard = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "simulator" | "settings">("requests");
+  const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "settings">("requests");
   const [requests, setRequests] = useState<PresidentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -420,7 +420,7 @@ const AdminDashboard = () => {
             { id: "users" as const, icon: "👥", label: "Utilisateurs", count: users.length },
             { id: "synagogues" as const, icon: "🏛️", label: "Synagogues", count: synas.length },
             { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
-            { id: "simulator" as const, icon: "✈️", label: "Simulateur", count: 0 },
+            
             { id: "settings" as const, icon: "⚙️", label: "Réglages", count: 0 },
           ].map((t) => (
             <button
@@ -663,10 +663,6 @@ const AdminDashboard = () => {
           <PrayerTimeSuggestionsAdmin mode="admin" />
         )}
 
-        {/* Simulator tab */}
-        {tab === "simulator" && (
-          <ZmanimTravelSimulator />
-        )}
 
         {/* Settings tab */}
         {tab === "settings" && (
