@@ -40,54 +40,59 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
         background: `linear-gradient(90deg, ${GOLD}, ${GOLD_LIGHT}, ${GOLD})`,
       }} />
 
-      {/* Header panel with two horizontal lines and centered Jour */}
-      <div style={{
-        position: "relative",
-        marginBottom: 14, marginTop: 8,
-        paddingTop: 8, paddingBottom: 8,
-      }}>
-        {/* Top horizontal gold line */}
-        <div style={{
-          position: "absolute", top: 0, left: 24, right: 24,
-          height: 1, background: `${GOLD}55`,
-        }} />
-        {/* Bottom horizontal gold line */}
-        <div style={{
-          position: "absolute", bottom: 0, left: 24, right: 24,
-          height: 1, background: `${GOLD}55`,
-        }} />
+      {/* Header panel rendered as SVG for precise capture positioning */}
+      <div style={{ marginTop: 10, marginBottom: 14 }}>
+        <svg
+          width="100%"
+          height="92"
+          viewBox="0 0 672 92"
+          role="img"
+          aria-label={`Séfirat HaOmer Jour ${day}`}
+          style={{ display: "block", overflow: "visible" }}
+        >
+          <line x1="0" y1="12" x2="672" y2="12" stroke={`${GOLD}66`} strokeWidth="1.5" />
+          <line x1="0" y1="80" x2="672" y2="80" stroke={`${GOLD}66`} strokeWidth="1.5" />
 
-        {/* Content row */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          minHeight: 56,
-        }}>
-          {/* Left: SÉFIRAT HAOMER */}
-          <span style={{
-            fontSize: 10, letterSpacing: 4, fontWeight: 700,
-            textTransform: "uppercase" as const, color: GOLD,
-            position: "absolute", left: 28,
-          }}>
-            Séfirat HaOmer
-          </span>
+          <text
+            x="12"
+            y="47"
+            fill={GOLD}
+            fontSize="10"
+            fontWeight="700"
+            letterSpacing="4"
+            style={{ fontFamily: "'Lora', 'Georgia', serif", textTransform: "uppercase" }}
+            dominantBaseline="middle"
+            textAnchor="start"
+          >
+            SÉFIRAT HAOMER
+          </text>
 
-          {/* Center: Jour N — 50% larger (54px) */}
-          <span style={{
-            fontFamily: "'Playfair Display', 'Georgia', serif",
-            fontSize: 54, fontWeight: 900, color: NAVY,
-            lineHeight: "1",
-          }}>
+          <text
+            x="336"
+            y="42"
+            fill={NAVY}
+            fontSize="54"
+            fontWeight="900"
+            style={{ fontFamily: "'Playfair Display', 'Georgia', serif" }}
+            dominantBaseline="middle"
+            textAnchor="middle"
+          >
             Jour {day}
-          </span>
+          </text>
 
-          {/* Right: Sefira attribute */}
-          <span style={{
-            fontSize: 13, fontWeight: 700, color: GOLD,
-            position: "absolute", right: 28,
-          }}>
+          <text
+            x="660"
+            y="47"
+            fill={GOLD}
+            fontSize="13"
+            fontWeight="700"
+            style={{ fontFamily: "'Lora', 'Georgia', serif" }}
+            dominantBaseline="middle"
+            textAnchor="end"
+          >
             {sefira.attribute} · {sefira.within}
-          </span>
-        </div>
+          </text>
+        </svg>
       </div>
 
       {/* Brakha */}
