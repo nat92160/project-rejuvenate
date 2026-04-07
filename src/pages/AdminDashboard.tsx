@@ -663,10 +663,6 @@ const AdminDashboard = () => {
           <PrayerTimeSuggestionsAdmin mode="admin" />
         )}
 
-        {/* Simulator tab */}
-        {tab === "simulator" && (
-          <ZmanimTravelSimulator />
-        )}
 
         {/* Settings tab */}
         {tab === "settings" && (
