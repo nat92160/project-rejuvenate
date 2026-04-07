@@ -43,28 +43,32 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
       {/* Header */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "center",
-        gap: 16, marginBottom: 12, marginTop: 6,
+        gap: 16, marginBottom: 12, marginTop: 6, height: 44,
       }}>
         <span style={{
           fontSize: 10, letterSpacing: 4, fontWeight: 700,
           textTransform: "uppercase" as const, color: GOLD,
+          lineHeight: "1",
         }}>
           Séfirat HaOmer
         </span>
         <div style={{
-          width: 2, height: 30, background: GOLD, borderRadius: 1, flexShrink: 0,
+          width: 2, height: 32, background: GOLD, borderRadius: 1, flexShrink: 0,
         }} />
         <span style={{
           fontFamily: "'Playfair Display', 'Georgia', serif",
           fontSize: 36, fontWeight: 900, color: NAVY,
-          lineHeight: "1", display: "flex", alignItems: "center",
+          lineHeight: "1", marginTop: -4,
         }}>
           Jour {day}
         </span>
         <div style={{
-          width: 2, height: 30, background: GOLD, borderRadius: 1, flexShrink: 0,
+          width: 2, height: 32, background: GOLD, borderRadius: 1, flexShrink: 0,
         }} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: GOLD }}>
+        <span style={{
+          fontSize: 13, fontWeight: 700, color: GOLD,
+          lineHeight: "1",
+        }}>
           {sefira.attribute} · {sefira.within}
         </span>
       </div>
