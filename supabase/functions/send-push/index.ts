@@ -408,6 +408,7 @@ Deno.serve(async (req) => {
 
     let sent = 0;
     const staleIds: string[] = [];
+    let apnsJwtCreated = false;
 
     // --- Send Web Push ---
     for (const sub of webSubs) {
@@ -445,6 +446,7 @@ Deno.serve(async (req) => {
     // --- Send Native Push (APNs) ---
     if (nativeSubs.length > 0) {
       const apnsJwt = await createApnsJwt();
+      apnsJwtCreated = !!apnsJwt;
       if (apnsJwt) {
         for (const sub of nativeSubs) {
           const success = await sendApnsPush(
@@ -465,7 +467,7 @@ Deno.serve(async (req) => {
       await supabase.from("push_subscriptions").delete().in("id", staleIds);
     }
 
-    return new Response(JSON.stringify({ sent, cleaned: staleIds.length, debug: { totalSubs: subs.length, webSubs: webSubs.length, nativeSubs: nativeSubs.length, apnsJwtCreated: !!apnsJwt } }), {
+    return new Response(JSON.stringify({ sent, cleaned: staleIds.length, debug: { totalSubs: subs.length, webSubs: webSubs.length, nativeSubs: nativeSubs.length, apnsJwtCreated } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
