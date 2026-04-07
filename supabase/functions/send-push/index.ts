@@ -465,7 +465,7 @@ Deno.serve(async (req) => {
       await supabase.from("push_subscriptions").delete().in("id", staleIds);
     }
 
-    return new Response(JSON.stringify({ sent, cleaned: staleIds.length }), {
+    return new Response(JSON.stringify({ sent, cleaned: staleIds.length, debug: { totalSubs: subs.length, webSubs: webSubs.length, nativeSubs: nativeSubs.length, apnsJwtCreated: !!apnsJwt } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
