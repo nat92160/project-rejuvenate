@@ -27,13 +27,12 @@ import OmerShareCard from "@/components/omer/OmerShareCard";
 // Re-export for landing page
 export { getTodayOmerDay };
 
-function getStreakMessage(streak: number): string {
-  if (streak >= 49) return "🏆 49 jours sans interruption ! Kol HaKavod !";
-  if (streak >= 30) return `🔥 ${streak} jours consécutifs ! Incroyable !`;
-  if (streak >= 14) return `🔥 ${streak} jours de suite ! Tu es un exemple !`;
-  if (streak >= 7) return `🔥 ${streak} jours consécutifs ! Une semaine complète !`;
-  if (streak >= 3) return `🔥 ${streak}ème jour consécutif ! Continue comme ça !`;
-  if (streak === 2) return "🔥 2ème jour consécutif ! Belle série !";
+function getStreakMessage(day: number): string {
+  if (day >= 49) return "🏆 49ème jour ! Kol HaKavod, le compte est complet !";
+  if (day >= 30) return `🔥 ${day}ème jour du Omer ! Bientôt Chavouot !`;
+  if (day >= 14) return `🔥 ${day}ème jour du Omer ! Tu es un exemple !`;
+  if (day >= 7) return `🔥 ${day}ème jour du Omer ! Continue comme ça !`;
+  if (day >= 2) return `🔥 ${day}ème jour du Omer ! Belle série !`;
   return "🌟 Bravo ! Mitsva accomplie pour ce soir.";
 }
 
@@ -324,7 +323,7 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
               animate={{ scale: 1, opacity: 1 }}
               className="text-sm font-bold text-foreground"
             >
-              {getStreakMessage(streak)}
+              {getStreakMessage(omerDay ?? 1)}
             </motion.div>
 
             {streak > 1 && !user && (
