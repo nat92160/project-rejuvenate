@@ -8,7 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { supabase } from "@/integrations/supabase/client";
-import { registerNativePush, requestNativePushPermission } from "@/lib/capacitorPush";
+import { registerNativePush, requestNativePushPermission, clearPushBadge, onNativePushActionPerformed } from "@/lib/capacitorPush";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import MinyanJoin from "./pages/MinyanJoin.tsx";
@@ -35,30 +35,34 @@ const queryClient = new QueryClient({
 
 /**
  * Save the native push token to push_subscriptions.
- * Uses a raw SQL upsert via rpc to handle NULL synagogue_id correctly
- * (PostgreSQL NULL ≠ NULL in unique constraints).
+ * Updates ALL existing native rows for this user (any synagogue_id),
+ * or inserts a new row with synagogue_id: null if none exist.
  */
 async function saveNativePushToken(userId: string, deviceToken: string) {
-  // Use .insert() with manual conflict handling since NULL synagogue_id
-  // doesn't work with onConflict. First try to find existing row.
-  const { data: existing } = await supabase
+  // Fetch ALL native push subscriptions for this user
+  const { data: existing, error: fetchError } = await supabase
     .from("push_subscriptions")
     .select("id")
     .eq("user_id", userId)
-    .eq("push_type", "native")
-    .is("synagogue_id", null)
-    .maybeSingle();
+    .eq("push_type", "native");
 
-  if (existing) {
-    // Update existing row
+  if (fetchError) {
+    console.error("[App] Failed to fetch native push subs:", fetchError);
+    return false;
+  }
+
+  if (existing && existing.length > 0) {
+    // Update device_token on ALL existing native rows
+    const ids = existing.map((r) => r.id);
     const { error } = await supabase
       .from("push_subscriptions")
       .update({ device_token: deviceToken } as never)
-      .eq("id", existing.id);
+      .in("id", ids);
     if (error) {
-      console.error("[App] Failed to update native push token:", error);
+      console.error("[App] Failed to update native push tokens:", error);
       return false;
     }
+    console.log(`[App] Updated ${ids.length} native push subscription(s)`);
   } else {
     // Insert new row
     const { error } = await supabase
@@ -126,6 +130,25 @@ function AppInner() {
           }
         } else {
           console.log("[App] 🔔 No user yet, token will be saved after login");
+          // Listen for auth state change to save token when user signs in
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+              if (
+                (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+                session?.user &&
+                deviceTokenRef.current &&
+                tokenSavedForUserRef.current !== session.user.id
+              ) {
+                console.log("[App] 🔔 Auth event", event, "— saving push token for", session.user.id);
+                const saved = await saveNativePushToken(session.user.id, deviceTokenRef.current);
+                if (saved) {
+                  tokenSavedForUserRef.current = session.user.id;
+                  console.log("[App] ✅ Native push token saved via auth listener");
+                }
+                subscription.unsubscribe();
+              }
+            }
+          );
         }
       } catch (err) {
         console.error("[App] ❌ Push bootstrap error:", err);
@@ -153,6 +176,29 @@ function AppInner() {
       }
     })();
   }, [isNative, loading, user]);
+
+  // ─── STEP 3: Badge clearing on native ───
+  useEffect(() => {
+    if (!isNative) return;
+
+    // Clear badge on app launch
+    clearPushBadge();
+
+    // Clear badge when tapping a notification
+    onNativePushActionPerformed(() => {
+      clearPushBadge();
+    });
+
+    // Clear badge when app resumes from background
+    const handleResume = () => {
+      clearPushBadge();
+    };
+    document.addEventListener("resume", handleResume);
+
+    return () => {
+      document.removeEventListener("resume", handleResume);
+    };
+  }, [isNative]);
 
   return (
     <TooltipProvider>
