@@ -362,6 +362,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY")!;
+    const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Get push subscriptions — filter by synagogue_id if provided, otherwise get ALL (broadcast mode)
     let query = supabase
