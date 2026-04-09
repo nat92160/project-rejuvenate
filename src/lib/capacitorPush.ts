@@ -61,3 +61,12 @@ export function onNativePushActionPerformed(
     callback(action.notification.data);
   });
 }
+
+export async function clearPushBadge(): Promise<void> {
+  try {
+    await PushNotifications.removeAllDeliveredNotifications();
+    console.log("[CapacitorPush] Badge cleared & delivered notifications removed");
+  } catch (err) {
+    console.error("[CapacitorPush] clearPushBadge error:", err);
+  }
+}
