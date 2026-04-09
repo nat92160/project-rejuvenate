@@ -113,8 +113,6 @@ const AnnoncesWidget = () => {
     badgeEmoji: isUrgent ? "🔴" : undefined,
     title: posterAnnonce.title,
     description: posterAnnonce.content || undefined,
-    date: formatDate(posterAnnonce.created_at),
-    dateEmoji: "📅",
     accentColor: isUrgent ? "#DC2626" : "#D4AF37",
     bgColor: isUrgent ? "#FFF5F5" : "#FDFAF3",
   } : null;
@@ -210,7 +208,7 @@ const AnnoncesWidget = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-display text-sm font-bold text-foreground leading-tight">{a.title}</h4>
-                    <p className="text-[10px] text-muted-foreground/60 mt-1">📅 {formatDate(a.created_at)}</p>
+                    
                   </div>
                 </div>
                 {a.content && (
