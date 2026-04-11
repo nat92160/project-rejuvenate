@@ -505,6 +505,7 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          omer_reminders: boolean
           suspended: boolean
           synagogue: string | null
           updated_at: string
@@ -517,6 +518,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          omer_reminders?: boolean
           suspended?: boolean
           synagogue?: string | null
           updated_at?: string
@@ -529,6 +531,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          omer_reminders?: boolean
           suspended?: boolean
           synagogue?: string | null
           updated_at?: string

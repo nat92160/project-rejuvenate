@@ -133,6 +133,10 @@ const EspacePersonnelWidget = () => {
   const [subscribedSynas, setSubscribedSynas] = useState<SubscribedSyna[]>([]);
   const [unsubscribing, setUnsubscribing] = useState<string | null>(null);
 
+  // Omer reminders opt-in (stored in DB)
+  const [omerReminders, setOmerReminders] = useState(true);
+  const [omerRemindersLoading, setOmerRemindersLoading] = useState(false);
+
   // Notification preferences (stored in localStorage for now)
   const [notifPrefs, setNotifPrefs] = useState(() => {
     try {
@@ -145,6 +149,38 @@ const EspacePersonnelWidget = () => {
   const native = isNativePlatform();
   const pushSupported = native || ("serviceWorker" in navigator && "PushManager" in window);
   const pushGranted = native || (pushSupported && "Notification" in window && Notification.permission === "granted");
+
+  // Load omer_reminders from profile
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("omer_reminders")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data && typeof (data as any).omer_reminders === "boolean") {
+          setOmerReminders((data as any).omer_reminders);
+        }
+      });
+  }, [user]);
+
+  const toggleOmerReminders = async () => {
+    if (!user) return;
+    setOmerRemindersLoading(true);
+    const newVal = !omerReminders;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ omer_reminders: newVal } as never)
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error("Erreur lors de la mise à jour");
+    } else {
+      setOmerReminders(newVal);
+      toast.success(newVal ? "Rappels Omer activés" : "Rappels Omer désactivés");
+    }
+    setOmerRemindersLoading(false);
+  };
 
   const syncNativePushToken = async () => {
     if (!native || !user) return;
@@ -434,6 +470,17 @@ const EspacePersonnelWidget = () => {
           enabled={!!notifPrefs.omer}
           loading={pushLoading}
           onToggle={() => toggleNotifPref("omer")}
+        />
+
+        <div className="border-t border-border" />
+
+        <NotifToggle
+          icon="🔁"
+          label="Rappels Omer persistants"
+          description="Rappel toutes les 20 min si vous n'avez pas encore compté"
+          enabled={omerReminders}
+          loading={omerRemindersLoading}
+          onToggle={toggleOmerReminders}
         />
 
         <div className="border-t border-border" />
