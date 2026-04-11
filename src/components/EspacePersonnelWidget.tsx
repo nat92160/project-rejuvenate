@@ -475,6 +475,17 @@ const EspacePersonnelWidget = () => {
         <div className="border-t border-border" />
 
         <NotifToggle
+          icon="🔁"
+          label="Rappels Omer persistants"
+          description="Rappel toutes les 20 min si vous n'avez pas encore compté"
+          enabled={omerReminders}
+          loading={omerRemindersLoading}
+          onToggle={toggleOmerReminders}
+        />
+
+        <div className="border-t border-border" />
+
+        <NotifToggle
           icon="🕐"
           label="Changement d'horaires"
           description="Prévenu quand les horaires de ma synagogue changent"
