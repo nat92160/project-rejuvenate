@@ -397,9 +397,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Separate web and native subscriptions
-    const webSubs = subs.filter((s: any) => s.push_type !== "native");
-    const nativeSubs = subs.filter((s: any) => s.push_type === "native" && s.device_token);
+    // Separate web and native subscriptions, then deduplicate
+    const allWebSubs = subs.filter((s: any) => s.push_type !== "native");
+    const allNativeSubs = subs.filter((s: any) => s.push_type === "native" && s.device_token);
+
+    // Deduplicate web subs by endpoint
+    const seenEndpoints = new Set<string>();
+    const webSubs = allWebSubs.filter((s: any) => {
+      if (!s.endpoint || seenEndpoints.has(s.endpoint)) return false;
+      seenEndpoints.add(s.endpoint);
+      return true;
+    });
+
+    // Deduplicate native subs by device_token
+    const seenTokens = new Set<string>();
+    const nativeSubs = allNativeSubs.filter((s: any) => {
+      if (seenTokens.has(s.device_token)) return false;
+      seenTokens.add(s.device_token);
+      return true;
+    });
 
     const privateKey = await importPrivateKey(vapidPrivateKey);
     const pushTitle = title || "Nouveau message";
