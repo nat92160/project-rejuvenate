@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN omer_reminders boolean NOT NULL DEFAULT true;
