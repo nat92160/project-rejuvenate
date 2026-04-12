@@ -260,8 +260,31 @@ const SiddourReader = ({
                   const isPrayerStart = i === prayerStartIdx;
 
                   // Internal section title — render as a prayer divider
+                  // BUT: Shema line must be rendered as a regular verse in black, not as gold title
                   if (isInternalSectionTitle(verse)) {
                     const titleText = normalizeHebrewMatch(verse);
+                    const isShemaLine = titleText.includes("שמע ישראל");
+                    
+                    if (isShemaLine) {
+                      // Render Shema as a bold black verse with vowels preserved
+                      return (
+                        <p
+                          key={i}
+                          ref={isPrayerStart ? prayerStartRef : undefined}
+                          style={{
+                            marginBottom: "1.1rem",
+                            lineHeight: 2.4,
+                            textAlign: "center",
+                            fontWeight: 800,
+                            fontSize: `${fontSize + 4}px`,
+                            color: prayerMode ? "#e8e0d0" : "#111",
+                          }}
+                        >
+                          <span dangerouslySetInnerHTML={{ __html: verse }} />
+                        </p>
+                      );
+                    }
+                    
                     return (
                       <div
                         key={i}
@@ -294,14 +317,19 @@ const SiddourReader = ({
                   }
 
                   if (isInstructionOnly(verse)) {
-                    return (
-                      <div
-                        key={i}
-                        className={isShemaSecondaryLine(verse) ? "verse-secondary" : "verse-instruction"}
-                        style={{ marginBottom: "0.75rem", lineHeight: 1.8 }}
-                        dangerouslySetInnerHTML={{ __html: verse }}
-                      />
-                    );
+                    // Keep "Baruch Shem" line — it's obligatory
+                    if (isShemaSecondaryLine(verse)) {
+                      return (
+                        <div
+                          key={i}
+                          className="verse-secondary"
+                          style={{ marginBottom: "0.75rem", lineHeight: 1.8 }}
+                          dangerouslySetInnerHTML={{ __html: verse }}
+                        />
+                      );
+                    }
+                    // Skip non-obligatory instructions (grey text)
+                    return null;
                   }
 
                   verseNum++;
