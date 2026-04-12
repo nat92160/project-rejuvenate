@@ -48,6 +48,12 @@ interface SynaItem {
   verified: boolean;
   president_id: string;
   address: string | null;
+  phone: string | null;
+  email: string | null;
+  shacharit_time: string | null;
+  minha_time: string | null;
+  arvit_time: string | null;
+  signature: string | null;
   created_at: string;
 }
 
@@ -244,6 +250,7 @@ const AdminDashboard = () => {
   const [synasLoading, setSynasLoading] = useState(false);
   const [synaProcessing, setSynaProcessing] = useState<string | null>(null);
   const [showCreateSyna, setShowCreateSyna] = useState(false);
+  const [editingSyna, setEditingSyna] = useState<SynaItem | null>(null);
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -287,7 +294,7 @@ const AdminDashboard = () => {
     setSynasLoading(true);
     const { data } = await supabase
       .from("synagogue_profiles")
-      .select("id, name, verified, president_id, address, created_at")
+      .select("id, name, verified, president_id, address, phone, email, shacharit_time, minha_time, arvit_time, signature, created_at")
       .neq("name", "")
       .order("created_at", { ascending: false });
     setSynas((data || []) as SynaItem[]);
@@ -372,6 +379,15 @@ const AdminDashboard = () => {
       .eq("id", synaId);
     if (error) toast.error("Erreur");
     else { toast.success(!currentlyVerified ? "✅ Synagogue vérifiée !" : "Vérification retirée"); await fetchSynas(); }
+    setSynaProcessing(null);
+  };
+
+  const handleDeleteSyna = async (synaId: string, synaName: string) => {
+    if (!confirm(`Supprimer définitivement la synagogue "${synaName}" ? Cette action est irréversible.`)) return;
+    setSynaProcessing(synaId);
+    const { error } = await supabase.from("synagogue_profiles").delete().eq("id", synaId);
+    if (error) toast.error("Erreur de suppression");
+    else { toast.success("🗑️ Synagogue supprimée"); await fetchSynas(); }
     setSynaProcessing(null);
   };
 
@@ -613,6 +629,24 @@ const AdminDashboard = () => {
               </button>
             </div>
             <SynagogueFormSheet open={showCreateSyna} onOpenChange={setShowCreateSyna} onCreated={fetchSynas} adminMode />
+            <SynagogueFormSheet
+              open={!!editingSyna}
+              onOpenChange={(open) => !open && setEditingSyna(null)}
+              onCreated={fetchSynas}
+              adminMode
+              editData={editingSyna ? {
+                id: editingSyna.id,
+                name: editingSyna.name,
+                address: editingSyna.address,
+                phone: editingSyna.phone,
+                email: editingSyna.email,
+                shacharit_time: editingSyna.shacharit_time,
+                minha_time: editingSyna.minha_time,
+                arvit_time: editingSyna.arvit_time,
+                signature: editingSyna.signature,
+                president_id: editingSyna.president_id,
+              } : null}
+            />
             {synasLoading ? (
               <div className="text-center py-10 text-sm text-muted-foreground">Chargement…</div>
             ) : synas.length === 0 ? (
@@ -649,17 +683,35 @@ const AdminDashboard = () => {
                           Créée le {new Date(syna.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
                         </p>
                       </div>
-                      <button
-                        onClick={() => handleToggleVerify(syna.id, syna.verified)}
-                        disabled={synaProcessing === syna.id}
-                        className="shrink-0 rounded-xl border-none px-4 py-2.5 text-xs font-bold cursor-pointer disabled:opacity-50 transition-all active:scale-95"
-                        style={syna.verified
-                          ? { background: "hsl(0 84% 60% / 0.1)", color: "hsl(0 84% 50%)" }
-                          : { background: "linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 30%))", color: "white", boxShadow: "0 4px 12px hsl(142 76% 36% / 0.3)" }
-                        }
-                      >
-                        {synaProcessing === syna.id ? "⏳" : syna.verified ? "Retirer ✕" : "✅ Vérifier"}
-                      </button>
+                      <div className="flex flex-col gap-1.5 shrink-0">
+                        <button
+                          onClick={() => handleToggleVerify(syna.id, syna.verified)}
+                          disabled={synaProcessing === syna.id}
+                          className="rounded-xl border-none px-3 py-2 text-[10px] font-bold cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                          style={syna.verified
+                            ? { background: "hsl(0 84% 60% / 0.1)", color: "hsl(0 84% 50%)" }
+                            : { background: "linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 30%))", color: "white", boxShadow: "0 4px 12px hsl(142 76% 36% / 0.3)" }
+                          }
+                        >
+                          {synaProcessing === syna.id ? "⏳" : syna.verified ? "Retirer ✕" : "✅ Vérifier"}
+                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setEditingSyna(syna)}
+                            className="flex-1 rounded-lg py-1.5 text-[10px] font-bold cursor-pointer transition-all active:scale-95"
+                            style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))", border: "none" }}
+                          >
+                            ✏️ Modifier
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSyna(syna.id, syna.name)}
+                            disabled={synaProcessing === syna.id}
+                            className="flex-1 rounded-lg py-1.5 text-[10px] font-bold bg-destructive/10 text-destructive border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
