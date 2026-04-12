@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
 
     // Get a representative candle time for the notification body
     // Use the first eligible sub's location
-    const repCoords = getSubCoords(eligibleSubs[0], synaLocations);
+    const repCoords = getSubCoords(eligibleSubs[0], synaLocations, profileLocations);
     const repSunset = calculateSunset(now, repCoords.lat, repCoords.lng)!;
     const repCandle = new Date(repSunset.getTime() - 18 * 60 * 1000);
     const candleTimeStr = repCandle.toLocaleTimeString("fr-FR", {
