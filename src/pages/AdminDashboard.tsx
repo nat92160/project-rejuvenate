@@ -250,6 +250,7 @@ const AdminDashboard = () => {
   const [synasLoading, setSynasLoading] = useState(false);
   const [synaProcessing, setSynaProcessing] = useState<string | null>(null);
   const [showCreateSyna, setShowCreateSyna] = useState(false);
+  const [editingSyna, setEditingSyna] = useState<SynaItem | null>(null);
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
