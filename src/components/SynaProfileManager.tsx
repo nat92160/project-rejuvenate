@@ -242,14 +242,27 @@ const SynaProfileManager = () => {
             </div>
           </div>
 
-          {/* Logo — fixed synagogue icon */}
+          {/* Logo upload */}
           <div className="rounded-2xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
             <label className="mb-2 block text-xs font-bold text-foreground">Logo de la synagogue</label>
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-border bg-primary/5">
-                <Building2 className="h-8 w-8 text-primary" />
+              {profile.logo_url ? (
+                <img src={profile.logo_url} alt="Logo" className="h-16 w-16 rounded-xl border border-border object-contain bg-white" />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed border-border bg-muted text-2xl">🏛️</div>
+              )}
+              <div>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="rounded-xl border-none px-4 py-2 text-xs font-bold text-primary-foreground cursor-pointer disabled:opacity-50"
+                  style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+                >
+                  {uploading ? "Upload…" : "Choisir un logo"}
+                </button>
+                <p className="mt-1 text-[10px] text-muted-foreground">PNG transparent recommandé</p>
               </div>
-              <p className="text-xs text-muted-foreground">Le logo synagogue est appliqué automatiquement</p>
             </div>
           </div>
 
