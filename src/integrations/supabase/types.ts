@@ -360,6 +360,30 @@ export type Database = {
         }
         Relationships: []
       }
+      omer_reminder_log: {
+        Row: {
+          id: string
+          omer_day: number
+          omer_year: number
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          omer_day: number
+          omer_year?: number
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          omer_day?: number
+          omer_year?: number
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       personal_dates: {
         Row: {
           civil_date: string | null
@@ -613,6 +637,30 @@ export type Database = {
           hebrew_name?: string
           id?: string
           mother_name?: string
+        }
+        Relationships: []
+      }
+      shabbat_notification_log: {
+        Row: {
+          id: string
+          sent_at: string
+          shabbat_date: string
+          synagogue_id: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          sent_at?: string
+          shabbat_date: string
+          synagogue_id?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          sent_at?: string
+          shabbat_date?: string
+          synagogue_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
