@@ -7,8 +7,9 @@ import {
   LayoutDashboard, Megaphone, Bell, Users, BarChart3,
   Settings, MessageSquare, Award, Building2, Calendar,
   BookOpen, Image, Heart as HeartIcon, Droplets, ChevronLeft,
-  Menu, X, GraduationCap, Gem, Home, Clock
+  Menu, X, GraduationCap, Gem, Home, Clock, Plus
 } from "lucide-react";
+import SynagogueFormSheet from "./SynagogueFormSheet";
 
 // Lazy components
 const AfficheChabbatWidget = lazy(() => import("./AfficheChabbatWidget"));
@@ -130,6 +131,7 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
   const { user, dbRole } = useAuth();
   const [activeFeature, setActiveFeature] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showCreateSyna, setShowCreateSyna] = useState(false);
   const canManage = !!user && dbRole === "president";
 
   const selectFeature = (id: string) => {
@@ -242,7 +244,17 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
           </h2>
           <p className="text-[10px] text-muted-foreground">Espace Président</p>
         </div>
+        <button
+          onClick={() => setShowCreateSyna(true)}
+          className="h-9 w-9 rounded-xl flex items-center justify-center cursor-pointer border-none transition-all active:scale-95 text-primary-foreground"
+          style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+          title="Créer une fiche synagogue"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
       </div>
+
+      <SynagogueFormSheet open={showCreateSyna} onOpenChange={setShowCreateSyna} />
 
       {/* Mobile sidebar drawer */}
       <AnimatePresence>
