@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Building2, MapPin, Phone, Mail, X } from "lucide-react";
+import { Building2, MapPin, Phone, Mail, Save } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -10,12 +10,27 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
+export interface SynagogueEditData {
+  id: string;
+  name: string;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  shacharit_time: string | null;
+  minha_time: string | null;
+  arvit_time: string | null;
+  signature: string | null;
+  president_id: string;
+}
+
 interface SynagogueFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: () => void;
   /** Admin mode: allows assigning a president by email */
   adminMode?: boolean;
+  /** If provided, the form will be in edit mode */
+  editData?: SynagogueEditData | null;
 }
 
 const RITE_OPTIONS = ["Séfarade", "Ashkénaze", "Mixte", "Autre"];
@@ -28,6 +43,7 @@ const SynagogueFormSheet = ({
   onOpenChange,
   onCreated,
   adminMode = false,
+  editData = null,
 }: SynagogueFormSheetProps) => {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
@@ -45,6 +61,31 @@ const SynagogueFormSheet = ({
     notes: "",
     presidentEmail: "",
   });
+
+  const isEdit = !!editData;
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (editData && open) {
+      const addr = editData.address || "";
+      setForm({
+        name: editData.name || "",
+        address: addr,
+        city: "",
+        zip: "",
+        phone: editData.phone || "",
+        email: editData.email || "",
+        rite: "Séfarade",
+        shacharit_time: editData.shacharit_time || "",
+        minha_time: editData.minha_time || "",
+        arvit_time: editData.arvit_time || "",
+        notes: editData.signature || "",
+        presidentEmail: "",
+      });
+    } else if (!editData && open) {
+      resetForm();
+    }
+  }, [editData, open]);
 
   const set = (key: string, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -66,17 +107,21 @@ const SynagogueFormSheet = ({
     });
 
   const handleSubmit = async () => {
-    if (!form.name.trim() || !form.address.trim() || !form.city.trim()) {
-      toast.error("Nom, adresse et ville sont obligatoires");
+    if (!form.name.trim()) {
+      toast.error("Le nom est obligatoire");
+      return;
+    }
+    if (!isEdit && (!form.address.trim() || !form.city.trim())) {
+      toast.error("Adresse et ville sont obligatoires");
       return;
     }
 
     setSaving(true);
 
-    let presidentId = user?.id;
+    let presidentId = isEdit ? editData!.president_id : user?.id;
 
-    // Admin mode: resolve president by email
-    if (adminMode && form.presidentEmail.trim()) {
+    // Admin mode: resolve president by email (only for creation)
+    if (adminMode && !isEdit && form.presidentEmail.trim()) {
       const { data: profileData } = await supabase.functions.invoke(
         "admin-users",
         { body: { action: "list" } }
@@ -102,47 +147,63 @@ const SynagogueFormSheet = ({
     // Geocode
     let latitude: number | null = null;
     let longitude: number | null = null;
-    const fullAddress = [form.address, form.zip, form.city]
-      .filter(Boolean)
-      .join(", ");
-    try {
-      const { data: geo } = await supabase.functions.invoke(
-        "geocode-address",
-        { body: { address: fullAddress } }
-      );
-      if (geo?.lat && geo?.lng) {
-        latitude = geo.lat;
-        longitude = geo.lng;
+    const fullAddress = isEdit
+      ? form.address.trim()
+      : [form.address, form.zip, form.city].filter(Boolean).join(", ");
+
+    if (fullAddress) {
+      try {
+        const { data: geo } = await supabase.functions.invoke(
+          "geocode-address",
+          { body: { address: fullAddress } }
+        );
+        if (geo?.lat && geo?.lng) {
+          latitude = geo.lat;
+          longitude = geo.lng;
+        }
+      } catch {
+        // optional
       }
-    } catch {
-      // optional
     }
 
     const payload: Record<string, any> = {
-      president_id: presidentId,
       name: form.name.trim(),
-      address: fullAddress,
+      address: fullAddress || null,
       phone: form.phone.trim() || null,
       email: form.email.trim() || null,
       shacharit_time: form.shacharit_time || null,
       minha_time: form.minha_time || null,
       arvit_time: form.arvit_time || null,
       signature: form.notes.trim() || "",
-      latitude,
-      longitude,
     };
 
-    const { error } = await supabase
-      .from("synagogue_profiles")
-      .insert(payload as any);
+    if (latitude !== null) {
+      payload.latitude = latitude;
+      payload.longitude = longitude;
+    }
+
+    let error;
+    if (isEdit) {
+      // Update existing
+      ({ error } = await supabase
+        .from("synagogue_profiles")
+        .update(payload as any)
+        .eq("id", editData!.id));
+    } else {
+      // Create new
+      payload.president_id = presidentId;
+      ({ error } = await supabase
+        .from("synagogue_profiles")
+        .insert(payload as any));
+    }
 
     setSaving(false);
 
     if (error) {
       console.error(error);
-      toast.error("Erreur lors de la création");
+      toast.error(isEdit ? "Erreur lors de la modification" : "Erreur lors de la création");
     } else {
-      toast.success("🏛️ Synagogue créée avec succès !");
+      toast.success(isEdit ? "✅ Fiche synagogue modifiée !" : "🏛️ Synagogue créée avec succès !");
       resetForm();
       onOpenChange(false);
       onCreated?.();
@@ -155,13 +216,13 @@ const SynagogueFormSheet = ({
         <SheetHeader className="mb-4">
           <SheetTitle className="flex items-center gap-2 font-display">
             <Building2 className="h-5 w-5 text-primary" />
-            Nouvelle Synagogue
+            {isEdit ? "Modifier la Synagogue" : "Nouvelle Synagogue"}
           </SheetTitle>
         </SheetHeader>
 
         <div className="space-y-4 pb-6">
-          {/* Admin: president email */}
-          {adminMode && (
+          {/* Admin: president email (only for creation) */}
+          {adminMode && !isEdit && (
             <div>
               <label className="mb-1 block text-xs font-bold text-foreground">
                 👤 Email du président (optionnel)
@@ -196,7 +257,7 @@ const SynagogueFormSheet = ({
           {/* Address */}
           <div>
             <label className="mb-1 flex items-center gap-1.5 text-xs font-bold text-foreground">
-              <MapPin className="h-3.5 w-3.5 text-primary/60" /> Adresse *
+              <MapPin className="h-3.5 w-3.5 text-primary/60" /> Adresse {!isEdit && "*"}
             </label>
             <input
               className={inputCls}
@@ -206,32 +267,34 @@ const SynagogueFormSheet = ({
             />
           </div>
 
-          {/* City + Zip */}
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="mb-1 block text-xs font-bold text-foreground">
-                Ville *
-              </label>
-              <input
-                className={inputCls}
-                value={form.city}
-                onChange={(e) => set("city", e.target.value)}
-                placeholder="Paris"
-              />
+          {/* City + Zip (only for creation) */}
+          {!isEdit && (
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="mb-1 block text-xs font-bold text-foreground">
+                  Ville *
+                </label>
+                <input
+                  className={inputCls}
+                  value={form.city}
+                  onChange={(e) => set("city", e.target.value)}
+                  placeholder="Paris"
+                />
+              </div>
+              <div className="w-28">
+                <label className="mb-1 block text-xs font-bold text-foreground">
+                  Code postal
+                </label>
+                <input
+                  className={inputCls}
+                  value={form.zip}
+                  onChange={(e) => set("zip", e.target.value)}
+                  placeholder="75002"
+                  inputMode="numeric"
+                />
+              </div>
             </div>
-            <div className="w-28">
-              <label className="mb-1 block text-xs font-bold text-foreground">
-                Code postal
-              </label>
-              <input
-                className={inputCls}
-                value={form.zip}
-                onChange={(e) => set("zip", e.target.value)}
-                placeholder="75002"
-                inputMode="numeric"
-              />
-            </div>
-          </div>
+          )}
 
           {/* Phone + Email */}
           <div className="flex gap-3">
@@ -342,7 +405,14 @@ const SynagogueFormSheet = ({
               boxShadow: "var(--shadow-gold)",
             }}
           >
-            {saving ? "⏳ Création en cours…" : "🏛️ Créer la synagogue"}
+            {isEdit ? (
+              <>
+                <Save className="h-4 w-4" />
+                {saving ? "⏳ Enregistrement…" : "✅ Enregistrer les modifications"}
+              </>
+            ) : (
+              saving ? "⏳ Création en cours…" : "🏛️ Créer la synagogue"
+            )}
           </button>
         </div>
       </SheetContent>
