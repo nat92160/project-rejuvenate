@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.send-cerfa-email]
 verify_jwt = false
+
+[functions.omer-reminder]
+verify_jwt = false
