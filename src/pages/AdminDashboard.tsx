@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import PrayerTimeSuggestionsAdmin from "@/components/PrayerTimeSuggestionsAdmin";
 import ZmanimTravelSimulator from "@/components/admin/ZmanimTravelSimulator";
+import SynagogueFormSheet from "@/components/SynagogueFormSheet";
 
 interface PresidentRequest {
   id: string;
@@ -242,6 +243,7 @@ const AdminDashboard = () => {
   const [synas, setSynas] = useState<SynaItem[]>([]);
   const [synasLoading, setSynasLoading] = useState(false);
   const [synaProcessing, setSynaProcessing] = useState<string | null>(null);
+  const [showCreateSyna, setShowCreateSyna] = useState(false);
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -598,11 +600,19 @@ const AdminDashboard = () => {
                 <p className="text-[10px] text-muted-foreground">Non vérifiées</p>
               </div>
             </div>
-            <button onClick={fetchSynas} disabled={synasLoading}
-              className="w-full mb-4 py-2.5 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground disabled:opacity-50"
-              style={{ background: "var(--gradient-gold)" }}>
-              {synasLoading ? "⏳ Chargement…" : "🔄 Actualiser"}
-            </button>
+            <div className="flex gap-2 mb-4">
+              <button onClick={() => setShowCreateSyna(true)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
+                style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}>
+                ➕ Créer une synagogue
+              </button>
+              <button onClick={fetchSynas} disabled={synasLoading}
+                className="py-2.5 px-4 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground disabled:opacity-50"
+                style={{ background: "var(--gradient-gold)" }}>
+                {synasLoading ? "⏳" : "🔄"}
+              </button>
+            </div>
+            <SynagogueFormSheet open={showCreateSyna} onOpenChange={setShowCreateSyna} onCreated={fetchSynas} adminMode />
             {synasLoading ? (
               <div className="text-center py-10 text-sm text-muted-foreground">Chargement…</div>
             ) : synas.length === 0 ? (
