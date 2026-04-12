@@ -95,6 +95,21 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Get user profile locations for fallback
+    const userIds = [...new Set(allSubs.map((s: any) => s.user_id))];
+    const profileLocations = new Map<string, { lat: number; lng: number }>();
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, latitude, longitude")
+        .in("user_id", userIds);
+      for (const p of profiles || []) {
+        if (p.latitude && p.longitude) {
+          profileLocations.set(p.user_id, { lat: p.latitude, lng: p.longitude });
+        }
+      }
+    }
+
     // Filter eligible subscribers
     const eligibleSubs = allSubs.filter((s: any) => {
       if (countedUserIds.has(s.user_id)) return false;
@@ -116,7 +131,7 @@ Deno.serve(async (req) => {
 
     // Filter by Tzeit HaKochavim
     const readySubs = eligibleSubs.filter((s: any) => {
-      const coords = getSubCoords(s, synaLocations);
+      const coords = getSubCoords(s, synaLocations, profileLocations);
       return isAfterTzeit(now, coords.lat, coords.lng);
     });
 
@@ -256,9 +271,18 @@ function json(data: unknown) {
   });
 }
 
-function getSubCoords(sub: any, synaLocations: Map<string, { lat: number; lng: number }>): { lat: number; lng: number } {
+function getSubCoords(
+  sub: any,
+  synaLocations: Map<string, { lat: number; lng: number }>,
+  profileLocations: Map<string, { lat: number; lng: number }>
+): { lat: number; lng: number } {
+  // 1. Push subscription GPS
   if (sub.latitude && sub.longitude) return { lat: sub.latitude, lng: sub.longitude };
+  // 2. Synagogue GPS
   if (sub.synagogue_id && synaLocations.has(sub.synagogue_id)) return synaLocations.get(sub.synagogue_id)!;
+  // 3. User profile GPS
+  if (sub.user_id && profileLocations.has(sub.user_id)) return profileLocations.get(sub.user_id)!;
+  // 4. Fallback Paris
   return { lat: PARIS_LAT, lng: PARIS_LNG };
 }
 
