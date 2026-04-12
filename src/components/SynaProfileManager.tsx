@@ -44,7 +44,9 @@ const SynaProfileManager = () => {
   const [profile, setProfile] = useState<SynaProfile>(DEFAULT_PROFILE);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [newSpeaker, setNewSpeaker] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
