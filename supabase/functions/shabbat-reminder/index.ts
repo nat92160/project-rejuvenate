@@ -64,6 +64,21 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Get user profile locations for fallback
+    const userIds = [...new Set(allSubs.map((s: any) => s.user_id))];
+    const profileLocations = new Map<string, { lat: number; lng: number }>();
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, latitude, longitude")
+        .in("user_id", userIds);
+      for (const p of profiles || []) {
+        if (p.latitude && p.longitude) {
+          profileLocations.set(p.user_id, { lat: p.latitude, lng: p.longitude });
+        }
+      }
+    }
+
     // Get users who already received notification today
     const { data: alreadySent } = await supabase
       .from("shabbat_notification_log")
@@ -85,7 +100,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const coords = getSubCoords(sub, synaLocations);
+      const coords = getSubCoords(sub, synaLocations, profileLocations);
       const sunset = calculateSunset(now, coords.lat, coords.lng);
       if (!sunset) continue;
 
@@ -131,7 +146,7 @@ Deno.serve(async (req) => {
 
     // Get a representative candle time for the notification body
     // Use the first eligible sub's location
-    const repCoords = getSubCoords(eligibleSubs[0], synaLocations);
+    const repCoords = getSubCoords(eligibleSubs[0], synaLocations, profileLocations);
     const repSunset = calculateSunset(now, repCoords.lat, repCoords.lng)!;
     const repCandle = new Date(repSunset.getTime() - 18 * 60 * 1000);
     const candleTimeStr = repCandle.toLocaleTimeString("fr-FR", {
@@ -213,9 +228,18 @@ function json(data: unknown) {
   });
 }
 
-function getSubCoords(sub: any, synaLocations: Map<string, { lat: number; lng: number }>): { lat: number; lng: number } {
+function getSubCoords(
+  sub: any,
+  synaLocations: Map<string, { lat: number; lng: number }>,
+  profileLocations: Map<string, { lat: number; lng: number }>
+): { lat: number; lng: number } {
+  // 1. Push subscription GPS
   if (sub.latitude && sub.longitude) return { lat: sub.latitude, lng: sub.longitude };
+  // 2. Synagogue GPS
   if (sub.synagogue_id && synaLocations.has(sub.synagogue_id)) return synaLocations.get(sub.synagogue_id)!;
+  // 3. User profile GPS
+  if (sub.user_id && profileLocations.has(sub.user_id)) return profileLocations.get(sub.user_id)!;
+  // 4. Fallback Paris
   return { lat: PARIS_LAT, lng: PARIS_LNG };
 }
 

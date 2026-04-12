@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
+import { useGpsProfileSync } from "@/hooks/useGpsProfileSync";
 import { supabase } from "@/integrations/supabase/client";
 import { registerNativePush, requestNativePushPermission, clearPushBadge, onNativePushActionPerformed } from "@/lib/capacitorPush";
 import Index from "./pages/Index.tsx";
@@ -86,6 +87,7 @@ async function saveNativePushToken(userId: string, deviceToken: string) {
 
 function AppInner() {
   useServiceWorkerUpdate();
+  useGpsProfileSync();
 
   const { user, loading } = useAuth();
   const permissionRequestedRef = useRef(false);
