@@ -263,7 +263,7 @@ const SiddourReader = ({
                   // BUT: Shema line must be rendered as a regular verse in black, not as gold title
                   if (isInternalSectionTitle(verse)) {
                     const titleText = normalizeHebrewMatch(verse);
-                    const isShemaLine = titleText.includes("שמע ישראל");
+                    const isShemaLine = titleText.replace(/\s+/g, "").includes("שמעישראל");
                     
                     if (isShemaLine) {
                       // Render Shema as a bold black verse with vowels preserved
