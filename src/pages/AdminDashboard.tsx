@@ -391,6 +391,7 @@ const AdminDashboard = () => {
     setSynaProcessing(null);
   };
 
+  const pending = useMemo(() => requests.filter((r) => r.status === "pending"), [requests]);
   const processed = useMemo(() => requests.filter((r) => r.status !== "pending"), [requests]);
   const filteredUsers = useMemo(
     () => users.filter((u) =>
