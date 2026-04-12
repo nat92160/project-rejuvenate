@@ -48,6 +48,12 @@ interface SynaItem {
   verified: boolean;
   president_id: string;
   address: string | null;
+  phone: string | null;
+  email: string | null;
+  shacharit_time: string | null;
+  minha_time: string | null;
+  arvit_time: string | null;
+  signature: string | null;
   created_at: string;
 }
 
