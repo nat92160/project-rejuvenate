@@ -1,0 +1,2 @@
+ALTER TABLE public.synagogue_profiles DROP CONSTRAINT unique_president;
+ALTER TABLE public.synagogue_profiles DROP CONSTRAINT synagogue_profiles_president_id_fkey;
