@@ -79,6 +79,28 @@ const SynaProfileManager = () => {
   }, [user]);
 
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner une image");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/logo-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("synagogue-logos").upload(path, file, { upsert: true });
+    if (error) {
+      toast.error("Erreur lors de l'upload du logo");
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("synagogue-logos").getPublicUrl(path);
+    setProfile((p) => ({ ...p, logo_url: urlData.publicUrl }));
+    setUploading(false);
+    toast.success("Logo uploadé !");
+  };
+
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
