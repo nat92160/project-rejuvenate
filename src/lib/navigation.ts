@@ -37,7 +37,7 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 export const DEFAULT_BOTTOM_TABS_BY_MODE: Record<BottomNavMode, string[]> = {
-  fidele: ["dashboard", "synagogue", "siddour", "zmanim"],
+  fidele: ["dashboard", "synagogue", "coursvirtuel", "zmanim"],
   president: ["dashboard", "affiche", "annonces", "horaires"],
 };
 
