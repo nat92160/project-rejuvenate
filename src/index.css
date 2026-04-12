@@ -218,7 +218,7 @@ select {
 
   .hebrew-reading-block .verse-instruction {
     font-size: 0.58em;
-    color: hsl(var(--muted-foreground) / 0.68);
+    color: inherit;
     font-weight: 400;
     font-style: italic;
     margin-block: 0.6em 0.2em;
@@ -227,7 +227,7 @@ select {
 
   .hebrew-reading-block .verse-prelude {
     font-size: 0.72em;
-    color: hsl(var(--muted-foreground) / 0.82);
+    color: inherit;
     font-weight: 500;
     margin-block: 0.2em 0.25em;
     line-height: 1.7;
@@ -235,7 +235,7 @@ select {
 
   .hebrew-reading-block .verse-secondary {
     font-size: 0.64em;
-    color: hsl(var(--muted-foreground) / 0.78);
+    color: inherit;
     font-weight: 500;
     margin-block: 0.08em 0.45em;
     line-height: 1.55;
