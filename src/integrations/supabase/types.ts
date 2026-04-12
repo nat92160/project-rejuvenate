@@ -529,6 +529,8 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          latitude: number | null
+          longitude: number | null
           omer_reminders: boolean
           suspended: boolean
           synagogue: string | null
@@ -542,6 +544,8 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          latitude?: number | null
+          longitude?: number | null
           omer_reminders?: boolean
           suspended?: boolean
           synagogue?: string | null
@@ -555,6 +559,8 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          latitude?: number | null
+          longitude?: number | null
           omer_reminders?: boolean
           suspended?: boolean
           synagogue?: string | null
