@@ -385,16 +385,7 @@ const FideleSynagogueView = () => {
                 transition={{ delay: index * 0.04 }}
               >
                 <div className="flex items-center gap-3">
-                  {syna.logo_url ? (
-                    <img src={syna.logo_url} alt="" className="h-12 w-12 rounded-xl border border-border object-contain bg-white" />
-                  ) : (
-                    <div
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold text-white"
-                      style={{ background: syna.primary_color }}
-                    >
-                      {syna.name.charAt(0)}
-                    </div>
-                  )}
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-2xl">🏛️</div>
                    <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
@@ -485,13 +476,7 @@ const FideleSynagogueView = () => {
                     transition={{ delay: index * 0.04 }}
                   >
                     <div className="flex items-start gap-3">
-                      {syna.logo_url ? (
-                        <img src={syna.logo_url} alt="" className="h-12 w-12 rounded-xl border border-border object-contain bg-white" />
-                      ) : (
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold text-white" style={{ background: syna.primary_color }}>
-                          {syna.name.charAt(0)}
-                        </div>
-                      )}
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-2xl">🏛️</div>
                        <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5 flex-wrap min-w-0">
@@ -801,13 +786,7 @@ const FideleSynagogueView = () => {
             <motion.div key={syna.id} className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
               <div className="flex items-center gap-3 mb-4">
-                {syna.logo_url ? (
-                  <img src={syna.logo_url} alt="" className="h-10 w-10 rounded-xl border border-border object-contain bg-white" />
-                ) : (
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold text-white" style={{ background: syna.primary_color }}>
-                    {syna.name.charAt(0)}
-                  </div>
-                )}
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-xl">🏛️</div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
                   {syna.verified && (
@@ -980,13 +959,7 @@ const FideleSynagogueView = () => {
                   className="w-full flex items-center gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary/20 transition-all cursor-pointer text-left"
                   style={{ boxShadow: "var(--shadow-card)" }}
                 >
-                  {syna.logo_url ? (
-                    <img src={syna.logo_url} alt="" className="h-10 w-10 rounded-xl border border-border object-contain bg-white" />
-                  ) : (
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold text-white" style={{ background: syna.primary_color }}>
-                      {syna.name.charAt(0)}
-                    </div>
-                  )}
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-xl">🏛️</div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-display text-sm font-bold text-foreground">{syna.name}</h4>
                     <p className="text-[10px] text-muted-foreground">💬 Ouvrir le chat</p>
