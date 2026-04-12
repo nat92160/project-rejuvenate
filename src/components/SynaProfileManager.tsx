@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Building2, MapPin, Phone, Mail, Save } from "lucide-react";
+import { useRef } from "react";
 
 interface SynaProfile {
   id?: string;
