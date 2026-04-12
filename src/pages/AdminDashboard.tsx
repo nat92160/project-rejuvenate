@@ -293,7 +293,7 @@ const AdminDashboard = () => {
     setSynasLoading(true);
     const { data } = await supabase
       .from("synagogue_profiles")
-      .select("id, name, verified, president_id, address, created_at")
+      .select("id, name, verified, president_id, address, phone, email, shacharit_time, minha_time, arvit_time, signature, created_at")
       .neq("name", "")
       .order("created_at", { ascending: false });
     setSynas((data || []) as SynaItem[]);
