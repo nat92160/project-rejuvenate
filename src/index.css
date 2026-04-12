@@ -197,11 +197,10 @@ select {
 
   .hebrew-reading-block small {
     display: inline;
-    font-size: 0.72em;
-    color: #999;
-    font-weight: 400;
-    font-style: italic;
-    line-height: 1.4;
+    font-size: 0.85em;
+    color: inherit;
+    font-weight: inherit;
+    line-height: inherit;
   }
 
   .hebrew-reading-block b {
