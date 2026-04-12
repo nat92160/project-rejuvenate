@@ -431,11 +431,16 @@ const SiddourReader = ({
               }}
             >
               {content.french.length > 0 ? (
-                content.french.map((verse, i) => (
-                  verse && verse.trim() ? (
+                content.french.map((verse, i) => {
+                  const hebrewVerse = content.hebrew?.[i] ?? "";
+                  if (isInstructionOnly(hebrewVerse) && !isShemaSecondaryLine(hebrewVerse)) {
+                    return null;
+                  }
+
+                  return verse && verse.trim() ? (
                     <p key={i} className="mb-3" dangerouslySetInnerHTML={{ __html: verse }} />
-                  ) : null
-                ))
+                  ) : null;
+                })
               ) : (
                 <p className="text-center text-sm" style={{ color: pmMuted }}>
                   La traduction n'est pas encore disponible pour cette section.
