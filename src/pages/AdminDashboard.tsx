@@ -382,7 +382,15 @@ const AdminDashboard = () => {
     setSynaProcessing(null);
   };
 
-  const pending = useMemo(() => requests.filter((r) => r.status === "pending"), [requests]);
+  const handleDeleteSyna = async (synaId: string, synaName: string) => {
+    if (!confirm(`Supprimer définitivement la synagogue "${synaName}" ? Cette action est irréversible.`)) return;
+    setSynaProcessing(synaId);
+    const { error } = await supabase.from("synagogue_profiles").delete().eq("id", synaId);
+    if (error) toast.error("Erreur de suppression");
+    else { toast.success("🗑️ Synagogue supprimée"); await fetchSynas(); }
+    setSynaProcessing(null);
+  };
+
   const processed = useMemo(() => requests.filter((r) => r.status !== "pending"), [requests]);
   const filteredUsers = useMemo(
     () => users.filter((u) =>
