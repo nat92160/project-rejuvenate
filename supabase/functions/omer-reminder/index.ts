@@ -6,17 +6,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-/**
- * Omer persistent reminder.
- *
- * Called by a cron job every 20 minutes between 19:00–01:00 UTC.
- * For each subscriber:
- *   1. Checks we're in the Omer period (16 Nissan → 5 Sivan)
- *   2. Checks it's after Tzeit HaKochavim for the subscriber's location
- *   3. Checks the user has NOT already counted today
- *   4. Checks the user has omer_reminders enabled in their profile
- *   5. Sends the push notification (deduplicated by endpoint/device_token)
- */
+const PARIS_LAT = 48.8566;
+const PARIS_LNG = 2.3522;
+const MAX_REMINDERS_PER_EVENING = 6;
+const TZEIT_DEGREES = 8.5;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -43,12 +36,12 @@ Deno.serve(async (req) => {
     const omerDay = getOmerDay(now);
 
     if (!omerDay) {
-      return json({ skipped: true, reason: "Not in Omer period", omerDay: null });
+      return json({ skipped: true, reason: "Not in Omer period" });
     }
 
-    // Get all users who have already counted today
-    const todayStr = now.toISOString().slice(0, 10);
     const omerYear = now.getFullYear();
+
+    // Get all users who have already counted today
     const { data: countedRows } = await supabase
       .from("omer_counts")
       .select("user_id")
@@ -65,35 +58,66 @@ Deno.serve(async (req) => {
 
     const disabledUserIds = new Set((disabledProfiles || []).map((r: any) => r.user_id));
 
-    // Get ALL push subscriptions (authenticated users)
+    // Get reminder log for tonight to enforce max 6 reminders
+    const { data: reminderLogs } = await supabase
+      .from("omer_reminder_log")
+      .select("user_id")
+      .eq("omer_day", omerDay)
+      .eq("omer_year", omerYear);
+
+    // Count reminders per user
+    const reminderCounts = new Map<string, number>();
+    for (const log of reminderLogs || []) {
+      reminderCounts.set(log.user_id, (reminderCounts.get(log.user_id) || 0) + 1);
+    }
+
+    // Get ALL push subscriptions with location data
     const { data: allSubs } = await supabase
       .from("push_subscriptions")
-      .select("id, user_id, endpoint, p256dh, auth, device_token, push_type, latitude, longitude, timezone");
+      .select("id, user_id, endpoint, p256dh, auth, device_token, push_type, latitude, longitude, timezone, synagogue_id");
 
     if (!allSubs?.length) {
       return json({ skipped: true, reason: "No subscribers" });
     }
 
-    // Filter: exclude users who already counted or disabled reminders
+    // Get synagogue locations for fallback coordinates
+    const synaIds = [...new Set(allSubs.map((s: any) => s.synagogue_id).filter(Boolean))];
+    let synaLocations = new Map<string, { lat: number; lng: number }>();
+    if (synaIds.length > 0) {
+      const { data: synas } = await supabase
+        .from("synagogue_profiles")
+        .select("id, latitude, longitude")
+        .in("id", synaIds);
+      for (const s of synas || []) {
+        if (s.latitude && s.longitude) {
+          synaLocations.set(s.id, { lat: s.latitude, lng: s.longitude });
+        }
+      }
+    }
+
+    // Filter eligible subscribers
     const eligibleSubs = allSubs.filter((s: any) => {
       if (countedUserIds.has(s.user_id)) return false;
       if (disabledUserIds.has(s.user_id)) return false;
+      if ((reminderCounts.get(s.user_id) || 0) >= MAX_REMINDERS_PER_EVENING) return false;
       return true;
     });
 
     if (!eligibleSubs.length) {
       return json({
         skipped: true,
-        reason: "All users already counted or disabled",
+        reason: "No eligible subscribers",
         totalSubs: allSubs.length,
         counted: countedUserIds.size,
         disabled: disabledUserIds.size,
+        maxedOut: [...reminderCounts.entries()].filter(([, c]) => c >= MAX_REMINDERS_PER_EVENING).length,
       });
     }
 
-    // Filter by location: only send if after Tzeit HaKochavim
+    // Filter by Tzeit HaKochavim
     const readySubs = eligibleSubs.filter((s: any) => {
-      return isAfterTzeit(now, s.latitude, s.longitude, s.timezone);
+      const coords = getSubCoords(s, synaLocations);
+      return isAfterTzeit(now, coords.lat, coords.lng);
     });
 
     if (!readySubs.length) {
@@ -104,61 +128,90 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Deduplicate by endpoint (web) and device_token (native)
+    // Deduplicate by user_id + device
     const seenEndpoints = new Set<string>();
     const seenTokens = new Set<string>();
-    const webSubs: any[] = [];
-    const nativeSubs: any[] = [];
+    const uniqueUserSubs: any[] = [];
 
     for (const sub of readySubs) {
       if (sub.push_type === "native" && sub.device_token) {
         if (!seenTokens.has(sub.device_token)) {
           seenTokens.add(sub.device_token);
-          nativeSubs.push(sub);
+          uniqueUserSubs.push(sub);
         }
       } else if (sub.endpoint) {
         if (!seenEndpoints.has(sub.endpoint)) {
           seenEndpoints.add(sub.endpoint);
-          webSubs.push(sub);
+          uniqueUserSubs.push(sub);
         }
       }
     }
 
-    const title = `🌾 Séfirat HaOmer — Jour ${omerDay}`;
-    const body = `N'oubliez pas de compter le Omer ce soir ! Jour ${omerDay} sur 49.`;
+    // Determine which users are getting first vs subsequent reminder
+    const uniqueUserIds = [...new Set(uniqueUserSubs.map((s: any) => s.user_id))];
+    const firstTimers = new Set(uniqueUserIds.filter(uid => !reminderCounts.has(uid)));
 
-    // Call send-push in broadcast mode (it will handle the actual sending)
-    // We collect unique synagogue_ids from readySubs to send per-synagogue
-    // But to avoid duplicates, we send ONE broadcast call without synagogue_id
-    const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({ title, body }),
-    });
+    const titleText = `🌾 Séfirat HaOmer — Jour ${omerDay}`;
 
-    const pushData = await pushRes.json();
+    // Send push per synagogue group (send-push handles dedup internally)
+    const synagogueIds = [...new Set(readySubs.map((s: any) => s.synagogue_id).filter(Boolean))];
+    let totalSent = 0;
 
-    // Also send to guest Omer subscribers (omer_push_subscriptions table)
+    // Send broadcast for users without synagogue
+    const hasNullSyna = readySubs.some((s: any) => !s.synagogue_id);
+    
+    // We need to send individually per-user to customize the body
+    // But send-push doesn't support per-user bodies, so we use two bodies:
+    const bodyFirst = `C'est l'heure ! Comptez le Omer ce soir — Jour ${omerDay} sur 49.`;
+    const bodyReminder = `Rappel : vous n'avez pas encore compté le Omer — Jour ${omerDay} sur 49.`;
+
+    // Determine which body to use based on majority
+    const body = firstTimers.size >= uniqueUserIds.length / 2 ? bodyFirst : bodyReminder;
+
+    // Send via send-push (broadcast mode)
+    try {
+      const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({ title: titleText, body }),
+      });
+      const pushData = await pushRes.json();
+      totalSent += pushData.sent || 0;
+    } catch (e) {
+      console.error("Push broadcast error:", e);
+    }
+
+    // Log reminders for each unique user
+    const logEntries = uniqueUserIds.map(uid => ({
+      user_id: uid,
+      omer_day: omerDay,
+      omer_year: omerYear,
+    }));
+
+    if (logEntries.length > 0) {
+      await supabase.from("omer_reminder_log").insert(logEntries);
+    }
+
+    // Also handle guest Omer subscribers
     const { data: guestSubs } = await supabase
       .from("omer_push_subscriptions")
       .select("endpoint, p256dh, auth, latitude, longitude, timezone");
 
     let guestSent = 0;
     if (guestSubs?.length) {
-      // Filter by tzeit for guests too
-      const readyGuests = guestSubs.filter((s: any) =>
-        isAfterTzeit(now, s.latitude, s.longitude, s.timezone)
-      );
+      const readyGuests = guestSubs.filter((s: any) => {
+        const lat = s.latitude || PARIS_LAT;
+        const lng = s.longitude || PARIS_LNG;
+        return isAfterTzeit(now, lat, lng);
+      });
 
-      // Deduplicate guest endpoints
       const guestSeenEndpoints = new Set<string>();
       for (const sub of readyGuests) {
         if (!sub.endpoint || guestSeenEndpoints.has(sub.endpoint)) continue;
         guestSeenEndpoints.add(sub.endpoint);
-
         try {
           const gRes = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
             method: "POST",
@@ -166,14 +219,10 @@ Deno.serve(async (req) => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${supabaseKey}`,
             },
-            body: JSON.stringify({
-              title,
-              body,
-              // We can't filter by user for guests, so broadcast
-            }),
+            body: JSON.stringify({ title: titleText, body }),
           });
           if (gRes.ok) guestSent++;
-          await gRes.text(); // consume body
+          await gRes.text();
         } catch { /* skip */ }
       }
     }
@@ -186,10 +235,9 @@ Deno.serve(async (req) => {
       disabled: disabledUserIds.size,
       eligible: eligibleSubs.length,
       afterTzeit: readySubs.length,
-      dedupedWeb: webSubs.length,
-      dedupedNative: nativeSubs.length,
-      pushResult: pushData,
+      sent: totalSent,
       guestSent,
+      logged: logEntries.length,
     });
   } catch (err) {
     console.error("omer-reminder error:", err);
@@ -208,9 +256,14 @@ function json(data: unknown) {
   });
 }
 
+function getSubCoords(sub: any, synaLocations: Map<string, { lat: number; lng: number }>): { lat: number; lng: number } {
+  if (sub.latitude && sub.longitude) return { lat: sub.latitude, lng: sub.longitude };
+  if (sub.synagogue_id && synaLocations.has(sub.synagogue_id)) return synaLocations.get(sub.synagogue_id)!;
+  return { lat: PARIS_LAT, lng: PARIS_LNG };
+}
+
 function getOmerDay(date: Date): number | null {
   const year = date.getFullYear();
-  // Pessah (15 Nissan) dates — Omer starts 16 Nissan (the day after)
   const pesachDates: Record<number, string> = {
     2025: "2025-04-12",
     2026: "2026-04-01",
@@ -224,11 +277,8 @@ function getOmerDay(date: Date): number | null {
 
   const pesach = new Date(pesachStr + "T00:00:00Z");
   const omerStart = new Date(pesach);
-  omerStart.setUTCDate(omerStart.getUTCDate() + 1); // 16 Nissan
+  omerStart.setUTCDate(omerStart.getUTCDate() + 1);
 
-  // In Jewish law, the day starts at nightfall, so the evening of the civil date
-  // corresponds to the next Jewish day. We use the civil date directly since
-  // the cron runs in the evening, and counting happens on the evening of that date.
   const todayMidnight = new Date(date);
   todayMidnight.setUTCHours(0, 0, 0, 0);
 
@@ -241,46 +291,25 @@ function getOmerDay(date: Date): number | null {
 }
 
 /**
- * Check if current time is after Tzeit HaKochavim for the given location.
- * Falls back to timezone-based check if no lat/lng available.
+ * Precise Tzeit HaKochavim calculation (8.5° below horizon).
+ * Uses proper astronomical formula with equation of time.
  */
-function isAfterTzeit(
-  now: Date,
-  lat: number | null,
-  lng: number | null,
-  tz: string | null
-): boolean {
-  if (lat && lng) {
-    const tzeit = calculateTzeit(now, lat, lng);
-    if (tzeit) {
-      return now.getTime() >= tzeit.getTime();
-    }
-  }
-
-  // Fallback: check if it's after 21:00 in the subscriber's timezone
-  const fallbackTz = tz || "Europe/Paris";
-  try {
-    const localHour = parseInt(
-      now.toLocaleString("en-US", { timeZone: fallbackTz, hour: "numeric", hour12: false }),
-      10
-    );
-    // After 21:00 local or before 02:00 (next day, still hasn't counted)
-    return localHour >= 21 || localHour < 2;
-  } catch {
-    return false;
-  }
+function isAfterTzeit(now: Date, lat: number, lng: number): boolean {
+  const tzeit = calculateTzeit(now, lat, lng);
+  if (!tzeit) return false;
+  return now.getTime() >= tzeit.getTime();
 }
 
-/**
- * Calculate Tzeit HaKochavim (8.5° below horizon) for a given date and location.
- */
 function calculateTzeit(date: Date, lat: number, lng: number): Date | null {
-  const TZEIT_DEGREES = 8.5;
   const dayOfYear = getDayOfYear(date);
 
-  const declination = -23.45 * Math.cos((2 * Math.PI / 365) * (dayOfYear + 10));
+  // Solar declination (more precise formula)
+  const B = ((2 * Math.PI) / 365) * (dayOfYear - 81);
+  const declination = 23.45 * Math.sin(B);
   const decRad = (declination * Math.PI) / 180;
   const latRad = (lat * Math.PI) / 180;
+
+  // Elevation angle for Tzeit: -8.5°
   const elevRad = (-TZEIT_DEGREES * Math.PI) / 180;
 
   const cosH =
@@ -290,9 +319,14 @@ function calculateTzeit(date: Date, lat: number, lng: number): Date | null {
   if (cosH > 1 || cosH < -1) return null;
 
   const H = (Math.acos(cosH) * 180) / Math.PI;
-  const B = ((2 * Math.PI) / 365) * (dayOfYear - 81);
+
+  // Equation of time
   const EoT = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+
+  // Solar noon in UTC minutes
   const solarNoonUTC = 720 - lng * 4 - EoT;
+
+  // Tzeit = solar noon + hour angle (in minutes)
   const tzeitUTC = solarNoonUTC + H * 4;
 
   const tzeitDate = new Date(date);
