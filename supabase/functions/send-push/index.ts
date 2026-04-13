@@ -353,7 +353,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { synagogue_id, title, body, sender_id } = await req.json();
+    const { synagogue_id, title, body, sender_id, user_ids } = await req.json();
 
     if (!body) {
       return new Response(JSON.stringify({ error: "Missing fields" }), {
@@ -368,7 +368,7 @@ Deno.serve(async (req) => {
     const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Get push subscriptions — filter by synagogue_id if provided, otherwise get ALL (broadcast mode)
+    // Get push subscriptions — filter by synagogue_id, user_ids, or get ALL (broadcast mode)
     let query = supabase
       .from("push_subscriptions")
       .select("*");
@@ -379,6 +379,11 @@ Deno.serve(async (req) => {
 
     if (sender_id) {
       query = query.neq("user_id", sender_id);
+    }
+
+    // If user_ids array is provided, only send to those users
+    if (user_ids && Array.isArray(user_ids) && user_ids.length > 0) {
+      query = query.in("user_id", user_ids);
     }
 
     const { data: subs, error } = await query;

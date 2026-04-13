@@ -155,37 +155,25 @@ Deno.serve(async (req) => {
       timeZone: "Europe/Paris",
     });
 
-    // Send push per synagogue group
-    const synagogueGroups = new Map<string, any[]>();
-    for (const sub of dedupedSubs) {
-      const key = sub.synagogue_id || "__global__";
-      if (!synagogueGroups.has(key)) synagogueGroups.set(key, []);
-      synagogueGroups.get(key)!.push(sub);
-    }
-
     let totalSent = 0;
     const title = "🕯️ Chabbat Chalom !";
     const body = `Allumage des bougies dans 18 minutes (${candleTimeStr}). Bon Chabbat !`;
 
-    for (const [synaId, _subs] of synagogueGroups) {
-      try {
-        const pushBody: any = { title, body };
-        if (synaId !== "__global__") pushBody.synagogue_id = synaId;
+    // Send via send-push with user_ids filter to avoid broadcasting to everyone
+    try {
+      const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify({ title, body, user_ids: [...eligibleUserIds] }),
+      });
 
-        const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${serviceRoleKey}`,
-          },
-          body: JSON.stringify(pushBody),
-        });
-
-        const pushData = await pushRes.json();
-        totalSent += pushData.sent || 0;
-      } catch (e) {
-        console.error(`Push error for synagogue ${synaId}:`, e);
-      }
+      const pushData = await pushRes.json();
+      totalSent += pushData.sent || 0;
+    } catch (e) {
+      console.error("Push error:", e);
     }
 
     // Log sent notifications

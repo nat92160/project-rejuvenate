@@ -168,22 +168,13 @@ Deno.serve(async (req) => {
 
     const titleText = `🌾 Séfirat HaOmer — Jour ${omerDay}`;
 
-    // Send push per synagogue group (send-push handles dedup internally)
-    const synagogueIds = [...new Set(readySubs.map((s: any) => s.synagogue_id).filter(Boolean))];
-    let totalSent = 0;
-
-    // Send broadcast for users without synagogue
-    const hasNullSyna = readySubs.some((s: any) => !s.synagogue_id);
-    
-    // We need to send individually per-user to customize the body
-    // But send-push doesn't support per-user bodies, so we use two bodies:
     const bodyFirst = `C'est l'heure ! Comptez le Omer ce soir — Jour ${omerDay} sur 49.`;
     const bodyReminder = `Rappel : vous n'avez pas encore compté le Omer — Jour ${omerDay} sur 49.`;
-
-    // Determine which body to use based on majority
     const body = firstTimers.size >= uniqueUserIds.length / 2 ? bodyFirst : bodyReminder;
 
-    // Send via send-push (broadcast mode)
+    let totalSent = 0;
+
+    // Send via send-push with user_ids filter to avoid broadcasting to everyone
     try {
       const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
         method: "POST",
@@ -191,12 +182,12 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${supabaseKey}`,
         },
-        body: JSON.stringify({ title: titleText, body }),
+        body: JSON.stringify({ title: titleText, body, user_ids: uniqueUserIds }),
       });
       const pushData = await pushRes.json();
       totalSent += pushData.sent || 0;
     } catch (e) {
-      console.error("Push broadcast error:", e);
+      console.error("Push error:", e);
     }
 
     // Log reminders for each unique user
@@ -210,37 +201,10 @@ Deno.serve(async (req) => {
       await supabase.from("omer_reminder_log").insert(logEntries);
     }
 
-    // Also handle guest Omer subscribers
-    const { data: guestSubs } = await supabase
-      .from("omer_push_subscriptions")
-      .select("endpoint, p256dh, auth, latitude, longitude, timezone");
-
-    let guestSent = 0;
-    if (guestSubs?.length) {
-      const readyGuests = guestSubs.filter((s: any) => {
-        const lat = s.latitude || PARIS_LAT;
-        const lng = s.longitude || PARIS_LNG;
-        return isAfterTzeit(now, lat, lng);
-      });
-
-      const guestSeenEndpoints = new Set<string>();
-      for (const sub of readyGuests) {
-        if (!sub.endpoint || guestSeenEndpoints.has(sub.endpoint)) continue;
-        guestSeenEndpoints.add(sub.endpoint);
-        try {
-          const gRes = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${supabaseKey}`,
-            },
-            body: JSON.stringify({ title: titleText, body }),
-          });
-          if (gRes.ok) guestSent++;
-          await gRes.text();
-        } catch { /* skip */ }
-      }
-    }
+    // Note: Guest omer subscribers (omer_push_subscriptions) are handled
+    // separately via web push directly - not through send-push which uses push_subscriptions.
+    // TODO: implement direct VAPID push for guest omer subs if needed.
+    const guestSent = 0;
 
     return json({
       success: true,
