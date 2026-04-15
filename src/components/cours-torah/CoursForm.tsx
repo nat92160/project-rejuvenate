@@ -542,6 +542,8 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
               : "Publier le cours"}
         </button>
       </div>
+      </>
+      )}
     </motion.div>
   );
 });
