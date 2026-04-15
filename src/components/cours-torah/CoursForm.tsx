@@ -236,7 +236,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
           day: dayOfWeek,
           date: dateLabel || undefined,
           passcode: zoomPasscode,
-          meetingId: zoomMeetingId,
+          meetingId: usePmi && pmiInfo?.pmi ? pmiInfo.pmi : zoomMeetingId,
         });
         toast.success("✅ Cours Zoom créé !");
       } else {
