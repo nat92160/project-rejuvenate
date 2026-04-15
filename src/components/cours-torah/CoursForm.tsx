@@ -219,18 +219,19 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
     if (error) toast.error("Erreur de publication");
     else if (data) {
       onCreated(data as Record<string, unknown>);
-      onClose();
-      toast.success(courseType === "zoom"
-        ? zoomSource === "manual"
-          ? "✅ Cours Zoom publié avec votre lien !"
-          : usePmi
-            ? zoomMode === "instant"
-              ? "✅ Salle personnelle Zoom activée !"
-              : "✅ Réunion programmée avec votre salle personnelle !"
-            : zoomMode === "instant"
-              ? "✅ Réunion Zoom instantanée créée !"
-              : "✅ Réunion Zoom programmée avec succès !"
-        : "Cours publié !");
+      if (courseType === "zoom" && zoomLink) {
+        setCreatedInfo({
+          title: title.trim(),
+          zoomLink,
+          rav: teacher.trim(),
+          time: time || "20:00",
+          day: dayOfWeek,
+        });
+        toast.success("✅ Cours Zoom créé !");
+      } else {
+        onClose();
+        toast.success("Cours publié !");
+      }
     }
     setSubmitting(false);
   };
