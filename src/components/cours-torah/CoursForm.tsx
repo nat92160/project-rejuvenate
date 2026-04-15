@@ -245,6 +245,68 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
       animate={{ opacity: 1, height: "auto" }}
       exit={{ opacity: 0, height: 0 }}
     >
+      {createdInfo ? (
+        <div className="space-y-4 text-center">
+          <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
+          <div>
+            <p className="text-lg font-bold text-foreground">Cours créé avec succès !</p>
+            <p className="text-sm text-muted-foreground mt-1">{createdInfo.title}{createdInfo.rav ? ` — ${createdInfo.rav}` : ""}</p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted/30 p-3">
+            <p className="text-[10px] text-muted-foreground mb-1 font-medium">Lien Zoom de la réunion</p>
+            <p className="text-sm font-mono text-foreground break-all">{createdInfo.zoomLink}</p>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(createdInfo.zoomLink);
+                  setLinkCopied(true);
+                  toast.success("Lien copié !");
+                  setTimeout(() => setLinkCopied(false), 2000);
+                } catch {
+                  toast.error("Impossible de copier");
+                }
+              }}
+              className="flex-1 py-3 rounded-xl text-sm font-bold cursor-pointer border border-border bg-card text-foreground flex items-center justify-center gap-2"
+            >
+              {linkCopied ? <CheckCircle size={16} /> : <Copy size={16} />}
+              {linkCopied ? "Copié !" : "Copier le lien"}
+            </button>
+            <button
+              onClick={() => {
+                const msg = `📚 *${createdInfo.title}*${createdInfo.rav ? `\n🎓 Rav ${createdInfo.rav}` : ""}\n📅 ${createdInfo.day} à ${createdInfo.time}\n\n🔗 Rejoindre : ${createdInfo.zoomLink}`;
+                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+                window.open(whatsappUrl, "_blank");
+              }}
+              className="flex-1 py-3 rounded-xl text-sm font-bold cursor-pointer border-none text-white flex items-center justify-center gap-2"
+              style={{ background: "#25D366" }}
+            >
+              📲 WhatsApp
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              const msg = `📚 *${createdInfo.title}*${createdInfo.rav ? `\n🎓 Rav ${createdInfo.rav}` : ""}\n📅 ${createdInfo.day} à ${createdInfo.time}\n\n🔗 Rejoindre : ${createdInfo.zoomLink}`;
+              void shareText(msg, createdInfo.title);
+            }}
+            className="w-full py-2.5 rounded-xl text-xs font-medium cursor-pointer border border-border bg-card text-muted-foreground flex items-center justify-center gap-2"
+          >
+            <ExternalLink size={14} /> Autre partage
+          </button>
+
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl text-xs font-bold cursor-pointer border-none bg-primary text-primary-foreground"
+          >
+            Fermer
+          </button>
+        </div>
+      ) : (
+      <>
       {/* Type toggle */}
       <div className="flex rounded-xl overflow-hidden border border-border mb-4">
         <button
