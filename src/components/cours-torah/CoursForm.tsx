@@ -107,11 +107,11 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
     }
   }, [courseType, zoomSource, usePmi, fetchPmi]);
 
-  const createZoomMeeting = async (meetingTitle: string, courseTime: string): Promise<string | null> => {
+  const createZoomMeeting = async (meetingTitle: string, courseTime: string): Promise<{ joinUrl: string; passcode?: string; meetingId?: string | number } | null> => {
     try {
       const body: Record<string, unknown> = {
         action: "create-meeting",
-        userId, // Per-user OAuth: meeting created on THEIR account
+        userId,
         title: meetingTitle,
         timezone: "Europe/Paris",
         duration: 60,
@@ -150,7 +150,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
         return null;
       }
 
-      return data.joinUrl;
+      return { joinUrl: data.joinUrl, passcode: data.passcode, meetingId: data.meetingId };
     } catch (err) {
       console.error("Zoom creation failed:", err);
       toast.error("Impossible de créer la réunion Zoom");
