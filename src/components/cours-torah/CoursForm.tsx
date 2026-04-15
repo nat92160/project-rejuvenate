@@ -1,12 +1,13 @@
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Copy, CheckCircle, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ZoomConnectionCard, useZoomConnection } from "@/components/ZoomConnectionCard";
+import { shareContent } from "@/lib/shareUtils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
