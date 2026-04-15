@@ -131,7 +131,7 @@ const CoursVirtuelWidget = () => {
               cityName={city.name}
               isOwner={isPresident && user?.id === c.creator_id}
               index={i}
-              synaProfile={synaProfile}
+              
               onDelete={handleDelete}
             />
           ))}

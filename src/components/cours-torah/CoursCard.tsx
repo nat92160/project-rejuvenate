@@ -1,10 +1,7 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { shareText } from "@/lib/shareUtils";
-import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
-import type { SynaProfile } from "@/components/poster/MasterPosterTemplate";
-import { sharePosterPng } from "@/components/poster/usePosterExport";
 import { normalizeCourseType } from "@/lib/courseType";
 
 interface CoursCardProps {
@@ -21,7 +18,6 @@ interface CoursCardProps {
   cityName: string;
   isOwner: boolean;
   index: number;
-  synaProfile: SynaProfile;
   onDelete: (id: string) => void;
   specific_date?: string | null;
 }
@@ -33,40 +29,14 @@ const dayColors: Record<string, string> = {
 
 const CoursCard = ({
   id, title, rav, day_of_week, course_time, zoom_link, description,
-  course_type, address, cityName, isOwner, index, synaProfile, onDelete, specific_date,
+  course_type, address, cityName, isOwner, index, onDelete, specific_date,
 }: CoursCardProps) => {
-  const posterRef = useRef<HTMLDivElement>(null);
-  const [exporting, setExporting] = useState(false);
   const isZoom = normalizeCourseType(course_type, zoom_link, address) === "zoom";
   const dotColor = dayColors[day_of_week] || "#94a3b8";
 
   const displayDate = specific_date
     ? new Date(specific_date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
     : day_of_week;
-
-  const posterContent: CardPosterContent = {
-    topEmoji: isZoom ? "🎥" : "📍",
-    badge: isZoom ? "COURS ZOOM" : "COURS PRÉSENTIEL",
-    badgeColor: isZoom ? "#2D8CFF" : "#16a34a",
-    title: title,
-    description: rav || undefined,
-    date: `${displayDate} à ${course_time?.slice(0, 5)}`,
-    dateEmoji: "📅",
-    details: [
-      ...(isZoom && zoom_link ? [{ icon: "🎥", text: "Lien Zoom disponible" }] : []),
-      ...(!isZoom && address ? [{ icon: "📍", text: address }] : []),
-      ...(description ? [{ icon: "📝", text: description }] : []),
-    ],
-    accentColor: isZoom ? "#2D8CFF" : "#16a34a",
-    bgColor: isZoom ? "#EFF6FF" : "#F0FDF4",
-  };
-
-  const handleSharePng = async () => {
-    setExporting(true);
-    const filename = `cours-${title.replace(/\s+/g, "-").toLowerCase()}.png`;
-    await sharePosterPng(posterRef.current, filename, `📚 ${title}`);
-    setExporting(false);
-  };
 
   const handleShare = async () => {
     let text = `📚 ${title}\n`;
@@ -95,15 +65,6 @@ const CoursCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
     >
-      {/* Hidden poster for PNG export */}
-      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-        <CardPosterTemplate
-          ref={posterRef}
-          profile={{ name: synaProfile.name || "Chabbat Chalom", logo_url: synaProfile.logo_url, website: "chabbat-chalom.com" }}
-          content={posterContent}
-        />
-      </div>
-
       {/* Visible card */}
       <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
         <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -156,12 +117,11 @@ const CoursCard = ({
 
       <div className="flex flex-wrap gap-2 mt-2 px-1">
         <button
-          onClick={handleSharePng}
-          disabled={exporting}
-          className="text-[11px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground disabled:opacity-50"
+          onClick={handleShare}
+          className="text-[11px] font-bold px-3 py-1.5 rounded-lg border-none cursor-pointer text-primary-foreground"
           style={{ background: "var(--gradient-gold)" }}
         >
-          {exporting ? "⏳ Génération..." : "📤 Partager l'Affiche"}
+          📤 Partager
         </button>
         {isOwner && (
           <button
