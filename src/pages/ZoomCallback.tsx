@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
-import { ZOOM_REDIRECT_URI, consumePkceVerifier } from "@/lib/zoom";
+import { ZOOM_REDIRECT_URI } from "@/lib/zoom";
 
 const ZOOM_CODE_KEY = "zoom_code_exchanged";
 
@@ -39,9 +39,8 @@ const ZoomCallback = () => {
 
     const exchangeCode = async () => {
       try {
-        const codeVerifier = consumePkceVerifier();
         const { data, error } = await supabase.functions.invoke("zoom-user-oauth", {
-          body: { action: "callback", code, state, redirectUri: ZOOM_REDIRECT_URI, codeVerifier },
+          body: { action: "callback", code, state, redirectUri: ZOOM_REDIRECT_URI },
         });
 
         if (error || !data?.success) {
