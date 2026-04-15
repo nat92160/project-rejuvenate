@@ -1,12 +1,13 @@
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Copy, CheckCircle, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ZoomConnectionCard, useZoomConnection } from "@/components/ZoomConnectionCard";
+import { shareText } from "@/lib/shareUtils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -57,7 +58,8 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
   const [manualZoomLink, setManualZoomLink] = useState("");
   const [desc, setDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
+  const [createdInfo, setCreatedInfo] = useState<{ title: string; zoomLink: string; rav: string; time: string; day: string } | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   useEffect(() => {
     setCourseType(initialCourseType);
   }, [initialCourseType]);
@@ -217,18 +219,19 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
     if (error) toast.error("Erreur de publication");
     else if (data) {
       onCreated(data as Record<string, unknown>);
-      onClose();
-      toast.success(courseType === "zoom"
-        ? zoomSource === "manual"
-          ? "✅ Cours Zoom publié avec votre lien !"
-          : usePmi
-            ? zoomMode === "instant"
-              ? "✅ Salle personnelle Zoom activée !"
-              : "✅ Réunion programmée avec votre salle personnelle !"
-            : zoomMode === "instant"
-              ? "✅ Réunion Zoom instantanée créée !"
-              : "✅ Réunion Zoom programmée avec succès !"
-        : "Cours publié !");
+      if (courseType === "zoom" && zoomLink) {
+        setCreatedInfo({
+          title: title.trim(),
+          zoomLink,
+          rav: teacher.trim(),
+          time: time || "20:00",
+          day: dayOfWeek,
+        });
+        toast.success("✅ Cours Zoom créé !");
+      } else {
+        onClose();
+        toast.success("Cours publié !");
+      }
     }
     setSubmitting(false);
   };
@@ -242,6 +245,68 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
       animate={{ opacity: 1, height: "auto" }}
       exit={{ opacity: 0, height: 0 }}
     >
+      {createdInfo ? (
+        <div className="space-y-4 text-center">
+          <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
+          <div>
+            <p className="text-lg font-bold text-foreground">Cours créé avec succès !</p>
+            <p className="text-sm text-muted-foreground mt-1">{createdInfo.title}{createdInfo.rav ? ` — ${createdInfo.rav}` : ""}</p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted/30 p-3">
+            <p className="text-[10px] text-muted-foreground mb-1 font-medium">Lien Zoom de la réunion</p>
+            <p className="text-sm font-mono text-foreground break-all">{createdInfo.zoomLink}</p>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(createdInfo.zoomLink);
+                  setLinkCopied(true);
+                  toast.success("Lien copié !");
+                  setTimeout(() => setLinkCopied(false), 2000);
+                } catch {
+                  toast.error("Impossible de copier");
+                }
+              }}
+              className="flex-1 py-3 rounded-xl text-sm font-bold cursor-pointer border border-border bg-card text-foreground flex items-center justify-center gap-2"
+            >
+              {linkCopied ? <CheckCircle size={16} /> : <Copy size={16} />}
+              {linkCopied ? "Copié !" : "Copier le lien"}
+            </button>
+            <button
+              onClick={() => {
+                const msg = `📚 *${createdInfo.title}*${createdInfo.rav ? `\n🎓 Rav ${createdInfo.rav}` : ""}\n📅 ${createdInfo.day} à ${createdInfo.time}\n\n🔗 Rejoindre : ${createdInfo.zoomLink}`;
+                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+                window.open(whatsappUrl, "_blank");
+              }}
+              className="flex-1 py-3 rounded-xl text-sm font-bold cursor-pointer border-none text-white flex items-center justify-center gap-2"
+              style={{ background: "#25D366" }}
+            >
+              📲 WhatsApp
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              const msg = `📚 *${createdInfo.title}*${createdInfo.rav ? `\n🎓 Rav ${createdInfo.rav}` : ""}\n📅 ${createdInfo.day} à ${createdInfo.time}\n\n🔗 Rejoindre : ${createdInfo.zoomLink}`;
+              void shareText(msg, createdInfo.title);
+            }}
+            className="w-full py-2.5 rounded-xl text-xs font-medium cursor-pointer border border-border bg-card text-muted-foreground flex items-center justify-center gap-2"
+          >
+            <ExternalLink size={14} /> Autre partage
+          </button>
+
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl text-xs font-bold cursor-pointer border-none bg-primary text-primary-foreground"
+          >
+            Fermer
+          </button>
+        </div>
+      ) : (
+      <>
       {/* Type toggle */}
       <div className="flex rounded-xl overflow-hidden border border-border mb-4">
         <button
@@ -477,6 +542,8 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
               : "Publier le cours"}
         </button>
       </div>
+      </>
+      )}
     </motion.div>
   );
 });
