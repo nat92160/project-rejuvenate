@@ -327,7 +327,8 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
             Fermer
           </button>
         </div>
-      ) : (
+        );
+      })() : (
       <>
       {/* Type toggle */}
       <div className="flex rounded-xl overflow-hidden border border-border mb-4">
