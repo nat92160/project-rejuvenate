@@ -171,6 +171,8 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
     setSubmitting(true);
 
     let zoomLink = "";
+    let zoomPasscode: string | undefined;
+    let zoomMeetingId: string | number | undefined;
     if (courseType === "zoom") {
       if (zoomSource === "manual") {
         zoomLink = manualZoomLink.trim();
@@ -184,18 +186,24 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
               ? "Création de la réunion Zoom instantanée..."
               : "Programmation de la réunion Zoom..."
         );
-        const link = await createZoomMeeting(title.trim(), time || "20:00");
-        if (!link) {
+        const result = await createZoomMeeting(title.trim(), time || "20:00");
+        if (!result) {
           setSubmitting(false);
           return;
         }
-        zoomLink = link;
+        zoomLink = result.joinUrl;
+        zoomPasscode = result.passcode;
+        zoomMeetingId = result.meetingId;
       }
     }
 
     const dayOfWeek = dateMode === "specific" && specificDate
       ? ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"][specificDate.getDay()]
       : day;
+
+    const dateLabel = dateMode === "specific" && specificDate
+      ? format(specificDate, "EEEE d MMMM yyyy", { locale: fr })
+      : null;
 
     const insertPayload = {
       creator_id: userId,
@@ -226,6 +234,9 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
           rav: teacher.trim(),
           time: time || "20:00",
           day: dayOfWeek,
+          date: dateLabel || undefined,
+          passcode: zoomPasscode,
+          meetingId: zoomMeetingId,
         });
         toast.success("✅ Cours Zoom créé !");
       } else {
