@@ -352,9 +352,12 @@ Deno.serve(async (req) => {
 
       // Create meeting on USER's account
       const tz = timezone || "Europe/Paris";
+      // For PMI: type 2 (scheduled) works with use_pmi=true
+      // For instant PMI: use type 1 with use_pmi=true
+      const meetingType = start_time ? 2 : 1;
       const meetingBody: Record<string, unknown> = {
         topic: title || "Cours en ligne",
-        type: start_time ? 2 : 1,
+        type: meetingType,
         duration: duration || 60,
         timezone: tz,
         settings: {
@@ -364,6 +367,7 @@ Deno.serve(async (req) => {
           use_pmi: Boolean(usePmi),
         },
       };
+      console.log("Creating meeting with use_pmi:", Boolean(usePmi), "type:", meetingType);
 
       if (start_time) {
         let formattedTime = start_time;
