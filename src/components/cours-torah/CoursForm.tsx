@@ -58,7 +58,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
   const [manualZoomLink, setManualZoomLink] = useState("");
   const [desc, setDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [createdInfo, setCreatedInfo] = useState<{ title: string; zoomLink: string; rav: string; time: string; day: string } | null>(null);
+  const [createdInfo, setCreatedInfo] = useState<{ title: string; zoomLink: string; rav: string; time: string; day: string; date?: string; passcode?: string; meetingId?: string | number } | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   useEffect(() => {
     setCourseType(initialCourseType);
