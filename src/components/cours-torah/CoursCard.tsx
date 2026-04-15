@@ -32,7 +32,6 @@ const CoursCard = ({
   course_type, address, cityName, isOwner, index, onDelete, specific_date,
 }: CoursCardProps) => {
   const isZoom = normalizeCourseType(course_type, zoom_link, address) === "zoom";
-  const isZoom = normalizeCourseType(course_type, zoom_link, address) === "zoom";
   const dotColor = dayColors[day_of_week] || "#94a3b8";
 
   const displayDate = specific_date
