@@ -58,7 +58,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
   const [manualZoomLink, setManualZoomLink] = useState("");
   const [desc, setDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [createdInfo, setCreatedInfo] = useState<{ title: string; zoomLink: string; rav: string; time: string; day: string } | null>(null);
+  const [createdInfo, setCreatedInfo] = useState<{ title: string; zoomLink: string; rav: string; time: string; day: string; date?: string; passcode?: string; meetingId?: string | number } | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   useEffect(() => {
     setCourseType(initialCourseType);
@@ -107,11 +107,11 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
     }
   }, [courseType, zoomSource, usePmi, fetchPmi]);
 
-  const createZoomMeeting = async (meetingTitle: string, courseTime: string): Promise<string | null> => {
+  const createZoomMeeting = async (meetingTitle: string, courseTime: string): Promise<{ joinUrl: string; passcode?: string; meetingId?: string | number } | null> => {
     try {
       const body: Record<string, unknown> = {
         action: "create-meeting",
-        userId, // Per-user OAuth: meeting created on THEIR account
+        userId,
         title: meetingTitle,
         timezone: "Europe/Paris",
         duration: 60,
@@ -150,7 +150,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
         return null;
       }
 
-      return data.joinUrl;
+      return { joinUrl: data.joinUrl, passcode: data.passcode, meetingId: data.meetingId };
     } catch (err) {
       console.error("Zoom creation failed:", err);
       toast.error("Impossible de créer la réunion Zoom");
@@ -171,6 +171,8 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
     setSubmitting(true);
 
     let zoomLink = "";
+    let zoomPasscode: string | undefined;
+    let zoomMeetingId: string | number | undefined;
     if (courseType === "zoom") {
       if (zoomSource === "manual") {
         zoomLink = manualZoomLink.trim();
@@ -184,18 +186,24 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
               ? "Création de la réunion Zoom instantanée..."
               : "Programmation de la réunion Zoom..."
         );
-        const link = await createZoomMeeting(title.trim(), time || "20:00");
-        if (!link) {
+        const result = await createZoomMeeting(title.trim(), time || "20:00");
+        if (!result) {
           setSubmitting(false);
           return;
         }
-        zoomLink = link;
+        zoomLink = result.joinUrl;
+        zoomPasscode = result.passcode;
+        zoomMeetingId = result.meetingId;
       }
     }
 
     const dayOfWeek = dateMode === "specific" && specificDate
       ? ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"][specificDate.getDay()]
       : day;
+
+    const dateLabel = dateMode === "specific" && specificDate
+      ? format(specificDate, "EEEE d MMMM yyyy", { locale: fr })
+      : null;
 
     const insertPayload = {
       creator_id: userId,
@@ -226,6 +234,9 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
           rav: teacher.trim(),
           time: time || "20:00",
           day: dayOfWeek,
+          date: dateLabel || undefined,
+          passcode: zoomPasscode,
+          meetingId: zoomMeetingId,
         });
         toast.success("✅ Cours Zoom créé !");
       } else {
@@ -245,7 +256,15 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
       animate={{ opacity: 1, height: "auto" }}
       exit={{ opacity: 0, height: 0 }}
     >
-      {createdInfo ? (
+      {createdInfo ? (() => {
+        const dateLine = createdInfo.date
+          ? `📅 ${createdInfo.date} à ${createdInfo.time}`
+          : `📅 Chaque ${createdInfo.day} à ${createdInfo.time}`;
+        const meetingIdLine = createdInfo.meetingId ? `\n🆔 ID réunion : ${createdInfo.meetingId}` : "";
+        const passcodeLine = createdInfo.passcode ? `\n🔑 Code : ${createdInfo.passcode}` : "";
+        const shareMsg = `📚 *${createdInfo.title}*${createdInfo.rav ? `\n🎓 Rav ${createdInfo.rav}` : ""}\n${dateLine}${meetingIdLine}${passcodeLine}\n\n🔗 Rejoindre : ${createdInfo.zoomLink}\n\n_Via Chabbat Chalom_`;
+
+        return (
         <div className="space-y-4 text-center">
           <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
           <div>
@@ -253,18 +272,25 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
             <p className="text-sm text-muted-foreground mt-1">{createdInfo.title}{createdInfo.rav ? ` — ${createdInfo.rav}` : ""}</p>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/30 p-3">
-            <p className="text-[10px] text-muted-foreground mb-1 font-medium">Lien Zoom de la réunion</p>
-            <p className="text-sm font-mono text-foreground break-all">{createdInfo.zoomLink}</p>
+          <div className="rounded-xl border border-border bg-muted/30 p-3 text-left space-y-1.5">
+            <p className="text-[10px] text-muted-foreground font-medium">Détails de la réunion</p>
+            <p className="text-sm text-foreground">{dateLine}</p>
+            {createdInfo.meetingId && (
+              <p className="text-xs text-muted-foreground">🆔 ID : {createdInfo.meetingId}</p>
+            )}
+            {createdInfo.passcode && (
+              <p className="text-xs text-muted-foreground">🔑 Code : {createdInfo.passcode}</p>
+            )}
+            <p className="text-xs font-mono text-foreground break-all mt-2">🔗 {createdInfo.zoomLink}</p>
           </div>
 
           <div className="flex gap-2">
             <button
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(createdInfo.zoomLink);
+                  await navigator.clipboard.writeText(shareMsg);
                   setLinkCopied(true);
-                  toast.success("Lien copié !");
+                  toast.success("Invitation copiée !");
                   setTimeout(() => setLinkCopied(false), 2000);
                 } catch {
                   toast.error("Impossible de copier");
@@ -273,12 +299,11 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
               className="flex-1 py-3 rounded-xl text-sm font-bold cursor-pointer border border-border bg-card text-foreground flex items-center justify-center gap-2"
             >
               {linkCopied ? <CheckCircle size={16} /> : <Copy size={16} />}
-              {linkCopied ? "Copié !" : "Copier le lien"}
+              {linkCopied ? "Copié !" : "Copier"}
             </button>
             <button
               onClick={() => {
-                const msg = `📚 *${createdInfo.title}*${createdInfo.rav ? `\n🎓 Rav ${createdInfo.rav}` : ""}\n📅 ${createdInfo.day} à ${createdInfo.time}\n\n🔗 Rejoindre : ${createdInfo.zoomLink}`;
-                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMsg)}`;
                 window.open(whatsappUrl, "_blank");
               }}
               className="flex-1 py-3 rounded-xl text-sm font-bold cursor-pointer border-none text-white flex items-center justify-center gap-2"
@@ -289,10 +314,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
           </div>
 
           <button
-            onClick={() => {
-              const msg = `📚 *${createdInfo.title}*${createdInfo.rav ? `\n🎓 Rav ${createdInfo.rav}` : ""}\n📅 ${createdInfo.day} à ${createdInfo.time}\n\n🔗 Rejoindre : ${createdInfo.zoomLink}`;
-              void shareText(msg, createdInfo.title);
-            }}
+            onClick={() => void shareText(shareMsg, createdInfo.title)}
             className="w-full py-2.5 rounded-xl text-xs font-medium cursor-pointer border border-border bg-card text-muted-foreground flex items-center justify-center gap-2"
           >
             <ExternalLink size={14} /> Autre partage
@@ -305,7 +327,8 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
             Fermer
           </button>
         </div>
-      ) : (
+        );
+      })() : (
       <>
       {/* Type toggle */}
       <div className="flex rounded-xl overflow-hidden border border-border mb-4">
