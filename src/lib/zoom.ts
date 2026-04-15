@@ -22,11 +22,18 @@ export async function generateCodeChallenge(verifier: string): Promise<string> {
 }
 
 export function storePkceVerifier(verifier: string): void {
-  sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
+  try {
+    localStorage.setItem(PKCE_VERIFIER_KEY, verifier);
+  } catch {
+    sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
+  }
 }
 
 export function consumePkceVerifier(): string | null {
-  const v = sessionStorage.getItem(PKCE_VERIFIER_KEY);
-  if (v) sessionStorage.removeItem(PKCE_VERIFIER_KEY);
+  const v = localStorage.getItem(PKCE_VERIFIER_KEY) || sessionStorage.getItem(PKCE_VERIFIER_KEY);
+  if (v) {
+    localStorage.removeItem(PKCE_VERIFIER_KEY);
+    sessionStorage.removeItem(PKCE_VERIFIER_KEY);
+  }
   return v;
 }
