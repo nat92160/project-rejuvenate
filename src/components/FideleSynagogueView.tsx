@@ -121,24 +121,26 @@ const FideleSynagogueView = () => {
     });
 
     setDirectory(
-      (allSynas || []).map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        logo_url: s.logo_url,
-        primary_color: s.primary_color || "#1e3a5f",
-        secondary_color: s.secondary_color || "#c9a84c",
-        subscriber_count: countMap.get(s.id) || 0,
-        isSubscribed: userSubs.includes(s.id),
-        shacharit_time: s.shacharit_time || null,
-        minha_time: s.minha_time || null,
-        arvit_time: s.arvit_time || null,
-        address: s.address || null,
-        phone: s.phone || null,
-        email: s.email || null,
-        latitude: s.latitude || null,
-        longitude: s.longitude || null,
-        verified: s.verified ?? false,
-      }))
+      (allSynas || [])
+        .filter((s: any) => s.verified === true || s.president_id === user?.id || s.adjoint_id === user?.id)
+        .map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          logo_url: s.logo_url,
+          primary_color: s.primary_color || "#1e3a5f",
+          secondary_color: s.secondary_color || "#c9a84c",
+          subscriber_count: countMap.get(s.id) || 0,
+          isSubscribed: userSubs.includes(s.id),
+          shacharit_time: s.shacharit_time || null,
+          minha_time: s.minha_time || null,
+          arvit_time: s.arvit_time || null,
+          address: s.address || null,
+          phone: s.phone || null,
+          email: s.email || null,
+          latitude: s.latitude || null,
+          longitude: s.longitude || null,
+          verified: s.verified ?? false,
+        }))
     );
     setDirLoading(false);
   };
