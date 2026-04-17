@@ -296,6 +296,7 @@ const AdminDashboard = () => {
       .from("synagogue_profiles")
       .select("id, name, verified, president_id, address, phone, email, shacharit_time, minha_time, arvit_time, signature, created_at")
       .neq("name", "")
+      .order("verified", { ascending: true })
       .order("created_at", { ascending: false });
     setSynas((data || []) as SynaItem[]);
     setSynasLoading(false);

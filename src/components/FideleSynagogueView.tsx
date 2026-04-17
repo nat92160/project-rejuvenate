@@ -9,6 +9,7 @@ import SynagogueChat from "./SynagogueChat";
 import SynaInfoCard from "./SynaInfoCard";
 import PrayerTimeSuggestionForm from "./PrayerTimeSuggestionForm";
 import VerifiedSuggestionsDisplay from "./VerifiedSuggestionsDisplay";
+import SynagogueFormSheet from "./SynagogueFormSheet";
 
 interface SynaDirectoryItem {
   id: string;
@@ -64,11 +65,13 @@ const getDistanceInMeters = (originLat: number, originLng: number, targetLat: nu
 };
 
 const FideleSynagogueView = () => {
-  const { user } = useAuth();
+  const { user, dbRole } = useAuth();
   const { city, geolocate, isGeolocating, locationError } = useCity();
   const [tab, setTab] = useState<"annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat" | "horaires" | "tehilim" | "minyan">("synagogues");
   const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
   const [suggestingSynaId, setSuggestingSynaId] = useState<string | null>(null);
+  const [showCreateSyna, setShowCreateSyna] = useState(false);
+  const isPresident = dbRole === "president";
 
   // Directory state
   const [directory, setDirectory] = useState<SynaDirectoryItem[]>([]);
@@ -91,9 +94,9 @@ const FideleSynagogueView = () => {
   // Fetch directory of registered synagogues
   const fetchDirectory = async () => {
     setDirLoading(true);
-    const { data: allSynas } = await supabase
+    const { data: allSynas } = await (supabase
       .from("synagogue_profiles")
-      .select("id, name, logo_url, primary_color, secondary_color, shacharit_time, minha_time, arvit_time, address, phone, email, latitude, longitude, verified")
+      .select("id, name, logo_url, primary_color, secondary_color, shacharit_time, minha_time, arvit_time, address, phone, email, latitude, longitude, verified, president_id, adjoint_id") as any)
       .neq("name", "")
       .order("name");
 
@@ -118,24 +121,26 @@ const FideleSynagogueView = () => {
     });
 
     setDirectory(
-      (allSynas || []).map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        logo_url: s.logo_url,
-        primary_color: s.primary_color || "#1e3a5f",
-        secondary_color: s.secondary_color || "#c9a84c",
-        subscriber_count: countMap.get(s.id) || 0,
-        isSubscribed: userSubs.includes(s.id),
-        shacharit_time: s.shacharit_time || null,
-        minha_time: s.minha_time || null,
-        arvit_time: s.arvit_time || null,
-        address: s.address || null,
-        phone: s.phone || null,
-        email: s.email || null,
-        latitude: s.latitude || null,
-        longitude: s.longitude || null,
-        verified: s.verified ?? false,
-      }))
+      (allSynas || [])
+        .filter((s: any) => s.verified === true || s.president_id === user?.id || s.adjoint_id === user?.id)
+        .map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          logo_url: s.logo_url,
+          primary_color: s.primary_color || "#1e3a5f",
+          secondary_color: s.secondary_color || "#c9a84c",
+          subscriber_count: countMap.get(s.id) || 0,
+          isSubscribed: userSubs.includes(s.id),
+          shacharit_time: s.shacharit_time || null,
+          minha_time: s.minha_time || null,
+          arvit_time: s.arvit_time || null,
+          address: s.address || null,
+          phone: s.phone || null,
+          email: s.email || null,
+          latitude: s.latitude || null,
+          longitude: s.longitude || null,
+          verified: s.verified ?? false,
+        }))
     );
     setDirLoading(false);
   };
@@ -331,7 +336,22 @@ const FideleSynagogueView = () => {
             ? `Abonné à ${subscribedCount} synagogue${subscribedCount > 1 ? "s" : ""} — ${city.name}`
             : `${city.name} — Abonnez-vous à une synagogue pour recevoir ses actualités`}
         </p>
+        {isPresident && (
+          <button
+            onClick={() => setShowCreateSyna(true)}
+            className="inline-flex items-center gap-2 rounded-xl border-none px-4 py-2.5 text-xs font-bold text-primary-foreground cursor-pointer transition-all active:scale-95"
+            style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+          >
+            ➕ Créer ma fiche synagogue
+          </button>
+        )}
       </div>
+
+      <SynagogueFormSheet
+        open={showCreateSyna}
+        onOpenChange={setShowCreateSyna}
+        onCreated={() => { void fetchDirectory(); toast.success("📤 Fiche envoyée — en attente de validation par un administrateur"); }}
+      />
 
       {/* Tabs – h-scroll, aerated */}
       <div className="mb-5 overflow-x-auto rounded-2xl border border-border bg-muted/60 p-2 shadow-sm" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
