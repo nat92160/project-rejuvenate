@@ -9,6 +9,7 @@ import SynagogueChat from "./SynagogueChat";
 import SynaInfoCard from "./SynaInfoCard";
 import PrayerTimeSuggestionForm from "./PrayerTimeSuggestionForm";
 import VerifiedSuggestionsDisplay from "./VerifiedSuggestionsDisplay";
+import SynagogueFormSheet from "./SynagogueFormSheet";
 
 interface SynaDirectoryItem {
   id: string;
@@ -64,11 +65,13 @@ const getDistanceInMeters = (originLat: number, originLng: number, targetLat: nu
 };
 
 const FideleSynagogueView = () => {
-  const { user } = useAuth();
+  const { user, dbRole } = useAuth();
   const { city, geolocate, isGeolocating, locationError } = useCity();
   const [tab, setTab] = useState<"annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat" | "horaires" | "tehilim" | "minyan">("synagogues");
   const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
   const [suggestingSynaId, setSuggestingSynaId] = useState<string | null>(null);
+  const [showCreateSyna, setShowCreateSyna] = useState(false);
+  const isPresident = dbRole === "president";
 
   // Directory state
   const [directory, setDirectory] = useState<SynaDirectoryItem[]>([]);
