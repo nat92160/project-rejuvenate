@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { shareText } from "@/lib/shareUtils";
 import { isNativePlatform, requestNativePushPermission, registerNativePush } from "@/lib/capacitorPush";
+import { MyDonations } from "@/components/MyDonations";
 
 interface PersonalDate {
   id: string;
@@ -447,6 +448,9 @@ const EspacePersonnelWidget = () => {
           </div>
         )}
       </div>
+
+      {/* ─── Mes Dons ─── */}
+      <MyDonations />
 
       {/* ─── Notifications ─── */}
       <div className="rounded-2xl bg-card p-4 border border-border space-y-1" style={{ boxShadow: "var(--shadow-card)" }}>
