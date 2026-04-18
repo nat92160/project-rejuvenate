@@ -51,11 +51,13 @@ const SynaProfileManager = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
+      const { data: rows } = await supabase
         .from("synagogue_profiles")
         .select("*")
         .eq("president_id", user.id)
-        .maybeSingle();
+        .order("created_at", { ascending: true })
+        .limit(1);
+      const data = rows && rows[0];
       if (data) {
         setProfile({
           id: data.id,

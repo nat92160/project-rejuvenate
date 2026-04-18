@@ -21,21 +21,24 @@ export const useSynaProfile = () => {
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     const load = async () => {
-      // Check as president first, then as adjoint
-      let { data } = await supabase
+      // Check as president first, then as adjoint. Take first match (multi-synagogue support).
+      let { data: rows } = await supabase
         .from("synagogue_profiles")
         .select("id, name, logo_url, signature, primary_color, secondary_color, font_family")
         .eq("president_id", user.id)
-        .maybeSingle();
+        .order("created_at", { ascending: true })
+        .limit(1);
       
-      if (!data) {
+      if (!rows || rows.length === 0) {
         const res = await (supabase
           .from("synagogue_profiles")
           .select("id, name, logo_url, signature, primary_color, secondary_color, font_family") as any)
           .eq("adjoint_id", user.id)
-          .maybeSingle();
-        data = res.data;
+          .order("created_at", { ascending: true })
+          .limit(1);
+        rows = res.data;
       }
+      const data = rows && rows[0];
       if (data) {
         setSynagogueId(data.id);
         setProfile({
