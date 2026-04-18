@@ -330,6 +330,17 @@ const DonsManager = () => {
           </div>
         </TabsContent>
 
+        {/* Relances tab */}
+        <TabsContent value="relances" className="mt-4">
+          {!stripeOnboarded ? (
+            <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center">
+              <p className="text-sm text-muted-foreground">Configurez Stripe (onglet Stripe) avant d'envoyer des relances.</p>
+            </div>
+          ) : (
+            <DonationReminders synagogueId={profileId} synagogueName={synagogueName} />
+          )}
+        </TabsContent>
+
         {/* CERFA tab */}
         <TabsContent value="cerfa" className="mt-4">
           <CerfaConfig synagogueId={profileId} />
