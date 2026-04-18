@@ -302,6 +302,11 @@ const DonsManager = () => {
         </div>
       )}
 
+      {/* Campagnes de dons */}
+      {stripeOnboarded && profileId && (
+        <CampaignsManager synagogueId={profileId} />
+      )}
+
       {/* Donations Table */}
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         <div className="flex items-center justify-between">
