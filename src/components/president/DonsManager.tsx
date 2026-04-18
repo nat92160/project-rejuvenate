@@ -5,9 +5,11 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Heart, ExternalLink, Loader2, Check, CreditCard, Download, Copy, Link2 } from "lucide-react";
+import { Heart, ExternalLink, Loader2, Check, CreditCard, Download, Copy, Link2, BarChart3, Settings, List, Megaphone } from "lucide-react";
 import { jsPDF } from "jspdf";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CampaignsManager from "./CampaignsManager";
+import DonsStats from "./DonsStats";
 
 interface Donation {
   id: string;
