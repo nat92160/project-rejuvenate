@@ -246,11 +246,12 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
         </div>
         <button
           onClick={() => setShowCreateSyna(true)}
-          className="h-9 w-9 rounded-xl flex items-center justify-center cursor-pointer border-none transition-all active:scale-95 text-primary-foreground"
+          className="h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer border-none transition-all active:scale-95 text-primary-foreground text-xs font-bold whitespace-nowrap"
           style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
-          title="Créer une fiche synagogue"
+          title="Ajouter une nouvelle synagogue"
         >
           <Plus className="w-4 h-4" />
+          <span>Ajouter une synagogue</span>
         </button>
       </div>
 
