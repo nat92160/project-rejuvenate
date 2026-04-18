@@ -22,11 +22,13 @@ const MikveManager = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await (supabase
+      const { data: rows } = await (supabase
         .from("synagogue_profiles")
         .select("id, mikve_enabled, mikve_winter_hours, mikve_summer_hours, mikve_phone, mikve_maps_link") as any)
         .eq("president_id", user.id)
-        .maybeSingle();
+        .order("created_at", { ascending: true })
+        .limit(1);
+      const data = rows && rows[0];
       if (data) {
         setProfileId(data.id);
         setEnabled(data.mikve_enabled || false);
