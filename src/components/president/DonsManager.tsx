@@ -49,17 +49,36 @@ const DonsManager = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await (supabase
+      // Try as president first, then as adjoint. Take first match (handles multi-synagogue presidents).
+      let { data: rows } = await (supabase
         .from("synagogue_profiles")
-        .select("id, name, address, donation_link") as any)
+        .select("id, name, address, donation_link, association_legal_name, rna_number, siret_number, article_cgi, president_first_name, president_last_name, signature") as any)
         .eq("president_id", user.id)
-        .maybeSingle();
+        .order("created_at", { ascending: true })
+        .limit(1);
+      if (!rows || rows.length === 0) {
+        const res = await (supabase
+          .from("synagogue_profiles")
+          .select("id, name, address, donation_link, association_legal_name, rna_number, siret_number, article_cgi, president_first_name, president_last_name, signature") as any)
+          .eq("adjoint_id", user.id)
+          .order("created_at", { ascending: true })
+          .limit(1);
+        rows = res.data;
+      }
+      const data = rows && rows[0];
       if (data) {
         setProfileId(data.id);
         setSynagogueName(data.name || "");
         setSynagogueAddress(data.address || "");
         setDonationLink(data.donation_link || "");
-        // Check Stripe onboarding
+        setCerfaInfo({
+          legalName: data.association_legal_name || "",
+          rna: data.rna_number || "",
+          siret: data.siret_number || "",
+          article: data.article_cgi || "200",
+          presidentName: `${data.president_first_name || ""} ${data.president_last_name || ""}`.trim(),
+          signature: data.signature || "",
+        });
         checkStripeStatus(data.id);
         loadDonations(data.id);
       }
