@@ -129,16 +129,76 @@ export type Database = {
           },
         ]
       }
+      donation_campaigns: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          creator_id: string
+          current_amount: number
+          description: string
+          end_date: string | null
+          goal_amount: number | null
+          id: string
+          is_active: boolean
+          start_date: string
+          synagogue_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          creator_id: string
+          current_amount?: number
+          description?: string
+          end_date?: string | null
+          goal_amount?: number | null
+          id?: string
+          is_active?: boolean
+          start_date?: string
+          synagogue_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          creator_id?: string
+          current_amount?: number
+          description?: string
+          end_date?: string | null
+          goal_amount?: number | null
+          id?: string
+          is_active?: boolean
+          start_date?: string
+          synagogue_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donation_campaigns_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       donations: {
         Row: {
           amount: number
+          campaign_id: string | null
           cerfa_generated: boolean
+          cerfa_number: string | null
           cerfa_token: string | null
           cerfa_url: string | null
           created_at: string
           donor_address: string
           donor_email: string
           donor_name: string
+          donor_user_id: string | null
+          fiscal_year: number
           id: string
           stripe_checkout_session_id: string | null
           stripe_payment_id: string | null
@@ -146,13 +206,17 @@ export type Database = {
         }
         Insert: {
           amount: number
+          campaign_id?: string | null
           cerfa_generated?: boolean
+          cerfa_number?: string | null
           cerfa_token?: string | null
           cerfa_url?: string | null
           created_at?: string
           donor_address?: string
           donor_email: string
           donor_name?: string
+          donor_user_id?: string | null
+          fiscal_year?: number
           id?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_id?: string | null
@@ -160,19 +224,30 @@ export type Database = {
         }
         Update: {
           amount?: number
+          campaign_id?: string | null
           cerfa_generated?: boolean
+          cerfa_number?: string | null
           cerfa_token?: string | null
           cerfa_url?: string | null
           created_at?: string
           donor_address?: string
           donor_email?: string
           donor_name?: string
+          donor_user_id?: string | null
+          fiscal_year?: number
           id?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_id?: string | null
           synagogue_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "donations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "donation_campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "donations_synagogue_id_fkey"
             columns: ["synagogue_id"]
@@ -795,8 +870,11 @@ export type Database = {
         Row: {
           address: string | null
           adjoint_id: string | null
+          article_cgi: string | null
           arvit_time: string | null
           arvit_time_2: string | null
+          association_legal_name: string | null
+          association_object: string | null
           chat_enabled: boolean
           created_at: string
           donation_link: string | null
@@ -819,10 +897,12 @@ export type Database = {
           president_id: string
           president_last_name: string | null
           primary_color: string | null
+          rna_number: string | null
           secondary_color: string | null
           shacharit_time: string | null
           shacharit_time_2: string | null
           signature: string | null
+          siret_number: string | null
           speakers: Json | null
           updated_at: string
           verified: boolean
@@ -830,8 +910,11 @@ export type Database = {
         Insert: {
           address?: string | null
           adjoint_id?: string | null
+          article_cgi?: string | null
           arvit_time?: string | null
           arvit_time_2?: string | null
+          association_legal_name?: string | null
+          association_object?: string | null
           chat_enabled?: boolean
           created_at?: string
           donation_link?: string | null
@@ -854,10 +937,12 @@ export type Database = {
           president_id: string
           president_last_name?: string | null
           primary_color?: string | null
+          rna_number?: string | null
           secondary_color?: string | null
           shacharit_time?: string | null
           shacharit_time_2?: string | null
           signature?: string | null
+          siret_number?: string | null
           speakers?: Json | null
           updated_at?: string
           verified?: boolean
@@ -865,8 +950,11 @@ export type Database = {
         Update: {
           address?: string | null
           adjoint_id?: string | null
+          article_cgi?: string | null
           arvit_time?: string | null
           arvit_time_2?: string | null
+          association_legal_name?: string | null
+          association_object?: string | null
           chat_enabled?: boolean
           created_at?: string
           donation_link?: string | null
@@ -889,10 +977,12 @@ export type Database = {
           president_id?: string
           president_last_name?: string | null
           primary_color?: string | null
+          rna_number?: string | null
           secondary_color?: string | null
           shacharit_time?: string | null
           shacharit_time_2?: string | null
           signature?: string | null
+          siret_number?: string | null
           speakers?: Json | null
           updated_at?: string
           verified?: boolean
