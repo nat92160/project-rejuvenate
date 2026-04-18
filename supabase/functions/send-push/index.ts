@@ -402,23 +402,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Separate web and native subscriptions, then deduplicate
+    // Separate web and native subscriptions
     const allWebSubs = subs.filter((s: any) => s.push_type !== "native");
     const allNativeSubs = subs.filter((s: any) => s.push_type === "native" && s.device_token);
-
-    // Deduplicate web subs by endpoint
-    const seenEndpoints = new Set<string>();
-    const webSubs = allWebSubs.filter((s: any) => {
-      if (!s.endpoint || seenEndpoints.has(s.endpoint)) return false;
-      seenEndpoints.add(s.endpoint);
-      return true;
-    });
 
     // Deduplicate native subs by device_token
     const seenTokens = new Set<string>();
     const nativeSubs = allNativeSubs.filter((s: any) => {
       if (seenTokens.has(s.device_token)) return false;
       seenTokens.add(s.device_token);
+      return true;
+    });
+
+    // Users who already have a native subscription — skip their web subs to avoid double notifications
+    const usersWithNative = new Set(nativeSubs.map((s: any) => s.user_id));
+
+    // Deduplicate web subs by endpoint AND skip users already covered by native
+    const seenEndpoints = new Set<string>();
+    const webSubs = allWebSubs.filter((s: any) => {
+      if (!s.endpoint || seenEndpoints.has(s.endpoint)) return false;
+      if (usersWithNative.has(s.user_id)) return false;
+      seenEndpoints.add(s.endpoint);
       return true;
     });
 
