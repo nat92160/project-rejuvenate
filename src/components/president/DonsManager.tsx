@@ -5,11 +5,12 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Heart, ExternalLink, Loader2, Check, CreditCard, Download, Copy, Link2, BarChart3, Settings, List, Megaphone } from "lucide-react";
+import { Heart, ExternalLink, Loader2, Check, CreditCard, Download, Copy, Link2, BarChart3, Settings, List, Megaphone, FileCheck } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CampaignsManager from "./CampaignsManager";
 import DonsStats from "./DonsStats";
+import CerfaConfig from "./CerfaConfig";
 
 interface Donation {
   id: string;
@@ -194,18 +195,21 @@ const DonsManager = () => {
       </div>
 
       <Tabs defaultValue="stats" className="w-full">
-        <TabsList className="w-full grid grid-cols-4 h-auto p-1">
-          <TabsTrigger value="stats" className="text-[11px] py-1.5 gap-1">
+        <TabsList className="w-full grid grid-cols-5 h-auto p-1">
+          <TabsTrigger value="stats" className="text-[10px] py-1.5 gap-1">
             <BarChart3 className="w-3.5 h-3.5" /> Stats
           </TabsTrigger>
-          <TabsTrigger value="campagnes" className="text-[11px] py-1.5 gap-1">
-            <Megaphone className="w-3.5 h-3.5" /> Campagnes
+          <TabsTrigger value="campagnes" className="text-[10px] py-1.5 gap-1">
+            <Megaphone className="w-3.5 h-3.5" /> Camp.
           </TabsTrigger>
-          <TabsTrigger value="historique" className="text-[11px] py-1.5 gap-1">
+          <TabsTrigger value="historique" className="text-[10px] py-1.5 gap-1">
             <List className="w-3.5 h-3.5" /> Dons
           </TabsTrigger>
-          <TabsTrigger value="config" className="text-[11px] py-1.5 gap-1">
-            <Settings className="w-3.5 h-3.5" /> Config
+          <TabsTrigger value="cerfa" className="text-[10px] py-1.5 gap-1">
+            <FileCheck className="w-3.5 h-3.5" /> CERFA
+          </TabsTrigger>
+          <TabsTrigger value="config" className="text-[10px] py-1.5 gap-1">
+            <Settings className="w-3.5 h-3.5" /> Stripe
           </TabsTrigger>
         </TabsList>
 
