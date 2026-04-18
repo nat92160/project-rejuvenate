@@ -449,6 +449,9 @@ const EspacePersonnelWidget = () => {
         )}
       </div>
 
+      {/* ─── Mes Dons ─── */}
+      <MyDonations />
+
       {/* ─── Notifications ─── */}
       <div className="rounded-2xl bg-card p-4 border border-border space-y-1" style={{ boxShadow: "var(--shadow-card)" }}>
         <h4 className="font-display text-sm font-bold text-foreground flex items-center gap-2 mb-2">🔔 Mes Notifications</h4>
