@@ -16,7 +16,7 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not set");
 
-    const { slug, amount, donor_name, donor_email, donor_address } = await req.json();
+    const { slug, amount, donor_name, donor_email, donor_address, campaign_id } = await req.json();
     if (!slug || !amount) throw new Error("slug et amount requis");
     if (amount < 100) throw new Error("Montant minimum : 1€");
 
@@ -70,6 +70,7 @@ serve(async (req) => {
           donor_name: donor_name || "",
           donor_email: donor_email || "",
           donor_address: donor_address || "",
+          campaign_id: campaign_id || "",
         },
       },
       customer_email: donor_email || undefined,
@@ -78,6 +79,7 @@ serve(async (req) => {
         donor_name: donor_name || "",
         donor_email: donor_email || "",
         donor_address: donor_address || "",
+        campaign_id: campaign_id || "",
         slug,
       },
       success_url: `${origin}/don/${slug}?success=true`,

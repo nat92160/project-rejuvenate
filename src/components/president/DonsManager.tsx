@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Heart, ExternalLink, Loader2, Check, CreditCard, Download, Copy, Link2 } from "lucide-react";
 import { jsPDF } from "jspdf";
+import CampaignsManager from "./CampaignsManager";
 
 interface Donation {
   id: string;
@@ -299,6 +300,11 @@ const DonsManager = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Campagnes de dons */}
+      {stripeOnboarded && profileId && (
+        <CampaignsManager synagogueId={profileId} />
       )}
 
       {/* Donations Table */}

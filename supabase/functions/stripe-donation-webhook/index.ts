@@ -35,6 +35,7 @@ serve(async (req) => {
       const session = event.data.object as Stripe.Checkout.Session;
       
       const synagogueId = session.metadata?.synagogue_id;
+      const campaignId = session.metadata?.campaign_id || null;
       const donorName = session.metadata?.donor_name || "";
       const donorEmail = session.metadata?.donor_email || session.customer_email || "";
       const donorAddress = session.metadata?.donor_address || "";
@@ -56,6 +57,7 @@ serve(async (req) => {
         .from("donations")
         .insert({
           synagogue_id: synagogueId,
+          campaign_id: campaignId || null,
           amount,
           donor_email: donorEmail,
           donor_name: donorName,

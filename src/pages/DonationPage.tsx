@@ -2,12 +2,22 @@ import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Heart, Check, Loader2 } from "lucide-react";
+import { Heart, Check, Loader2, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const SUGGESTED_AMOUNTS = [1800, 3600, 5200, 10000]; // in cents
+
+interface Campaign {
+  id: string;
+  title: string;
+  description: string;
+  goal_amount: number | null;
+  current_amount: number;
+  cover_image_url: string | null;
+  end_date: string | null;
+}
 
 const DonationPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -17,8 +27,11 @@ const DonationPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [synagogue, setSynagogue] = useState<{ name: string; logo_url: string | null } | null>(null);
+  const [synagogue, setSynagogue] = useState<{ id: string; name: string; logo_url: string | null } | null>(null);
   const [stripeReady, setStripeReady] = useState(false);
+
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
   const [selectedAmount, setSelectedAmount] = useState(3600);
   const [customAmount, setCustomAmount] = useState("");
@@ -44,18 +57,28 @@ const DonationPage = () => {
         return;
       }
 
+      const synaId = (sa as any).synagogue_id;
       setStripeReady((sa as any).is_onboarded);
 
-      // Get synagogue info
-      const { data: profile } = await supabase
-        .from("synagogue_profiles")
-        .select("name, logo_url")
-        .eq("id", (sa as any).synagogue_id)
-        .single();
+      // Get synagogue info + active campaigns in parallel
+      const [{ data: profile }, { data: camps }] = await Promise.all([
+        supabase
+          .from("synagogue_profiles")
+          .select("name, logo_url")
+          .eq("id", synaId)
+          .single(),
+        (supabase
+          .from("donation_campaigns" as any)
+          .select("id, title, description, goal_amount, current_amount, cover_image_url, end_date") as any)
+          .eq("synagogue_id", synaId)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false }),
+      ]);
 
       if (profile) {
-        setSynagogue({ name: profile.name, logo_url: profile.logo_url });
+        setSynagogue({ id: synaId, name: profile.name, logo_url: profile.logo_url });
       }
+      setCampaigns((camps as Campaign[]) || []);
       setLoading(false);
     })();
   }, [slug]);
@@ -77,7 +100,14 @@ const DonationPage = () => {
 
     setSubmitting(true);
     const { data, error } = await supabase.functions.invoke("create-donation-checkout", {
-      body: { slug, amount, donor_name: donorName, donor_email: donorEmail, donor_address: `${donorAddress}, ${donorPostal} ${donorCity}` },
+      body: {
+        slug,
+        amount,
+        donor_name: donorName,
+        donor_email: donorEmail,
+        donor_address: `${donorAddress}, ${donorPostal} ${donorCity}`,
+        campaign_id: selectedCampaignId,
+      },
     });
 
     if (error || data?.error) {
@@ -115,8 +145,8 @@ const DonationPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-            <Check className="w-8 h-8 text-green-600" />
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-xl font-bold text-foreground">Merci pour votre don ! 💛</h1>
           <p className="text-sm text-muted-foreground mt-2">
@@ -156,6 +186,71 @@ const DonationPage = () => {
           </div>
         ) : (
           <div className="rounded-2xl border border-border bg-card p-6 space-y-6">
+            {/* Campaign selection */}
+            {campaigns.length > 0 && (
+              <div>
+                <Label className="text-xs font-semibold mb-2 flex items-center gap-1">
+                  <Target className="w-3 h-3" /> Destination du don
+                </Label>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setSelectedCampaignId(null)}
+                    className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer ${
+                      selectedCampaignId === null
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-background hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="text-sm font-bold text-foreground">Don général</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Soutien libre à la synagogue
+                    </div>
+                  </button>
+                  {campaigns.map((c) => {
+                    const pct = c.goal_amount
+                      ? Math.min(100, Math.round((c.current_amount / c.goal_amount) * 100))
+                      : 0;
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => setSelectedCampaignId(c.id)}
+                        className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer ${
+                          selectedCampaignId === c.id
+                            ? "border-primary bg-primary/10"
+                            : "border-border bg-background hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="text-sm font-bold text-foreground">{c.title}</div>
+                        {c.description && (
+                          <div className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">
+                            {c.description}
+                          </div>
+                        )}
+                        {c.goal_amount && (
+                          <div className="mt-2 space-y-1">
+                            <div className="flex justify-between text-[10px]">
+                              <span className="font-semibold text-primary">
+                                {(c.current_amount / 100).toFixed(0)} € collectés
+                              </span>
+                              <span className="text-muted-foreground">
+                                {pct}% de {(c.goal_amount / 100).toFixed(0)} €
+                              </span>
+                            </div>
+                            <div className="h-1 rounded-full bg-muted overflow-hidden">
+                              <div
+                                className="h-full bg-primary transition-all"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Amount selection */}
             <div>
               <Label className="text-xs font-semibold mb-3 block">Montant du don</Label>
