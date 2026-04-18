@@ -17,6 +17,7 @@ interface Donation {
   amount: number;
   donor_name: string;
   donor_email: string;
+  donor_address: string;
   cerfa_generated: boolean;
   created_at: string;
 }
@@ -88,7 +89,7 @@ const DonsManager = () => {
     setLoadingDonations(true);
     const { data } = await (supabase
       .from("donations" as any)
-      .select("id, amount, donor_name, donor_email, cerfa_generated, created_at") as any)
+      .select("id, amount, donor_name, donor_email, donor_address, cerfa_generated, created_at") as any)
       .eq("synagogue_id", synaId)
       .order("created_at", { ascending: false })
       .limit(100);
