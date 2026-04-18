@@ -27,6 +27,7 @@ const DonsManager = () => {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [synagogueName, setSynagogueName] = useState("");
   const [synagogueAddress, setSynagogueAddress] = useState("");
+  const [cerfaInfo, setCerfaInfo] = useState<{ legalName: string; rna: string; siret: string; article: string; presidentName: string; signature: string }>({ legalName: "", rna: "", siret: "", article: "200", presidentName: "", signature: "" });
 
   // Stripe Connect state
   const [stripeOnboarded, setStripeOnboarded] = useState(false);
