@@ -326,6 +326,11 @@ const DonsManager = () => {
           </div>
         </TabsContent>
 
+        {/* CERFA tab */}
+        <TabsContent value="cerfa" className="mt-4">
+          <CerfaConfig synagogueId={profileId} />
+        </TabsContent>
+
         {/* Config tab */}
         <TabsContent value="config" className="mt-4 space-y-4">
           {/* Stripe Connect Setup */}
