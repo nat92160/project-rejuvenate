@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { shareText } from "@/lib/shareUtils";
 import { isNativePlatform, requestNativePushPermission, registerNativePush } from "@/lib/capacitorPush";
+import { MyDonations } from "@/components/MyDonations";
 
 interface PersonalDate {
   id: string;
