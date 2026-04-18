@@ -127,47 +127,86 @@ const DonsManager = () => {
   const generateCerfa = (donation: Donation) => {
     const doc = new jsPDF();
     const d = new Date(donation.created_at);
+    const fiscalYear = d.getFullYear();
+    const cerfaNum = donation.id.slice(0, 8).toUpperCase();
+    const legalName = cerfaInfo.legalName || synagogueName;
 
-    doc.setFontSize(18);
-    doc.text("REÇU FISCAL - DON", 105, 25, { align: "center" });
-
-    doc.setFontSize(10);
-    doc.text("Cerfa n° 11580*04", 105, 32, { align: "center" });
-
-    doc.setFontSize(12);
-    doc.text("ORGANISME BÉNÉFICIAIRE", 20, 50);
-    doc.setFontSize(10);
-    doc.text(`Nom : ${synagogueName}`, 20, 58);
-    doc.text(`Adresse : ${synagogueAddress || "—"}`, 20, 65);
-
-    doc.setFontSize(12);
-    doc.text("DONATEUR", 20, 85);
-    doc.setFontSize(10);
-    doc.text(`Nom : ${donation.donor_name || "—"}`, 20, 93);
-    doc.text(`Email : ${donation.donor_email}`, 20, 100);
-
-    doc.setFontSize(12);
-    doc.text("INFORMATIONS DU DON", 20, 120);
-    doc.setFontSize(10);
-    doc.text(`Date du don : ${d.toLocaleDateString("fr-FR")}`, 20, 128);
-    doc.text(`Montant : ${(donation.amount / 100).toFixed(2)} €`, 20, 135);
-    doc.text("Mode de versement : Paiement en ligne (Carte bancaire)", 20, 142);
-    doc.text("Nature du don : Numéraire", 20, 149);
+    doc.setFontSize(16);
+    doc.text("REÇU AU TITRE DES DONS", 105, 22, { align: "center" });
+    doc.setFontSize(9);
+    doc.text("à certains organismes d'intérêt général — Cerfa n° 11580*04", 105, 28, { align: "center" });
+    doc.text(`Article ${cerfaInfo.article} du Code Général des Impôts`, 105, 33, { align: "center" });
 
     doc.setFontSize(9);
-    doc.text(
-      "Le bénéficiaire certifie sur l'honneur que les dons et versements qu'il reçoit",
-      20, 170
-    );
-    doc.text(
-      "ouvrent droit à la réduction d'impôt prévue à l'article 200 du CGI.",
-      20, 177
-    );
+    doc.setDrawColor(200);
+    doc.rect(20, 38, 170, 8);
+    doc.text(`Reçu N° ${cerfaNum}`, 25, 43.5);
+    doc.text(`Année fiscale ${fiscalYear}`, 95, 43.5);
+    doc.text(`Émis le ${new Date().toLocaleDateString("fr-FR")}`, 145, 43.5);
 
-    doc.text(`Date : ${new Date().toLocaleDateString("fr-FR")}`, 20, 200);
-    doc.text(`Signature : ${synagogueName}`, 20, 210);
+    doc.setFontSize(11);
+    doc.setFont(undefined, "bold");
+    doc.text("BÉNÉFICIAIRE DES VERSEMENTS", 20, 56);
+    doc.setFont(undefined, "normal");
+    doc.setFontSize(10);
+    doc.text(legalName, 20, 63);
+    doc.setFontSize(9);
+    doc.text(`Adresse : ${synagogueAddress || "—"}`, 20, 70);
+    doc.text("Objet : Exercice du culte", 20, 76);
+    if (cerfaInfo.rna) doc.text(`N° RNA : ${cerfaInfo.rna}`, 20, 82);
+    if (cerfaInfo.siret) doc.text(`N° SIRET : ${cerfaInfo.siret}`, 110, 82);
 
-    doc.save(`cerfa-don-${d.toISOString().split("T")[0]}-${donation.id.slice(0, 8)}.pdf`);
+    doc.setFontSize(11);
+    doc.setFont(undefined, "bold");
+    doc.text("DONATEUR", 20, 95);
+    doc.setFont(undefined, "normal");
+    doc.setFontSize(10);
+    doc.text(donation.donor_name || "—", 20, 102);
+    doc.setFontSize(9);
+    doc.text(`Adresse : ${donation.donor_address || "—"}`, 20, 109);
+    doc.text(`Courriel : ${donation.donor_email}`, 20, 115);
+
+    doc.setFontSize(11);
+    doc.setFont(undefined, "bold");
+    doc.text("DON EFFECTUÉ", 20, 128);
+    doc.setFont(undefined, "normal");
+    doc.setFontSize(10);
+    doc.text(`Date du versement : ${d.toLocaleDateString("fr-FR")}`, 20, 135);
+    doc.setFont(undefined, "bold");
+    doc.text(`Montant : ${(donation.amount / 100).toFixed(2)} €`, 20, 142);
+    doc.setFont(undefined, "normal");
+    doc.setFontSize(9);
+    doc.text("Forme du don : Déclaration de don manuel", 20, 149);
+    doc.text("Nature : Numéraire — Mode : Carte bancaire (paiement sécurisé en ligne)", 20, 155);
+
+    doc.setFontSize(8);
+    doc.setFont(undefined, "italic");
+    const mention = `Le bénéficiaire reconnaît, conformément à l'article ${cerfaInfo.article} du CGI, que les dons et versements qu'il reçoit ouvrent droit à une réduction d'impôt${cerfaInfo.article.includes("200") ? " égale à 66% de leur montant pour les particuliers (dans la limite de 20% du revenu imposable)" : ""}.`;
+    const splitMention = doc.splitTextToSize(mention, 170);
+    doc.text(splitMention, 20, 170);
+
+    doc.setFont(undefined, "normal");
+    doc.setFontSize(9);
+    const city = synagogueAddress ? synagogueAddress.split(",").pop()?.trim() : "—";
+    doc.text(`Fait à ${city}, le ${new Date().toLocaleDateString("fr-FR")}`, 20, 195);
+    if (cerfaInfo.presidentName) {
+      doc.setFont(undefined, "bold");
+      doc.text(`Le Président : ${cerfaInfo.presidentName}`, 20, 203);
+      doc.setFont(undefined, "normal");
+    }
+    if (cerfaInfo.signature) {
+      doc.setFont(undefined, "italic");
+      doc.setFontSize(8);
+      doc.text(cerfaInfo.signature, 20, 210);
+    }
+
+    doc.setFont(undefined, "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(120);
+    doc.text("Reçu établi conformément aux dispositions des articles 200 et 238 bis du CGI et à l'arrêté du 1er décembre 2003.", 20, 280);
+    doc.text(`Réf. interne : ${donation.id}`, 20, 285);
+
+    doc.save(`cerfa-${fiscalYear}-${cerfaNum}.pdf`);
   };
 
   const exportCsv = () => {
