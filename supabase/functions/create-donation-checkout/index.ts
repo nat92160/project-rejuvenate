@@ -2,18 +2,38 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+const DEFAULT_APP_URL = "https://www.chabbat-chalom.com";
+
 const ALLOWED_ORIGINS = [
-  "https://www.chabbat-chalom.com",
+  DEFAULT_APP_URL,
   "https://chabbat-chalom.com",
   "https://next-level-code.lovable.app",
+  "https://id-preview--ccdec38b-a549-4028-bfa6-5617122e8d21.lovable.app",
+  "capacitor://localhost",
+  "ionic://localhost",
+  "http://localhost",
+  "http://127.0.0.1",
+  "chabbatchalom://localhost",
 ];
 
 function buildCorsHeaders(origin: string | null) {
-  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : DEFAULT_APP_URL;
   return {
     "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
     "Vary": "Origin",
+  };
+}
+
+function resolveReturnUrl(origin: string | null, slug: string) {
+  const baseUrl = origin && /^https?:\/\//i.test(origin) && ALLOWED_ORIGINS.includes(origin)
+    ? origin
+    : DEFAULT_APP_URL;
+
+  return {
+    successUrl: `${baseUrl}/don/${slug}?success=true&session_id={CHECKOUT_SESSION_ID}`,
+    cancelUrl: `${baseUrl}/don/${slug}?canceled=true`,
   };
 }
 
@@ -71,7 +91,8 @@ serve(async (req) => {
     const synaProfile = { name: synagogueName };
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const origin = req.headers.get("origin") || "";
+    const origin = req.headers.get("origin");
+    const { successUrl, cancelUrl } = resolveReturnUrl(origin, slug);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -111,8 +132,8 @@ serve(async (req) => {
         donor_siret: donor_siret || "",
         slug,
       },
-      success_url: `${origin}/don/${slug}?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/don/${slug}?canceled=true`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
     });
 
     // CRITICAL: Insert donation immediately so CERFA is available right after payment
@@ -136,7 +157,7 @@ serve(async (req) => {
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Erreur inconnue";
-    console.error("create-donation-checkout error:", msg);
+    console.error("create-donation-checkout error:", msg, { origin: req.headers.get("origin") });
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
