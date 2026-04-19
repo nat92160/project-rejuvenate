@@ -5,9 +5,17 @@ const shareTextMock = vi.fn();
 const isNativePlatformMock = vi.fn();
 const toastSuccessMock = vi.fn();
 const toastErrorMock = vi.fn();
+const writeFileMock = vi.fn();
+const fetchMock = vi.fn();
 
 vi.mock("@capacitor/share", () => ({
   Share: { share: shareMock },
+}));
+
+vi.mock("@capacitor/filesystem", () => ({
+  Filesystem: { writeFile: writeFileMock },
+  Directory: { Cache: "CACHE" },
+  Encoding: { UTF8: "utf8" },
 }));
 
 vi.mock("@/lib/capacitorPush", () => ({
@@ -32,47 +40,72 @@ describe("shareCerfaPdf", () => {
     isNativePlatformMock.mockReturnValue(false);
     shareTextMock.mockResolvedValue(true);
     shareMock.mockResolvedValue(undefined);
+    writeFileMock.mockResolvedValue({ uri: "file:///cache/cerfa-abc.pdf" });
+    fetchMock.mockImplementation(async () => ({
+      ok: true,
+      status: 200,
+      blob: async () => new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], { type: "application/pdf" }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
     Object.defineProperty(navigator, "share", {
+      configurable: true,
+      writable: true,
+      value: undefined,
+    });
+    Object.defineProperty(navigator, "canShare", {
       configurable: true,
       writable: true,
       value: undefined,
     });
   });
 
-  it("utilise le partage natif dans l'app avec l'URL publique du PDF", async () => {
+  it("partage le PDF en fichier via le sheet natif iOS", async () => {
     isNativePlatformMock.mockReturnValue(true);
-    const { shareCerfaPdf, getCerfaPdfUrl } = await import("@/lib/cerfaPdf");
+    const { shareCerfaPdf } = await import("@/lib/cerfaPdf");
 
-    const token = "abc-123";
+    const token = "abc12345-rest";
     await expect(shareCerfaPdf(token)).resolves.toBe(true);
 
+    expect(writeFileMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "cerfa-abc12345.pdf",
+        directory: "CACHE",
+      }),
+    );
     expect(shareMock).toHaveBeenCalledWith(
       expect.objectContaining({
         title: "Reçu CERFA",
-        url: getCerfaPdfUrl(token),
+        url: "file:///cache/cerfa-abc.pdf",
       }),
     );
     expect(shareTextMock).not.toHaveBeenCalled();
   });
 
-  it("utilise navigator.share sur le web sans blob bloqué", async () => {
+  it("partage le PDF en fichier via Web Share API quand canShare l'autorise", async () => {
     const navigatorShare = vi.fn().mockResolvedValue(undefined);
+    const canShare = vi.fn().mockReturnValue(true);
     Object.defineProperty(navigator, "share", {
       configurable: true,
       writable: true,
       value: navigatorShare,
     });
+    Object.defineProperty(navigator, "canShare", {
+      configurable: true,
+      writable: true,
+      value: canShare,
+    });
 
-    const { shareCerfaPdf, getCerfaPdfUrl } = await import("@/lib/cerfaPdf");
+    const { shareCerfaPdf } = await import("@/lib/cerfaPdf");
     const token = "web-123";
 
     await expect(shareCerfaPdf(token)).resolves.toBe(true);
 
+    expect(canShare).toHaveBeenCalled();
     expect(navigatorShare).toHaveBeenCalledWith(
-      expect.objectContaining({
-        url: getCerfaPdfUrl(token),
-      }),
+      expect.objectContaining({ title: "Reçu CERFA" }),
     );
+    const callArg = navigatorShare.mock.calls[0][0];
+    expect(callArg.files?.[0]).toBeInstanceOf(File);
     expect(shareTextMock).not.toHaveBeenCalled();
   });
 
