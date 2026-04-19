@@ -1,6 +1,23 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+// SECURITY: HTML escaping to prevent XSS in user-controlled fields
+function esc(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeUrl(value: unknown): string {
+  const s = String(value || "");
+  if (/^https?:\/\//i.test(s)) return esc(s);
+  return "";
+}
+
 serve(async (req) => {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
