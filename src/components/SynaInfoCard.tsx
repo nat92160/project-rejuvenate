@@ -38,7 +38,8 @@ const SynaInfoCard = ({ info }: Props) => {
     setDistance(d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`);
   }, [city.lat, city.lng, info.latitude, info.longitude]);
 
-  // Check if the synagogue has a donation slug configured
+  // Platform model: every synagogue can receive donations.
+  // Use configured slug if it exists, otherwise fall back to the synagogue ID.
   useEffect(() => {
     if (!info.id) return;
     (async () => {
@@ -47,7 +48,7 @@ const SynaInfoCard = ({ info }: Props) => {
         .select("custom_donation_slug")
         .eq("synagogue_id", info.id)
         .maybeSingle() as any);
-      if (data?.custom_donation_slug) setDonationSlug(data.custom_donation_slug);
+      setDonationSlug(data?.custom_donation_slug || info.id);
     })();
   }, [info.id]);
 

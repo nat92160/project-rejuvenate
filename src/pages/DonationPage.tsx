@@ -51,19 +51,26 @@ const DonationPage = () => {
   useEffect(() => {
     if (!slug) return;
     (async () => {
-      // Look up synagogue by donation slug (Connect onboarding no longer required — platform model)
+      // Platform model: lookup by custom slug OR by raw synagogue UUID (fallback)
+      let synaId: string | null = null;
+
       const { data: sa } = await supabase
         .from("synagogue_stripe_accounts" as any)
         .select("synagogue_id")
         .eq("custom_donation_slug", slug)
         .maybeSingle();
 
-      if (!sa) {
+      if (sa) {
+        synaId = (sa as any).synagogue_id;
+      } else {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+        if (isUuid) synaId = slug;
+      }
+
+      if (!synaId) {
         setLoading(false);
         return;
       }
-
-      const synaId = (sa as any).synagogue_id;
 
       // Get synagogue info + active campaigns in parallel
       const [{ data: profile }, { data: camps }] = await Promise.all([
