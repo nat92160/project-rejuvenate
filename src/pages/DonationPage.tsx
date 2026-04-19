@@ -121,6 +121,10 @@ const DonationPage = () => {
   }, [slug]);
 
   const handleDonate = async () => {
+    if (!cerfaReady) {
+      toast.error("Cette synagogue n'a pas finalisé sa configuration fiscale. Les dons sont temporairement indisponibles.");
+      return;
+    }
     const amount = isCustom ? Math.round(parseFloat(customAmount) * 100) : selectedAmount;
     if (!amount || amount < 100) {
       toast.error("Montant minimum : 1€");
