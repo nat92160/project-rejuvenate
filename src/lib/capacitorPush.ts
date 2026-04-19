@@ -4,6 +4,7 @@ import { PushNotifications } from "@capacitor/push-notifications";
 export const isNativePlatform = () => Capacitor.isNativePlatform();
 export const isIOS = () => Capacitor.getPlatform() === "ios";
 export const isAndroid = () => Capacitor.getPlatform() === "android";
+export const getPlatform = () => Capacitor.getPlatform();
 
 export async function requestNativePushPermission(): Promise<boolean> {
   try {

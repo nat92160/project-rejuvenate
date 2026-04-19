@@ -1,6 +1,9 @@
+import { Share } from "@capacitor/share";
 import { toast } from "sonner";
+import { isNativePlatform } from "@/lib/capacitorPush";
+import { shareText } from "@/lib/shareUtils";
 
-function getCerfaPdfUrl(token: string) {
+export function getCerfaPdfUrl(token: string) {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   return `${supabaseUrl}/functions/v1/generate-cerfa?token=${encodeURIComponent(token)}`;
 }
@@ -24,6 +27,39 @@ function makeCerfaFilename(token: string) {
   return `cerfa-${token.slice(0, 8)}.pdf`;
 }
 
+async function shareCerfaLink(token: string): Promise<boolean> {
+  const url = getCerfaPdfUrl(token);
+
+  if (isNativePlatform()) {
+    await Share.share({
+      title: "Reçu CERFA",
+      text: "Voici le lien du reçu CERFA en PDF.",
+      url,
+      dialogTitle: "Partager le CERFA",
+    });
+    return true;
+  }
+
+  if (typeof navigator !== "undefined" && navigator.share) {
+    try {
+      await navigator.share({
+        title: "Reçu CERFA",
+        text: "Voici le lien du reçu CERFA en PDF.",
+        url,
+      });
+      return true;
+    } catch (error: any) {
+      if (error?.name === "AbortError") return false;
+    }
+  }
+
+  const shared = await shareText(url, "Reçu CERFA");
+  if (shared) {
+    toast.success("Lien du CERFA prêt à être envoyé.");
+  }
+  return shared;
+}
+
 export async function downloadCerfaPdf(token: string): Promise<void> {
   try {
     const blob = await fetchCerfaPdfBlob(token);
@@ -42,42 +78,7 @@ export async function downloadCerfaPdf(token: string): Promise<void> {
 
 export async function shareCerfaPdf(token: string): Promise<boolean> {
   try {
-    const blob = await fetchCerfaPdfBlob(token);
-    const file = new File([blob], makeCerfaFilename(token), { type: "application/pdf" });
-
-    // 1) Tentative Web Share (mobile principalement)
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ title: "Reçu CERFA", files: [file] });
-        return true;
-      } catch (error: any) {
-        if (error?.name === "AbortError") return false;
-        // sinon on bascule sur le fallback
-      }
-    }
-
-    // 2) Fallback web : ouvrir le PDF dans un nouvel onglet + le télécharger
-    const url = URL.createObjectURL(blob);
-
-    // Ouvrir dans un nouvel onglet (le président peut l'envoyer manuellement)
-    const opened = window.open(url, "_blank", "noopener,noreferrer");
-
-    // Téléchargement automatique en parallèle (au cas où le popup est bloqué)
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = file.name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
-
-    if (opened) {
-      toast.success("PDF ouvert et téléchargé. Vous pouvez le transférer au fidèle.");
-    } else {
-      toast.success("PDF téléchargé. Vous pouvez le transférer au fidèle.");
-    }
-    return true;
+    return await shareCerfaLink(token);
   } catch (error) {
     console.error("shareCerfaPdf error:", error);
     toast.error("Impossible de générer le PDF du CERFA");

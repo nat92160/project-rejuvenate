@@ -1,5 +1,5 @@
 {
-	"appId": "com.chabbatchalom.app",
+	"appId": "com.chabbatchalom.15app",
 	"appName": "Chabbat Chalom",
 	"webDir": "dist",
 	"ios": {
@@ -34,7 +34,9 @@
 		}
 	},
 	"packageClassList": [
+		"CAPBrowserPlugin",
 		"GeolocationPlugin",
-		"PushNotificationsPlugin"
+		"PushNotificationsPlugin",
+		"SharePlugin"
 	]
 }

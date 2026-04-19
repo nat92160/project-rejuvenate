@@ -1,0 +1,13 @@
+import{k as i,l as u}from"./index-DRrhnuEi.js";const h=["","אֶחָד","שְׁנַיִם","שְׁלֹשָׁה","אַרְבָּעָה","חֲמִשָּׁה","שִׁשָּׁה","שִׁבְעָה","שְׁמוֹנָה","תִּשְׁעָה","עֲשָׂרָה"],l=["","עֲשָׂרָה","עֶשְׂרִים","שְׁלֹשִׁים","אַרְבָּעִים"],A=["עֲשָׂרָה","אַחַד עָשָׂר","שְׁנֵים עָשָׂר","שְׁלֹשָׁה עָשָׂר","אַרְבָּעָה עָשָׂר","חֲמִשָּׁה עָשָׂר","שִׁשָּׁה עָשָׂר","שִׁבְעָה עָשָׂר","שְׁמוֹנָה עָשָׂר","תִּשְׁעָה עָשָׂר"];function c(e){if(e<=0||e>49)return"";if(e<=10)return h[e];if(e<20)return A[e-10];const n=Math.floor(e/10),t=e%10;return t===0?l[n]:`${h[t]} וְ${l[n]}`}function H(e){return{weeks:Math.floor(e/7),days:e%7}}function O(e){const{weeks:n,days:t}=H(e),o=e===1?"יוֹם אֶחָד":`${c(e)} יָמִים`;let r="";if(n>0){const m=n===1?"שָׁבוּעַ אֶחָד":`${c(n)} שָׁבוּעוֹת`;if(t===0)r=`, שֶׁהֵם ${m}`;else{const $=t===1?"יוֹם אֶחָד":`${c(t)} יָמִים`;r=`, שֶׁהֵם ${m} וְ${$}`}}const s=`בָּרוּךְ אַתָּה יְיָ אֱלֹהֵֽינוּ מֶֽלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָֽׁנוּ בְּמִצְוֹתָיו, וְצִוָּֽנוּ עַל סְפִירַת הָעֹֽמֶר.
+
+הַיּוֹם ${o}${r} לָעֹֽמֶר.
+
+הָרַחֲמָן הוּא יַחֲזִיר עֲבוֹדַת בֵּית הַמִּקְדָּשׁ לִמְקוֹמָהּ, בִּמְהֵרָה בְיָמֵינוּ, אָמֵן סֶלָה.`,d=`Baroukh Ata Ado-naï Élo-hénou Mélekh HaOlam, Achère Kiddéchanou Bémitsvotav, Vétsivanou Al Séfirat HaOmer.
+
+HaYom ${e===1?"yom é'had":`${e} yamim`}${n>0?`, chéhem ${n} chavouo${n>1?"t":"a"} vé${t} yamim`:""} laOmer.
+
+Hara'haman Hou Ya'hazir Avodat Beit Hamikdach Limekomah Bimhera Veyaménou, Amen Séla.`,g=`Béni sois-Tu Éternel notre D.ieu Roi du monde, qui nous a sanctifiés par Ses commandements et nous a ordonné le compte du Omer.
+
+Aujourd'hui ${e}${e===1?"er":""} jour${n>0?`, soit ${n} semaine${n>1?"s":""} et ${t} jour${t>1?"s":""}`:""} du Omer.
+
+Que le Miséricordieux rétablisse le service du Temple en son lieu, rapidement de nos jours, Amen Séla.`;return{hebrew:s,phonetic:d,french:g}}function v(){try{const e=new Date;if(e.getHours()>=17){const o=new Date(e);o.setDate(o.getDate()+1);const r=i.calendar({start:o,end:o,omer:!0});for(const a of r)if(a.getFlags()&u.OMER_COUNT){const s=a.getDesc().match(/(\d+)/);if(s)return parseInt(s[1])}}const t=i.calendar({start:e,end:e,omer:!0});for(const o of t)if(o.getFlags()&u.OMER_COUNT){const r=o.getDesc().match(/(\d+)/);if(r)return parseInt(r[1])}}catch{}return null}function E(e){try{const t=i.calendar({start:new Date(e,0,1),end:new Date(e,11,31),omer:!0}).filter(o=>o.getFlags()&u.OMER_COUNT);return t.length===0?null:{start:t[0].getDate().greg(),end:t[t.length-1].getDate().greg()}}catch{return null}}const f=["Hessed","Gvoura","Tiféret","Nétsa'h","Hod","Yessod","Malkhout"];function k(e){if(e<1||e>49)return{attribute:"",within:""};const n=Math.floor((e-1)/7),t=(e-1)%7;return{attribute:f[t],within:f[n]}}export{E as a,k as b,O as c,H as d,v as g};
