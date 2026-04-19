@@ -29,6 +29,8 @@ const DonationPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [synagogue, setSynagogue] = useState<{ id: string; name: string; logo_url: string | null } | null>(null);
+  const [cerfaReady, setCerfaReady] = useState(true);
+  const [cerfaMissing, setCerfaMissing] = useState<string[]>([]);
   const [stripeReady, setStripeReady] = useState(true); // Platform model: always ready
 
   // CERFA download state (success screen)
@@ -60,13 +62,13 @@ const DonationPage = () => {
 
       const { data: sa } = await supabase
         .from("synagogue_profiles")
-        .select("id, name, logo_url, donation_slug")
+        .select("id, name, logo_url, donation_slug, association_legal_name, rna_number, siret_number, address, president_first_name, president_last_name")
         .eq("donation_slug", slug)
         .maybeSingle();
 
       if (sa?.id) {
         synaId = sa.id;
-        synaProfile = sa;
+        synaProfile = sa as any;
         setStripeReady(true);
       } else {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
@@ -94,15 +96,24 @@ const DonationPage = () => {
           ? Promise.resolve({ data: null })
           : supabase
               .from("synagogue_profiles")
-              .select("id, name, logo_url, donation_slug")
+              .select("id, name, logo_url, donation_slug, association_legal_name, rna_number, siret_number, address, president_first_name, president_last_name")
               .eq("id", synaId)
               .maybeSingle(),
       ]);
 
-      const profile = synaProfile ?? profileById;
+      const profile: any = synaProfile ?? profileById;
 
       if (profile) {
         setSynagogue({ id: profile.id, name: profile.name, logo_url: profile.logo_url });
+
+        // ─── CERFA legal config check — block donations if missing
+        const missing: string[] = [];
+        if (!profile.association_legal_name) missing.push("Dénomination légale");
+        if (!profile.rna_number && !profile.siret_number) missing.push("Numéro RNA ou SIRET");
+        if (!profile.address) missing.push("Adresse de l'association");
+        if (!profile.president_first_name && !profile.president_last_name) missing.push("Nom du président signataire");
+        setCerfaMissing(missing);
+        setCerfaReady(missing.length === 0);
       }
       setCampaigns((camps as Campaign[]) || []);
       setLoading(false);
@@ -110,6 +121,10 @@ const DonationPage = () => {
   }, [slug]);
 
   const handleDonate = async () => {
+    if (!cerfaReady) {
+      toast.error("Cette synagogue n'a pas finalisé sa configuration fiscale. Les dons sont temporairement indisponibles.");
+      return;
+    }
     const amount = isCustom ? Math.round(parseFloat(customAmount) * 100) : selectedAmount;
     if (!amount || amount < 100) {
       toast.error("Montant minimum : 1€");
@@ -312,6 +327,23 @@ const DonationPage = () => {
           <div className="rounded-2xl border border-border bg-card p-6 text-center">
             <p className="text-sm text-muted-foreground">
               Les dons ne sont pas encore activés pour cette synagogue.
+            </p>
+          </div>
+        ) : !cerfaReady ? (
+          <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-6 text-center space-y-3">
+            <div className="text-4xl">⚠️</div>
+            <h2 className="text-lg font-bold text-amber-900">Configuration fiscale incomplète</h2>
+            <p className="text-sm text-amber-800">
+              Cette synagogue n'a pas encore finalisé les informations légales requises pour émettre des reçus fiscaux conformes (CERFA 2041-RD).
+            </p>
+            <div className="text-left bg-white/60 rounded-lg p-3 text-xs text-amber-900">
+              <p className="font-semibold mb-1">Informations manquantes :</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                {cerfaMissing.map((m) => <li key={m}>{m}</li>)}
+              </ul>
+            </div>
+            <p className="text-xs text-amber-700">
+              Les dons sont temporairement désactivés. Le président de cette synagogue doit compléter la configuration CERFA depuis son tableau de bord.
             </p>
           </div>
         ) : (

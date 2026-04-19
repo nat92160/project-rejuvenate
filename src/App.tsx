@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { useGpsProfileSync } from "@/hooks/useGpsProfileSync";
 import { supabase } from "@/integrations/supabase/client";
-import { registerNativePush, requestNativePushPermission, clearPushBadge, onNativePushActionPerformed } from "@/lib/capacitorPush";
+import { registerNativePush, clearPushBadge, onNativePushActionPerformed } from "@/lib/capacitorPush";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import MinyanJoin from "./pages/MinyanJoin.tsx";
@@ -96,86 +96,49 @@ function AppInner() {
 
   const isNative = Capacitor.isNativePlatform();
 
-  // ─── STEP 1: Request push permission IMMEDIATELY on native, no auth needed ───
+  // ─── Push permissions are NOT requested on launch.
+  // Only GPS is requested automatically (via useGpsProfileSync).
+  // Notification permission is requested only when the user opts in
+  // (e.g. activating Shabbat reminders from settings or the Omer page).
+  // This keeps the first-launch experience light and respectful.
+  //
+  // If a token has already been granted in a previous session, we still
+  // refresh it silently — but we never trigger the OS prompt here.
   useEffect(() => {
-    if (!isNative) {
-      console.log("[App] Not native platform, skipping push setup");
-      return;
-    }
+    if (!isNative) return;
     if (permissionRequestedRef.current) return;
     permissionRequestedRef.current = true;
 
-    console.log("[App] 🔔 Native platform detected! Requesting push permission NOW (no auth needed)...");
-
     (async () => {
       try {
-        const granted = await requestNativePushPermission();
-        console.log("[App] 🔔 Push permission result:", granted);
-
-        if (!granted) {
-          console.warn("[App] Push permission denied by user");
+        const { PushNotifications } = await import("@capacitor/push-notifications");
+        const status = await PushNotifications.checkPermissions();
+        if (status.receive !== "granted") {
+          console.log("[App] Push permission not yet granted — skipping silent token refresh");
           return;
         }
-
-        console.log("[App] 🔔 Permission granted, registering for push token...");
+        console.log("[App] 🔕 Push already authorized, refreshing token silently…");
         const token = await registerNativePush();
-        console.log("[App] 🔔 Got device token:", token?.substring(0, 20) + "...");
         deviceTokenRef.current = token;
-
-        // If user is already logged in, save immediately
         if (user && token) {
-          console.log("[App] 🔔 User already logged in, saving token now...");
           const saved = await saveNativePushToken(user.id, token);
-          if (saved) {
-            tokenSavedForUserRef.current = user.id;
-            console.log("[App] ✅ Native push token saved for user", user.id);
-          }
-        } else {
-          console.log("[App] 🔔 No user yet, token will be saved after login");
-          // Listen for auth state change to save token when user signs in
-          const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-              if (
-                (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
-                session?.user &&
-                deviceTokenRef.current &&
-                tokenSavedForUserRef.current !== session.user.id
-              ) {
-                console.log("[App] 🔔 Auth event", event, "— saving push token for", session.user.id);
-                const saved = await saveNativePushToken(session.user.id, deviceTokenRef.current);
-                if (saved) {
-                  tokenSavedForUserRef.current = session.user.id;
-                  console.log("[App] ✅ Native push token saved via auth listener");
-                }
-                subscription.unsubscribe();
-              }
-            }
-          );
+          if (saved) tokenSavedForUserRef.current = user.id;
         }
       } catch (err) {
-        console.error("[App] ❌ Push bootstrap error:", err);
+        console.warn("[App] Silent push token refresh skipped:", err);
       }
     })();
-  }, [isNative]); // Only depends on isNative, NOT on user/loading
+  }, [isNative, user]);
 
-  // ─── STEP 2: Save token when user becomes available (after login) ───
+  // Save token when user logs in later (only if a token was already silently refreshed)
   useEffect(() => {
     if (!isNative || loading || !user) return;
     if (!deviceTokenRef.current) return;
     if (tokenSavedForUserRef.current === user.id) return;
 
-    console.log("[App] 🔔 User now available, saving pending push token...");
-
     (async () => {
-      try {
-        const saved = await saveNativePushToken(user.id, deviceTokenRef.current!);
-        if (saved) {
-          tokenSavedForUserRef.current = user.id;
-          console.log("[App] ✅ Native push token saved after login for user", user.id);
-        }
-      } catch (err) {
-        console.error("[App] ❌ Failed to save push token after login:", err);
-      }
+      const saved = await saveNativePushToken(user.id, deviceTokenRef.current!);
+      if (saved) tokenSavedForUserRef.current = user.id;
     })();
   }, [isNative, loading, user]);
 
