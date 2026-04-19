@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Phone, MapPin, Navigation, Mail, Building2 } from "lucide-react";
+import { Phone, MapPin, Navigation, Mail, Building2, Heart } from "lucide-react";
 import { useCity } from "@/hooks/useCity";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SynaInfo {
+  id?: string;
   name: string;
   address: string | null;
   phone: string | null;
@@ -19,6 +21,7 @@ interface Props {
 const SynaInfoCard = ({ info }: Props) => {
   const { city } = useCity();
   const [distance, setDistance] = useState<string | null>(null);
+  const [donationSlug, setDonationSlug] = useState<string | null>(null);
   const isGps = !!city._gps;
 
   useEffect(() => {
@@ -34,6 +37,19 @@ const SynaInfoCard = ({ info }: Props) => {
     const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     setDistance(d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`);
   }, [city.lat, city.lng, info.latitude, info.longitude]);
+
+  // Check if the synagogue has a donation slug configured
+  useEffect(() => {
+    if (!info.id) return;
+    (async () => {
+      const { data } = await (supabase
+        .from("synagogue_stripe_accounts" as any)
+        .select("custom_donation_slug")
+        .eq("synagogue_id", info.id)
+        .maybeSingle() as any);
+      if (data?.custom_donation_slug) setDonationSlug(data.custom_donation_slug);
+    })();
+  }, [info.id]);
 
   const mapsUrl = info.latitude && info.longitude
     ? `https://www.google.com/maps/dir/?api=1&destination=${info.latitude},${info.longitude}`
@@ -105,6 +121,21 @@ const SynaInfoCard = ({ info }: Props) => {
           >
             <Mail className="h-5 w-5 shrink-0 text-primary/60" />
             <span className="text-sm text-foreground">{info.email}</span>
+          </a>
+        )}
+
+        {/* Donation button — visible only if synagogue has activated donations */}
+        {donationSlug && (
+          <a
+            href={`/don/${donationSlug}`}
+            className="flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 no-underline transition-all active:scale-[0.98] text-primary-foreground font-bold text-sm"
+            style={{
+              background: "linear-gradient(135deg, hsl(var(--gold)), hsl(var(--gold-matte)))",
+              boxShadow: "var(--shadow-gold)",
+            }}
+          >
+            <Heart className="h-5 w-5 fill-current" />
+            Faire un don 💛
           </a>
         )}
       </div>
