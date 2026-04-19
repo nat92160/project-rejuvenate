@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { FileCheck, Loader2, Save, Info } from "lucide-react";
+import { FileCheck, Loader2, Save, Info, Upload, X } from "lucide-react";
 
 interface Props {
   synagogueId: string;
@@ -18,6 +18,8 @@ interface CerfaData {
   siret_number: string;
   article_cgi: string;
   signature: string;
+  signature_image_url: string;
+  organism_quality: string;
   address: string;
   president_first_name: string;
   president_last_name: string;
@@ -26,6 +28,7 @@ interface CerfaData {
 const CerfaConfig = ({ synagogueId }: Props) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [data, setData] = useState<CerfaData>({
     association_legal_name: "",
     association_object: "Exercice du culte",
@@ -33,6 +36,8 @@ const CerfaConfig = ({ synagogueId }: Props) => {
     siret_number: "",
     article_cgi: "200",
     signature: "",
+    signature_image_url: "",
+    organism_quality: "Œuvre ou organisme d'intérêt général",
     address: "",
     president_first_name: "",
     president_last_name: "",
@@ -42,7 +47,7 @@ const CerfaConfig = ({ synagogueId }: Props) => {
     (async () => {
       const { data: profile } = await (supabase
         .from("synagogue_profiles")
-        .select("association_legal_name, association_object, rna_number, siret_number, article_cgi, signature, address, president_first_name, president_last_name") as any)
+        .select("association_legal_name, association_object, rna_number, siret_number, article_cgi, signature, signature_image_url, organism_quality, address, president_first_name, president_last_name") as any)
         .eq("id", synagogueId)
         .maybeSingle();
       if (profile) {
@@ -53,6 +58,8 @@ const CerfaConfig = ({ synagogueId }: Props) => {
           siret_number: profile.siret_number || "",
           article_cgi: profile.article_cgi || "200",
           signature: profile.signature || "",
+          signature_image_url: profile.signature_image_url || "",
+          organism_quality: profile.organism_quality || "Œuvre ou organisme d'intérêt général",
           address: profile.address || "",
           president_first_name: profile.president_first_name || "",
           president_last_name: profile.president_last_name || "",
@@ -61,6 +68,22 @@ const CerfaConfig = ({ synagogueId }: Props) => {
       setLoading(false);
     })();
   }, [synagogueId]);
+
+  const uploadSignature = async (file: File) => {
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${synagogueId}/signature-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("synagogue-logos").upload(path, file, { upsert: true });
+    if (error) {
+      toast.error("Échec de l'envoi de la signature");
+      setUploading(false);
+      return;
+    }
+    const { data: pub } = supabase.storage.from("synagogue-logos").getPublicUrl(path);
+    setData((d) => ({ ...d, signature_image_url: pub.publicUrl }));
+    setUploading(false);
+    toast.success("Signature ajoutée");
+  };
 
   const save = async () => {
     setSaving(true);
@@ -73,6 +96,8 @@ const CerfaConfig = ({ synagogueId }: Props) => {
         siret_number: data.siret_number || null,
         article_cgi: data.article_cgi || "200",
         signature: data.signature || null,
+        signature_image_url: data.signature_image_url || null,
+        organism_quality: data.organism_quality || "Œuvre ou organisme d'intérêt général",
         president_first_name: data.president_first_name || null,
         president_last_name: data.president_last_name || null,
       }) as any)
@@ -87,7 +112,7 @@ const CerfaConfig = ({ synagogueId }: Props) => {
 
   if (loading) return <div className="text-center py-4"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>;
 
-  const isComplete = data.association_legal_name && data.address && (data.rna_number || data.siret_number) && (data.president_first_name || data.president_last_name);
+  const isComplete = !!(data.association_legal_name && data.address && (data.rna_number || data.siret_number) && (data.president_first_name || data.president_last_name));
 
   return (
     <div className="space-y-4">
@@ -162,6 +187,19 @@ const CerfaConfig = ({ synagogueId }: Props) => {
               <option value="200 et 238 bis">Articles 200 et 238 bis — Particuliers et entreprises</option>
             </select>
           </div>
+
+          <div>
+            <Label className="text-[11px] font-semibold">Qualité de l'organisme</Label>
+            <select
+              value={data.organism_quality}
+              onChange={(e) => setData({ ...data, organism_quality: e.target.value })}
+              className="w-full text-xs mt-1 rounded-md border border-input bg-background px-3 py-2 h-9"
+            >
+              <option value="Œuvre ou organisme d'intérêt général">Œuvre ou organisme d'intérêt général</option>
+              <option value="Association reconnue d'utilité publique">Association reconnue d'utilité publique</option>
+              <option value="Association cultuelle">Association cultuelle</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -196,6 +234,37 @@ const CerfaConfig = ({ synagogueId }: Props) => {
             placeholder="Ex: Président de l'Association Cultuelle"
             className="text-xs mt-1 min-h-[60px]"
           />
+        </div>
+
+        <div>
+          <Label className="text-[11px] font-semibold">Signature manuscrite (PNG transparent)</Label>
+          <div className="mt-1 flex items-center gap-3">
+            {data.signature_image_url ? (
+              <div className="relative">
+                <img src={data.signature_image_url} alt="Signature" className="h-16 max-w-[200px] object-contain bg-muted/30 rounded p-1" />
+                <button
+                  type="button"
+                  onClick={() => setData({ ...data, signature_image_url: "" })}
+                  className="absolute -top-2 -right-2 bg-background border border-border rounded-full p-0.5"
+                  aria-label="Retirer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 cursor-pointer text-[11px] border border-dashed border-border rounded-md px-3 py-2 hover:bg-muted/40">
+                {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                <span>{uploading ? "Envoi…" : "Téléverser une signature"}</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadSignature(f); }}
+                />
+              </label>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">PNG transparent recommandé, ~300 px de large.</p>
         </div>
       </div>
 

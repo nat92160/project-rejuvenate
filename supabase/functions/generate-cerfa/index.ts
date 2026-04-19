@@ -53,9 +53,16 @@ serve(async (req) => {
 
   const { data: syna } = await supabaseAdmin
     .from("synagogue_profiles")
-    .select("name, address, president_first_name, president_last_name, logo_url, signature, association_legal_name, association_object, rna_number, siret_number, article_cgi")
+    .select("name, address, president_first_name, president_last_name, logo_url, signature, signature_image_url, organism_quality, association_legal_name, association_object, rna_number, siret_number, article_cgi")
     .eq("id", donation.synagogue_id)
     .single();
+
+  // Si pas encore de numéro CERFA, on en assigne un séquentiel par synagogue+année
+  let cerfaNumber = donation.cerfa_number as string | null;
+  if (!cerfaNumber) {
+    const { data: assigned } = await supabaseAdmin.rpc("assign_cerfa_number", { _donation_id: donation.id });
+    if (typeof assigned === "string") cerfaNumber = assigned;
+  }
 
   const donDate = new Date(donation.created_at);
   const today = new Date();
@@ -66,103 +73,179 @@ serve(async (req) => {
   const legalName = syna?.association_legal_name || syna?.name || "—";
   const articleCgi = syna?.article_cgi || "200";
   const associationObject = syna?.association_object || "Exercice du culte";
-  const cerfaNumber = donation.cerfa_number || donation.id.slice(0, 8).toUpperCase();
   const fiscalYear = donation.fiscal_year || donDate.getFullYear();
+  const organismQuality = syna?.organism_quality || "Œuvre ou organisme d'intérêt général";
+  const finalCerfaNumber = cerfaNumber || `A${fiscalYear}/${donation.id.slice(0, 5).toUpperCase()}`;
+  const amountEuros = donation.amount / 100;
+  const amountInWords = numberToFrenchWords(amountEuros);
+
+  const article200Checked = articleCgi.includes("200") ? "&#10004;" : "";
+  const article238Checked = articleCgi.includes("238") ? "&#10004;" : "";
+  const article978Checked = articleCgi.includes("978") ? "&#10004;" : "";
+
+  const isCompany = donation.donor_type === "societe";
+  const donorDisplayName = isCompany
+    ? (donation.donor_company_name || donation.donor_name || "—")
+    : `M ou Mme ${(donation.donor_name || "—").toUpperCase()}`;
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Reçu Fiscal CERFA n° ${esc(cerfaNumber)}</title>
+  <title>Reçu Fiscal CERFA n° ${esc(finalCerfaNumber)}</title>
   <style>
+    @page { size: A4; margin: 12mm; }
     @media print { body { margin: 0; } .no-print { display: none; } }
-    body { font-family: 'Georgia', serif; max-width: 720px; margin: 40px auto; padding: 20px; color: #1a1a1a; }
-    .header { text-align: center; border-bottom: 3px double #1e3a5f; padding-bottom: 20px; margin-bottom: 30px; }
-    .header h1 { font-size: 22px; color: #1e3a5f; margin: 0; }
-    .header p { font-size: 11px; color: #666; margin: 5px 0 0; }
-    .logo { max-height: 80px; margin-bottom: 10px; }
-    .receipt-meta { display: flex; justify-content: space-between; font-size: 11px; color: #444; margin-bottom: 20px; padding: 8px 12px; background: #f7f7f9; border-radius: 6px; }
-    .section { margin-bottom: 22px; }
-    .section h2 { font-size: 13px; text-transform: uppercase; color: #1e3a5f; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px; letter-spacing: 0.5px; }
-    .section p { font-size: 12px; margin: 4px 0; line-height: 1.6; }
-    .legal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 11px; }
-    .legal-grid span.label { color: #666; }
-    .amount { font-size: 18px; font-weight: bold; color: #1e3a5f; }
-    .footer { margin-top: 40px; font-size: 10px; color: #888; border-top: 1px solid #ddd; padding-top: 15px; }
-    .signature { margin-top: 30px; }
-    .print-btn { display: block; margin: 20px auto; padding: 12px 30px; background: #1e3a5f; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
-    .legal-mention { font-size: 11px; font-style: italic; padding: 10px; background: #fafafa; border-left: 3px solid #c9a84c; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; max-width: 800px; margin: 24px auto; padding: 16px; color: #111; font-size: 12px; line-height: 1.45; }
+    .print-btn { display: block; margin: 0 auto 18px; padding: 10px 22px; background: #1e3a5f; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+    .frame { border: 1px solid #111; }
+    .top { display: grid; grid-template-columns: 200px 1fr 160px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #111; gap: 12px; }
+    .top .left { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; }
+    .top .left .small { font-size: 10px; }
+    .cerfa-bubble { display: inline-block; border: 1.5px solid #111; border-radius: 999px; padding: 4px 22px; font-style: italic; font-weight: 700; letter-spacing: 1px; }
+    .top .center { text-align: center; font-weight: 700; font-size: 12.5px; line-height: 1.35; }
+    .top .right { text-align: right; font-size: 11px; }
+    .top .right .num { font-weight: 700; font-size: 13px; margin-top: 4px; }
+    .donor-bar { display: grid; grid-template-columns: 200px 1fr; padding: 14px 18px; border-bottom: 1px solid #111; gap: 16px; align-items: center; }
+    .donor-bar .logo { display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 700; font-size: 11px; }
+    .donor-bar .logo img { max-width: 90px; max-height: 90px; }
+    .donor-bar .donor-block { font-size: 12.5px; line-height: 1.6; }
+    .donor-bar .donor-block .donor-name { font-weight: 700; }
+    .section-title { background: #d6d6d6; text-align: center; padding: 6px 0; font-weight: 700; letter-spacing: 0.5px; font-size: 12px; border-bottom: 1px solid #111; }
+    .grid-2col { display: grid; grid-template-columns: 220px 1fr; }
+    .grid-2col > div { padding: 8px 14px; border-bottom: 1px solid #cfcfcf; }
+    .grid-2col .lbl { font-weight: 700; background: #fafafa; }
+    .grid-2col > div:nth-last-child(-n+2) { border-bottom: none; }
+    .amount-section { padding: 14px 18px; border-bottom: 1px solid #111; }
+    .amount-line { text-align: center; font-size: 12px; margin-bottom: 8px; }
+    .amount-box { display: flex; justify-content: center; }
+    .amount-box .pill { border: 1.5px solid #111; padding: 8px 22px; font-weight: 700; font-size: 13.5px; letter-spacing: 0.3px; }
+    .checks { padding: 12px 18px; border-bottom: 1px solid #111; }
+    .checks .center-h { text-align: center; font-weight: 700; font-size: 12px; margin-bottom: 10px; line-height: 1.5; }
+    .checks .row { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; margin: 6px 0 14px; }
+    .checks .group-title { font-weight: 700; text-decoration: underline; font-size: 12px; margin-top: 6px; }
+    .check { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
+    .check .box { width: 16px; height: 16px; border: 1.2px solid #111; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1; }
+    .footer-row { display: grid; grid-template-columns: 1fr 1fr; padding: 14px 18px; gap: 12px; }
+    .footer-row .right { text-align: right; }
+    .footer-row .right .date { font-weight: 700; }
+    .footer-row .right .pres { margin-top: 6px; font-style: italic; }
+    .footer-row .right .sig img { max-height: 70px; margin-top: 6px; }
+    .footer-mention { text-align: center; font-weight: 700; padding: 12px 18px 0; }
+    .footer-note { text-align: center; font-size: 9.5px; color: #555; padding: 10px 18px 4px; }
   </style>
 </head>
 <body>
   <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimer / Télécharger PDF</button>
 
-  <div class="header">
-    ${syna?.logo_url && safeUrl(syna.logo_url) ? `<img src="${safeUrl(syna.logo_url)}" class="logo" alt="Logo">` : ""}
-    <h1>REÇU AU TITRE DES DONS</h1>
-    <p>à certains organismes d'intérêt général — Cerfa n° 11580*04</p>
-    <p>Article ${esc(articleCgi)} du Code Général des Impôts</p>
-  </div>
-
-  <div class="receipt-meta">
-    <span><strong>Reçu N°</strong> ${esc(cerfaNumber)}</span>
-    <span><strong>Année fiscale</strong> ${esc(fiscalYear)}</span>
-    <span><strong>Émis le</strong> ${today.toLocaleDateString("fr-FR")}</span>
-  </div>
-
-  <div class="section">
-    <h2>Bénéficiaire des versements</h2>
-    <p><strong>${esc(legalName)}</strong></p>
-    <div class="legal-grid">
-      <span class="label">Adresse :</span><span>${esc(syna?.address || "—")}</span>
-      <span class="label">Objet :</span><span>${esc(associationObject)}</span>
-      ${syna?.rna_number ? `<span class="label">N° RNA :</span><span>${esc(syna.rna_number)}</span>` : ""}
-      ${syna?.siret_number ? `<span class="label">N° SIRET :</span><span>${esc(syna.siret_number)}</span>` : ""}
+  <div class="frame">
+    <!-- TOP HEADER -->
+    <div class="top">
+      <div class="left">
+        <div class="small">2041-RD</div>
+        <div class="cerfa-bubble">cerfa</div>
+        <div class="small">N° 11580*05</div>
+      </div>
+      <div class="center">
+        Reçu des dons et versements<br>
+        effectués par les particuliers au titre<br>
+        des articles 200 et 978 du code<br>
+        général des impôts
+      </div>
+      <div class="right">
+        <div>N° d'ordre du reçu</div>
+        <div class="num">${esc(finalCerfaNumber)}</div>
+      </div>
     </div>
-  </div>
 
-  <div class="section">
-    <h2>${donation.donor_type === "societe" ? "Donateur (Personne morale)" : "Donateur"}</h2>
-    ${donation.donor_type === "societe" ? `
-      <p><strong>${esc(donation.donor_company_name || "—")}</strong></p>
-      ${donation.donor_siret ? `<p>SIRET : ${esc(donation.donor_siret)}</p>` : ""}
-      <p>Représentée par : ${esc(donation.donor_name || "—")}</p>
-    ` : `
-      <p><strong>${esc(donation.donor_name || "—")}</strong></p>
-    `}
-    <p>${esc(donation.donor_address || "—")}</p>
-    <p>Courriel : ${esc(donation.donor_email)}</p>
-  </div>
+    <!-- DONOR HEADER (logo + adresse donateur) -->
+    <div class="donor-bar">
+      <div class="logo">
+        ${syna?.logo_url && safeUrl(syna.logo_url) ? `<img src="${safeUrl(syna.logo_url)}" alt="Logo">` : ""}
+        <div>${esc(syna?.name || legalName)}</div>
+      </div>
+      <div class="donor-block">
+        <div class="donor-name">${esc(donorDisplayName)}</div>
+        <div>${esc(donation.donor_address || "—")}</div>
+        <div>Courriel : ${esc(donation.donor_email)}</div>
+      </div>
+    </div>
 
-  <div class="section">
-    <h2>Don effectué</h2>
-    <p>Date du versement : <strong>${donDate.toLocaleDateString("fr-FR")}</strong></p>
-    <p>Montant : <span class="amount">${(donation.amount / 100).toFixed(2)} €</span></p>
-    <p>(${esc(numberToFrenchWords(donation.amount / 100))} euros)</p>
-    <p>Forme du don : Acte authentique &nbsp;☐&nbsp; Acte sous seing privé &nbsp;☐&nbsp; Déclaration de don manuel &nbsp;☑&nbsp; Autre &nbsp;☐</p>
-    <p>Nature du don : Numéraire ☑ &nbsp;&nbsp; Titres ☐ &nbsp;&nbsp; Autres ☐</p>
-    <p>Mode de versement : Carte bancaire (paiement en ligne sécurisé)</p>
-  </div>
+    <!-- BENEFICIAIRE -->
+    <div class="section-title">BENEFICIAIRE DU DON</div>
+    <div class="grid-2col">
+      <div class="lbl">NOM OU DENOMINATION :</div>
+      <div><strong>${esc(legalName)}</strong></div>
+      <div class="lbl">Numéro SIREN ou RNA :</div>
+      <div>${esc(syna?.rna_number || syna?.siret_number || "—")}</div>
+      <div class="lbl">ADRESSE ASSOCIATION :</div>
+      <div>${esc(syna?.address || "—")}</div>
+      <div class="lbl">OBJET :</div>
+      <div>${esc(associationObject)}</div>
+      <div class="lbl">QUALITE DE L'ORGANISME :</div>
+      <div>${esc(organismQuality)}</div>
+    </div>
 
-  <div class="section">
-    <p class="legal-mention">
-      Le bénéficiaire reconnaît, conformément à l'article ${esc(articleCgi)} du Code Général des Impôts,
-      que les dons et versements qu'il reçoit ouvrent droit à une réduction d'impôt
-      ${articleCgi.includes("200") ? "égale à 66% de leur montant pour les particuliers (dans la limite de 20% du revenu imposable)" : "dans les conditions prévues par la loi"}.
-    </p>
-  </div>
+    <!-- MONTANT -->
+    <div class="amount-section">
+      <div class="amount-line">Le bénéficiaire reconnaît avoir reçu au titre des dons et versements ouvrant droit à réduction d'impôt, la somme de</div>
+      <div class="amount-box">
+        <div class="pill">***${amountEuros.toFixed(2).replace(/\.00$/, "")} Euros*** ${esc(amountInWords)}</div>
+      </div>
+    </div>
 
-  <div class="signature">
-    <p style="font-size: 12px;">Fait à ${esc(syna?.address ? syna.address.split(",").pop()?.trim() : "—")}, le ${today.toLocaleDateString("fr-FR")}</p>
-    <p style="font-size: 12px; margin-top: 10px;">
-      ${presidentName ? `Le Président : <strong>${esc(presidentName)}</strong>` : ""}
-    </p>
-    ${syna?.signature ? `<p style="font-size: 11px; font-style: italic; color: #666; margin-top: 5px;">${esc(syna.signature)}</p>` : ""}
-  </div>
+    <!-- DONATEUR -->
+    <div class="section-title">DONATEUR</div>
+    <div class="grid-2col">
+      <div class="lbl">NOM OU DENOMINATION :</div>
+      <div>${esc(donorDisplayName)}</div>
+      <div class="lbl">ADRESSE DONATEUR :</div>
+      <div>${esc(donation.donor_address || "—")}</div>
+    </div>
 
-  <div class="footer">
-    <p>Reçu établi conformément aux dispositions des articles 200 et 238 bis du CGI et à l'arrêté du 1er décembre 2003.</p>
-    <p>Réf. interne : ${esc(donation.id)}</p>
+    <!-- CHECKBOXES -->
+    <div class="checks">
+      <div class="center-h">Le bénéficiaire certifie sur l'honneur que les dons et versements qu'il reçoit<br>ouvrent droit à la réduction d'impôt prévue à l'article</div>
+      <div class="row">
+        <span class="check"><span class="box">${article200Checked}</span> 200 du CGI</span>
+        <span class="check"><span class="box">${article238Checked}</span> 238 bis du CGI</span>
+        <span class="check"><span class="box">${article978Checked}</span> 978 du CGI</span>
+      </div>
+
+      <div class="group-title">Forme du don</div>
+      <div class="row">
+        <span class="check"><span class="box"></span> Acte authentique</span>
+        <span class="check"><span class="box"></span> Acte sous seing privé</span>
+        <span class="check"><span class="box">&#10004;</span> Déclaration de don manuel</span>
+        <span class="check"><span class="box"></span> Autres</span>
+      </div>
+
+      <div class="group-title">Nature du don</div>
+      <div class="row">
+        <span class="check"><span class="box">&#10004;</span> Numéraire</span>
+        <span class="check"><span class="box"></span> Titres de sociétés cotées</span>
+        <span class="check"><span class="box"></span> Autres</span>
+      </div>
+    </div>
+
+    <!-- FOOTER (mode + date + signature) -->
+    <div class="footer-row">
+      <div class="left">
+        Mode de versement : <strong>CB</strong>
+      </div>
+      <div class="right">
+        <div>Date et signature</div>
+        <div class="date">${donDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</div>
+        ${presidentName ? `<div class="pres">M. ${esc(presidentName)}, Président :</div>` : ""}
+        <div class="sig">
+          ${syna?.signature_image_url && safeUrl(syna.signature_image_url) ? `<img src="${safeUrl(syna.signature_image_url)}" alt="Signature">` : ""}
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-mention">Reçu cerfa généré par Chabbat Chalom</div>
+    <div class="footer-note">Article ${esc(articleCgi)} du Code Général des Impôts — Réf. interne : ${esc(donation.id)}</div>
   </div>
 </body>
 </html>`;
