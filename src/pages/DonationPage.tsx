@@ -159,6 +159,7 @@ const DonationPage = () => {
 
   // Auto-fetch CERFA URL as soon as we land on the success screen so the
   // download button is ready instantly (no extra click + spinner wait).
+  // Polls until Stripe webhook confirms payment_status = "paid" (up to ~20s).
   useEffect(() => {
     if (!success || !sessionId || cerfaUrl || cerfaLoading) return;
     let cancelled = false;
@@ -168,7 +169,7 @@ const DonationPage = () => {
       try {
         const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
         let lastErr = "";
-        for (let attempt = 0; attempt < 5; attempt++) {
+        for (let attempt = 0; attempt < 10; attempt++) {
           if (cancelled) return;
           const res = await fetch(
             `https://${projectId}.supabase.co/functions/v1/get-donation-cerfa?session_id=${sessionId}`
@@ -180,10 +181,11 @@ const DonationPage = () => {
             if (!cancelled) setCerfaUrl(niceUrl);
             return;
           }
+          // 202 = pending payment confirmation, keep polling silently
           lastErr = data?.error || `HTTP ${res.status}`;
-          await new Promise((r) => setTimeout(r, 1500));
+          await new Promise((r) => setTimeout(r, 2000));
         }
-        if (!cancelled) setCerfaError(lastErr || "Reçu en cours de préparation…");
+        if (!cancelled) setCerfaError(lastErr || "Paiement en cours de validation par Stripe…");
       } catch (e: any) {
         if (!cancelled) setCerfaError(e?.message || "Reçu non disponible pour l'instant");
       } finally {
