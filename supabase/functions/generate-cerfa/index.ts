@@ -110,9 +110,9 @@ serve(async (req) => {
     .warn { background: #fffaf2; border: 1px solid #d9a85f; color: #6b4810; padding: 6px 10px; border-radius: 6px; font-size: 10.5px; margin-bottom: 8px; text-align: center; font-weight: 600; }
     .frame { border: 1.5px solid #996515; background: #fff; }
     .top { display: grid; grid-template-columns: 170px 1fr 150px; align-items: center; padding: 10px 14px; border-bottom: 1.5px solid #996515; gap: 10px; background: #fffdf7; }
-    .top .left { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9.5px; color: #996515; }
-    .top .left .small { font-size: 9px; }
-    .cerfa-bubble { display: inline-block; border: 1.3px solid #996515; color: #996515; border-radius: 999px; padding: 2px 18px; font-style: italic; font-weight: 700; letter-spacing: 1px; font-size: 11px; }
+    .top .left { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: #6b4810; font-weight: 700; }
+    .top .left .small { font-size: 9.5px; letter-spacing: 0.3px; }
+    .cerfa-bubble { display: inline-block; border: 2px solid #6b4810; color: #6b4810; background: #fff8e8; border-radius: 999px; padding: 3px 22px; font-style: italic; font-weight: 900; letter-spacing: 1.2px; font-size: 13px; box-shadow: 0 1px 0 rgba(107,72,16,0.15); }
     .top .center { text-align: center; font-weight: 700; font-size: 11px; line-height: 1.3; color: #2a2a2a; }
     .top .right { text-align: right; font-size: 10px; color: #996515; }
     .top .right .num { font-weight: 700; font-size: 12.5px; margin-top: 2px; color: #996515; letter-spacing: 0.5px; }
