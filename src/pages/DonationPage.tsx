@@ -159,6 +159,7 @@ const DonationPage = () => {
 
   // Auto-fetch CERFA URL as soon as we land on the success screen so the
   // download button is ready instantly (no extra click + spinner wait).
+  // Polls until Stripe webhook confirms payment_status = "paid" (up to ~20s).
   useEffect(() => {
     if (!success || !sessionId || cerfaUrl || cerfaLoading) return;
     let cancelled = false;
@@ -168,7 +169,7 @@ const DonationPage = () => {
       try {
         const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
         let lastErr = "";
-        for (let attempt = 0; attempt < 5; attempt++) {
+        for (let attempt = 0; attempt < 10; attempt++) {
           if (cancelled) return;
           const res = await fetch(
             `https://${projectId}.supabase.co/functions/v1/get-donation-cerfa?session_id=${sessionId}`
@@ -180,10 +181,11 @@ const DonationPage = () => {
             if (!cancelled) setCerfaUrl(niceUrl);
             return;
           }
+          // 202 = pending payment confirmation, keep polling silently
           lastErr = data?.error || `HTTP ${res.status}`;
-          await new Promise((r) => setTimeout(r, 1500));
+          await new Promise((r) => setTimeout(r, 2000));
         }
-        if (!cancelled) setCerfaError(lastErr || "Reçu en cours de préparation…");
+        if (!cancelled) setCerfaError(lastErr || "Paiement en cours de validation par Stripe…");
       } catch (e: any) {
         if (!cancelled) setCerfaError(e?.message || "Reçu non disponible pour l'instant");
       } finally {
@@ -226,8 +228,8 @@ const DonationPage = () => {
         amount,
         donor_name:
           donorType === "particulier"
-            ? `${donorCivility} ${donorFirstName.trim()} ${donorLastName.trim()}`.trim()
-            : `${donorFirstName.trim()} ${donorLastName.trim()}`.trim(),
+            ? `${donorCivility === "M" ? "M." : "Mme"} ${donorFirstName.trim()} ${donorLastName.trim()}`.trim()
+            : `${donorCivility === "M" ? "M." : "Mme"} ${donorFirstName.trim()} ${donorLastName.trim()}`.trim(),
         donor_email: donorEmail,
         donor_address: `${donorAddress}, ${donorPostal} ${donorCity}`,
         campaign_id: selectedCampaignId,
@@ -679,35 +681,38 @@ const DonationPage = () => {
                 </>
               )}
 
-              {donorType === "particulier" && (
-                <div>
-                  <Label className="text-xs font-semibold mb-2 block">Civilité *</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setDonorCivility("M")}
-                      className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-all border cursor-pointer ${
-                        donorCivility === "M"
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-background text-foreground hover:border-primary/50"
-                      }`}
-                    >
-                      Mr
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDonorCivility("Mme")}
-                      className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-all border cursor-pointer ${
-                        donorCivility === "Mme"
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-background text-foreground hover:border-primary/50"
-                      }`}
-                    >
-                      Mme
-                    </button>
-                  </div>
+              {/* Civilité — always visible, used both for particulier (CERFA) and société (représentant) */}
+              <div>
+                <Label className="text-xs font-semibold mb-2 block">
+                  Civilité * <span className="text-muted-foreground font-normal">(M. ou Mme)</span>
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDonorCivility("M")}
+                    aria-pressed={donorCivility === "M"}
+                    className={`py-3 px-3 rounded-xl text-base font-bold transition-all border cursor-pointer ${
+                      donorCivility === "M"
+                        ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/30"
+                        : "border-border bg-background text-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    M.
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDonorCivility("Mme")}
+                    aria-pressed={donorCivility === "Mme"}
+                    className={`py-3 px-3 rounded-xl text-base font-bold transition-all border cursor-pointer ${
+                      donorCivility === "Mme"
+                        ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/30"
+                        : "border-border bg-background text-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    Mme
+                  </button>
                 </div>
-              )}
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs font-semibold">Prénom *</Label>

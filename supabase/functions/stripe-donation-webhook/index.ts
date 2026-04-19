@@ -39,8 +39,15 @@ serve(async (req) => {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      // The donation row was already INSERTED by create-donation-checkout.
-      // We just confirm payment and trigger CERFA email.
+      // CRITICAL: Only release CERFA if Stripe confirms the payment is "paid".
+      // checkout.session.completed can fire for unpaid sessions (async methods, etc.)
+      const paymentConfirmed = session.payment_status === "paid";
+      if (!paymentConfirmed) {
+        console.warn(`Session ${session.id} completed but payment_status=${session.payment_status} — CERFA withheld`);
+        return new Response(JSON.stringify({ received: true, payment_status: session.payment_status }), { status: 200 });
+      }
+
+      // The donation row was already INSERTED by create-donation-checkout (pending).
       const { data: existing } = await supabaseAdmin
         .from("donations")
         .select("id, cerfa_token, donor_email, donor_name, amount, synagogue_id, cerfa_generated")
@@ -52,7 +59,7 @@ serve(async (req) => {
         return new Response(JSON.stringify({ received: true, warning: "no_row" }), { status: 200 });
       }
 
-      // Mark as paid: store payment_intent
+      // Mark as paid → CERFA becomes available.
       await supabaseAdmin
         .from("donations")
         .update({
@@ -88,6 +95,21 @@ serve(async (req) => {
       } catch (emailErr) {
         console.error("Failed to send CERFA email:", emailErr);
       }
+    }
+
+    // Also handle async payment outcomes
+    if (event.type === "checkout.session.async_payment_succeeded") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      await supabaseAdmin
+        .from("donations")
+        .update({ cerfa_generated: true, stripe_payment_id: (session.payment_intent as string) || null })
+        .eq("stripe_checkout_session_id", session.id);
+      console.log(`Async payment succeeded: session=${session.id}`);
+    }
+
+    if (event.type === "checkout.session.async_payment_failed" || event.type === "checkout.session.expired") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      console.warn(`Payment NOT completed (${event.type}) for session ${session.id} — CERFA stays withheld`);
     }
 
     return new Response(JSON.stringify({ received: true }), {

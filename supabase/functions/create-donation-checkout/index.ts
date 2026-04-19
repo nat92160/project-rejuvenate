@@ -136,8 +136,9 @@ serve(async (req) => {
       cancel_url: cancelUrl,
     });
 
-    // CRITICAL: Insert donation immediately so CERFA is available right after payment
-    // (does not depend on the Stripe webhook being configured)
+    // Insert PENDING donation row (cerfa_generated = false).
+    // The Stripe webhook will flip cerfa_generated = true ONLY when
+    // payment_status === "paid". Until then, no CERFA is delivered.
     await supabaseAdmin.from("donations").insert({
       synagogue_id: synagogueId,
       campaign_id: campaign_id || null,
@@ -149,7 +150,7 @@ serve(async (req) => {
       donor_company_name: donor_company_name || null,
       donor_siret: donor_siret || null,
       stripe_checkout_session_id: session.id,
-      cerfa_generated: true,
+      cerfa_generated: false,
     });
 
     return new Response(JSON.stringify({ url: session.url, session_id: session.id }), {
