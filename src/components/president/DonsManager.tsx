@@ -2,16 +2,15 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Heart, ExternalLink, Loader2, Check, CreditCard, Download, Copy, Link2, BarChart3, Settings, List, Megaphone, FileCheck, BellRing, Share2 } from "lucide-react";
+import { Heart, Loader2, Download, BarChart3, List, Megaphone, FileCheck, BellRing, Share2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CampaignsManager from "./CampaignsManager";
 import DonsStats from "./DonsStats";
 import CerfaConfig from "./CerfaConfig";
 import DonationReminders from "./DonationReminders";
-import { shareCerfaPdf } from "@/lib/cerfaPdf";
+import { shareCerfaPdf, downloadCerfaPdf } from "@/lib/cerfaPdf";
 
 interface Donation {
   id: string;
