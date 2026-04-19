@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Heart, Check, Loader2, Target, FileText, Download } from "lucide-react";
+import { Heart, Check, Loader2, Target, FileText, Download, Home, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { useAuth } from "@/hooks/useAuth";
 
 const SUGGESTED_AMOUNTS = [1800, 3600, 5200, 10000]; // in cents
 
@@ -23,6 +24,8 @@ interface Campaign {
 const DonationPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const success = searchParams.get("success") === "true";
   const sessionId = searchParams.get("session_id");
   const canceled = searchParams.get("canceled") === "true";
@@ -125,6 +128,34 @@ const DonationPage = () => {
     })();
   }, [slug]);
 
+  // Prefill donor info from connected user profile
+  useEffect(() => {
+    if (!user) return;
+    if (!donorEmail && user.email) setDonorEmail(user.email);
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!data) return;
+      const first = (data as any).first_name || "";
+      const last = (data as any).last_name || "";
+      if (!donorFirstName && first) setDonorFirstName(first);
+      if (!donorLastName && last) setDonorLastName(last);
+      if (!donorFirstName && !first && (data as any).display_name) {
+        const parts = String((data as any).display_name).trim().split(/\s+/);
+        if (parts.length >= 2) {
+          setDonorFirstName(parts[0]);
+          setDonorLastName(parts.slice(1).join(" "));
+        } else {
+          setDonorFirstName(parts[0]);
+        }
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   const handleDonate = async () => {
     if (!cerfaReady) {
       toast.error("Cette synagogue n'a pas finalisé sa configuration fiscale. Les dons sont temporairement indisponibles.");
@@ -206,6 +237,10 @@ const DonationPage = () => {
           <p className="text-4xl mb-4">🏛️</p>
           <h1 className="text-xl font-bold text-foreground">Page introuvable</h1>
           <p className="text-sm text-muted-foreground mt-2">Cette page de don n'existe pas.</p>
+          <Button onClick={() => navigate("/")} variant="outline" className="mt-6 rounded-xl">
+            <Home className="w-4 h-4 mr-2" />
+            Retour à l'accueil
+          </Button>
         </div>
       </div>
     );
@@ -310,6 +345,62 @@ const DonationPage = () => {
           <p className="text-[10px] text-muted-foreground/70 mt-4 italic">
             Une copie du reçu vous sera également envoyée par email.
           </p>
+
+          <Button
+            onClick={() => navigate("/")}
+            variant="outline"
+            className="mt-6 w-full rounded-xl py-5 font-bold"
+          >
+            <Home className="w-4 h-4 mr-2" />
+            Retour à l'accueil
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Auth gate: only logged-in users can donate
+  if (!authLoading && !user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-md text-center">
+          {synagogue.logo_url ? (
+            <img
+              src={synagogue.logo_url}
+              alt={synagogue.name}
+              className="w-20 h-20 rounded-2xl object-contain mx-auto mb-4 border border-border"
+            />
+          ) : (
+            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">🏛️</span>
+            </div>
+          )}
+          <h1 className="text-xl font-bold text-foreground">{synagogue.name}</h1>
+          <p className="text-sm text-muted-foreground mt-1 mb-6">Faire un don sécurisé</p>
+
+          <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+            <div className="text-4xl">🔒</div>
+            <h2 className="text-base font-bold text-foreground">Connexion requise</h2>
+            <p className="text-sm text-muted-foreground">
+              Pour des raisons de sécurité et pour que vous puissiez retrouver votre reçu fiscal CERFA dans votre espace personnel, vous devez être connecté pour faire un don.
+            </p>
+            <Button
+              onClick={() => navigate(`/?auth=1&redirect=${encodeURIComponent(`/don/${slug}`)}`)}
+              className="w-full py-6 text-base font-bold rounded-xl"
+              style={{ background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))" }}
+            >
+              <LogIn className="w-5 h-5 mr-2" />
+              Se connecter / S'inscrire
+            </Button>
+            <Button
+              onClick={() => navigate("/")}
+              variant="outline"
+              className="w-full rounded-xl py-5 font-bold"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Retour à l'accueil
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -318,6 +409,19 @@ const DonationPage = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
+        {/* Top bar with back-home */}
+        <div className="flex justify-start mb-2">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground bg-transparent border-none cursor-pointer px-2 py-1.5 rounded-lg"
+            style={{ minHeight: 36 }}
+          >
+            <Home className="w-3.5 h-3.5" />
+            Accueil
+          </button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           {synagogue.logo_url ? (
