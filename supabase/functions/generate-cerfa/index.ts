@@ -197,7 +197,7 @@ serve(async (req) => {
     <div class="amount-section">
       <div class="amount-line">Le bénéficiaire reconnaît avoir reçu au titre des dons et versements ouvrant droit à réduction d'impôt, la somme de</div>
       <div class="amount-box">
-        <div class="pill">***${amountEuros.toFixed(2).replace(/\.00$/, "")} Euros*** ${esc(amountInWords)}</div>
+        <div class="pill">***${amountEuros.toFixed(2).replace(/\.00$/, "")} Euros*** (${esc(amountInWords)} euros)</div>
       </div>
     </div>
 
