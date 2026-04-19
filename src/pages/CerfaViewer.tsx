@@ -102,6 +102,7 @@ const CerfaViewer = () => {
           container.appendChild(pageShell);
 
           await page.render({
+            canvas,
             canvasContext: context,
             viewport,
             transform: dpr === 1 ? undefined : [dpr, 0, 0, dpr, 0, 0],
