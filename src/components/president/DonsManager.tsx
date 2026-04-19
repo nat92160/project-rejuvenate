@@ -257,16 +257,18 @@ const DonsManager = () => {
                       >
                         👁️ Aperçu
                       </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => downloadCerfa(d)}
-                        disabled={!d.cerfa_token}
-                        className="h-7 text-[10px]"
-                      >
-                        <Download className="mr-1 h-3 w-3" /> Télécharger
-                      </Button>
+                      {!isNativeApp && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => downloadCerfa(d)}
+                          disabled={!d.cerfa_token}
+                          className="h-7 text-[10px]"
+                        >
+                          <Download className="mr-1 h-3 w-3" /> Télécharger
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         size="sm"
