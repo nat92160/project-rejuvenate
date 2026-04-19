@@ -51,6 +51,7 @@ const DonationPage = () => {
   const [donorType, setDonorType] = useState<"particulier" | "societe">("particulier");
   const [donorCompanyName, setDonorCompanyName] = useState("");
   const [donorSiret, setDonorSiret] = useState("");
+  const [donorCivility, setDonorCivility] = useState<"M" | "Mme">("M");
   const [donorFirstName, setDonorFirstName] = useState("");
   const [donorLastName, setDonorLastName] = useState("");
   const [donorEmail, setDonorEmail] = useState("");
@@ -184,7 +185,10 @@ const DonationPage = () => {
       body: {
         slug,
         amount,
-        donor_name: `${donorFirstName.trim()} ${donorLastName.trim()}`.trim(),
+        donor_name:
+          donorType === "particulier"
+            ? `${donorCivility} ${donorFirstName.trim()} ${donorLastName.trim()}`.trim()
+            : `${donorFirstName.trim()} ${donorLastName.trim()}`.trim(),
         donor_email: donorEmail,
         donor_address: `${donorAddress}, ${donorPostal} ${donorCity}`,
         campaign_id: selectedCampaignId,
@@ -625,6 +629,35 @@ const DonationPage = () => {
                 </>
               )}
 
+              {donorType === "particulier" && (
+                <div>
+                  <Label className="text-xs font-semibold mb-2 block">Civilité *</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDonorCivility("M")}
+                      className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-all border cursor-pointer ${
+                        donorCivility === "M"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-background text-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      Mr
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDonorCivility("Mme")}
+                      className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-all border cursor-pointer ${
+                        donorCivility === "Mme"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-background text-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      Mme
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs font-semibold">Prénom *</Label>
