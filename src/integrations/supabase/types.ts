@@ -195,8 +195,11 @@ export type Database = {
           cerfa_url: string | null
           created_at: string
           donor_address: string
+          donor_company_name: string | null
           donor_email: string
           donor_name: string
+          donor_siret: string | null
+          donor_type: string
           donor_user_id: string | null
           fiscal_year: number
           id: string
@@ -213,8 +216,11 @@ export type Database = {
           cerfa_url?: string | null
           created_at?: string
           donor_address?: string
+          donor_company_name?: string | null
           donor_email: string
           donor_name?: string
+          donor_siret?: string | null
+          donor_type?: string
           donor_user_id?: string | null
           fiscal_year?: number
           id?: string
@@ -231,8 +237,11 @@ export type Database = {
           cerfa_url?: string | null
           created_at?: string
           donor_address?: string
+          donor_company_name?: string | null
           donor_email?: string
           donor_name?: string
+          donor_siret?: string | null
+          donor_type?: string
           donor_user_id?: string | null
           fiscal_year?: number
           id?: string
