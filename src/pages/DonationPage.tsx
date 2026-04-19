@@ -153,7 +153,7 @@ const DonationPage = () => {
       body: {
         slug,
         amount,
-        donor_name: donorName,
+        donor_name: `${donorFirstName.trim()} ${donorLastName.trim()}`.trim(),
         donor_email: donorEmail,
         donor_address: `${donorAddress}, ${donorPostal} ${donorCity}`,
         campaign_id: selectedCampaignId,
@@ -514,15 +514,27 @@ const DonationPage = () => {
                 </>
               )}
 
-              <div>
-                <Label className="text-xs font-semibold">
-                  {donorType === "societe" ? "Représentant (Prénom Nom)" : "Votre nom"}
-                </Label>
-                <Input
-                  placeholder="Prénom Nom"
-                  value={donorName}
-                  onChange={(e) => setDonorName(e.target.value)}
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs font-semibold">Prénom *</Label>
+                  <Input
+                    placeholder="Prénom"
+                    value={donorFirstName}
+                    onChange={(e) => setDonorFirstName(e.target.value)}
+                    autoComplete="given-name"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Nom *</Label>
+                  <Input
+                    placeholder="Nom"
+                    value={donorLastName}
+                    onChange={(e) => setDonorLastName(e.target.value)}
+                    autoComplete="family-name"
+                    required
+                  />
+                </div>
               </div>
               <div>
                 <Label className="text-xs font-semibold">Votre email *</Label>
@@ -531,6 +543,7 @@ const DonationPage = () => {
                   placeholder="email@exemple.com"
                   value={donorEmail}
                   onChange={(e) => setDonorEmail(e.target.value)}
+                  autoComplete="email"
                   required
                 />
                 <p className="text-[10px] text-muted-foreground mt-1">
@@ -539,12 +552,19 @@ const DonationPage = () => {
               </div>
               <div>
                 <Label className="text-xs font-semibold">Adresse postale *</Label>
-                <Input
-                  placeholder="12 rue de la Paix"
+                <AddressAutocomplete
                   value={donorAddress}
-                  onChange={(e) => setDonorAddress(e.target.value)}
+                  onChange={setDonorAddress}
+                  onSelect={(d) => {
+                    if (d.city) setDonorCity(d.city);
+                    if (d.postal_code) setDonorPostal(d.postal_code);
+                  }}
+                  placeholder="Commencez à taper votre adresse…"
                   required
                 />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Sélectionnez une suggestion pour remplir automatiquement la ville et le code postal
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
