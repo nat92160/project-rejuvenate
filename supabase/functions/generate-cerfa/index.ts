@@ -64,7 +64,7 @@ serve(async (req) => {
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Reçu Fiscal CERFA n° ${cerfaNumber}</title>
+  <title>Reçu Fiscal CERFA n° ${esc(cerfaNumber)}</title>
   <style>
     @media print { body { margin: 0; } .no-print { display: none; } }
     body { font-family: 'Georgia', serif; max-width: 720px; margin: 40px auto; padding: 20px; color: #1a1a1a; }
@@ -89,47 +89,47 @@ serve(async (req) => {
   <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimer / Télécharger PDF</button>
 
   <div class="header">
-    ${syna?.logo_url ? `<img src="${syna.logo_url}" class="logo" alt="Logo">` : ""}
+    ${syna?.logo_url && safeUrl(syna.logo_url) ? `<img src="${safeUrl(syna.logo_url)}" class="logo" alt="Logo">` : ""}
     <h1>REÇU AU TITRE DES DONS</h1>
     <p>à certains organismes d'intérêt général — Cerfa n° 11580*04</p>
-    <p>Article ${articleCgi} du Code Général des Impôts</p>
+    <p>Article ${esc(articleCgi)} du Code Général des Impôts</p>
   </div>
 
   <div class="receipt-meta">
-    <span><strong>Reçu N°</strong> ${cerfaNumber}</span>
-    <span><strong>Année fiscale</strong> ${fiscalYear}</span>
+    <span><strong>Reçu N°</strong> ${esc(cerfaNumber)}</span>
+    <span><strong>Année fiscale</strong> ${esc(fiscalYear)}</span>
     <span><strong>Émis le</strong> ${today.toLocaleDateString("fr-FR")}</span>
   </div>
 
   <div class="section">
     <h2>Bénéficiaire des versements</h2>
-    <p><strong>${legalName}</strong></p>
+    <p><strong>${esc(legalName)}</strong></p>
     <div class="legal-grid">
-      <span class="label">Adresse :</span><span>${syna?.address || "—"}</span>
-      <span class="label">Objet :</span><span>${associationObject}</span>
-      ${syna?.rna_number ? `<span class="label">N° RNA :</span><span>${syna.rna_number}</span>` : ""}
-      ${syna?.siret_number ? `<span class="label">N° SIRET :</span><span>${syna.siret_number}</span>` : ""}
+      <span class="label">Adresse :</span><span>${esc(syna?.address || "—")}</span>
+      <span class="label">Objet :</span><span>${esc(associationObject)}</span>
+      ${syna?.rna_number ? `<span class="label">N° RNA :</span><span>${esc(syna.rna_number)}</span>` : ""}
+      ${syna?.siret_number ? `<span class="label">N° SIRET :</span><span>${esc(syna.siret_number)}</span>` : ""}
     </div>
   </div>
 
   <div class="section">
     <h2>${donation.donor_type === "societe" ? "Donateur (Personne morale)" : "Donateur"}</h2>
     ${donation.donor_type === "societe" ? `
-      <p><strong>${donation.donor_company_name || "—"}</strong></p>
-      ${donation.donor_siret ? `<p>SIRET : ${donation.donor_siret}</p>` : ""}
-      <p>Représentée par : ${donation.donor_name || "—"}</p>
+      <p><strong>${esc(donation.donor_company_name || "—")}</strong></p>
+      ${donation.donor_siret ? `<p>SIRET : ${esc(donation.donor_siret)}</p>` : ""}
+      <p>Représentée par : ${esc(donation.donor_name || "—")}</p>
     ` : `
-      <p><strong>${donation.donor_name || "—"}</strong></p>
+      <p><strong>${esc(donation.donor_name || "—")}</strong></p>
     `}
-    <p>${donation.donor_address || "—"}</p>
-    <p>Courriel : ${donation.donor_email}</p>
+    <p>${esc(donation.donor_address || "—")}</p>
+    <p>Courriel : ${esc(donation.donor_email)}</p>
   </div>
 
   <div class="section">
     <h2>Don effectué</h2>
     <p>Date du versement : <strong>${donDate.toLocaleDateString("fr-FR")}</strong></p>
     <p>Montant : <span class="amount">${(donation.amount / 100).toFixed(2)} €</span></p>
-    <p>(${numberToFrenchWords(donation.amount / 100)} euros)</p>
+    <p>(${esc(numberToFrenchWords(donation.amount / 100))} euros)</p>
     <p>Forme du don : Acte authentique &nbsp;☐&nbsp; Acte sous seing privé &nbsp;☐&nbsp; Déclaration de don manuel &nbsp;☑&nbsp; Autre &nbsp;☐</p>
     <p>Nature du don : Numéraire ☑ &nbsp;&nbsp; Titres ☐ &nbsp;&nbsp; Autres ☐</p>
     <p>Mode de versement : Carte bancaire (paiement en ligne sécurisé)</p>
@@ -137,23 +137,23 @@ serve(async (req) => {
 
   <div class="section">
     <p class="legal-mention">
-      Le bénéficiaire reconnaît, conformément à l'article ${articleCgi} du Code Général des Impôts,
+      Le bénéficiaire reconnaît, conformément à l'article ${esc(articleCgi)} du Code Général des Impôts,
       que les dons et versements qu'il reçoit ouvrent droit à une réduction d'impôt
       ${articleCgi.includes("200") ? "égale à 66% de leur montant pour les particuliers (dans la limite de 20% du revenu imposable)" : "dans les conditions prévues par la loi"}.
     </p>
   </div>
 
   <div class="signature">
-    <p style="font-size: 12px;">Fait à ${syna?.address ? syna.address.split(",").pop()?.trim() : "—"}, le ${today.toLocaleDateString("fr-FR")}</p>
+    <p style="font-size: 12px;">Fait à ${esc(syna?.address ? syna.address.split(",").pop()?.trim() : "—")}, le ${today.toLocaleDateString("fr-FR")}</p>
     <p style="font-size: 12px; margin-top: 10px;">
-      ${presidentName ? `Le Président : <strong>${presidentName}</strong>` : ""}
+      ${presidentName ? `Le Président : <strong>${esc(presidentName)}</strong>` : ""}
     </p>
-    ${syna?.signature ? `<p style="font-size: 11px; font-style: italic; color: #666; margin-top: 5px;">${syna.signature}</p>` : ""}
+    ${syna?.signature ? `<p style="font-size: 11px; font-style: italic; color: #666; margin-top: 5px;">${esc(syna.signature)}</p>` : ""}
   </div>
 
   <div class="footer">
     <p>Reçu établi conformément aux dispositions des articles 200 et 238 bis du CGI et à l'arrêté du 1er décembre 2003.</p>
-    <p>Réf. interne : ${donation.id}</p>
+    <p>Réf. interne : ${esc(donation.id)}</p>
   </div>
 </body>
 </html>`;
