@@ -26,15 +26,14 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Find the connected account by slug
+    // Find synagogue by slug (still uses synagogue_stripe_accounts table for slug lookup)
     const { data: stripeAccount, error: saError } = await supabaseAdmin
       .from("synagogue_stripe_accounts")
-      .select("stripe_account_id, synagogue_id, is_onboarded")
+      .select("synagogue_id")
       .eq("custom_donation_slug", slug)
-      .single();
+      .maybeSingle();
 
     if (saError || !stripeAccount) throw new Error("Synagogue non trouvée");
-    if (!stripeAccount.is_onboarded) throw new Error("Les paiements ne sont pas encore configurés pour cette synagogue");
 
     // Get synagogue name
     const { data: synaProfile } = await supabaseAdmin
@@ -44,11 +43,10 @@ serve(async (req) => {
       .single();
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-
-    // Calculate 4% application fee
-    const applicationFee = Math.round(amount * 0.04);
     const origin = req.headers.get("origin") || "";
 
+    // PLATFORM MODEL: payment goes directly to platform Stripe account
+    // No Connect, no application_fee — full amount received, manual transfer to synagogue later
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
@@ -64,7 +62,6 @@ serve(async (req) => {
         },
       ],
       payment_intent_data: {
-        application_fee_amount: applicationFee,
         metadata: {
           synagogue_id: stripeAccount.synagogue_id,
           donor_name: donor_name || "",
@@ -82,10 +79,8 @@ serve(async (req) => {
         campaign_id: campaign_id || "",
         slug,
       },
-      success_url: `${origin}/don/${slug}?success=true`,
+      success_url: `${origin}/don/${slug}?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/don/${slug}?canceled=true`,
-    }, {
-      stripeAccount: stripeAccount.stripe_account_id,
     });
 
     return new Response(JSON.stringify({ url: session.url, session_id: session.id }), {
