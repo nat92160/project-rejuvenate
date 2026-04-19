@@ -105,7 +105,8 @@ serve(async (req) => {
     * { box-sizing: border-box; }
     html, body { font-family: 'Lora', Georgia, 'Times New Roman', serif; color: #2a2a2a; font-size: 10.5px; line-height: 1.3; background: #fff; }
     body { max-width: 800px; margin: 12px auto; padding: 8px; }
-    .print-btn { display: block; margin: 0 auto 10px; padding: 8px 18px; background: #996515; color: #fff; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; letter-spacing: 0.5px; }
+    .print-btn { display: block; margin: 0 auto 8px; padding: 14px 22px; background: #996515; color: #fff; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; font-family: inherit; letter-spacing: 0.5px; font-weight: 700; box-shadow: 0 4px 12px rgba(153,101,21,0.3); width: calc(100% - 16px); max-width: 360px; }
+    .print-hint { text-align: center; font-size: 12px; color: #6b4810; margin: 0 auto 12px; max-width: 360px; padding: 0 10px; line-height: 1.4; }
     .warn { background: #fffaf2; border: 1px solid #d9a85f; color: #6b4810; padding: 6px 10px; border-radius: 6px; font-size: 10.5px; margin-bottom: 8px; text-align: center; font-weight: 600; }
     .frame { border: 1.5px solid #996515; background: #fff; }
     .top { display: grid; grid-template-columns: 170px 1fr 150px; align-items: center; padding: 10px 14px; border-bottom: 1.5px solid #996515; gap: 10px; background: #fffdf7; }
@@ -146,7 +147,8 @@ serve(async (req) => {
   </style>
 </head>
 <body>
-  <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimer / Télécharger PDF</button>
+  <button class="print-btn no-print" onclick="window.print()">🖨️ Télécharger en PDF / Imprimer</button>
+  <p class="print-hint no-print">📱 Sur smartphone : appuyez sur le bouton ci-dessus, puis dans la fenêtre qui s'ouvre, choisissez <strong>« Enregistrer en PDF »</strong> ou <strong>« Partager »</strong>.</p>
   ${missingLegalInfo ? `<div class="warn no-print">⚠️ Informations légales incomplètes (RNA/SIRET ou dénomination manquant). Ce reçu n'est pas valide fiscalement tant que la configuration CERFA n'est pas terminée.</div>` : ""}
   <div class="frame">
     <!-- TOP HEADER -->
