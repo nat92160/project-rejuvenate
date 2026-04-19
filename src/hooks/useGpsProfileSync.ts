@@ -57,21 +57,23 @@ export function useGpsProfileSync() {
         let longitude: number;
 
         if (Capacitor.isNativePlatform()) {
+          // Native: use Capacitor Geolocation (system permission already granted via useCity flow)
           const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000 });
           latitude = pos.coords.latitude;
           longitude = pos.coords.longitude;
         } else {
-          // Web fallback — use navigator.geolocation
-          if (!navigator.geolocation) return;
-          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: false,
-              timeout: 10000,
-              maximumAge: 300000,
-            });
-          });
-          latitude = pos.coords.latitude;
-          longitude = pos.coords.longitude;
+          // Web: do NOT trigger a second geolocation prompt.
+          // Reuse the position already cached by useCity (calj_gps_city) to avoid duplicate browser prompts.
+          try {
+            const cached = localStorage.getItem("calj_gps_city");
+            if (!cached) return;
+            const parsed = JSON.parse(cached);
+            if (typeof parsed?.lat !== "number" || typeof parsed?.lng !== "number") return;
+            latitude = parsed.lat;
+            longitude = parsed.lng;
+          } catch {
+            return;
+          }
         }
 
         // Check if moved significantly
