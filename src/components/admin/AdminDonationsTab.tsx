@@ -43,7 +43,7 @@ interface PayoutRow {
 const fmtEuro = (cents: number) => `${(cents / 100).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
 
-function downloadCsv(filename: string, rows: string[][]) {
+function downloadCsv(filename: string, rows: (string | number)[][]) {
   const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(";")).join("\n");
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
