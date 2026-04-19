@@ -317,6 +317,62 @@ const DonationPage = () => {
           <p className="text-[10px] text-muted-foreground/70 mt-4 italic">
             Une copie du reçu vous sera également envoyée par email.
           </p>
+
+          <Button
+            onClick={() => navigate("/")}
+            variant="outline"
+            className="mt-6 w-full rounded-xl py-5 font-bold"
+          >
+            <Home className="w-4 h-4 mr-2" />
+            Retour à l'accueil
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Auth gate: only logged-in users can donate
+  if (!authLoading && !user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-md text-center">
+          {synagogue.logo_url ? (
+            <img
+              src={synagogue.logo_url}
+              alt={synagogue.name}
+              className="w-20 h-20 rounded-2xl object-contain mx-auto mb-4 border border-border"
+            />
+          ) : (
+            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">🏛️</span>
+            </div>
+          )}
+          <h1 className="text-xl font-bold text-foreground">{synagogue.name}</h1>
+          <p className="text-sm text-muted-foreground mt-1 mb-6">Faire un don sécurisé</p>
+
+          <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+            <div className="text-4xl">🔒</div>
+            <h2 className="text-base font-bold text-foreground">Connexion requise</h2>
+            <p className="text-sm text-muted-foreground">
+              Pour des raisons de sécurité et pour que vous puissiez retrouver votre reçu fiscal CERFA dans votre espace personnel, vous devez être connecté pour faire un don.
+            </p>
+            <Button
+              onClick={() => navigate(`/?auth=1&redirect=${encodeURIComponent(`/don/${slug}`)}`)}
+              className="w-full py-6 text-base font-bold rounded-xl"
+              style={{ background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))" }}
+            >
+              <LogIn className="w-5 h-5 mr-2" />
+              Se connecter / S'inscrire
+            </Button>
+            <Button
+              onClick={() => navigate("/")}
+              variant="outline"
+              className="w-full rounded-xl py-5 font-bold"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Retour à l'accueil
+            </Button>
+          </div>
         </div>
       </div>
     );
