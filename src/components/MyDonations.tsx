@@ -80,26 +80,14 @@ export const MyDonations = () => {
     })();
   }, [user]);
 
-  const handleDownloadCerfa = async (donation: Donation) => {
-    if (donation.cerfa_url) {
-      window.open(donation.cerfa_url, "_blank");
+  const handleDownloadCerfa = (donation: Donation) => {
+    if (!donation.cerfa_token) {
+      toast.error("Reçu indisponible (token manquant)");
       return;
     }
-    toast.info("Génération du reçu CERFA...");
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-cerfa", {
-        body: { donation_id: donation.id, token: donation.cerfa_token },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      } else {
-        toast.error("Reçu indisponible");
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error("Erreur génération reçu");
-    }
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const url = `${supabaseUrl}/functions/v1/generate-cerfa?token=${donation.cerfa_token}`;
+    window.open(url, "_blank");
   };
 
   if (!user) return null;
