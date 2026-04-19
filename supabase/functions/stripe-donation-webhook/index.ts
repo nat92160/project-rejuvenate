@@ -16,20 +16,21 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not set");
+    // SECURITY: refuse to process if webhook secret is not configured
+    if (!webhookSecret) {
+      console.error("STRIPE_WEBHOOK_SECRET not configured — refusing webhook to prevent forgery");
+      return new Response(JSON.stringify({ error: "Webhook secret not configured" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const body = await req.text();
 
-    let event: Stripe.Event;
-
-    if (webhookSecret) {
-      const sig = req.headers.get("stripe-signature");
-      if (!sig) throw new Error("Missing stripe-signature header");
-      event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-    } else {
-      // Fallback: parse without verification (dev mode)
-      event = JSON.parse(body) as Stripe.Event;
-    }
+    const sig = req.headers.get("stripe-signature");
+    if (!sig) throw new Error("Missing stripe-signature header");
+    const event: Stripe.Event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
