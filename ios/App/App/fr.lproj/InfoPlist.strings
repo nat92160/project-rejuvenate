@@ -1,0 +1,7 @@
+/* Localized Info.plist values - French */
+"CFBundleDisplayName" = "Chabbat Chalom";
+"CFBundleName" = "Chabbat Chalom";
+"NSLocationWhenInUseUsageDescription" = "Chabbat Chalom utilise votre position pour calculer vos horaires d'allumage, de Chabbat et de prière précis selon votre ville.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Chabbat Chalom utilise votre position pour calculer vos horaires d'allumage, de Chabbat et de prière précis selon votre ville.";
+"NSLocationAlwaysUsageDescription" = "Chabbat Chalom utilise votre position pour vous notifier des horaires d'allumage et de sortie du Chabbat même en arrière-plan.";
+"NSUserNotificationsUsageDescription" = "Recevez les rappels d'allumage des bougies, de la sortie de Chabbat, du compte du Omer et les alertes de votre communauté.";

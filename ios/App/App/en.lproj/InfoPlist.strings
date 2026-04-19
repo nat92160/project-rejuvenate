@@ -1,0 +1,7 @@
+/* Localized Info.plist values - English */
+"CFBundleDisplayName" = "Chabbat Chalom";
+"CFBundleName" = "Chabbat Chalom";
+"NSLocationWhenInUseUsageDescription" = "Chabbat Chalom uses your location to compute accurate candle-lighting, Shabbat and prayer times for your city.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Chabbat Chalom uses your location to compute accurate candle-lighting, Shabbat and prayer times for your city.";
+"NSLocationAlwaysUsageDescription" = "Chabbat Chalom uses your location to notify you of candle-lighting and Shabbat-end times even in the background.";
+"NSUserNotificationsUsageDescription" = "Receive reminders for candle lighting, end of Shabbat, the Omer count and your community alerts.";
