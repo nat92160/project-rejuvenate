@@ -215,7 +215,7 @@ const DonsManager = () => {
             <div className="flex items-center justify-between">
               <Label className="text-xs font-semibold">Historique des dons</Label>
               {donations.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={exportCsv} className="h-7 text-xs">
+                <Button type="button" variant="ghost" size="sm" onClick={exportCsv} className="h-7 text-xs">
                   <Download className="mr-1 h-3 w-3" /> CSV
                 </Button>
               )}
@@ -259,28 +259,31 @@ const DonsManager = () => {
 
                     <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40">
                       <Button
+                        type="button"
                         size="sm"
                         variant="outline"
                         onClick={() => openOfficialCerfa(d)}
-                        disabled={!cerfaConfigured || !d.cerfa_token}
+                        disabled={!d.cerfa_token}
                         className="h-7 text-[10px]"
                       >
                         👁️ Aperçu
                       </Button>
                       <Button
+                        type="button"
                         size="sm"
                         variant="outline"
                         onClick={() => downloadCerfa(d)}
-                        disabled={!cerfaConfigured || !d.cerfa_token}
+                        disabled={!d.cerfa_token}
                         className="h-7 text-[10px]"
                       >
                         <Download className="mr-1 h-3 w-3" /> Télécharger
                       </Button>
                       <Button
+                        type="button"
                         size="sm"
                         variant="outline"
                         onClick={() => shareCerfa(d)}
-                        disabled={!cerfaConfigured || !d.cerfa_token}
+                        disabled={!d.cerfa_token}
                         className="h-7 text-[10px]"
                       >
                         <Share2 className="mr-1 h-3 w-3" /> Partager
