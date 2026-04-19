@@ -184,7 +184,7 @@ serve(async (req) => {
       <div class="lbl">NOM OU DENOMINATION :</div>
       <div><strong>${esc(legalName)}</strong></div>
       <div class="lbl">Numéro SIREN ou RNA :</div>
-      <div>${esc(syna?.rna_number || syna?.siret_number || "—")}</div>
+      <div>${rnaSiret ? esc(rnaSiret) : `<span class="missing">À COMPLÉTER (config CERFA)</span>`}</div>
       <div class="lbl">ADRESSE ASSOCIATION :</div>
       <div>${esc(syna?.address || "—")}</div>
       <div class="lbl">OBJET :</div>
