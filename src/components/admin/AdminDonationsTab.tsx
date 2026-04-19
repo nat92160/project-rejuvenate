@@ -182,6 +182,33 @@ const AdminDonationsTab = () => {
     else { toast.success("✅ Reversement enregistré"); fetchAll(); }
   };
 
+  const handleDeleteDonation = async (d: Donation) => {
+    const label = d.cerfa_number || d.donor_name || d.donor_email || d.id.slice(0, 8);
+    if (!confirm(`Supprimer définitivement le don "${label}" (${fmtEuro(d.amount)}) ?\n\nIl disparaîtra de la vue Président ET de l'espace personnel du fidèle.`)) return;
+    const { error } = await supabase.from("donations").delete().eq("id", d.id);
+    if (error) {
+      toast.error("Suppression impossible : " + error.message);
+      return;
+    }
+    toast.success("✅ Don supprimé");
+    setDonations((prev) => prev.filter((x) => x.id !== d.id));
+  };
+
+  const handleToggleCerfa = async (d: Donation) => {
+    const next = !d.cerfa_generated;
+    const action = next ? "réactiver" : "désactiver";
+    if (!confirm(`Voulez-vous ${action} le CERFA pour ce don ?`)) return;
+    const payload: any = { cerfa_generated: next };
+    if (!next) payload.cerfa_number = null;
+    const { error } = await supabase.from("donations").update(payload).eq("id", d.id);
+    if (error) {
+      toast.error("Mise à jour impossible : " + error.message);
+      return;
+    }
+    toast.success(next ? "✅ CERFA réactivé" : "🚫 CERFA désactivé");
+    setDonations((prev) => prev.map((x) => x.id === d.id ? { ...x, cerfa_generated: next, cerfa_number: next ? x.cerfa_number : null } : x));
+  };
+
   const exportDonationsCsv = () => {
     const rows = [
       ["N° CERFA", "Date", "Synagogue", "Donateur", "Email", "Type", "Montant (€)", "Statut", "CERFA généré"],
