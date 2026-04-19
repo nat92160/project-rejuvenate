@@ -75,6 +75,12 @@ async function buildCerfaPdfBlob(token: string): Promise<Blob> {
     iframeDocument.body.style.padding = "0";
     iframeDocument.body.style.width = `${A4_WIDTH_PX}px`;
 
+    // Masque les éléments .no-print (bouton imprimer, hints) qui ne doivent pas
+    // apparaître dans le PDF et qui faussent la hauteur capturée.
+    const hideStyle = iframeDocument.createElement("style");
+    hideStyle.textContent = `.no-print { display: none !important; }`;
+    iframeDocument.head.appendChild(hideStyle);
+
     // PDF-safe overrides: police système stable, kerning/ligatures désactivés,
     // espacement neutre — évite le chevauchement de lettres avec html2canvas.
     const styleFix = iframeDocument.createElement("style");
@@ -96,26 +102,31 @@ async function buildCerfaPdfBlob(token: string): Promise<Blob> {
     // Laisse le navigateur recalculer la mise en page après injection du style
     await new Promise((resolve) => setTimeout(resolve, 150));
 
-    const fullHeight = Math.max(
-      iframeDocument.body.scrollHeight,
-      iframeDocument.documentElement.scrollHeight,
+    // On cible précisément le cadre CERFA (.frame) pour ignorer les marges du body
+    // et capturer uniquement le contenu utile, sans bandes blanches.
+    const frame = iframeDocument.querySelector(".frame") as HTMLElement | null;
+    const target = frame || iframeDocument.body;
+
+    const rect = target.getBoundingClientRect();
+    const contentWidth = Math.ceil(rect.width) || A4_WIDTH_PX;
+    const contentHeight = Math.ceil(
+      Math.max(target.scrollHeight, rect.height),
     );
 
-    const canvas = await html2canvas(iframeDocument.body, {
+    const canvas = await html2canvas(target, {
       backgroundColor: "#ffffff",
       scale: 2,
       useCORS: true,
       allowTaint: false,
       logging: false,
-      width: A4_WIDTH_PX,
-      height: fullHeight,
-      windowWidth: A4_WIDTH_PX,
-      windowHeight: Math.max(A4_HEIGHT_PX, fullHeight),
+      width: contentWidth,
+      height: contentHeight,
+      windowWidth: contentWidth,
+      windowHeight: contentHeight,
       scrollX: 0,
       scrollY: 0,
     });
 
-    const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -125,18 +136,41 @@ async function buildCerfaPdfBlob(token: string): Promise<Blob> {
 
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgHeight = (canvas.height * pageWidth) / canvas.width;
-    let renderedHeight = imgHeight;
-    let position = 0;
 
-    pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight, undefined, "FAST");
-    renderedHeight -= pageHeight;
+    // Marge périphérique pour ne pas coller au bord et garder un rendu pro
+    const margin = 6; // mm
+    const usableWidth = pageWidth - margin * 2;
 
-    while (renderedHeight > 0) {
-      position = renderedHeight - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight, undefined, "FAST");
-      renderedHeight -= pageHeight;
+    // Hauteur réelle du contenu une fois ajusté à la largeur utile
+    const fittedHeight = (canvas.height * usableWidth) / canvas.width;
+
+    if (fittedHeight <= pageHeight - margin * 2) {
+      // Tient sur 1 page : on centre verticalement (look "carte fiscale")
+      const top = Math.max(margin, (pageHeight - fittedHeight) / 2);
+      pdf.addImage(
+        canvas.toDataURL("image/png"),
+        "PNG",
+        margin,
+        top,
+        usableWidth,
+        fittedHeight,
+        undefined,
+        "FAST",
+      );
+    } else {
+      // Trop grand : on pagine proprement
+      const imgData = canvas.toDataURL("image/png");
+      let remaining = fittedHeight;
+      let position = margin;
+      pdf.addImage(imgData, "PNG", margin, position, usableWidth, fittedHeight, undefined, "FAST");
+      remaining -= pageHeight - margin * 2;
+
+      while (remaining > 0) {
+        position = margin + remaining - fittedHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", margin, position, usableWidth, fittedHeight, undefined, "FAST");
+        remaining -= pageHeight - margin * 2;
+      }
     }
 
     return pdf.output("blob");
