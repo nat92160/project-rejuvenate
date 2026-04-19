@@ -440,8 +440,8 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                   )}
                 </div>
 
-                {/* Donation button — every partner synagogue can receive donations */}
-                {isPartner && (
+                {/* Donation button — visible on all synagogues */}
+                {isPartner ? (
                   <a
                     href={`/don/${item.id}`}
                     onClick={(e) => e.stopPropagation()}
@@ -450,7 +450,19 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                   >
                     💛 Faire un don
                   </a>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toast.info("Cette synagogue n'a pas encore activé les dons en ligne. Contactez-la directement.");
+                    }}
+                    className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold border cursor-pointer transition-all active:scale-[0.98]"
+                    style={{ background: "hsl(var(--gold) / 0.06)", borderColor: "hsl(var(--gold) / 0.2)", color: "hsl(var(--gold-matte))" }}
+                  >
+                    💛 Faire un don
+                  </button>
                 )}
+
 
                 {/* Edit horaires button */}
                 {confirmedIds.has(editKey) ? (
