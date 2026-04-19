@@ -17,7 +17,7 @@ serve(async (req) => {
 
   const { data: donation, error } = await supabaseAdmin
     .from("donations")
-    .select("id, amount, donor_name, donor_email, donor_address, created_at, synagogue_id, cerfa_number, fiscal_year")
+    .select("id, amount, donor_name, donor_email, donor_address, donor_type, donor_company_name, donor_siret, created_at, synagogue_id, cerfa_number, fiscal_year")
     .eq("cerfa_token", token)
     .single();
 
@@ -96,8 +96,14 @@ serve(async (req) => {
   </div>
 
   <div class="section">
-    <h2>Donateur</h2>
-    <p><strong>${donation.donor_name || "—"}</strong></p>
+    <h2>${donation.donor_type === "societe" ? "Donateur (Personne morale)" : "Donateur"}</h2>
+    ${donation.donor_type === "societe" ? `
+      <p><strong>${donation.donor_company_name || "—"}</strong></p>
+      ${donation.donor_siret ? `<p>SIRET : ${donation.donor_siret}</p>` : ""}
+      <p>Représentée par : ${donation.donor_name || "—"}</p>
+    ` : `
+      <p><strong>${donation.donor_name || "—"}</strong></p>
+    `}
     <p>${donation.donor_address || "—"}</p>
     <p>Courriel : ${donation.donor_email}</p>
   </div>
