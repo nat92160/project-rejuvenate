@@ -369,86 +369,13 @@ const AdminDonationsTab = () => {
 
       {/* === COMMISSIONS === */}
       {subtab === "commissions" && (
-        <>
-          <div className="rounded-2xl border border-border bg-card p-4 flex flex-wrap gap-2 items-center">
-            <label className="text-xs font-bold text-foreground">Période :</label>
-            <input type="month" value={periodMonth} onChange={(e) => setPeriodMonth(e.target.value)} className="px-3 py-2 text-xs rounded-lg border border-border bg-background" />
-            <button onClick={() => setPeriodMonth("")} className="px-3 py-2 text-xs rounded-lg bg-muted text-foreground border-none cursor-pointer">Toutes</button>
-            <button onClick={exportCommissionsCsv} className="ml-auto px-3 py-2 rounded-lg text-xs font-bold border-none cursor-pointer text-primary-foreground" style={{ background: "var(--gradient-gold)" }}>
-              📥 Export CSV
-            </button>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-card overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left p-2 font-bold">Synagogue</th>
-                  <th className="text-right p-2 font-bold">Dons</th>
-                  <th className="text-right p-2 font-bold">Total reçu</th>
-                  <th className="text-right p-2 font-bold">Commission 4%</th>
-                  <th className="text-right p-2 font-bold">À reverser</th>
-                  <th className="text-center p-2 font-bold">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {commissionStats.map((s) => (
-                  <tr key={s.synagogue_id} className="border-t border-border">
-                    <td className="p-2 font-bold">{s.synagogue_name}</td>
-                    <td className="p-2 text-right">{s.count}</td>
-                    <td className="p-2 text-right">{fmtEuro(s.total)}</td>
-                    <td className="p-2 text-right text-amber-600 font-bold">{fmtEuro(s.commission)}</td>
-                    <td className="p-2 text-right text-green-600 font-bold">{fmtEuro(s.payout)}</td>
-                    <td className="p-2 text-center">
-                      <button
-                        onClick={() => handleMarkPayout(s.synagogue_id, s.total, s.commission, s.payout)}
-                        className="px-2 py-1 rounded-lg text-[10px] font-bold border-none cursor-pointer text-primary-foreground"
-                        style={{ background: "var(--gradient-gold)" }}
-                      >
-                        ✅ Marquer reversé
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {commissionStats.length === 0 && (
-                  <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Aucun don payé sur cette période</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {payouts.length > 0 && (
-            <div>
-              <h4 className="text-sm font-bold text-foreground mb-2 mt-4">📜 Historique des reversements</h4>
-              <div className="rounded-2xl border border-border bg-card overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="text-left p-2 font-bold">Date</th>
-                      <th className="text-left p-2 font-bold">Synagogue</th>
-                      <th className="text-left p-2 font-bold">Période</th>
-                      <th className="text-right p-2 font-bold">Total dons</th>
-                      <th className="text-right p-2 font-bold">Commission</th>
-                      <th className="text-right p-2 font-bold">Reversé</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payouts.map((p) => (
-                      <tr key={p.id} className="border-t border-border">
-                        <td className="p-2">{p.paid_at ? fmtDate(p.paid_at) : "—"}</td>
-                        <td className="p-2 font-bold">{p.synagogue_name}</td>
-                        <td className="p-2">{fmtDate(p.period_start)} → {fmtDate(p.period_end)}</td>
-                        <td className="p-2 text-right">{fmtEuro(p.total_donations_amount)}</td>
-                        <td className="p-2 text-right text-amber-600">{fmtEuro(p.commission_amount)}</td>
-                        <td className="p-2 text-right text-green-600 font-bold">{fmtEuro(p.payout_amount)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </>
+        <CommissionsView
+          donations={donations}
+          periodMonth={periodMonth}
+          setPeriodMonth={setPeriodMonth}
+          onRefresh={fetchAll}
+          setDonations={setDonations}
+        />
       )}
 
       {/* === COUNTERS === */}
