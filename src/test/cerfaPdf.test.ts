@@ -41,15 +41,12 @@ describe("shareCerfaPdf", () => {
     shareTextMock.mockResolvedValue(true);
     shareMock.mockResolvedValue(undefined);
     writeFileMock.mockResolvedValue({ uri: "file:///cache/cerfa-abc.pdf" });
-    fetchMock.mockResolvedValue({
+    fetchMock.mockImplementation(async () => ({
       ok: true,
+      status: 200,
       blob: async () => new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], { type: "application/pdf" }),
-    });
-    Object.defineProperty(globalThis, "fetch", {
-      configurable: true,
-      writable: true,
-      value: fetchMock,
-    });
+    }));
+    vi.stubGlobal("fetch", fetchMock);
     Object.defineProperty(navigator, "share", {
       configurable: true,
       writable: true,
