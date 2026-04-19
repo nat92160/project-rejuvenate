@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Heart, Check, Loader2, Target, FileText, Download } from "lucide-react";
+import { Heart, Check, Loader2, Target, FileText, Download, Home, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { useAuth } from "@/hooks/useAuth";
 
 const SUGGESTED_AMOUNTS = [1800, 3600, 5200, 10000]; // in cents
 
