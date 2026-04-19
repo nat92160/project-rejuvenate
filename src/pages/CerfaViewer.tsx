@@ -190,15 +190,17 @@ const CerfaViewer = () => {
               </div>
             )}
             <div ref={pagesRef} className="space-y-4" />
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span>L'aperçu ne s'affiche pas ?</span>
-              <button
-                onClick={handleOpenNewTab}
-                className="font-semibold text-primary underline-offset-2 hover:underline"
-              >
-                Ouvrir le PDF dans un nouvel onglet
-              </button>
-            </div>
+            {!isNativeApp && (
+              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <span>L'aperçu ne s'affiche pas ?</span>
+                <button
+                  onClick={handleOpenNewTab}
+                  className="font-semibold text-primary underline-offset-2 hover:underline"
+                >
+                  Ouvrir le PDF dans un nouvel onglet
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
