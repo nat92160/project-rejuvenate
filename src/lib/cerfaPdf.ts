@@ -1,4 +1,5 @@
 import { Share } from "@capacitor/share";
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 import { toast } from "sonner";
 import { isNativePlatform } from "@/lib/capacitorPush";
 import { shareText } from "@/lib/shareUtils";
@@ -27,26 +28,62 @@ function makeCerfaFilename(token: string) {
   return `cerfa-${token.slice(0, 8)}.pdf`;
 }
 
-async function shareCerfaLink(token: string): Promise<boolean> {
-  const url = getCerfaPdfUrl(token);
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      // result = "data:application/pdf;base64,XXXX" → on garde uniquement la partie base64
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
+      resolve(base64);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
 
-  if (isNativePlatform()) {
-    await Share.share({
-      title: "Reçu CERFA",
-      text: "Voici le lien du reçu CERFA en PDF.",
-      url,
-      dialogTitle: "Partager le CERFA",
-    });
-    return true;
-  }
+async function shareCerfaPdfNative(token: string): Promise<boolean> {
+  const blob = await fetchCerfaPdfBlob(token);
+  const base64 = await blobToBase64(blob);
+  const filename = makeCerfaFilename(token);
 
+  // Écrit le PDF dans le cache de l'app pour obtenir une URI fichier partageable
+  const written = await Filesystem.writeFile({
+    path: filename,
+    data: base64,
+    directory: Directory.Cache,
+  });
+
+  await Share.share({
+    title: "Reçu CERFA",
+    text: "Voici votre reçu CERFA en PDF.",
+    url: written.uri,
+    dialogTitle: "Partager le CERFA",
+  });
+  return true;
+}
+
+async function shareCerfaPdfWeb(token: string): Promise<boolean> {
+  // 1) Web Share API niveau fichier (iOS Safari, Chrome Android)
   if (typeof navigator !== "undefined" && navigator.share) {
     try {
-      await navigator.share({
-        title: "Reçu CERFA",
-        text: "Voici le lien du reçu CERFA en PDF.",
-        url,
-      });
+      const blob = await fetchCerfaPdfBlob(token);
+      const file = new File([blob], makeCerfaFilename(token), { type: "application/pdf" });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: "Reçu CERFA", files: [file] });
+        return true;
+      }
+    } catch (error: any) {
+      if (error?.name === "AbortError") return false;
+      // sinon on bascule sur le fallback lien
+    }
+  }
+
+  // 2) Fallback : partage du lien public PDF (jamais blob: → pas de blocage Chrome)
+  const url = getCerfaPdfUrl(token);
+  if (typeof navigator !== "undefined" && navigator.share) {
+    try {
+      await navigator.share({ title: "Reçu CERFA", text: "Lien du reçu CERFA", url });
       return true;
     } catch (error: any) {
       if (error?.name === "AbortError") return false;
@@ -54,9 +91,7 @@ async function shareCerfaLink(token: string): Promise<boolean> {
   }
 
   const shared = await shareText(url, "Reçu CERFA");
-  if (shared) {
-    toast.success("Lien du CERFA prêt à être envoyé.");
-  }
+  if (shared) toast.success("Lien du CERFA prêt à être envoyé.");
   return shared;
 }
 
@@ -78,7 +113,10 @@ export async function downloadCerfaPdf(token: string): Promise<void> {
 
 export async function shareCerfaPdf(token: string): Promise<boolean> {
   try {
-    return await shareCerfaLink(token);
+    if (isNativePlatform()) {
+      return await shareCerfaPdfNative(token);
+    }
+    return await shareCerfaPdfWeb(token);
   } catch (error) {
     console.error("shareCerfaPdf error:", error);
     toast.error("Impossible de générer le PDF du CERFA");
