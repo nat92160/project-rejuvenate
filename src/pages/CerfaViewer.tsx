@@ -106,12 +106,31 @@ const CerfaViewer = () => {
             </Button>
           </div>
         ) : (
-          <iframe
-            ref={iframeRef}
-            title="CERFA"
-            src={pdfUrl}
+          <object
+            data={pdfUrl}
+            type="application/pdf"
             className="h-[calc(100vh-7rem)] min-h-[640px] w-full rounded-xl border border-border bg-background"
-          />
+          >
+            <iframe
+              ref={iframeRef}
+              title="CERFA"
+              src={pdfUrl}
+              className="h-full w-full rounded-xl border-0 bg-background"
+            />
+            <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Votre navigateur ne peut pas afficher le PDF directement.
+              </p>
+              <a
+                href={pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-primary underline"
+              >
+                Ouvrir le PDF dans un nouvel onglet
+              </a>
+            </div>
+          </object>
         )}
       </div>
     </main>
