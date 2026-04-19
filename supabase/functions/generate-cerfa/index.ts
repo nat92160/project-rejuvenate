@@ -97,51 +97,54 @@ serve(async (req) => {
   <meta charset="UTF-8">
   <title>Reçu Fiscal CERFA n° ${esc(finalCerfaNumber)}</title>
   <style>
-    @page { size: A4; margin: 12mm; }
-    @media print { body { margin: 0; } .no-print { display: none; } }
+    @page { size: A4; margin: 8mm; }
+    @media print { body { margin: 0; } .no-print { display: none; } .frame { page-break-inside: avoid; } }
     * { box-sizing: border-box; }
-    body { font-family: Arial, Helvetica, sans-serif; max-width: 800px; margin: 24px auto; padding: 16px; color: #111; font-size: 12px; line-height: 1.45; }
-    .print-btn { display: block; margin: 0 auto 18px; padding: 10px 22px; background: #1e3a5f; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+    html, body { font-family: Arial, Helvetica, sans-serif; color: #111; font-size: 10.5px; line-height: 1.3; }
+    body { max-width: 800px; margin: 12px auto; padding: 8px; }
+    .print-btn { display: block; margin: 0 auto 10px; padding: 8px 18px; background: #1e3a5f; color: #fff; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .warn { background: #fff4e5; border: 1px solid #f0a35e; color: #8a4b00; padding: 6px 10px; border-radius: 6px; font-size: 10.5px; margin-bottom: 8px; text-align: center; font-weight: 600; }
     .frame { border: 1px solid #111; }
-    .top { display: grid; grid-template-columns: 200px 1fr 160px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #111; gap: 12px; }
-    .top .left { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; }
-    .top .left .small { font-size: 10px; }
-    .cerfa-bubble { display: inline-block; border: 1.5px solid #111; border-radius: 999px; padding: 4px 22px; font-style: italic; font-weight: 700; letter-spacing: 1px; }
-    .top .center { text-align: center; font-weight: 700; font-size: 12.5px; line-height: 1.35; }
-    .top .right { text-align: right; font-size: 11px; }
-    .top .right .num { font-weight: 700; font-size: 13px; margin-top: 4px; }
-    .donor-bar { display: grid; grid-template-columns: 200px 1fr; padding: 14px 18px; border-bottom: 1px solid #111; gap: 16px; align-items: center; }
-    .donor-bar .logo { display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 700; font-size: 11px; }
-    .donor-bar .logo img { max-width: 90px; max-height: 90px; }
-    .donor-bar .donor-block { font-size: 12.5px; line-height: 1.6; }
+    .top { display: grid; grid-template-columns: 170px 1fr 150px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #111; gap: 10px; }
+    .top .left { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9.5px; }
+    .top .left .small { font-size: 9px; }
+    .cerfa-bubble { display: inline-block; border: 1.3px solid #111; border-radius: 999px; padding: 2px 18px; font-style: italic; font-weight: 700; letter-spacing: 1px; font-size: 11px; }
+    .top .center { text-align: center; font-weight: 700; font-size: 11px; line-height: 1.3; }
+    .top .right { text-align: right; font-size: 10px; }
+    .top .right .num { font-weight: 700; font-size: 11.5px; margin-top: 2px; }
+    .donor-bar { display: grid; grid-template-columns: 170px 1fr; padding: 8px 12px; border-bottom: 1px solid #111; gap: 12px; align-items: center; }
+    .donor-bar .logo { display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 700; font-size: 10px; text-align: center; }
+    .donor-bar .logo img { max-width: 70px; max-height: 70px; object-fit: contain; }
+    .donor-bar .donor-block { font-size: 11px; line-height: 1.45; }
     .donor-bar .donor-block .donor-name { font-weight: 700; }
-    .section-title { background: #d6d6d6; text-align: center; padding: 6px 0; font-weight: 700; letter-spacing: 0.5px; font-size: 12px; border-bottom: 1px solid #111; }
-    .grid-2col { display: grid; grid-template-columns: 220px 1fr; }
-    .grid-2col > div { padding: 8px 14px; border-bottom: 1px solid #cfcfcf; }
+    .section-title { background: #d6d6d6; text-align: center; padding: 4px 0; font-weight: 700; letter-spacing: 0.5px; font-size: 10.5px; border-bottom: 1px solid #111; }
+    .grid-2col { display: grid; grid-template-columns: 200px 1fr; }
+    .grid-2col > div { padding: 4px 12px; border-bottom: 1px solid #cfcfcf; font-size: 10.5px; }
     .grid-2col .lbl { font-weight: 700; background: #fafafa; }
     .grid-2col > div:nth-last-child(-n+2) { border-bottom: none; }
-    .amount-section { padding: 14px 18px; border-bottom: 1px solid #111; }
-    .amount-line { text-align: center; font-size: 12px; margin-bottom: 8px; }
+    .missing { color: #b8410f; font-weight: 700; }
+    .amount-section { padding: 8px 12px; border-bottom: 1px solid #111; }
+    .amount-line { text-align: center; font-size: 10.5px; margin-bottom: 5px; }
     .amount-box { display: flex; justify-content: center; }
-    .amount-box .pill { border: 1.5px solid #111; padding: 8px 22px; font-weight: 700; font-size: 13.5px; letter-spacing: 0.3px; }
-    .checks { padding: 12px 18px; border-bottom: 1px solid #111; }
-    .checks .center-h { text-align: center; font-weight: 700; font-size: 12px; margin-bottom: 10px; line-height: 1.5; }
-    .checks .row { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; margin: 6px 0 14px; }
-    .checks .group-title { font-weight: 700; text-decoration: underline; font-size: 12px; margin-top: 6px; }
-    .check { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
-    .check .box { width: 16px; height: 16px; border: 1.2px solid #111; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1; }
-    .footer-row { display: grid; grid-template-columns: 1fr 1fr; padding: 14px 18px; gap: 12px; }
+    .amount-box .pill { border: 1.3px solid #111; padding: 5px 18px; font-weight: 700; font-size: 11.5px; letter-spacing: 0.2px; text-align: center; }
+    .checks { padding: 6px 12px; border-bottom: 1px solid #111; }
+    .checks .center-h { text-align: center; font-weight: 700; font-size: 10.5px; margin-bottom: 6px; line-height: 1.4; }
+    .checks .row { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin: 3px 0 8px; }
+    .checks .group-title { font-weight: 700; text-decoration: underline; font-size: 10.5px; margin-top: 3px; }
+    .check { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; }
+    .check .box { width: 13px; height: 13px; border: 1.1px solid #111; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; }
+    .footer-row { display: grid; grid-template-columns: 1fr 1fr; padding: 8px 12px; gap: 10px; }
     .footer-row .right { text-align: right; }
     .footer-row .right .date { font-weight: 700; }
-    .footer-row .right .pres { margin-top: 6px; font-style: italic; }
-    .footer-row .right .sig img { max-height: 70px; margin-top: 6px; }
-    .footer-mention { text-align: center; font-weight: 700; padding: 12px 18px 0; }
-    .footer-note { text-align: center; font-size: 9.5px; color: #555; padding: 10px 18px 4px; }
+    .footer-row .right .pres { margin-top: 3px; font-style: italic; font-size: 10.5px; }
+    .footer-row .right .sig img { max-height: 55px; margin-top: 3px; }
+    .footer-mention { text-align: center; font-weight: 700; padding: 6px 12px 0; font-size: 10.5px; }
+    .footer-note { text-align: center; font-size: 9px; color: #555; padding: 4px 12px 4px; }
   </style>
 </head>
 <body>
   <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimer / Télécharger PDF</button>
-
+  ${missingLegalInfo ? `<div class="warn no-print">⚠️ Informations légales incomplètes (RNA/SIRET ou dénomination manquant). Ce reçu n'est pas valide fiscalement tant que la configuration CERFA n'est pas terminée.</div>` : ""}
   <div class="frame">
     <!-- TOP HEADER -->
     <div class="top">
