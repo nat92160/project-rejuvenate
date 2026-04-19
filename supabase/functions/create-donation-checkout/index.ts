@@ -78,7 +78,7 @@ serve(async (req) => {
       ],
       payment_intent_data: {
         metadata: {
-          synagogue_id: stripeAccount.synagogue_id,
+          synagogue_id: synagogueId,
           donor_name: donor_name || "",
           donor_email: donor_email || "",
           donor_address: donor_address || "",
@@ -87,7 +87,7 @@ serve(async (req) => {
       },
       customer_email: donor_email || undefined,
       metadata: {
-        synagogue_id: stripeAccount.synagogue_id,
+        synagogue_id: synagogueId,
         donor_name: donor_name || "",
         donor_email: donor_email || "",
         donor_address: donor_address || "",
