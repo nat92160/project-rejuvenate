@@ -228,8 +228,8 @@ const DonationPage = () => {
         amount,
         donor_name:
           donorType === "particulier"
-            ? `${donorCivility} ${donorFirstName.trim()} ${donorLastName.trim()}`.trim()
-            : `${donorFirstName.trim()} ${donorLastName.trim()}`.trim(),
+            ? `${donorCivility === "M" ? "M." : "Mme"} ${donorFirstName.trim()} ${donorLastName.trim()}`.trim()
+            : `${donorCivility === "M" ? "M." : "Mme"} ${donorFirstName.trim()} ${donorLastName.trim()}`.trim(),
         donor_email: donorEmail,
         donor_address: `${donorAddress}, ${donorPostal} ${donorCity}`,
         campaign_id: selectedCampaignId,
