@@ -73,9 +73,35 @@ serve(async (req) => {
         const cerfaUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-cerfa?token=${existing.cerfa_token}`;
         const { data: synaInfo } = await supabaseAdmin
           .from("synagogue_profiles")
-          .select("name")
+          .select("name, president_id, adjoint_id")
           .eq("id", existing.synagogue_id)
           .single();
+
+        // Notify president + adjoint with a push notification
+        try {
+          const recipientIds = [synaInfo?.president_id, synaInfo?.adjoint_id].filter(Boolean) as string[];
+          if (recipientIds.length > 0) {
+            const amountEuros = (existing.amount / 100).toFixed(2);
+            const donorLabel = existing.donor_name || existing.donor_email || "Un donateur";
+            await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({
+                user_ids: recipientIds,
+                title: `💝 Nouveau don de ${amountEuros} €`,
+                body: `${donorLabel} vient de faire un don à ${synaInfo?.name || "votre synagogue"}.`,
+                url: "/?tab=president",
+                tag: `donation-${existing.id}`,
+              }),
+            });
+            console.log(`Push sent to president/adjoint for donation ${existing.id}`);
+          }
+        } catch (pushErr) {
+          console.error("Failed to send president push:", pushErr);
+        }
 
         await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-cerfa-email`, {
           method: "POST",
