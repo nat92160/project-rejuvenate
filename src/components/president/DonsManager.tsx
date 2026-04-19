@@ -158,26 +158,8 @@ const DonsManager = () => {
       toast.error("Reçu indisponible (token manquant).");
       return;
     }
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const url = `${supabaseUrl}/functions/v1/generate-cerfa?token=${donation.cerfa_token}`;
 
-    // Native (iOS/Android Capacitor) → open in system browser
-    try {
-      const { Capacitor } = await import("@capacitor/core");
-      if (Capacitor.isNativePlatform()) {
-        const { Browser } = await import("@capacitor/browser");
-        await Browser.open({ url, presentationStyle: "fullscreen" });
-        return;
-      }
-    } catch (e) {
-      console.warn("Capacitor browser fallback", e);
-    }
-
-    // Web → open immediately (sync) so iOS Safari doesn't block it
-    const newTab = window.open(url, "_blank", "noopener,noreferrer");
-    if (!newTab) {
-      window.location.href = url;
-    }
+    window.location.assign(`/cerfa/${encodeURIComponent(donation.cerfa_token)}`);
   };
 
   const shareCerfa = async (donation: Donation) => {
@@ -189,8 +171,11 @@ const DonsManager = () => {
       toast.error("Reçu indisponible (token manquant).");
       return;
     }
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const url = `${supabaseUrl}/functions/v1/generate-cerfa?token=${donation.cerfa_token}`;
+
+    const publicBaseUrl = window.location.origin.startsWith("http")
+      ? window.location.origin
+      : "https://www.chabbat-chalom.com";
+    const url = `${publicBaseUrl}/cerfa/${encodeURIComponent(donation.cerfa_token)}`;
     const message = `Reçu fiscal CERFA — ${synagogueName}\nDon de ${(donation.amount / 100).toFixed(2)} € au nom de ${donation.donor_name || donation.donor_email}\n\n${url}`;
     await shareText(message, `Reçu CERFA — ${synagogueName}`);
   };

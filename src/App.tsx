@@ -19,6 +19,7 @@ import Install from "./pages/Install.tsx";
 
 const OmerLanding = lazy(() => import("./pages/OmerLanding.tsx"));
 const DonationPage = lazy(() => import("./pages/DonationPage.tsx"));
+const CerfaViewer = lazy(() => import("./pages/CerfaViewer.tsx"));
 const ZoomCallback = lazy(() => import("./pages/ZoomCallback.tsx"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy.tsx"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService.tsx"));
@@ -178,6 +179,7 @@ function AppInner() {
           <Route path="/install" element={<Install />} />
           <Route path="/omer" element={<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}><OmerLanding /></Suspense>} />
           <Route path="/don/:slug" element={<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}><DonationPage /></Suspense>} />
+          <Route path="/cerfa/:token" element={<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}><CerfaViewer /></Suspense>} />
           <Route path="/zoom-callback" element={<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}><ZoomCallback /></Suspense>} />
           <Route path="/privacy" element={<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}><PrivacyPolicy /></Suspense>} />
           <Route path="/terms" element={<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}><TermsOfService /></Suspense>} />
