@@ -172,10 +172,9 @@ const DonsManager = () => {
       return;
     }
 
-    const publicBaseUrl = window.location.origin.startsWith("http")
-      ? window.location.origin
-      : "https://www.chabbat-chalom.com";
-    const url = `${publicBaseUrl}/cerfa/${encodeURIComponent(donation.cerfa_token)}`;
+    // Partage du reçu seul (HTML pur servi par l'edge function), sans interface de l'app
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const url = `${supabaseUrl}/functions/v1/generate-cerfa?token=${encodeURIComponent(donation.cerfa_token)}`;
     const message = `Reçu fiscal CERFA — ${synagogueName}\nDon de ${(donation.amount / 100).toFixed(2)} € au nom de ${donation.donor_name || donation.donor_email}\n\n${url}`;
     await shareText(message, `Reçu CERFA — ${synagogueName}`);
   };
