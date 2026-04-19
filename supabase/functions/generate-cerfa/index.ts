@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
 // SECURITY: HTML escaping to prevent XSS in user-controlled fields
 function esc(value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -19,11 +24,15 @@ function safeUrl(value: unknown): string {
 }
 
 serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
 
   if (!token) {
-    return new Response("Token manquant", { status: 400 });
+    return new Response("Token manquant", { status: 400, headers: corsHeaders });
   }
 
   const supabaseAdmin = createClient(
@@ -39,7 +48,7 @@ serve(async (req) => {
     .single();
 
   if (error || !donation) {
-    return new Response("Reçu introuvable", { status: 404 });
+    return new Response("Reçu introuvable", { status: 404, headers: corsHeaders });
   }
 
   const { data: syna } = await supabaseAdmin
@@ -162,6 +171,7 @@ serve(async (req) => {
   return new Response(html, {
     status: 200,
     headers: {
+      ...corsHeaders,
       "Content-Type": "text/html; charset=utf-8",
       "Content-Disposition": "inline",
       "Cache-Control": "no-store",
