@@ -73,6 +73,94 @@ export type Database = {
         }
         Relationships: []
       }
+      cerfa_commission_payouts: {
+        Row: {
+          commission_amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          paid_by: string | null
+          payout_amount: number
+          period_end: string
+          period_start: string
+          synagogue_id: string
+          total_donations_amount: number
+          updated_at: string
+        }
+        Insert: {
+          commission_amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          payout_amount?: number
+          period_end: string
+          period_start: string
+          synagogue_id: string
+          total_donations_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          commission_amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          payout_amount?: number
+          period_end?: string
+          period_start?: string
+          synagogue_id?: string
+          total_donations_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cerfa_commission_payouts_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cerfa_counters: {
+        Row: {
+          created_at: string
+          fiscal_year: number
+          id: string
+          last_number: number
+          synagogue_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fiscal_year: number
+          id?: string
+          last_number?: number
+          synagogue_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fiscal_year?: number
+          id?: string
+          last_number?: number
+          synagogue_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cerfa_counters_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: false
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cours_zoom: {
         Row: {
           address: string | null
@@ -1285,6 +1373,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      next_cerfa_number: {
+        Args: { _fiscal_year: number; _synagogue_id: string }
+        Returns: string
       }
       subscribe_to_place: {
         Args: {
