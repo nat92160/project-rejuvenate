@@ -209,6 +209,10 @@ const DonationPage = () => {
           <p className="text-4xl mb-4">🏛️</p>
           <h1 className="text-xl font-bold text-foreground">Page introuvable</h1>
           <p className="text-sm text-muted-foreground mt-2">Cette page de don n'existe pas.</p>
+          <Button onClick={() => navigate("/")} variant="outline" className="mt-6 rounded-xl">
+            <Home className="w-4 h-4 mr-2" />
+            Retour à l'accueil
+          </Button>
         </div>
       </div>
     );
