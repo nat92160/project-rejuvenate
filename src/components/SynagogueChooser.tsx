@@ -190,15 +190,16 @@ const SynagogueChooser = ({ onSelect }: Props) => {
   }, []);
 
   const allItems: SynaItem[] = useMemo(() => {
-    let list: SynaItem[] = [...partners, ...externals];
+    // Tri STRICT par distance — aucune priorité partenaire/Google
+    const getDist = (s: SynaItem) => s.source === "partner" ? s.dist : s.distance;
+    let list: SynaItem[] = [...partners, ...externals].sort((a, b) => getDist(a) - getDist(b));
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(s => s.name.toLowerCase().includes(q) || (s.address && s.address.toLowerCase().includes(q)));
     }
-    if (filters.includes("proche")) list = list.filter(s => (s.source === "partner" ? s.dist : s.distance) <= 2000);
+    if (filters.includes("proche")) list = list.filter(s => getDist(s) <= 2000);
     if (filters.includes("verifie")) list = list.filter(s => s.source === "partner" && s.verified);
     if (filters.includes("ouvert")) list = list.filter(s => s.source === "partner" && getNextOffice(s) !== null);
-    list.sort((a, b) => (a.source === "partner" ? a.dist : a.distance) - (b.source === "partner" ? b.dist : b.distance));
     return list;
   }, [partners, externals, search, filters]);
 
