@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Capacitor } from "@capacitor/core";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +22,8 @@ import DonsStats from "./DonsStats";
 import CerfaConfig from "./CerfaConfig";
 import DonationReminders from "./DonationReminders";
 import { shareCerfaPdf, downloadCerfaPdf } from "@/lib/cerfaPdf";
+
+const isNativeApp = Capacitor.isNativePlatform();
 
 interface Donation {
   id: string;
