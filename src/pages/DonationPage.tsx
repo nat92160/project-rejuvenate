@@ -62,13 +62,13 @@ const DonationPage = () => {
 
       const { data: sa } = await supabase
         .from("synagogue_profiles")
-        .select("id, name, logo_url, donation_slug")
+        .select("id, name, logo_url, donation_slug, association_legal_name, rna_number, siret_number, address, president_first_name, president_last_name")
         .eq("donation_slug", slug)
         .maybeSingle();
 
       if (sa?.id) {
         synaId = sa.id;
-        synaProfile = sa;
+        synaProfile = sa as any;
         setStripeReady(true);
       } else {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
@@ -96,15 +96,24 @@ const DonationPage = () => {
           ? Promise.resolve({ data: null })
           : supabase
               .from("synagogue_profiles")
-              .select("id, name, logo_url, donation_slug")
+              .select("id, name, logo_url, donation_slug, association_legal_name, rna_number, siret_number, address, president_first_name, president_last_name")
               .eq("id", synaId)
               .maybeSingle(),
       ]);
 
-      const profile = synaProfile ?? profileById;
+      const profile: any = synaProfile ?? profileById;
 
       if (profile) {
         setSynagogue({ id: profile.id, name: profile.name, logo_url: profile.logo_url });
+
+        // ─── CERFA legal config check — block donations if missing
+        const missing: string[] = [];
+        if (!profile.association_legal_name) missing.push("Dénomination légale");
+        if (!profile.rna_number && !profile.siret_number) missing.push("Numéro RNA ou SIRET");
+        if (!profile.address) missing.push("Adresse de l'association");
+        if (!profile.president_first_name && !profile.president_last_name) missing.push("Nom du président signataire");
+        setCerfaMissing(missing);
+        setCerfaReady(missing.length === 0);
       }
       setCampaigns((camps as Campaign[]) || []);
       setLoading(false);
