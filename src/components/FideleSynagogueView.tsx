@@ -554,6 +554,13 @@ const FideleSynagogueView = () => {
                               📞 Appeler
                             </a>
                           )}
+                          <a
+                            href={`/don/${syna.id}`}
+                            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] font-bold no-underline transition-all active:scale-95"
+                            style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", boxShadow: "var(--shadow-gold)" }}
+                          >
+                            💛 Faire un don
+                          </a>
                           <button
                             onClick={() => setSuggestingSynaId(suggestingSynaId === syna.id ? null : syna.id)}
                             className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary cursor-pointer transition-all active:scale-95 hover:bg-primary/10"
@@ -663,6 +670,13 @@ const FideleSynagogueView = () => {
                             📞 Appeler
                           </a>
                         )}
+                        <button
+                          onClick={() => toast.info("Cette synagogue n'a pas encore activé les dons en ligne. Contactez-la directement.")}
+                          className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[11px] font-bold cursor-pointer transition-all active:scale-95"
+                          style={{ background: "hsl(var(--gold) / 0.06)", borderColor: "hsl(var(--gold) / 0.2)", color: "hsl(var(--gold-matte))" }}
+                        >
+                          💛 Faire un don
+                        </button>
                       </div>
                       {suggestingSynaId === `gm-${gr.id}` && (
                         <div className="mt-3">
