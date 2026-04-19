@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ExternalLink, Loader2, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,8 +6,6 @@ import { fetchCerfaPdfBlob, shareCerfaPdf } from "@/lib/cerfaPdf";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 
 GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
 const CerfaViewer = () => {
   const navigate = useNavigate();
@@ -18,11 +16,6 @@ const CerfaViewer = () => {
   const [rendering, setRendering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
-
-  const directUrl = useMemo(
-    () => (token ? `${SUPABASE_URL}/functions/v1/generate-cerfa?token=${encodeURIComponent(token)}` : null),
-    [token],
-  );
 
   useEffect(() => {
     if (!token) {
@@ -125,8 +118,13 @@ const CerfaViewer = () => {
   }, [pdfBlob]);
 
   const handleOpenNewTab = () => {
-    if (!directUrl) return;
-    window.open(directUrl, "_blank", "noopener,noreferrer");
+    if (!pdfBlob) return;
+    const blobUrl = URL.createObjectURL(pdfBlob);
+    const opened = window.open(blobUrl, "_blank");
+    if (!opened) {
+      window.location.assign(blobUrl);
+    }
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
   };
 
   const handleShare = async () => {
@@ -171,10 +169,10 @@ const CerfaViewer = () => {
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Chargement du CERFA…</p>
           </div>
-        ) : error || !directUrl ? (
+        ) : error || !pdfBlob ? (
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 rounded-xl border border-border bg-card p-6 text-center">
             <p className="text-sm text-muted-foreground">{error || "Reçu introuvable."}</p>
-            <Button variant="outline" onClick={handleOpenNewTab} className="min-h-11" disabled={!directUrl}>
+            <Button variant="outline" onClick={handleOpenNewTab} className="min-h-11" disabled={!pdfBlob}>
               Ouvrir le PDF
             </Button>
           </div>

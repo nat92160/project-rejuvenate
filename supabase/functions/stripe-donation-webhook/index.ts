@@ -70,7 +70,7 @@ serve(async (req) => {
 
       // Send CERFA email (best-effort)
       try {
-        const cerfaUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-cerfa?token=${existing.cerfa_token}`;
+        const cerfaUrl = `https://chabbat-chalom.com/cerfa/${encodeURIComponent(existing.cerfa_token)}`;
         const { data: synaInfo } = await supabaseAdmin
           .from("synagogue_profiles")
           .select("name, president_id, adjoint_id")
