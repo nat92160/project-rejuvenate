@@ -1,27 +1,20 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { jsPDF } from "https://esm.sh/jspdf@2.5.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// SECURITY: HTML escaping to prevent XSS in user-controlled fields
-function esc(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function safeUrl(value: unknown): string {
-  const s = String(value || "");
-  if (/^https?:\/\//i.test(s)) return esc(s);
-  return "";
-}
+// Couleurs CERFA (doré institutionnel)
+const GOLD: [number, number, number] = [153, 101, 21];      // #996515
+const GOLD_DARK: [number, number, number] = [107, 72, 16];  // #6b4810
+const GOLD_LIGHT_BG: [number, number, number] = [255, 248, 232]; // #fff8e8
+const CREAM_BG: [number, number, number] = [255, 253, 247]; // #fffdf7
+const TEXT: [number, number, number] = [42, 42, 42];        // #2a2a2a
+const BORDER_LIGHT: [number, number, number] = [224, 198, 147]; // #e0c693
+const RED_WARN: [number, number, number] = [184, 65, 15];   // #b8410f
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -57,7 +50,6 @@ serve(async (req) => {
     .eq("id", donation.synagogue_id)
     .single();
 
-  // Si pas encore de numéro CERFA, on en assigne un séquentiel par synagogue+année
   let cerfaNumber = donation.cerfa_number as string | null;
   if (!cerfaNumber) {
     const { data: assigned } = await supabaseAdmin.rpc("assign_cerfa_number", { _donation_id: donation.id });
@@ -65,7 +57,6 @@ serve(async (req) => {
   }
 
   const donDate = new Date(donation.created_at);
-  const today = new Date();
   const presidentName = syna
     ? `${syna.president_first_name || ""} ${syna.president_last_name || ""}`.trim()
     : "";
@@ -79,9 +70,9 @@ serve(async (req) => {
   const amountEuros = donation.amount / 100;
   const amountInWords = numberToFrenchWords(amountEuros);
 
-  const article200Checked = articleCgi.includes("200") ? "&#10004;" : "";
-  const article238Checked = articleCgi.includes("238") ? "&#10004;" : "";
-  const article978Checked = articleCgi.includes("978") ? "&#10004;" : "";
+  const article200Checked = articleCgi.includes("200");
+  const article238Checked = articleCgi.includes("238");
+  const article978Checked = articleCgi.includes("978");
 
   const isCompany = donation.donor_type === "societe";
   const donorDisplayName = isCompany
@@ -91,189 +82,474 @@ serve(async (req) => {
   const rnaSiret = syna?.rna_number || syna?.siret_number || "";
   const missingLegalInfo = !rnaSiret || !syna?.association_legal_name;
 
-  const html = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Reçu Fiscal CERFA n° ${esc(finalCerfaNumber)}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
-  <style>
-    @page { size: A4; margin: 8mm; }
-    @media print { body { margin: 0; background: #fff; } .no-print { display: none; } .frame { page-break-inside: avoid; } }
-    * { box-sizing: border-box; }
-    html, body { font-family: 'Lora', Georgia, 'Times New Roman', serif; color: #2a2a2a; font-size: 10.5px; line-height: 1.3; background: #fff; }
-    body { max-width: 800px; margin: 12px auto; padding: 8px; }
-    .print-btn { display: block; margin: 0 auto 8px; padding: 14px 22px; background: #996515; color: #fff; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; font-family: inherit; letter-spacing: 0.5px; font-weight: 700; box-shadow: 0 4px 12px rgba(153,101,21,0.3); width: calc(100% - 16px); max-width: 360px; }
-    .print-hint { text-align: center; font-size: 12px; color: #6b4810; margin: 0 auto 12px; max-width: 360px; padding: 0 10px; line-height: 1.4; }
-    .warn { background: #fffaf2; border: 1px solid #d9a85f; color: #6b4810; padding: 6px 10px; border-radius: 6px; font-size: 10.5px; margin-bottom: 8px; text-align: center; font-weight: 600; }
-    .frame { border: 1.5px solid #996515; background: #fff; }
-    .top { display: grid; grid-template-columns: 170px 1fr 150px; align-items: center; padding: 10px 14px; border-bottom: 1.5px solid #996515; gap: 10px; background: #fffdf7; }
-    .top .left { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: #6b4810; font-weight: 700; }
-    .top .left .small { font-size: 9.5px; letter-spacing: 0.3px; }
-    .cerfa-bubble { display: inline-block; border: 2px solid #6b4810; color: #6b4810; background: #fff8e8; border-radius: 999px; padding: 3px 22px; font-style: italic; font-weight: 900; letter-spacing: 1.2px; font-size: 13px; box-shadow: 0 1px 0 rgba(107,72,16,0.15); }
-    .top .center { text-align: center; font-weight: 700; font-size: 11px; line-height: 1.3; color: #2a2a2a; }
-    .top .right { text-align: right; font-size: 10px; color: #996515; }
-    .top .right .num { font-weight: 700; font-size: 12.5px; margin-top: 2px; color: #996515; letter-spacing: 0.5px; }
-    .donor-bar { display: grid; grid-template-columns: 170px 1fr; padding: 10px 14px; border-bottom: 1px solid #e0c693; gap: 12px; align-items: center; background: #fff; }
-    .donor-bar .logo { display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 700; font-size: 10px; text-align: center; color: #996515; }
-    .donor-bar .logo img { max-width: 70px; max-height: 70px; object-fit: contain; }
-    .donor-bar .donor-block { font-size: 11px; line-height: 1.45; }
-    .donor-bar .donor-block .donor-name { font-weight: 700; color: #2a2a2a; }
-    .section-title { background: #996515; color: #fff; text-align: center; padding: 5px 0; font-weight: 700; letter-spacing: 1.2px; font-size: 10.5px; border-bottom: 1px solid #996515; text-transform: uppercase; }
-    .grid-2col { display: grid; grid-template-columns: 200px 1fr; }
-    .grid-2col > div { padding: 5px 12px; border-bottom: 1px solid #f0e2c3; font-size: 10.5px; }
-    .grid-2col .lbl { font-weight: 700; background: #fffdf7; color: #6b4810; }
-    .grid-2col > div:nth-last-child(-n+2) { border-bottom: none; }
-    .missing { color: #b8410f; font-weight: 700; }
-    .amount-section { padding: 10px 14px; border-bottom: 1px solid #e0c693; background: #fffdf7; }
-    .amount-line { text-align: center; font-size: 10.5px; margin-bottom: 6px; color: #2a2a2a; }
-    .amount-box { display: flex; justify-content: center; }
-    .amount-box .pill { border: 1.5px solid #996515; color: #996515; padding: 6px 22px; font-weight: 700; font-size: 12px; letter-spacing: 0.3px; text-align: center; background: #fff; border-radius: 4px; }
-    .checks { padding: 8px 14px; border-bottom: 1px solid #e0c693; }
-    .checks .center-h { text-align: center; font-weight: 700; font-size: 10.5px; margin-bottom: 6px; line-height: 1.4; color: #2a2a2a; }
-    .checks .row { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin: 3px 0 8px; }
-    .checks .group-title { font-weight: 700; text-decoration: underline; font-size: 10.5px; margin-top: 3px; color: #996515; }
-    .check { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; }
-    .check .box { width: 13px; height: 13px; border: 1.2px solid #996515; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; color: #996515; }
-    .footer-row { display: grid; grid-template-columns: 1fr 1fr; padding: 10px 14px; gap: 10px; background: #fffdf7; border-bottom: 1px solid #e0c693; }
-    .footer-row .right { text-align: right; }
-    .footer-row .right .date { font-weight: 700; color: #2a2a2a; }
-    .footer-row .right .pres { margin-top: 3px; font-style: italic; font-size: 10.5px; color: #6b4810; }
-    .footer-row .right .sig img { max-height: 55px; margin-top: 3px; }
-    .footer-mention { text-align: center; font-weight: 700; padding: 8px 12px 2px; font-size: 11px; color: #996515; letter-spacing: 1px; text-transform: uppercase; font-family: 'Playfair Display', Georgia, serif; }
-    .footer-note { text-align: center; font-size: 9px; color: #888; padding: 2px 12px 6px; font-style: italic; }
-  </style>
-</head>
-<body>
-  ${missingLegalInfo ? `<div class="warn no-print">⚠️ Informations légales incomplètes (RNA/SIRET ou dénomination manquant). Ce reçu n'est pas valide fiscalement tant que la configuration CERFA n'est pas terminée.</div>` : ""}
-  <div class="frame">
-    <!-- TOP HEADER -->
-    <div class="top">
-      <div class="left">
-        <div class="small">2041-RD</div>
-        <div class="cerfa-bubble">cerfa</div>
-        <div class="small">N° 11580*05</div>
-      </div>
-      <div class="center">
-        Reçu des dons et versements<br>
-        effectués par les particuliers au titre<br>
-        des articles 200 et 978 du code<br>
-        général des impôts
-      </div>
-      <div class="right">
-        <div>N° d'ordre du reçu</div>
-        <div class="num">${esc(finalCerfaNumber)}</div>
-      </div>
-    </div>
+  // ====== PDF GENERATION ======
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const pageW = 210;
+  const margin = 8;
+  const frameX = margin;
+  const frameW = pageW - margin * 2;
+  let y = margin;
 
-    <!-- DONOR HEADER (logo + adresse donateur) -->
-    <div class="donor-bar">
-      <div class="logo">
-        ${syna?.logo_url && safeUrl(syna.logo_url) ? `<img src="${safeUrl(syna.logo_url)}" alt="Logo">` : ""}
-        <div>${esc(syna?.name || legalName)}</div>
-      </div>
-      <div class="donor-block">
-        <div class="donor-name">${esc(donorDisplayName)}</div>
-        <div>${esc(donation.donor_address || "—")}</div>
-        <div>Courriel : ${esc(donation.donor_email)}</div>
-      </div>
-    </div>
+  // Police par défaut (helvetica = serif-like neutre, jsPDF n'a pas Lora natif)
+  doc.setFont("helvetica", "normal");
 
-    <!-- BENEFICIAIRE -->
-    <div class="section-title">BENEFICIAIRE DU DON</div>
-    <div class="grid-2col">
-      <div class="lbl">NOM OU DENOMINATION :</div>
-      <div><strong>${esc(legalName)}</strong></div>
-      <div class="lbl">Numéro SIREN ou RNA :</div>
-      <div>${rnaSiret ? esc(rnaSiret) : `<span class="missing">À COMPLÉTER (config CERFA)</span>`}</div>
-      <div class="lbl">ADRESSE ASSOCIATION :</div>
-      <div>${esc(syna?.address || "—")}</div>
-      <div class="lbl">OBJET :</div>
-      <div>${esc(associationObject)}</div>
-      <div class="lbl">QUALITE DE L'ORGANISME :</div>
-      <div>${esc(organismQuality)}</div>
-    </div>
+  // ========== WARNING (si infos manquantes) ==========
+  if (missingLegalInfo) {
+    doc.setFillColor(255, 250, 242);
+    doc.setDrawColor(217, 168, 95);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(frameX, y, frameW, 8, 1.5, 1.5, "FD");
+    doc.setTextColor(...GOLD_DARK);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text(
+      "Informations legales incompletes (RNA/SIRET ou denomination manquant). Recu non valide fiscalement.",
+      pageW / 2,
+      y + 5.2,
+      { align: "center" }
+    );
+    y += 10;
+  }
 
-    <!-- MONTANT -->
-    <div class="amount-section">
-      <div class="amount-line">Le bénéficiaire reconnaît avoir reçu au titre des dons et versements ouvrant droit à réduction d'impôt, la somme de</div>
-      <div class="amount-box">
-        <div class="pill">***${amountEuros.toFixed(2).replace(/\.00$/, "")} Euros*** (${esc(amountInWords)} euros)</div>
-      </div>
-    </div>
+  // ========== CADRE PRINCIPAL ==========
+  const frameStartY = y;
+  doc.setDrawColor(...GOLD);
+  doc.setLineWidth(0.5);
 
-    <!-- DONATEUR -->
-    <div class="section-title">DONATEUR</div>
-    <div class="grid-2col">
-      <div class="lbl">NOM OU DENOMINATION :</div>
-      <div>${esc(donorDisplayName)}</div>
-      <div class="lbl">ADRESSE DONATEUR :</div>
-      <div>${esc(donation.donor_address || "—")}</div>
-    </div>
+  // ========== TOP HEADER (logo cerfa | titre | N° d'ordre) ==========
+  const topH = 24;
+  doc.setFillColor(...CREAM_BG);
+  doc.rect(frameX, y, frameW, topH, "F");
 
-    <!-- CHECKBOXES -->
-    <div class="checks">
-      <div class="center-h">Le bénéficiaire certifie sur l'honneur que les dons et versements qu'il reçoit<br>ouvrent droit à la réduction d'impôt prévue à l'article</div>
-      <div class="row">
-        <span class="check"><span class="box">${article200Checked}</span> 200 du CGI</span>
-        <span class="check"><span class="box">${article238Checked}</span> 238 bis du CGI</span>
-        <span class="check"><span class="box">${article978Checked}</span> 978 du CGI</span>
-      </div>
+  // Colonne gauche : "2041-RD" + bulle cerfa + "N° 11580*05"
+  const leftColX = frameX + 4;
+  const leftColW = 50;
+  doc.setTextColor(...GOLD_DARK);
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  doc.text("2041-RD", leftColX + leftColW / 2, y + 4.5, { align: "center" });
 
-      <div class="group-title">Forme du don</div>
-      <div class="row">
-        <span class="check"><span class="box"></span> Acte authentique</span>
-        <span class="check"><span class="box"></span> Acte sous seing privé</span>
-        <span class="check"><span class="box">&#10004;</span> Déclaration de don manuel</span>
-        <span class="check"><span class="box"></span> Autres</span>
-      </div>
+  // Bulle CERFA
+  const bubbleW = 28;
+  const bubbleH = 7;
+  const bubbleX = leftColX + (leftColW - bubbleW) / 2;
+  const bubbleY = y + 7;
+  doc.setFillColor(...GOLD_LIGHT_BG);
+  doc.setDrawColor(...GOLD_DARK);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(bubbleX, bubbleY, bubbleW, bubbleH, 3.5, 3.5, "FD");
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bolditalic");
+  doc.setTextColor(...GOLD_DARK);
+  doc.text("cerfa", bubbleX + bubbleW / 2, bubbleY + 5, { align: "center" });
 
-      <div class="group-title">Nature du don</div>
-      <div class="row">
-        <span class="check"><span class="box">&#10004;</span> Numéraire</span>
-        <span class="check"><span class="box"></span> Titres de sociétés cotées</span>
-        <span class="check"><span class="box"></span> Autres</span>
-      </div>
-    </div>
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  doc.text("N° 11580*05", leftColX + leftColW / 2, y + 19, { align: "center" });
 
-    <!-- FOOTER (mode + date + signature) -->
-    <div class="footer-row">
-      <div class="left">
-        Mode de versement : <strong>CB</strong>
-      </div>
-      <div class="right">
-        <div>Date et signature</div>
-        <div class="date">${donDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</div>
-        ${presidentName ? `<div class="pres">M. ${esc(presidentName)}, Président :</div>` : ""}
-        <div class="sig">
-          ${syna?.signature_image_url && safeUrl(syna.signature_image_url) ? `<img src="${safeUrl(syna.signature_image_url)}" alt="Signature">` : ""}
-        </div>
-      </div>
-    </div>
+  // Colonne centrale : titre
+  doc.setTextColor(...TEXT);
+  doc.setFontSize(9.5);
+  doc.setFont("helvetica", "bold");
+  const titleLines = [
+    "Recu des dons et versements",
+    "effectues par les particuliers au titre",
+    "des articles 200 et 978 du code",
+    "general des impots",
+  ];
+  const centerX = pageW / 2;
+  let titleY = y + 6;
+  titleLines.forEach((line) => {
+    doc.text(line, centerX, titleY, { align: "center" });
+    titleY += 4;
+  });
 
-    <div class="footer-mention">Reçu cerfa généré par Chabbat Chalom</div>
-    <div class="footer-note">Article ${esc(articleCgi)} du Code Général des Impôts — Réf. interne : ${esc(donation.id)}</div>
-  </div>
-</body>
-</html>`;
+  // Colonne droite : N° d'ordre
+  const rightColX = frameX + frameW - 4;
+  doc.setTextColor(...GOLD);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.text("N° d'ordre du recu", rightColX, y + 9, { align: "right" });
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text(finalCerfaNumber, rightColX, y + 14.5, { align: "right" });
 
-  // Return HTML as string (not Uint8Array) so Cloudflare keeps the Content-Type as text/html
-  return new Response(html, {
+  // Ligne de séparation top header
+  doc.setDrawColor(...GOLD);
+  doc.setLineWidth(0.5);
+  doc.line(frameX, y + topH, frameX + frameW, y + topH);
+  y += topH;
+
+  // ========== DONOR HEADER (logo synagogue + adresse donateur) ==========
+  const donorBarH = 22;
+  doc.setFillColor(255, 255, 255);
+  doc.rect(frameX, y, frameW, donorBarH, "F");
+
+  // Logo synagogue (à gauche, sans image — juste nom)
+  const logoColX = frameX;
+  const logoColW = 50;
+  doc.setTextColor(...GOLD);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  const synaName = syna?.name || legalName;
+  const wrappedSyna = doc.splitTextToSize(synaName, logoColW - 6);
+  doc.text(wrappedSyna, logoColX + logoColW / 2, y + 11, { align: "center", maxWidth: logoColW - 6 });
+
+  // Bloc adresse donateur
+  const donorX = frameX + logoColW + 2;
+  const donorW = frameW - logoColW - 4;
+  doc.setTextColor(...TEXT);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text(donorDisplayName, donorX, y + 6);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  const addrLines = doc.splitTextToSize(donation.donor_address || "—", donorW - 4);
+  doc.text(addrLines, donorX, y + 11);
+  doc.text(`Courriel : ${donation.donor_email}`, donorX, y + 11 + (addrLines.length * 4));
+
+  // Séparateur
+  doc.setDrawColor(...BORDER_LIGHT);
+  doc.setLineWidth(0.2);
+  doc.line(frameX, y + donorBarH, frameX + frameW, y + donorBarH);
+  y += donorBarH;
+
+  // ========== SECTION TITLE: BENEFICIAIRE ==========
+  y = drawSectionTitle(doc, "BENEFICIAIRE DU DON", frameX, y, frameW);
+
+  // ========== Grid Bénéficiaire ==========
+  const rows1: Array<[string, string, boolean]> = [
+    ["NOM OU DENOMINATION :", legalName, false],
+    ["Numero SIREN ou RNA :", rnaSiret || "A COMPLETER (config CERFA)", !rnaSiret],
+    ["ADRESSE ASSOCIATION :", syna?.address || "—", false],
+    ["OBJET :", associationObject, false],
+    ["QUALITE DE L'ORGANISME :", organismQuality, false],
+  ];
+  y = drawGrid(doc, rows1, frameX, y, frameW);
+
+  // ========== MONTANT ==========
+  const amountH = 22;
+  doc.setFillColor(...CREAM_BG);
+  doc.rect(frameX, y, frameW, amountH, "F");
+  doc.setTextColor(...TEXT);
+  doc.setFontSize(8.5);
+  doc.setFont("helvetica", "normal");
+  const amtIntro = doc.splitTextToSize(
+    "Le beneficiaire reconnait avoir recu au titre des dons et versements ouvrant droit a reduction d'impot, la somme de",
+    frameW - 16
+  );
+  let amtY = y + 5;
+  amtIntro.forEach((line: string) => {
+    doc.text(line, pageW / 2, amtY, { align: "center" });
+    amtY += 4;
+  });
+
+  // Pill montant
+  const amountStr = `***${amountEuros.toFixed(2).replace(/\.00$/, "")} Euros*** (${amountInWords} euros)`;
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  const pillTextW = doc.getTextWidth(amountStr);
+  const pillW = Math.min(pillTextW + 16, frameW - 20);
+  const pillH = 7;
+  const pillX = (pageW - pillW) / 2;
+  const pillY = y + amountH - pillH - 2;
+  doc.setDrawColor(...GOLD);
+  doc.setFillColor(255, 255, 255);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(pillX, pillY, pillW, pillH, 1, 1, "FD");
+  doc.setTextColor(...GOLD);
+  // Si trop long, réduire la police
+  let amtFontSize = 10;
+  while (doc.getTextWidth(amountStr) > pillW - 8 && amtFontSize > 6) {
+    amtFontSize -= 0.5;
+    doc.setFontSize(amtFontSize);
+  }
+  doc.text(amountStr, pageW / 2, pillY + pillH / 2 + 1.5, { align: "center" });
+
+  doc.setDrawColor(...BORDER_LIGHT);
+  doc.setLineWidth(0.2);
+  doc.line(frameX, y + amountH, frameX + frameW, y + amountH);
+  y += amountH;
+
+  // ========== SECTION TITLE: DONATEUR ==========
+  y = drawSectionTitle(doc, "DONATEUR", frameX, y, frameW);
+
+  const rows2: Array<[string, string, boolean]> = [
+    ["NOM OU DENOMINATION :", donorDisplayName, false],
+    ["ADRESSE DONATEUR :", donation.donor_address || "—", false],
+  ];
+  y = drawGrid(doc, rows2, frameX, y, frameW);
+
+  // ========== CHECKBOXES ==========
+  const checksStartY = y;
+  doc.setFillColor(255, 255, 255);
+  // Hauteur estimée
+  const checksH = 38;
+  doc.rect(frameX, y, frameW, checksH, "F");
+
+  doc.setTextColor(...TEXT);
+  doc.setFontSize(8.5);
+  doc.setFont("helvetica", "bold");
+  const certifyLines = [
+    "Le beneficiaire certifie sur l'honneur que les dons et versements qu'il recoit",
+    "ouvrent droit a la reduction d'impot prevue a l'article",
+  ];
+  let cy = y + 4.5;
+  certifyLines.forEach((line) => {
+    doc.text(line, pageW / 2, cy, { align: "center" });
+    cy += 4;
+  });
+
+  // Row articles
+  cy += 2;
+  const articleItems: Array<[boolean, string]> = [
+    [article200Checked, "200 du CGI"],
+    [article238Checked, "238 bis du CGI"],
+    [article978Checked, "978 du CGI"],
+  ];
+  drawCheckRow(doc, articleItems, frameX + 6, cy, frameW - 12);
+  cy += 7;
+
+  // Forme du don
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GOLD);
+  doc.text("Forme du don", frameX + 6, cy);
+  // Soulignement
+  const ftw = doc.getTextWidth("Forme du don");
+  doc.setLineWidth(0.2);
+  doc.setDrawColor(...GOLD);
+  doc.line(frameX + 6, cy + 0.8, frameX + 6 + ftw, cy + 0.8);
+  cy += 4;
+  drawCheckRow(doc, [
+    [false, "Acte authentique"],
+    [false, "Acte sous seing prive"],
+    [true, "Declaration de don manuel"],
+    [false, "Autres"],
+  ], frameX + 6, cy, frameW - 12);
+  cy += 7;
+
+  // Nature du don
+  doc.setTextColor(...GOLD);
+  doc.setFont("helvetica", "bold");
+  doc.text("Nature du don", frameX + 6, cy);
+  const ntw = doc.getTextWidth("Nature du don");
+  doc.line(frameX + 6, cy + 0.8, frameX + 6 + ntw, cy + 0.8);
+  cy += 4;
+  drawCheckRow(doc, [
+    [true, "Numeraire"],
+    [false, "Titres de societes cotees"],
+    [false, "Autres"],
+  ], frameX + 6, cy, frameW - 12);
+  cy += 5;
+
+  const checksRealH = cy - checksStartY;
+  doc.setDrawColor(...BORDER_LIGHT);
+  doc.setLineWidth(0.2);
+  doc.line(frameX, checksStartY + checksRealH, frameX + frameW, checksStartY + checksRealH);
+  y = checksStartY + checksRealH;
+
+  // ========== FOOTER (mode + date + signature) ==========
+  const footerH = 28;
+  doc.setFillColor(...CREAM_BG);
+  doc.rect(frameX, y, frameW, footerH, "F");
+
+  // Gauche : mode de versement
+  doc.setTextColor(...TEXT);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text("Mode de versement : ", frameX + 6, y + 8);
+  const mvw = doc.getTextWidth("Mode de versement : ");
+  doc.setFont("helvetica", "bold");
+  doc.text("CB", frameX + 6 + mvw, y + 8);
+
+  // Droite : date + signature
+  const rxRight = frameX + frameW - 6;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.text("Date et signature", rxRight, y + 5, { align: "right" });
+  doc.setFont("helvetica", "bold");
+  const dateStr = donDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  doc.text(dateStr, rxRight, y + 10, { align: "right" });
+  if (presidentName) {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(...GOLD_DARK);
+    doc.text(`M. ${presidentName}, President :`, rxRight, y + 14.5, { align: "right" });
+  }
+  // Signature texte si pas d'image
+  if (syna?.signature) {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(11);
+    doc.setTextColor(...GOLD_DARK);
+    doc.text(syna.signature, rxRight, y + 22, { align: "right" });
+  }
+
+  doc.setDrawColor(...BORDER_LIGHT);
+  doc.setLineWidth(0.2);
+  doc.line(frameX, y + footerH, frameX + frameW, y + footerH);
+  y += footerH;
+
+  // ========== FOOTER MENTION ==========
+  doc.setTextColor(...GOLD);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("RECU CERFA GENERE PAR CHABBAT CHALOM", pageW / 2, y + 6, { align: "center" });
+
+  doc.setTextColor(136, 136, 136);
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "italic");
+  doc.text(
+    `Article ${articleCgi} du Code General des Impots — Ref. interne : ${donation.id}`,
+    pageW / 2,
+    y + 11,
+    { align: "center" }
+  );
+  y += 14;
+
+  // ========== CADRE EXTERIEUR (englobe tout) ==========
+  doc.setDrawColor(...GOLD);
+  doc.setLineWidth(0.6);
+  doc.rect(frameX, frameStartY, frameW, y - frameStartY);
+
+  // Output
+  const pdfArrayBuffer = doc.output("arraybuffer");
+  const pdfBytes = new Uint8Array(pdfArrayBuffer);
+
+  return new Response(pdfBytes, {
     status: 200,
     headers: {
       ...corsHeaders,
-      "Content-Type": "text/html; charset=utf-8",
-      "Content-Disposition": "inline",
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `inline; filename="cerfa-don-${finalCerfaNumber.replace(/\//g, "-")}.pdf"`,
       "Cache-Control": "no-store",
     },
   });
 });
 
-// Simple number-to-French-words for amounts (basic, suitable for <1M)
+// ====== HELPERS ======
+
+function drawSectionTitle(doc: any, title: string, x: number, y: number, w: number): number {
+  const h = 6.5;
+  doc.setFillColor(...GOLD);
+  doc.rect(x, y, w, h, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text(title, x + w / 2, y + h / 2 + 1.5, { align: "center" });
+  return y + h;
+}
+
+function drawGrid(
+  doc: any,
+  rows: Array<[string, string, boolean]>,
+  x: number,
+  y: number,
+  w: number
+): number {
+  const labelW = 55;
+  const valueW = w - labelW;
+  const padX = 3;
+  const lineH = 4.2;
+
+  rows.forEach(([label, value, missing], idx) => {
+    // Calculer la hauteur dynamique selon le wrap
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    const valueLines = doc.splitTextToSize(value, valueW - padX * 2);
+    const rowH = Math.max(7, valueLines.length * lineH + 2.5);
+
+    // BG label
+    doc.setFillColor(...CREAM_BG);
+    doc.rect(x, y, labelW, rowH, "F");
+    // BG value
+    doc.setFillColor(255, 255, 255);
+    doc.rect(x + labelW, y, valueW, rowH, "F");
+
+    // Texte label
+    doc.setTextColor(...GOLD_DARK);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text(label, x + padX, y + 4.5);
+
+    // Texte value
+    if (missing) {
+      doc.setTextColor(...RED_WARN);
+      doc.setFont("helvetica", "bold");
+    } else {
+      doc.setTextColor(...TEXT);
+      doc.setFont("helvetica", "normal");
+    }
+    doc.setFontSize(8.5);
+    doc.text(valueLines, x + labelW + padX, y + 4.5);
+
+    // Bordure basse (sauf dernière)
+    if (idx < rows.length - 1) {
+      doc.setDrawColor(240, 226, 195); // #f0e2c3
+      doc.setLineWidth(0.15);
+      doc.line(x, y + rowH, x + w, y + rowH);
+    }
+
+    y += rowH;
+  });
+
+  // Bordure basse finale plus marquée
+  doc.setDrawColor(...BORDER_LIGHT);
+  doc.setLineWidth(0.2);
+  doc.line(x, y, x + w, y);
+
+  return y;
+}
+
+function drawCheckRow(
+  doc: any,
+  items: Array<[boolean, string]>,
+  x: number,
+  y: number,
+  maxW: number,
+) {
+  const boxSize = 3.2;
+  const gapBoxLabel = 1.5;
+  const gapItems = 5;
+  let cursorX = x;
+
+  doc.setFontSize(8.5);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...TEXT);
+
+  items.forEach(([checked, label]) => {
+    // Box
+    doc.setDrawColor(...GOLD);
+    doc.setLineWidth(0.3);
+    doc.setFillColor(255, 255, 255);
+    doc.rect(cursorX, y - boxSize + 0.5, boxSize, boxSize, "FD");
+
+    if (checked) {
+      doc.setTextColor(...GOLD);
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "bold");
+      doc.text("X", cursorX + boxSize / 2, y - 0.5, { align: "center" });
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "normal");
+    }
+
+    // Label
+    doc.setTextColor(...TEXT);
+    const labelX = cursorX + boxSize + gapBoxLabel;
+    doc.text(label, labelX, y);
+    cursorX = labelX + doc.getTextWidth(label) + gapItems;
+
+    // Wrap si dépasse (simple)
+    if (cursorX > x + maxW) {
+      cursorX = x;
+      y += 5;
+    }
+  });
+}
+
+// Number to French words
 function numberToFrenchWords(n: number): string {
-  if (n === 0) return "zéro";
+  if (n === 0) return "zero";
   const units = ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"];
   const tens = ["", "", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante", "quatre-vingt", "quatre-vingt"];
   const intPart = Math.floor(n);
@@ -296,5 +572,5 @@ function numberToFrenchWords(n: number): string {
   }
   result += below1000(intPart % 1000);
   if (decPart > 0) result += " et " + decPart + "/100";
-  return result.trim() || "zéro";
+  return result.trim() || "zero";
 }
