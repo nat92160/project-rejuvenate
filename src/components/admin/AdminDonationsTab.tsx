@@ -182,6 +182,33 @@ const AdminDonationsTab = () => {
     else { toast.success("✅ Reversement enregistré"); fetchAll(); }
   };
 
+  const handleDeleteDonation = async (d: Donation) => {
+    const label = d.cerfa_number || d.donor_name || d.donor_email || d.id.slice(0, 8);
+    if (!confirm(`Supprimer définitivement le don "${label}" (${fmtEuro(d.amount)}) ?\n\nIl disparaîtra de la vue Président ET de l'espace personnel du fidèle.`)) return;
+    const { error } = await supabase.from("donations").delete().eq("id", d.id);
+    if (error) {
+      toast.error("Suppression impossible : " + error.message);
+      return;
+    }
+    toast.success("✅ Don supprimé");
+    setDonations((prev) => prev.filter((x) => x.id !== d.id));
+  };
+
+  const handleToggleCerfa = async (d: Donation) => {
+    const next = !d.cerfa_generated;
+    const action = next ? "réactiver" : "désactiver";
+    if (!confirm(`Voulez-vous ${action} le CERFA pour ce don ?`)) return;
+    const payload: any = { cerfa_generated: next };
+    if (!next) payload.cerfa_number = null;
+    const { error } = await supabase.from("donations").update(payload).eq("id", d.id);
+    if (error) {
+      toast.error("Mise à jour impossible : " + error.message);
+      return;
+    }
+    toast.success(next ? "✅ CERFA réactivé" : "🚫 CERFA désactivé");
+    setDonations((prev) => prev.map((x) => x.id === d.id ? { ...x, cerfa_generated: next, cerfa_number: next ? x.cerfa_number : null } : x));
+  };
+
   const exportDonationsCsv = () => {
     const rows = [
       ["N° CERFA", "Date", "Synagogue", "Donateur", "Email", "Type", "Montant (€)", "Statut", "CERFA généré"],
@@ -281,6 +308,7 @@ const AdminDonationsTab = () => {
                   <th className="text-right p-2 font-bold">Montant</th>
                   <th className="text-center p-2 font-bold">Statut</th>
                   <th className="text-center p-2 font-bold">CERFA</th>
+                  <th className="text-center p-2 font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -300,18 +328,36 @@ const AdminDonationsTab = () => {
                         </span>
                       </td>
                       <td className="p-2 text-center">{d.cerfa_generated ? "✅" : "—"}</td>
+                      <td className="p-2 text-center whitespace-nowrap">
+                        <div className="flex gap-1 justify-center">
+                          <button
+                            onClick={() => handleToggleCerfa(d)}
+                            className="px-2 py-1 rounded-md text-[10px] font-bold border border-border bg-muted hover:bg-muted/70 cursor-pointer"
+                            title={d.cerfa_generated ? "Désactiver le CERFA" : "Réactiver le CERFA"}
+                          >
+                            {d.cerfa_generated ? "🚫" : "♻️"}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDonation(d)}
+                            className="px-2 py-1 rounded-md text-[10px] font-bold border-none cursor-pointer text-white bg-destructive hover:opacity-90"
+                            title="Supprimer définitivement"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
                 {filteredDonations.length === 0 && (
-                  <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Aucun don trouvé</td></tr>
+                  <tr><td colSpan={9} className="p-6 text-center text-muted-foreground">Aucun don trouvé</td></tr>
                 )}
               </tbody>
               <tfoot className="bg-muted/30">
                 <tr>
                   <td colSpan={5} className="p-2 font-bold text-right">TOTAL</td>
                   <td className="p-2 text-right font-bold text-primary">{fmtEuro(totalDonations)}</td>
-                  <td colSpan={2} />
+                  <td colSpan={3} />
                 </tr>
               </tfoot>
             </table>
