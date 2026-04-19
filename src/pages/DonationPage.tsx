@@ -153,7 +153,11 @@ const DonationPage = () => {
         console.warn("Capacitor browser fallback to window.location", e);
       }
       window.location.href = data.url;
+      return;
     }
+
+    toast.error("Impossible d'ouvrir la page de paiement");
+    setSubmitting(false);
   };
 
   if (loading) {
