@@ -681,35 +681,38 @@ const DonationPage = () => {
                 </>
               )}
 
-              {donorType === "particulier" && (
-                <div>
-                  <Label className="text-xs font-semibold mb-2 block">Civilité *</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setDonorCivility("M")}
-                      className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-all border cursor-pointer ${
-                        donorCivility === "M"
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-background text-foreground hover:border-primary/50"
-                      }`}
-                    >
-                      Mr
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDonorCivility("Mme")}
-                      className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-all border cursor-pointer ${
-                        donorCivility === "Mme"
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-background text-foreground hover:border-primary/50"
-                      }`}
-                    >
-                      Mme
-                    </button>
-                  </div>
+              {/* Civilité — always visible, used both for particulier (CERFA) and société (représentant) */}
+              <div>
+                <Label className="text-xs font-semibold mb-2 block">
+                  Civilité * <span className="text-muted-foreground font-normal">(M. ou Mme)</span>
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDonorCivility("M")}
+                    aria-pressed={donorCivility === "M"}
+                    className={`py-3 px-3 rounded-xl text-base font-bold transition-all border cursor-pointer ${
+                      donorCivility === "M"
+                        ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/30"
+                        : "border-border bg-background text-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    M.
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDonorCivility("Mme")}
+                    aria-pressed={donorCivility === "Mme"}
+                    className={`py-3 px-3 rounded-xl text-base font-bold transition-all border cursor-pointer ${
+                      donorCivility === "Mme"
+                        ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/30"
+                        : "border-border bg-background text-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    Mme
+                  </button>
                 </div>
-              )}
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs font-semibold">Prénom *</Label>
