@@ -308,6 +308,7 @@ const AdminDonationsTab = () => {
                   <th className="text-right p-2 font-bold">Montant</th>
                   <th className="text-center p-2 font-bold">Statut</th>
                   <th className="text-center p-2 font-bold">CERFA</th>
+                  <th className="text-center p-2 font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -327,18 +328,36 @@ const AdminDonationsTab = () => {
                         </span>
                       </td>
                       <td className="p-2 text-center">{d.cerfa_generated ? "✅" : "—"}</td>
+                      <td className="p-2 text-center whitespace-nowrap">
+                        <div className="flex gap-1 justify-center">
+                          <button
+                            onClick={() => handleToggleCerfa(d)}
+                            className="px-2 py-1 rounded-md text-[10px] font-bold border border-border bg-muted hover:bg-muted/70 cursor-pointer"
+                            title={d.cerfa_generated ? "Désactiver le CERFA" : "Réactiver le CERFA"}
+                          >
+                            {d.cerfa_generated ? "🚫" : "♻️"}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDonation(d)}
+                            className="px-2 py-1 rounded-md text-[10px] font-bold border-none cursor-pointer text-white bg-destructive hover:opacity-90"
+                            title="Supprimer définitivement"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
                 {filteredDonations.length === 0 && (
-                  <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Aucun don trouvé</td></tr>
+                  <tr><td colSpan={9} className="p-6 text-center text-muted-foreground">Aucun don trouvé</td></tr>
                 )}
               </tbody>
               <tfoot className="bg-muted/30">
                 <tr>
                   <td colSpan={5} className="p-2 font-bold text-right">TOTAL</td>
                   <td className="p-2 text-right font-bold text-primary">{fmtEuro(totalDonations)}</td>
-                  <td colSpan={2} />
+                  <td colSpan={3} />
                 </tr>
               </tfoot>
             </table>
