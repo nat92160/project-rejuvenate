@@ -36,12 +36,20 @@ serve(async (req) => {
 
   const { data: donation, error } = await supabaseAdmin
     .from("donations")
-    .select("id, amount, donor_name, donor_email, donor_address, donor_type, donor_company_name, donor_siret, created_at, synagogue_id, cerfa_number, fiscal_year")
+    .select("id, amount, donor_name, donor_email, donor_address, donor_type, donor_company_name, donor_siret, created_at, synagogue_id, cerfa_number, fiscal_year, cerfa_generated")
     .eq("cerfa_token", token)
     .single();
 
   if (error || !donation) {
     return new Response("Reçu introuvable", { status: 404, headers: corsHeaders });
+  }
+
+  // SECURITY: never deliver a CERFA for a payment that is not confirmed by Stripe.
+  if (!donation.cerfa_generated) {
+    return new Response(
+      "Le paiement n'est pas encore confirmé par Stripe. Le reçu CERFA sera disponible dès la validation du paiement.",
+      { status: 402, headers: corsHeaders }
+    );
   }
 
   const { data: syna } = await supabaseAdmin
