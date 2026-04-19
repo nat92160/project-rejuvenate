@@ -96,7 +96,7 @@ serve(async (req) => {
       }
     }
 
-    const cerfaUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-cerfa?token=${donation.cerfa_token}`;
+    const cerfaUrl = `https://chabbat-chalom.com/cerfa/${encodeURIComponent(donation.cerfa_token)}`;
 
     return new Response(
       JSON.stringify({
