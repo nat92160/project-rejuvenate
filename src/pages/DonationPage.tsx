@@ -139,6 +139,19 @@ const DonationPage = () => {
     }
 
     if (data?.url) {
+      // On native iOS/Android (Capacitor), open in system browser
+      // so Stripe Checkout works (and can redirect back to the app via universal links / web URL).
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (Capacitor.isNativePlatform()) {
+          const { Browser } = await import("@capacitor/browser");
+          await Browser.open({ url: data.url, presentationStyle: "fullscreen" });
+          setSubmitting(false);
+          return;
+        }
+      } catch (e) {
+        console.warn("Capacitor browser fallback to window.location", e);
+      }
       window.location.href = data.url;
     }
   };
