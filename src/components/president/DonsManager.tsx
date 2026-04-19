@@ -176,6 +176,21 @@ const DonsManager = () => {
     }
   };
 
+  const shareCerfa = async (donation: Donation) => {
+    if (!cerfaConfigured) {
+      toast.error("Configurez d'abord les informations légales (onglet CERFA).");
+      return;
+    }
+    if (!donation.cerfa_token) {
+      toast.error("Reçu indisponible (token manquant).");
+      return;
+    }
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const url = `${supabaseUrl}/functions/v1/generate-cerfa?token=${donation.cerfa_token}`;
+    const message = `Reçu fiscal CERFA — ${synagogueName}\nDon de ${(donation.amount / 100).toFixed(2)} € au nom de ${donation.donor_name || donation.donor_email}\n\n${url}`;
+    await shareText(message, `Reçu CERFA — ${synagogueName}`);
+  };
+
   const exportCsv = () => {
     if (!donations.length) return;
     const header = "Date,Donateur,Email,Montant (€),CERFA\n";
