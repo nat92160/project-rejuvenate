@@ -329,6 +329,23 @@ const DonationPage = () => {
               Les dons ne sont pas encore activés pour cette synagogue.
             </p>
           </div>
+        ) : !cerfaReady ? (
+          <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-6 text-center space-y-3">
+            <div className="text-4xl">⚠️</div>
+            <h2 className="text-lg font-bold text-amber-900">Configuration fiscale incomplète</h2>
+            <p className="text-sm text-amber-800">
+              Cette synagogue n'a pas encore finalisé les informations légales requises pour émettre des reçus fiscaux conformes (CERFA 2041-RD).
+            </p>
+            <div className="text-left bg-white/60 rounded-lg p-3 text-xs text-amber-900">
+              <p className="font-semibold mb-1">Informations manquantes :</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                {cerfaMissing.map((m) => <li key={m}>{m}</li>)}
+              </ul>
+            </div>
+            <p className="text-xs text-amber-700">
+              Les dons sont temporairement désactivés. Le président de cette synagogue doit compléter la configuration CERFA depuis son tableau de bord.
+            </p>
+          </div>
         ) : (
           <div className="rounded-2xl border border-border bg-card p-6 space-y-6">
             {/* Campaign selection */}
