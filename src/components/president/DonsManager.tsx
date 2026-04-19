@@ -160,19 +160,23 @@ const DonsManager = () => {
     }
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const url = `${supabaseUrl}/functions/v1/generate-cerfa?token=${donation.cerfa_token}`;
-    const newTab = window.open("about:blank", "_blank");
+
+    // Native (iOS/Android Capacitor) → open in system browser
     try {
-      const res = await fetch(url, { headers: { Accept: "text/html" } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const html = await res.text();
-      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-      const blobUrl = URL.createObjectURL(blob);
-      if (newTab) newTab.location.href = blobUrl; else window.location.href = blobUrl;
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+      const { Capacitor } = await import("@capacitor/core");
+      if (Capacitor.isNativePlatform()) {
+        const { Browser } = await import("@capacitor/browser");
+        await Browser.open({ url, presentationStyle: "fullscreen" });
+        return;
+      }
     } catch (e) {
-      console.error(e);
-      if (newTab) newTab.close();
-      toast.error("Impossible d'ouvrir le reçu CERFA.");
+      console.warn("Capacitor browser fallback", e);
+    }
+
+    // Web → open immediately (sync) so iOS Safari doesn't block it
+    const newTab = window.open(url, "_blank", "noopener,noreferrer");
+    if (!newTab) {
+      window.location.href = url;
     }
   };
 
