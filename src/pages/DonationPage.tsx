@@ -212,6 +212,20 @@ const DonationPage = () => {
   }
 
   if (success) {
+    const openCerfa = async (url: string) => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (Capacitor.isNativePlatform()) {
+          const { Browser } = await import("@capacitor/browser");
+          await Browser.open({ url, presentationStyle: "fullscreen" });
+          return;
+        }
+      } catch (e) {
+        // fall through to window.open
+      }
+      window.open(url, "_blank", "noopener,noreferrer");
+    };
+
     const fetchCerfa = async () => {
       if (!sessionId) {
         setCerfaError("Identifiant de session manquant");
@@ -227,8 +241,7 @@ const DonationPage = () => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Erreur");
         setCerfaUrl(data.cerfa_url);
-        // Auto-open in new tab
-        window.open(data.cerfa_url, "_blank");
+        await openCerfa(data.cerfa_url);
       } catch (e: any) {
         setCerfaError(e.message || "Reçu non disponible pour l'instant");
       } finally {
