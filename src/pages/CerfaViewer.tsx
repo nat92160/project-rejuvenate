@@ -89,17 +89,12 @@ const CerfaViewer = () => {
             </Button>
           </div>
         ) : (
-          <>
-            <p className="mb-3 text-center text-sm text-muted-foreground">
-              Sur smartphone, appuyez sur <span className="font-semibold text-foreground">PDF / Imprimer</span> pour enregistrer ou partager le reçu.
-            </p>
-            <iframe
-              ref={iframeRef}
-              title="CERFA"
-              srcDoc={html}
-              className="h-[calc(100vh-10rem)] min-h-[640px] w-full rounded-xl border border-border bg-background"
-            />
-          </>
+          <iframe
+            ref={iframeRef}
+            title="CERFA"
+            srcDoc={html}
+            className="h-[calc(100vh-7rem)] min-h-[640px] w-full rounded-xl border border-border bg-background"
+          />
         )}
       </div>
     </main>
