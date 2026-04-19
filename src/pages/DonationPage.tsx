@@ -54,20 +54,26 @@ const DonationPage = () => {
   useEffect(() => {
     if (!slug) return;
     (async () => {
-      // Centralized model: lookup by donation_slug on synagogue_profiles, or by raw UUID fallback
+      // Centralized model: single lookup on synagogue_profiles by donation_slug, or raw UUID fallback
       let synaId: string | null = null;
+      let synaProfile: { id: string; name: string; logo_url: string | null; donation_slug: string | null } | null = null;
 
-      const { data: synaBySlug } = await supabase
+      const { data: sa } = await supabase
         .from("synagogue_profiles")
-        .select("id")
+        .select("id, name, logo_url, donation_slug")
         .eq("donation_slug", slug)
         .maybeSingle();
 
-      if (synaBySlug?.id) {
-        synaId = synaBySlug.id;
+      if (sa?.id) {
+        synaId = sa.id;
+        synaProfile = sa;
+        setStripeReady(true);
       } else {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
-        if (isUuid) synaId = slug;
+        if (isUuid) {
+          synaId = slug;
+          setStripeReady(true);
+        }
       }
 
       if (!synaId) {
@@ -75,23 +81,28 @@ const DonationPage = () => {
         return;
       }
 
-      // Get synagogue info + active campaigns in parallel
-      const [{ data: profile }, { data: camps }] = await Promise.all([
-        supabase
-          .from("synagogue_profiles")
-          .select("name, logo_url")
-          .eq("id", synaId)
-          .single(),
-        (supabase
+      const campaignQuery = (supabase
           .from("donation_campaigns" as any)
           .select("id, title, description, goal_amount, current_amount, cover_image_url, end_date") as any)
           .eq("synagogue_id", synaId)
           .eq("is_active", true)
-          .order("created_at", { ascending: false }),
+          .order("created_at", { ascending: false });
+
+      const [{ data: camps }, { data: profileById }] = await Promise.all([
+        campaignQuery,
+        synaProfile
+          ? Promise.resolve({ data: null })
+          : supabase
+              .from("synagogue_profiles")
+              .select("id, name, logo_url, donation_slug")
+              .eq("id", synaId)
+              .maybeSingle(),
       ]);
 
+      const profile = synaProfile ?? profileById;
+
       if (profile) {
-        setSynagogue({ id: synaId, name: profile.name, logo_url: profile.logo_url });
+        setSynagogue({ id: profile.id, name: profile.name, logo_url: profile.logo_url });
       }
       setCampaigns((camps as Campaign[]) || []);
       setLoading(false);
