@@ -381,6 +381,19 @@ const DonationPage = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
+        {/* Top bar with back-home */}
+        <div className="flex justify-start mb-2">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground bg-transparent border-none cursor-pointer px-2 py-1.5 rounded-lg"
+            style={{ minHeight: 36 }}
+          >
+            <Home className="w-3.5 h-3.5" />
+            Accueil
+          </button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           {synagogue.logo_url ? (
