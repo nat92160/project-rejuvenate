@@ -181,13 +181,8 @@ const SynagogueChooser = ({ onSelect }: Props) => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Auto-geolocate on mount if no GPS position yet (improves distance accuracy)
-  useEffect(() => {
-    if (!city._gps && !isGeolocating) {
-      geolocate();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Note: GPS prompt is handled centrally by triggerAutoGeo() in Index.tsx
+  // to avoid duplicate browser geolocation prompts.
 
   const allItems: SynaItem[] = useMemo(() => {
     // Tri STRICT par distance — aucune priorité partenaire/Google
