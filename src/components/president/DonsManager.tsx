@@ -31,17 +31,8 @@ const DonsManager = () => {
   const [synagogueAddress, setSynagogueAddress] = useState("");
   const [cerfaInfo, setCerfaInfo] = useState<{ legalName: string; rna: string; siret: string; article: string; presidentName: string; signature: string }>({ legalName: "", rna: "", siret: "", article: "200", presidentName: "", signature: "" });
 
-  const [stripeOnboarded, setStripeOnboarded] = useState(false);
-  const [stripeExists, setStripeExists] = useState(false);
-  const [newSlug, setNewSlug] = useState("");
-  const [savingSlug, setSavingSlug] = useState(false);
-  const [onboarding, setOnboarding] = useState(false);
-  const [donationSlug, setDonationSlug] = useState("");
-
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loadingDonations, setLoadingDonations] = useState(false);
-
-  const [donationLink, setDonationLink] = useState("");
 
   useEffect(() => {
     if (!user) return;
