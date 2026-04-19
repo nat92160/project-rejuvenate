@@ -41,36 +41,34 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Find synagogue by slug — accept either a custom slug OR a raw synagogue UUID (platform fallback)
+    // CENTRALIZED MODEL: all payments go to the main MN Partners Stripe account.
+    // Look up synagogue by donation_slug, or by raw UUID as fallback.
     let synagogueId: string | null = null;
+    let synagogueName: string | null = null;
 
-    const { data: stripeAccount } = await supabaseAdmin
-      .from("synagogue_stripe_accounts")
-      .select("synagogue_id")
-      .eq("custom_donation_slug", slug)
+    const { data: synaBySlug } = await supabaseAdmin
+      .from("synagogue_profiles")
+      .select("id, name")
+      .eq("donation_slug", slug)
       .maybeSingle();
 
-    if (stripeAccount?.synagogue_id) {
-      synagogueId = stripeAccount.synagogue_id;
+    if (synaBySlug?.id) {
+      synagogueId = synaBySlug.id;
+      synagogueName = synaBySlug.name;
     } else {
-      // Fallback: treat slug as synagogue UUID (platform centralized model)
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
       if (!isUuid) throw new Error("Synagogue non trouvée");
-      const { data: syna } = await supabaseAdmin
+      const { data: synaById } = await supabaseAdmin
         .from("synagogue_profiles")
-        .select("id")
+        .select("id, name")
         .eq("id", slug)
         .maybeSingle();
-      if (!syna) throw new Error("Synagogue non trouvée");
-      synagogueId = syna.id;
+      if (!synaById) throw new Error("Synagogue non trouvée");
+      synagogueId = synaById.id;
+      synagogueName = synaById.name;
     }
 
-    // Get synagogue name
-    const { data: synaProfile } = await supabaseAdmin
-      .from("synagogue_profiles")
-      .select("name")
-      .eq("id", synagogueId)
-      .single();
+    const synaProfile = { name: synagogueName };
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const origin = req.headers.get("origin") || "";
