@@ -75,20 +75,47 @@ async function buildCerfaPdfBlob(token: string): Promise<Blob> {
     iframeDocument.body.style.padding = "0";
     iframeDocument.body.style.width = `${A4_WIDTH_PX}px`;
 
+    // PDF-safe overrides: police système stable, kerning/ligatures désactivés,
+    // espacement neutre — évite le chevauchement de lettres avec html2canvas.
+    const styleFix = iframeDocument.createElement("style");
+    styleFix.textContent = `
+      * {
+        font-family: Arial, Helvetica, "Liberation Sans", sans-serif !important;
+        font-kerning: none !important;
+        font-feature-settings: "kern" 0, "liga" 0, "calt" 0 !important;
+        font-variant-ligatures: none !important;
+        letter-spacing: normal !important;
+        word-spacing: normal !important;
+        text-rendering: geometricPrecision !important;
+        -webkit-font-smoothing: antialiased !important;
+      }
+      body { font-size: 11px !important; line-height: 1.4 !important; }
+    `;
+    iframeDocument.head.appendChild(styleFix);
+
+    // Laisse le navigateur recalculer la mise en page après injection du style
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    const fullHeight = Math.max(
+      iframeDocument.body.scrollHeight,
+      iframeDocument.documentElement.scrollHeight,
+    );
+
     const canvas = await html2canvas(iframeDocument.body, {
       backgroundColor: "#ffffff",
       scale: 2,
       useCORS: true,
       allowTaint: false,
+      logging: false,
       width: A4_WIDTH_PX,
-      height: iframeDocument.body.scrollHeight,
+      height: fullHeight,
       windowWidth: A4_WIDTH_PX,
-      windowHeight: Math.max(A4_HEIGHT_PX, iframeDocument.body.scrollHeight),
+      windowHeight: Math.max(A4_HEIGHT_PX, fullHeight),
       scrollX: 0,
       scrollY: 0,
     });
 
-    const imgData = canvas.toDataURL("image/jpeg", 0.98);
+    const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -102,13 +129,13 @@ async function buildCerfaPdfBlob(token: string): Promise<Blob> {
     let renderedHeight = imgHeight;
     let position = 0;
 
-    pdf.addImage(imgData, "JPEG", 0, position, pageWidth, imgHeight, undefined, "FAST");
+    pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight, undefined, "FAST");
     renderedHeight -= pageHeight;
 
     while (renderedHeight > 0) {
       position = renderedHeight - imgHeight;
       pdf.addPage();
-      pdf.addImage(imgData, "JPEG", 0, position, pageWidth, imgHeight, undefined, "FAST");
+      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight, undefined, "FAST");
       renderedHeight -= pageHeight;
     }
 
