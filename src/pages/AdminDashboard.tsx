@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import PrayerTimeSuggestionsAdmin from "@/components/PrayerTimeSuggestionsAdmin";
 import ZmanimTravelSimulator from "@/components/admin/ZmanimTravelSimulator";
 import SynagogueFormSheet from "@/components/SynagogueFormSheet";
+import AdminDonationsTab from "@/components/admin/AdminDonationsTab";
 
 interface PresidentRequest {
   id: string;
@@ -234,7 +235,7 @@ const SettingsTab = () => {
 const AdminDashboard = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "settings">("requests");
+  const [tab, setTab] = useState<"requests" | "users" | "synagogues" | "horaires" | "donations" | "settings">("requests");
   const [requests, setRequests] = useState<PresidentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -439,7 +440,7 @@ const AdminDashboard = () => {
             { id: "users" as const, icon: "👥", label: "Utilisateurs", count: users.length },
             { id: "synagogues" as const, icon: "🏛️", label: "Synagogues", count: synas.length },
             { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
-            
+            { id: "donations" as const, icon: "💰", label: "Dons", count: 0 },
             { id: "settings" as const, icon: "⚙️", label: "Réglages", count: 0 },
           ].map((t) => (
             <button
@@ -726,6 +727,8 @@ const AdminDashboard = () => {
           <PrayerTimeSuggestionsAdmin mode="admin" />
         )}
 
+        {/* Donations admin tab */}
+        {tab === "donations" && <AdminDonationsTab />}
 
         {/* Settings tab */}
         {tab === "settings" && (
