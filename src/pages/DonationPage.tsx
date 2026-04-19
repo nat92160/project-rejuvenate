@@ -54,17 +54,17 @@ const DonationPage = () => {
   useEffect(() => {
     if (!slug) return;
     (async () => {
-      // Platform model: lookup by custom slug OR by raw synagogue UUID (fallback)
+      // Centralized model: lookup by donation_slug on synagogue_profiles, or by raw UUID fallback
       let synaId: string | null = null;
 
-      const { data: sa } = await supabase
-        .from("synagogue_stripe_accounts" as any)
-        .select("synagogue_id")
-        .eq("custom_donation_slug", slug)
+      const { data: synaBySlug } = await supabase
+        .from("synagogue_profiles")
+        .select("id")
+        .eq("donation_slug", slug)
         .maybeSingle();
 
-      if (sa) {
-        synaId = (sa as any).synagogue_id;
+      if (synaBySlug?.id) {
+        synaId = synaBySlug.id;
       } else {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
         if (isUuid) synaId = slug;
