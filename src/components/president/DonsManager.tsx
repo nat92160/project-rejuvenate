@@ -119,12 +119,6 @@ const DonsManager = () => {
   );
 
   const openOfficialCerfa = (donation: Donation) => {
-    if (!cerfaConfigured) {
-      toast.error(
-        "Veuillez configurer les informations légales (onglet CERFA) avant d'émettre des reçus.",
-      );
-      return;
-    }
     if (!donation.cerfa_token) {
       toast.error("Reçu indisponible (token manquant).");
       return;
@@ -133,10 +127,6 @@ const DonsManager = () => {
   };
 
   const downloadCerfa = async (donation: Donation) => {
-    if (!cerfaConfigured) {
-      toast.error("Configurez d'abord l'onglet CERFA.");
-      return;
-    }
     if (!donation.cerfa_token) {
       toast.error("Reçu indisponible (token manquant).");
       return;
@@ -145,10 +135,6 @@ const DonsManager = () => {
   };
 
   const shareCerfa = async (donation: Donation) => {
-    if (!cerfaConfigured) {
-      toast.error("Configurez d'abord l'onglet CERFA.");
-      return;
-    }
     if (!donation.cerfa_token) {
       toast.error("Reçu indisponible (token manquant).");
       return;
