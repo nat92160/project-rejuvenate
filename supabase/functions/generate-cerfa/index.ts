@@ -158,16 +158,12 @@ serve(async (req) => {
 </body>
 </html>`;
 
-  // Force UTF-8 encoding to prevent mojibake (Ã© instead of é)
-  const encoder = new TextEncoder();
-  const body = encoder.encode(html);
-
-  return new Response(body, {
+  // Return HTML as string (not Uint8Array) so Cloudflare keeps the Content-Type as text/html
+  return new Response(html, {
     status: 200,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      "Content-Length": String(body.byteLength),
-      "X-Content-Type-Options": "nosniff",
+      "Content-Disposition": "inline",
       "Cache-Control": "no-store",
     },
   });
