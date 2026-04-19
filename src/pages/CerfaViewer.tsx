@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, Printer, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { shareCerfaPdf } from "@/lib/cerfaPdf";
+import { fetchCerfaPdfBlob, shareCerfaPdf } from "@/lib/cerfaPdf";
 
 const CerfaViewer = () => {
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [html, setHtml] = useState<string | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
@@ -20,48 +20,40 @@ const CerfaViewer = () => {
       return;
     }
 
+    let activeUrl: string | null = null;
     const controller = new AbortController();
 
     (async () => {
       try {
         setLoading(true);
         setError(null);
-
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const response = await fetch(
-          `${supabaseUrl}/functions/v1/generate-cerfa?token=${encodeURIComponent(token)}`,
-          {
-            headers: { Accept: "text/html" },
-            signal: controller.signal,
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const text = await response.text();
-        if (!text.trim().startsWith("<!DOCTYPE html")) {
-          throw new Error("Invalid CERFA HTML response");
-        }
-
-        setHtml(text);
+        const blob = await fetchCerfaPdfBlob(token);
+        if (controller.signal.aborted) return;
+        activeUrl = URL.createObjectURL(blob);
+        setPdfUrl(activeUrl);
       } catch (err) {
         if (controller.signal.aborted) return;
         console.error("CERFA viewer error:", err);
         setError("Impossible d'afficher le reçu CERFA.");
       } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
+        if (!controller.signal.aborted) setLoading(false);
       }
     })();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      if (activeUrl) URL.revokeObjectURL(activeUrl);
+    };
   }, [token]);
 
   const handlePrint = () => {
-    iframeRef.current?.contentWindow?.print();
+    if (!pdfUrl) return;
+    // Ouvre le PDF dans un nouvel onglet pour impression native (plus fiable que iframe.print)
+    const w = window.open(pdfUrl, "_blank");
+    if (!w) {
+      // Fallback : tente l'impression iframe
+      iframeRef.current?.contentWindow?.print();
+    }
   };
 
   const handleShare = async () => {
@@ -86,15 +78,15 @@ const CerfaViewer = () => {
             <Button
               variant="outline"
               onClick={handleShare}
-              disabled={!html || loading || sharing}
+              disabled={!pdfUrl || loading || sharing}
               className="min-h-11"
             >
               {sharing ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <Share2 className="h-4 w-4 sm:mr-2" />}
               <span className="hidden sm:inline">Partager PDF</span>
             </Button>
-            <Button onClick={handlePrint} disabled={!html || loading} className="min-h-11">
+            <Button onClick={handlePrint} disabled={!pdfUrl || loading} className="min-h-11">
               <Printer className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">PDF / Imprimer</span>
+              <span className="hidden sm:inline">Ouvrir / Imprimer</span>
             </Button>
           </div>
         </div>
@@ -106,7 +98,7 @@ const CerfaViewer = () => {
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Chargement du CERFA…</p>
           </div>
-        ) : error || !html ? (
+        ) : error || !pdfUrl ? (
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 rounded-xl border border-border bg-card p-6 text-center">
             <p className="text-sm text-muted-foreground">{error || "Reçu introuvable."}</p>
             <Button variant="outline" onClick={() => navigate(-1)} className="min-h-11">
@@ -117,7 +109,7 @@ const CerfaViewer = () => {
           <iframe
             ref={iframeRef}
             title="CERFA"
-            srcDoc={html}
+            src={pdfUrl}
             className="h-[calc(100vh-7rem)] min-h-[640px] w-full rounded-xl border border-border bg-background"
           />
         )}
