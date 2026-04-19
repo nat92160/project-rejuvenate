@@ -2,12 +2,25 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://www.chabbat-chalom.com",
+  "https://chabbat-chalom.com",
+  "https://next-level-code.lovable.app",
+];
+
+function buildCorsHeaders(origin: string | null) {
+  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "Vary": "Origin",
+  };
+}
+
+const MAX_DONATION_AMOUNT = 5_000_000; // 50 000€ en centimes
 
 serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req.headers.get("origin"));
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -18,7 +31,9 @@ serve(async (req) => {
 
     const { slug, amount, donor_name, donor_email, donor_address, campaign_id, donor_type, donor_company_name, donor_siret } = await req.json();
     if (!slug || !amount) throw new Error("slug et amount requis");
+    if (typeof amount !== "number" || !Number.isInteger(amount)) throw new Error("Montant invalide");
     if (amount < 100) throw new Error("Montant minimum : 1€");
+    if (amount > MAX_DONATION_AMOUNT) throw new Error("Montant maximum : 50 000€");
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
