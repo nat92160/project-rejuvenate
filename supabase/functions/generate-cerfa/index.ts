@@ -84,13 +84,21 @@ serve(async (req) => {
 
   // ====== PDF GENERATION ======
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+
+  // Patch global : jsPDF (helvetica) ne supporte que WinAnsi/latin1.
+  // On translittère tout texte pour éviter les � sur œ, apostrophes typo, etc.
+  const origText = doc.text.bind(doc);
+  (doc as any).text = function (text: any, ...rest: any[]) {
+    const safe = Array.isArray(text) ? text.map(toLatin1) : toLatin1(text);
+    return origText(safe, ...rest);
+  };
+
   const pageW = 210;
   const margin = 8;
   const frameX = margin;
   const frameW = pageW - margin * 2;
   let y = margin;
 
-  // Police par défaut (helvetica = serif-like neutre, jsPDF n'a pas Lora natif)
   doc.setFont("helvetica", "normal");
 
   // ========== WARNING (si infos manquantes) ==========
@@ -412,9 +420,12 @@ serve(async (req) => {
   doc.setLineWidth(0.6);
   doc.rect(frameX, frameStartY, frameW, y - frameStartY);
 
-  // Output
-  const pdfArrayBuffer = doc.output("arraybuffer");
-  const pdfBytes = new Uint8Array(pdfArrayBuffer);
+  // Output - jsPDF retourne du latin1 (WinAnsi), conversion en bytes
+  const pdfString = doc.output();
+  const pdfBytes = new Uint8Array(pdfString.length);
+  for (let i = 0; i < pdfString.length; i++) {
+    pdfBytes[i] = pdfString.charCodeAt(i) & 0xff;
+  }
 
   return new Response(pdfBytes, {
     status: 200,
@@ -574,3 +585,28 @@ function numberToFrenchWords(n: number): string {
   if (decPart > 0) result += " et " + decPart + "/100";
   return result.trim() || "zero";
 }
+
+// Translittération Unicode -> WinAnsi (latin1) pour jsPDF/helvetica
+function toLatin1(input: any): string {
+  if (input === null || input === undefined) return "";
+  let s = String(input);
+  const map: Record<string, string> = {
+    "œ": "oe", "Œ": "OE", "æ": "ae", "Æ": "AE",
+    "’": "'", "‘": "'", "‚": ",", "‛": "'",
+    "“": '"', "”": '"', "„": '"', "‟": '"',
+    "–": "-", "—": "-", "‐": "-", "‑": "-", "‒": "-", "−": "-",
+    "…": "...", "•": "-",
+    "→": "->", "←": "<-", "↔": "<->",
+    "✓": "X", "✔": "X", "✗": "X", "✘": "X",
+    "©": "(c)", "®": "(R)", "™": "(TM)",
+    "\u00A0": " ", "\u202F": " ", "\u2009": " ", "\u200B": "",
+  };
+  s = s.replace(/[œŒæÆ’‘‚‛“”„‟–—‐‑‒−…•→←↔✓✔✗✘©®™\u00A0\u202F\u2009\u200B]/g, (c) => map[c] ?? c);
+  // Tout caractère restant hors latin1 -> translittération ASCII
+  s = s.replace(/[^\x00-\xff]/g, (c) => {
+    const stripped = c.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+    return /^[\x00-\x7f]+$/.test(stripped) ? stripped : "";
+  });
+  return s;
+}
+
