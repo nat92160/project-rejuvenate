@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.omer-reminder]
 verify_jwt = false
+
+[functions.get-donation-cerfa]
+verify_jwt = false
+
+[functions.places-autocomplete]
+verify_jwt = false
