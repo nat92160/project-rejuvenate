@@ -29,6 +29,8 @@ const DonationPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [synagogue, setSynagogue] = useState<{ id: string; name: string; logo_url: string | null } | null>(null);
+  const [cerfaReady, setCerfaReady] = useState(true);
+  const [cerfaMissing, setCerfaMissing] = useState<string[]>([]);
   const [stripeReady, setStripeReady] = useState(true); // Platform model: always ready
 
   // CERFA download state (success screen)
