@@ -294,14 +294,24 @@ const DonsManager = () => {
                         <td className="py-2 pr-2 max-w-[100px] truncate">{d.donor_name || d.donor_email}</td>
                         <td className="py-2 pr-2 font-semibold">{(d.amount / 100).toFixed(2)} €</td>
                         <td className="py-2">
-                          <button
-                            onClick={() => openOfficialCerfa(d)}
-                            disabled={!cerfaConfigured}
-                            className="text-primary hover:underline cursor-pointer bg-transparent border-none text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
-                            title={cerfaConfigured ? "Générer le reçu CERFA officiel" : "Configurez d'abord l'onglet CERFA"}
-                          >
-                            📄 CERFA
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => openOfficialCerfa(d)}
+                              disabled={!cerfaConfigured}
+                              className="text-primary hover:underline cursor-pointer bg-transparent border-none text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline inline-flex items-center gap-1"
+                              title={cerfaConfigured ? "Télécharger / ouvrir le reçu CERFA" : "Configurez d'abord l'onglet CERFA"}
+                            >
+                              <Download className="w-3 h-3" /> CERFA
+                            </button>
+                            <button
+                              onClick={() => shareCerfa(d)}
+                              disabled={!cerfaConfigured || !d.cerfa_token}
+                              className="text-primary hover:underline cursor-pointer bg-transparent border-none text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline inline-flex items-center gap-1"
+                              title="Partager le lien du reçu CERFA"
+                            >
+                              <Share2 className="w-3 h-3" /> Partager
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
