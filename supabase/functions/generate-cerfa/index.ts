@@ -412,9 +412,12 @@ serve(async (req) => {
   doc.setLineWidth(0.6);
   doc.rect(frameX, frameStartY, frameW, y - frameStartY);
 
-  // Output
-  const pdfArrayBuffer = doc.output("arraybuffer");
-  const pdfBytes = new Uint8Array(pdfArrayBuffer);
+  // Output - jsPDF retourne du latin1 (WinAnsi), conversion en bytes
+  const pdfString = doc.output();
+  const pdfBytes = new Uint8Array(pdfString.length);
+  for (let i = 0; i < pdfString.length; i++) {
+    pdfBytes[i] = pdfString.charCodeAt(i) & 0xff;
+  }
 
   return new Response(pdfBytes, {
     status: 200,
