@@ -26,20 +26,35 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Find synagogue by slug (still uses synagogue_stripe_accounts table for slug lookup)
-    const { data: stripeAccount, error: saError } = await supabaseAdmin
+    // Find synagogue by slug — accept either a custom slug OR a raw synagogue UUID (platform fallback)
+    let synagogueId: string | null = null;
+
+    const { data: stripeAccount } = await supabaseAdmin
       .from("synagogue_stripe_accounts")
       .select("synagogue_id")
       .eq("custom_donation_slug", slug)
       .maybeSingle();
 
-    if (saError || !stripeAccount) throw new Error("Synagogue non trouvée");
+    if (stripeAccount?.synagogue_id) {
+      synagogueId = stripeAccount.synagogue_id;
+    } else {
+      // Fallback: treat slug as synagogue UUID (platform centralized model)
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+      if (!isUuid) throw new Error("Synagogue non trouvée");
+      const { data: syna } = await supabaseAdmin
+        .from("synagogue_profiles")
+        .select("id")
+        .eq("id", slug)
+        .maybeSingle();
+      if (!syna) throw new Error("Synagogue non trouvée");
+      synagogueId = syna.id;
+    }
 
     // Get synagogue name
     const { data: synaProfile } = await supabaseAdmin
       .from("synagogue_profiles")
       .select("name")
-      .eq("id", stripeAccount.synagogue_id)
+      .eq("id", synagogueId)
       .single();
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
