@@ -1,21 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ExternalLink, Loader2, Printer, Share2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchCerfaPdfBlob, shareCerfaPdf } from "@/lib/cerfaPdf";
+import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
+
+GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
 const CerfaViewer = () => {
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const pagesRef = useRef<HTMLDivElement | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rendering, setRendering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
 
-  // URL directe vers l'edge function (utilisée pour iframe + lien "ouvrir")
   const directUrl = useMemo(
     () => (token ? `${SUPABASE_URL}/functions/v1/generate-cerfa?token=${encodeURIComponent(token)}` : null),
     [token],
@@ -28,7 +31,6 @@ const CerfaViewer = () => {
       return;
     }
 
-    let activeUrl: string | null = null;
     const controller = new AbortController();
 
     (async () => {
@@ -37,8 +39,7 @@ const CerfaViewer = () => {
         setError(null);
         const blob = await fetchCerfaPdfBlob(token);
         if (controller.signal.aborted) return;
-        activeUrl = URL.createObjectURL(blob);
-        setBlobUrl(activeUrl);
+        setPdfBlob(blob);
       } catch (err) {
         if (controller.signal.aborted) return;
         console.error("CERFA viewer error:", err);
@@ -48,11 +49,80 @@ const CerfaViewer = () => {
       }
     })();
 
-    return () => {
-      controller.abort();
-      if (activeUrl) URL.revokeObjectURL(activeUrl);
-    };
+    return () => controller.abort();
   }, [token]);
+
+  useEffect(() => {
+    if (!pdfBlob || !pagesRef.current) return;
+
+    let cancelled = false;
+    const container = pagesRef.current;
+
+    (async () => {
+      try {
+        setRendering(true);
+        container.innerHTML = "";
+
+        const pdfData = await pdfBlob.arrayBuffer();
+        if (cancelled) return;
+
+        const loadingTask = getDocument({ data: pdfData });
+        const pdf = await loadingTask.promise;
+        if (cancelled) {
+          loadingTask.destroy();
+          return;
+        }
+
+        const containerWidth = Math.max(Math.min(container.clientWidth || 900, 1100), 280);
+        const dpr = window.devicePixelRatio || 1;
+
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+          if (cancelled) break;
+
+          const page = await pdf.getPage(pageNumber);
+          const baseViewport = page.getViewport({ scale: 1 });
+          const displayScale = containerWidth / baseViewport.width;
+          const viewport = page.getViewport({ scale: displayScale });
+
+          const pageShell = document.createElement("div");
+          pageShell.className =
+            "overflow-hidden rounded-xl border border-border bg-white shadow-sm";
+
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          if (!context) continue;
+
+          canvas.width = Math.floor(viewport.width * dpr);
+          canvas.height = Math.floor(viewport.height * dpr);
+          canvas.style.width = `${Math.floor(viewport.width)}px`;
+          canvas.style.height = `${Math.floor(viewport.height)}px`;
+          canvas.className = "block w-full h-auto";
+
+          pageShell.appendChild(canvas);
+          container.appendChild(pageShell);
+
+          await page.render({
+            canvas,
+            canvasContext: context,
+            viewport,
+            transform: dpr === 1 ? undefined : [dpr, 0, 0, dpr, 0, 0],
+          }).promise;
+        }
+      } catch (err) {
+        console.error("CERFA render error:", err);
+        if (!cancelled) {
+          setError("L'aperçu PDF ne peut pas être affiché ici.");
+        }
+      } finally {
+        if (!cancelled) setRendering(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (container) container.innerHTML = "";
+    };
+  }, [pdfBlob]);
 
   const handleOpenNewTab = () => {
     if (!directUrl) return;
@@ -104,21 +174,21 @@ const CerfaViewer = () => {
         ) : error || !directUrl ? (
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 rounded-xl border border-border bg-card p-6 text-center">
             <p className="text-sm text-muted-foreground">{error || "Reçu introuvable."}</p>
-            <Button variant="outline" onClick={() => navigate(-1)} className="min-h-11">
-              Revenir
+            <Button variant="outline" onClick={handleOpenNewTab} className="min-h-11" disabled={!directUrl}>
+              Ouvrir le PDF
             </Button>
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Aperçu : iframe direct vers l'URL (plus fiable que blob: dans iframes imbriquées) */}
-            <iframe
-              ref={iframeRef}
-              title="Reçu CERFA"
-              src={blobUrl || directUrl}
-              className="h-[calc(100vh-9rem)] min-h-[640px] w-full rounded-xl border border-border bg-white"
-            />
+            {rendering && (
+              <div className="flex min-h-[20vh] items-center justify-center gap-3 rounded-xl border border-border bg-card">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Préparation de l'aperçu…</p>
+              </div>
+            )}
+            <div ref={pagesRef} className="space-y-4" />
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span>L'aperçu ne s'affiche pas&nbsp;?</span>
+              <span>L'aperçu ne s'affiche pas ?</span>
               <button
                 onClick={handleOpenNewTab}
                 className="font-semibold text-primary underline-offset-2 hover:underline"
