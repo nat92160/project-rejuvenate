@@ -147,8 +147,6 @@ serve(async (req) => {
   </style>
 </head>
 <body>
-  <button class="print-btn no-print" onclick="window.print()">🖨️ Télécharger en PDF / Imprimer</button>
-  <p class="print-hint no-print">📱 Sur smartphone : appuyez sur le bouton ci-dessus, puis dans la fenêtre qui s'ouvre, choisissez <strong>« Enregistrer en PDF »</strong> ou <strong>« Partager »</strong>.</p>
   ${missingLegalInfo ? `<div class="warn no-print">⚠️ Informations légales incomplètes (RNA/SIRET ou dénomination manquant). Ce reçu n'est pas valide fiscalement tant que la configuration CERFA n'est pas terminée.</div>` : ""}
   <div class="frame">
     <!-- TOP HEADER -->
