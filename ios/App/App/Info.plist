@@ -5,7 +5,14 @@
 	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>fr</string>
+	<key>CFBundleAllowMixedLocalizations</key>
+	<true/>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>fr</string>
+		<string>en</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Chabbat Chalom</string>
 	<key>CFBundleExecutable</key>
@@ -52,6 +59,12 @@
 		<string>remote-notification</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Chabbat Chalom utilise votre position pour calculer les horaires de prière (zmanim) précis pour votre emplacement.</string>
+	<string>Chabbat Chalom utilise votre position pour calculer vos horaires d'allumage, de Chabbat et de prière précis selon votre ville.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Chabbat Chalom utilise votre position pour calculer vos horaires d'allumage, de Chabbat et de prière précis selon votre ville.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Chabbat Chalom utilise votre position pour vous notifier des horaires d'allumage et de sortie du Chabbat même en arrière-plan.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Recevez les rappels d'allumage des bougies, de la sortie de Chabbat, du compte du Omer et les alertes de votre communauté.</string>
 </dict>
 </plist>
