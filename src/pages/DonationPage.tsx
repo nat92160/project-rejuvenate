@@ -24,6 +24,8 @@ interface Campaign {
 const DonationPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const success = searchParams.get("success") === "true";
   const sessionId = searchParams.get("session_id");
   const canceled = searchParams.get("canceled") === "true";
