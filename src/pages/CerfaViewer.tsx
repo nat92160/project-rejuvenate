@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, Printer, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { shareText } from "@/lib/shareUtils";
+import { shareCerfaPdf } from "@/lib/cerfaPdf";
 
 const CerfaViewer = () => {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ const CerfaViewer = () => {
   const [html, setHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -65,10 +66,12 @@ const CerfaViewer = () => {
 
   const handleShare = async () => {
     if (!token) return;
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    // Lien direct vers le reçu HTML pur (servi par l'edge function)
-    const url = `${supabaseUrl}/functions/v1/generate-cerfa?token=${encodeURIComponent(token)}`;
-    await shareText(`Reçu fiscal CERFA\n\n${url}`, "Reçu CERFA");
+    setSharing(true);
+    try {
+      await shareCerfaPdf(token);
+    } finally {
+      setSharing(false);
+    }
   };
 
   return (
@@ -83,11 +86,11 @@ const CerfaViewer = () => {
             <Button
               variant="outline"
               onClick={handleShare}
-              disabled={!html || loading}
+              disabled={!html || loading || sharing}
               className="min-h-11"
             >
-              <Share2 className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Partager</span>
+              {sharing ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <Share2 className="h-4 w-4 sm:mr-2" />}
+              <span className="hidden sm:inline">Partager PDF</span>
             </Button>
             <Button onClick={handlePrint} disabled={!html || loading} className="min-h-11">
               <Printer className="h-4 w-4 sm:mr-2" />
