@@ -157,6 +157,45 @@ const DonationPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // Auto-fetch CERFA URL as soon as we land on the success screen so the
+  // download button is ready instantly (no extra click + spinner wait).
+  useEffect(() => {
+    if (!success || !sessionId || cerfaUrl || cerfaLoading) return;
+    let cancelled = false;
+    (async () => {
+      setCerfaLoading(true);
+      setCerfaError(null);
+      try {
+        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+        let lastErr = "";
+        for (let attempt = 0; attempt < 5; attempt++) {
+          if (cancelled) return;
+          const res = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/get-donation-cerfa?session_id=${sessionId}`
+          );
+          const data = await res.json();
+          if (res.ok && data?.cerfa_url) {
+            const tok = new URL(data.cerfa_url).searchParams.get("token");
+            const niceUrl = tok ? `${window.location.origin}/cerfa/${encodeURIComponent(tok)}` : data.cerfa_url;
+            if (!cancelled) setCerfaUrl(niceUrl);
+            return;
+          }
+          lastErr = data?.error || `HTTP ${res.status}`;
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+        if (!cancelled) setCerfaError(lastErr || "Reçu en cours de préparation…");
+      } catch (e: any) {
+        if (!cancelled) setCerfaError(e?.message || "Reçu non disponible pour l'instant");
+      } finally {
+        if (!cancelled) setCerfaLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [success, sessionId]);
+
   const handleDonate = async () => {
     if (!cerfaReady) {
       toast.error("Cette synagogue n'a pas finalisé sa configuration fiscale. Les dons sont temporairement indisponibles.");
@@ -274,13 +313,24 @@ const DonationPage = () => {
       setCerfaError(null);
       try {
         const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-        const res = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/get-donation-cerfa?session_id=${sessionId}`
-        );
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Erreur");
-        setCerfaUrl(data.cerfa_url);
-        await openCerfa(data.cerfa_url);
+        // Poll up to ~10s : the Stripe webhook may need a moment to insert the donation
+        let lastErr = "";
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const res = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/get-donation-cerfa?session_id=${sessionId}`
+          );
+          const data = await res.json();
+          if (res.ok && data?.cerfa_url) {
+            // Use brand-domain viewer URL instead of raw Supabase function URL
+            const token = new URL(data.cerfa_url).searchParams.get("token");
+            const niceUrl = token ? `${window.location.origin}/cerfa/${encodeURIComponent(token)}` : data.cerfa_url;
+            setCerfaUrl(niceUrl);
+            return;
+          }
+          lastErr = data?.error || `HTTP ${res.status}`;
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+        throw new Error(lastErr || "Reçu non disponible");
       } catch (e: any) {
         setCerfaError(e.message || "Reçu non disponible pour l'instant");
       } finally {

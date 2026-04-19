@@ -9,6 +9,18 @@ export function getCerfaPdfUrl(token: string) {
   return `${supabaseUrl}/functions/v1/generate-cerfa?token=${encodeURIComponent(token)}`;
 }
 
+/**
+ * Public-facing URL (custom domain) used for sharing.
+ * Hides the underlying Supabase host so recipients see the brand domain.
+ */
+export function getCerfaShareUrl(token: string) {
+  const origin =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : "https://chabbat-chalom.com";
+  return `${origin}/cerfa/${encodeURIComponent(token)}`;
+}
+
 export async function fetchCerfaPdfBlob(token: string): Promise<Blob> {
   const response = await fetch(getCerfaPdfUrl(token), {
     headers: { Accept: "application/pdf" },
@@ -79,11 +91,11 @@ async function shareCerfaPdfWeb(token: string): Promise<boolean> {
     }
   }
 
-  // 2) Fallback : partage du lien public PDF (jamais blob: → pas de blocage Chrome)
-  const url = getCerfaPdfUrl(token);
+  // 2) Fallback : partage du lien public (custom domain) — masque l'URL Supabase
+  const url = getCerfaShareUrl(token);
   if (typeof navigator !== "undefined" && navigator.share) {
     try {
-      await navigator.share({ title: "Reçu CERFA", text: "Lien du reçu CERFA", url });
+      await navigator.share({ title: "Reçu CERFA", text: "Voici votre reçu fiscal CERFA.", url });
       return true;
     } catch (error: any) {
       if (error?.name === "AbortError") return false;
