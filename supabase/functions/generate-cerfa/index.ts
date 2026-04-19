@@ -585,3 +585,28 @@ function numberToFrenchWords(n: number): string {
   if (decPart > 0) result += " et " + decPart + "/100";
   return result.trim() || "zero";
 }
+
+// Translittération Unicode -> WinAnsi (latin1) pour jsPDF/helvetica
+function toLatin1(input: any): string {
+  if (input === null || input === undefined) return "";
+  let s = String(input);
+  const map: Record<string, string> = {
+    "œ": "oe", "Œ": "OE", "æ": "ae", "Æ": "AE",
+    "’": "'", "‘": "'", "‚": ",", "‛": "'",
+    "“": '"', "”": '"', "„": '"', "‟": '"',
+    "–": "-", "—": "-", "‐": "-", "‑": "-", "‒": "-", "−": "-",
+    "…": "...", "•": "-",
+    "→": "->", "←": "<-", "↔": "<->",
+    "✓": "X", "✔": "X", "✗": "X", "✘": "X",
+    "©": "(c)", "®": "(R)", "™": "(TM)",
+    "\u00A0": " ", "\u202F": " ", "\u2009": " ", "\u200B": "",
+  };
+  s = s.replace(/[œŒæÆ’‘‚‛“”„‟–—‐‑‒−…•→←↔✓✔✗✘©®™\u00A0\u202F\u2009\u200B]/g, (c) => map[c] ?? c);
+  // Tout caractère restant hors latin1 -> translittération ASCII
+  s = s.replace(/[^\x00-\xff]/g, (c) => {
+    const stripped = c.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+    return /^[\x00-\x7f]+$/.test(stripped) ? stripped : "";
+  });
+  return s;
+}
+
