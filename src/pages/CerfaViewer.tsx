@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Printer } from "lucide-react";
+import { ArrowLeft, Loader2, Printer, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { shareText } from "@/lib/shareUtils";
 
 const CerfaViewer = () => {
   const navigate = useNavigate();
@@ -62,16 +63,37 @@ const CerfaViewer = () => {
     iframeRef.current?.contentWindow?.print();
   };
 
+  const handleShare = async () => {
+    if (!token) return;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    // Lien direct vers le reçu HTML pur (servi par l'edge function)
+    const url = `${supabaseUrl}/functions/v1/generate-cerfa?token=${encodeURIComponent(token)}`;
+    await shareText(`Reçu fiscal CERFA\n\n${url}`, "Reçu CERFA");
+  };
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-3 py-3 sm:px-4">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="min-h-11">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Retour
+          <Button variant="ghost" onClick={() => navigate(-1)} className="min-h-11 px-2 sm:px-4">
+            <ArrowLeft className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Retour</span>
           </Button>
-          <Button onClick={handlePrint} disabled={!html || loading} className="min-h-11">
-            <Printer className="mr-2 h-4 w-4" /> PDF / Imprimer
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleShare}
+              disabled={!html || loading}
+              className="min-h-11"
+            >
+              <Share2 className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Partager</span>
+            </Button>
+            <Button onClick={handlePrint} disabled={!html || loading} className="min-h-11">
+              <Printer className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">PDF / Imprimer</span>
+            </Button>
+          </div>
         </div>
       </div>
 
