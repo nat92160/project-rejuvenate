@@ -887,6 +887,7 @@ export type Database = {
           chat_enabled: boolean
           created_at: string
           donation_link: string | null
+          donation_slug: string | null
           email: string | null
           font_family: string | null
           id: string
@@ -927,6 +928,7 @@ export type Database = {
           chat_enabled?: boolean
           created_at?: string
           donation_link?: string | null
+          donation_slug?: string | null
           email?: string | null
           font_family?: string | null
           id?: string
@@ -967,6 +969,7 @@ export type Database = {
           chat_enabled?: boolean
           created_at?: string
           donation_link?: string | null
+          donation_slug?: string | null
           email?: string | null
           font_family?: string | null
           id?: string
