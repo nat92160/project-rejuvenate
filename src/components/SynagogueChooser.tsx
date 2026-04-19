@@ -440,6 +440,18 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                   )}
                 </div>
 
+                {/* Donation button — every partner synagogue can receive donations */}
+                {isPartner && (
+                  <a
+                    href={`/don/${item.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold no-underline text-primary-foreground transition-all active:scale-[0.98]"
+                    style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+                  >
+                    💛 Faire un don
+                  </a>
+                )}
+
                 {/* Edit horaires button */}
                 {confirmedIds.has(editKey) ? (
                   <div className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold"
