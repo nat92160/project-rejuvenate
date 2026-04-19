@@ -884,6 +884,8 @@ export type Database = {
           arvit_time_2: string | null
           association_legal_name: string | null
           association_object: string | null
+          cerfa_counter_value: number
+          cerfa_counter_year: number | null
           chat_enabled: boolean
           created_at: string
           donation_link: string | null
@@ -902,6 +904,7 @@ export type Database = {
           minha_time: string | null
           minha_time_2: string | null
           name: string
+          organism_quality: string | null
           phone: string | null
           president_first_name: string | null
           president_id: string
@@ -912,6 +915,7 @@ export type Database = {
           shacharit_time: string | null
           shacharit_time_2: string | null
           signature: string | null
+          signature_image_url: string | null
           siret_number: string | null
           speakers: Json | null
           updated_at: string
@@ -925,6 +929,8 @@ export type Database = {
           arvit_time_2?: string | null
           association_legal_name?: string | null
           association_object?: string | null
+          cerfa_counter_value?: number
+          cerfa_counter_year?: number | null
           chat_enabled?: boolean
           created_at?: string
           donation_link?: string | null
@@ -943,6 +949,7 @@ export type Database = {
           minha_time?: string | null
           minha_time_2?: string | null
           name?: string
+          organism_quality?: string | null
           phone?: string | null
           president_first_name?: string | null
           president_id: string
@@ -953,6 +960,7 @@ export type Database = {
           shacharit_time?: string | null
           shacharit_time_2?: string | null
           signature?: string | null
+          signature_image_url?: string | null
           siret_number?: string | null
           speakers?: Json | null
           updated_at?: string
@@ -966,6 +974,8 @@ export type Database = {
           arvit_time_2?: string | null
           association_legal_name?: string | null
           association_object?: string | null
+          cerfa_counter_value?: number
+          cerfa_counter_year?: number | null
           chat_enabled?: boolean
           created_at?: string
           donation_link?: string | null
@@ -984,6 +994,7 @@ export type Database = {
           minha_time?: string | null
           minha_time_2?: string | null
           name?: string
+          organism_quality?: string | null
           phone?: string | null
           president_first_name?: string | null
           president_id?: string
@@ -994,6 +1005,7 @@ export type Database = {
           shacharit_time?: string | null
           shacharit_time_2?: string | null
           signature?: string | null
+          signature_image_url?: string | null
           siret_number?: string | null
           speakers?: Json | null
           updated_at?: string
@@ -1266,6 +1278,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_cerfa_number: { Args: { _donation_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
