@@ -96,6 +96,9 @@ serve(async (req) => {
 <head>
   <meta charset="UTF-8">
   <title>Reçu Fiscal CERFA n° ${esc(finalCerfaNumber)}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
   <style>
     @page { size: A4; margin: 8mm; }
     @media print { body { margin: 0; background: #fff; } .no-print { display: none; } .frame { page-break-inside: avoid; } }
