@@ -158,9 +158,18 @@ serve(async (req) => {
 </body>
 </html>`;
 
-  return new Response(html, {
+  // Force UTF-8 encoding to prevent mojibake (Ã© instead of é)
+  const encoder = new TextEncoder();
+  const body = encoder.encode(html);
+
+  return new Response(body, {
     status: 200,
-    headers: { "Content-Type": "text/html; charset=utf-8" },
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Content-Length": String(body.byteLength),
+      "X-Content-Type-Options": "nosniff",
+      "Cache-Control": "no-store",
+    },
   });
 });
 
