@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Heart, Check, Loader2, Target } from "lucide-react";
+import { Heart, Check, Loader2, Target, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,12 +23,18 @@ const DonationPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const success = searchParams.get("success") === "true";
+  const sessionId = searchParams.get("session_id");
   const canceled = searchParams.get("canceled") === "true";
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [synagogue, setSynagogue] = useState<{ id: string; name: string; logo_url: string | null } | null>(null);
-  const [stripeReady, setStripeReady] = useState(false);
+  const [stripeReady, setStripeReady] = useState(true); // Platform model: always ready
+
+  // CERFA download state (success screen)
+  const [cerfaUrl, setCerfaUrl] = useState<string | null>(null);
+  const [cerfaLoading, setCerfaLoading] = useState(false);
+  const [cerfaError, setCerfaError] = useState<string | null>(null);
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
@@ -45,10 +51,10 @@ const DonationPage = () => {
   useEffect(() => {
     if (!slug) return;
     (async () => {
-      // Look up stripe account by slug
+      // Look up synagogue by donation slug (Connect onboarding no longer required — platform model)
       const { data: sa } = await supabase
         .from("synagogue_stripe_accounts" as any)
-        .select("synagogue_id, is_onboarded")
+        .select("synagogue_id")
         .eq("custom_donation_slug", slug)
         .maybeSingle();
 
@@ -58,7 +64,6 @@ const DonationPage = () => {
       }
 
       const synaId = (sa as any).synagogue_id;
-      setStripeReady((sa as any).is_onboarded);
 
       // Get synagogue info + active campaigns in parallel
       const [{ data: profile }, { data: camps }] = await Promise.all([
@@ -142,16 +147,96 @@ const DonationPage = () => {
   }
 
   if (success) {
+    const fetchCerfa = async () => {
+      if (!sessionId) {
+        setCerfaError("Identifiant de session manquant");
+        return;
+      }
+      setCerfaLoading(true);
+      setCerfaError(null);
+      try {
+        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+        const res = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/get-donation-cerfa?session_id=${sessionId}`
+        );
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Erreur");
+        setCerfaUrl(data.cerfa_url);
+        // Auto-open in new tab
+        window.open(data.cerfa_url, "_blank");
+      } catch (e: any) {
+        setCerfaError(e.message || "Reçu non disponible pour l'instant");
+      } finally {
+        setCerfaLoading(false);
+      }
+    };
+
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="text-center max-w-sm">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+        <div className="text-center max-w-sm w-full">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <Check className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-xl font-bold text-foreground">Merci pour votre don ! 💛</h1>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-sm text-muted-foreground mt-2 mb-6">
             Votre don à <strong>{synagogue.name}</strong> a été reçu avec succès.
-            Un reçu fiscal (CERFA) vous sera envoyé par email.
+            Vous pouvez télécharger votre reçu fiscal CERFA ci-dessous.
+          </p>
+
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+            <div className="flex items-center justify-center gap-2 text-primary">
+              <FileText className="w-5 h-5" />
+              <span className="text-sm font-bold">Reçu fiscal CERFA</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Conservez ce document pour bénéficier d'une réduction d'impôt de 66% (article 200 du CGI).
+            </p>
+
+            {cerfaUrl ? (
+              <a
+                href={cerfaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full"
+              >
+                <Button
+                  className="w-full py-6 text-base font-bold rounded-xl"
+                  style={{ background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))" }}
+                >
+                  <Download className="w-5 h-5 mr-2" />
+                  Télécharger mon CERFA
+                </Button>
+              </a>
+            ) : (
+              <Button
+                onClick={fetchCerfa}
+                disabled={cerfaLoading}
+                className="w-full py-6 text-base font-bold rounded-xl"
+                style={{ background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))" }}
+              >
+                {cerfaLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Préparation du reçu…
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5 mr-2" />
+                    Obtenir mon reçu CERFA
+                  </>
+                )}
+              </Button>
+            )}
+
+            {cerfaError && (
+              <p className="text-[11px] text-amber-600 bg-amber-50 rounded-lg p-2">
+                {cerfaError}
+              </p>
+            )}
+          </div>
+
+          <p className="text-[10px] text-muted-foreground/70 mt-4 italic">
+            Une copie du reçu vous sera également envoyée par email.
           </p>
         </div>
       </div>
