@@ -84,13 +84,21 @@ serve(async (req) => {
 
   // ====== PDF GENERATION ======
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+
+  // Patch global : jsPDF (helvetica) ne supporte que WinAnsi/latin1.
+  // On translittère tout texte pour éviter les � sur œ, apostrophes typo, etc.
+  const origText = doc.text.bind(doc);
+  (doc as any).text = function (text: any, ...rest: any[]) {
+    const safe = Array.isArray(text) ? text.map(toLatin1) : toLatin1(text);
+    return origText(safe, ...rest);
+  };
+
   const pageW = 210;
   const margin = 8;
   const frameX = margin;
   const frameW = pageW - margin * 2;
   let y = margin;
 
-  // Police par défaut (helvetica = serif-like neutre, jsPDF n'a pas Lora natif)
   doc.setFont("helvetica", "normal");
 
   // ========== WARNING (si infos manquantes) ==========
