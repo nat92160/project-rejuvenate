@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ExternalLink, Loader2, Share2 } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
 import { fetchCerfaPdfBlob, shareCerfaPdf } from "@/lib/cerfaPdf";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
+
+const isNativeApp = Capacitor.isNativePlatform();
 
 GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
