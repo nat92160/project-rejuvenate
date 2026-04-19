@@ -88,6 +88,9 @@ serve(async (req) => {
     ? (donation.donor_company_name || donation.donor_name || "—")
     : `M ou Mme ${(donation.donor_name || "—").toUpperCase()}`;
 
+  const rnaSiret = syna?.rna_number || syna?.siret_number || "";
+  const missingLegalInfo = !rnaSiret || !syna?.association_legal_name;
+
   const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
