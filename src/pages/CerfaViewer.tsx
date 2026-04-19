@@ -158,10 +158,12 @@ const CerfaViewer = () => {
               {sharing ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <Share2 className="h-4 w-4 sm:mr-2" />}
               <span className="hidden sm:inline">Partager PDF</span>
             </Button>
-            <Button onClick={handleOpenNewTab} disabled={!pdfBlob || loading} className="min-h-11">
-              <ExternalLink className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Ouvrir / Imprimer</span>
-            </Button>
+            {!isNativeApp && (
+              <Button onClick={handleOpenNewTab} disabled={!pdfBlob || loading} className="min-h-11">
+                <ExternalLink className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Ouvrir / Imprimer</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
