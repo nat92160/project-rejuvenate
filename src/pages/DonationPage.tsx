@@ -6,6 +6,7 @@ import { Heart, Check, Loader2, Target, FileText, Download } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 const SUGGESTED_AMOUNTS = [1800, 3600, 5200, 10000]; // in cents
 
@@ -47,7 +48,8 @@ const DonationPage = () => {
   const [donorType, setDonorType] = useState<"particulier" | "societe">("particulier");
   const [donorCompanyName, setDonorCompanyName] = useState("");
   const [donorSiret, setDonorSiret] = useState("");
-  const [donorName, setDonorName] = useState("");
+  const [donorFirstName, setDonorFirstName] = useState("");
+  const [donorLastName, setDonorLastName] = useState("");
   const [donorEmail, setDonorEmail] = useState("");
   const [donorAddress, setDonorAddress] = useState("");
   const [donorCity, setDonorCity] = useState("");
