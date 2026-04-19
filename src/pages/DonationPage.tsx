@@ -42,6 +42,9 @@ const DonationPage = () => {
   const [selectedAmount, setSelectedAmount] = useState(3600);
   const [customAmount, setCustomAmount] = useState("");
   const [isCustom, setIsCustom] = useState(false);
+  const [donorType, setDonorType] = useState<"particulier" | "societe">("particulier");
+  const [donorCompanyName, setDonorCompanyName] = useState("");
+  const [donorSiret, setDonorSiret] = useState("");
   const [donorName, setDonorName] = useState("");
   const [donorEmail, setDonorEmail] = useState("");
   const [donorAddress, setDonorAddress] = useState("");
@@ -109,6 +112,10 @@ const DonationPage = () => {
       toast.error("L'adresse complète est obligatoire pour le reçu fiscal");
       return;
     }
+    if (donorType === "societe" && !donorCompanyName) {
+      toast.error("La raison sociale est obligatoire pour une société");
+      return;
+    }
 
     setSubmitting(true);
     const { data, error } = await supabase.functions.invoke("create-donation-checkout", {
@@ -119,6 +126,9 @@ const DonationPage = () => {
         donor_email: donorEmail,
         donor_address: `${donorAddress}, ${donorPostal} ${donorCity}`,
         campaign_id: selectedCampaignId,
+        donor_type: donorType,
+        donor_company_name: donorType === "societe" ? donorCompanyName : null,
+        donor_siret: donorType === "societe" ? donorSiret : null,
       },
     });
 
@@ -388,8 +398,61 @@ const DonationPage = () => {
 
             {/* Donor info */}
             <div className="space-y-3">
+              {/* Type donateur */}
               <div>
-                <Label className="text-xs font-semibold">Votre nom</Label>
+                <Label className="text-xs font-semibold mb-2 block">Vous êtes</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDonorType("particulier")}
+                    className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-all border cursor-pointer ${
+                      donorType === "particulier"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-background text-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    👤 Particulier
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDonorType("societe")}
+                    className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-all border cursor-pointer ${
+                      donorType === "societe"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-background text-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    🏢 Société
+                  </button>
+                </div>
+              </div>
+
+              {donorType === "societe" && (
+                <>
+                  <div>
+                    <Label className="text-xs font-semibold">Raison sociale *</Label>
+                    <Input
+                      placeholder="Nom de la société"
+                      value={donorCompanyName}
+                      onChange={(e) => setDonorCompanyName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">SIRET</Label>
+                    <Input
+                      placeholder="14 chiffres"
+                      value={donorSiret}
+                      onChange={(e) => setDonorSiret(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div>
+                <Label className="text-xs font-semibold">
+                  {donorType === "societe" ? "Représentant (Prénom Nom)" : "Votre nom"}
+                </Label>
                 <Input
                   placeholder="Prénom Nom"
                   value={donorName}

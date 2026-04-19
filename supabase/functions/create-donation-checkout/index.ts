@@ -16,7 +16,7 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not set");
 
-    const { slug, amount, donor_name, donor_email, donor_address, campaign_id } = await req.json();
+    const { slug, amount, donor_name, donor_email, donor_address, campaign_id, donor_type, donor_company_name, donor_siret } = await req.json();
     if (!slug || !amount) throw new Error("slug et amount requis");
     if (amount < 100) throw new Error("Montant minimum : 1€");
 
@@ -60,8 +60,6 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const origin = req.headers.get("origin") || "";
 
-    // PLATFORM MODEL: payment goes directly to platform Stripe account
-    // No Connect, no application_fee — full amount received, manual transfer to synagogue later
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
@@ -83,6 +81,9 @@ serve(async (req) => {
           donor_email: donor_email || "",
           donor_address: donor_address || "",
           campaign_id: campaign_id || "",
+          donor_type: donor_type || "particulier",
+          donor_company_name: donor_company_name || "",
+          donor_siret: donor_siret || "",
         },
       },
       customer_email: donor_email || undefined,
@@ -92,10 +93,29 @@ serve(async (req) => {
         donor_email: donor_email || "",
         donor_address: donor_address || "",
         campaign_id: campaign_id || "",
+        donor_type: donor_type || "particulier",
+        donor_company_name: donor_company_name || "",
+        donor_siret: donor_siret || "",
         slug,
       },
       success_url: `${origin}/don/${slug}?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/don/${slug}?canceled=true`,
+    });
+
+    // CRITICAL: Insert donation immediately so CERFA is available right after payment
+    // (does not depend on the Stripe webhook being configured)
+    await supabaseAdmin.from("donations").insert({
+      synagogue_id: synagogueId,
+      campaign_id: campaign_id || null,
+      amount,
+      donor_email: donor_email || "",
+      donor_name: donor_name || "",
+      donor_address: donor_address || "",
+      donor_type: donor_type || "particulier",
+      donor_company_name: donor_company_name || null,
+      donor_siret: donor_siret || null,
+      stripe_checkout_session_id: session.id,
+      cerfa_generated: true,
     });
 
     return new Response(JSON.stringify({ url: session.url, session_id: session.id }), {
