@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { useGpsProfileSync } from "@/hooks/useGpsProfileSync";
 import { supabase } from "@/integrations/supabase/client";
-import { registerNativePush, requestNativePushPermission, clearPushBadge, onNativePushActionPerformed } from "@/lib/capacitorPush";
+import { registerNativePush, clearPushBadge, onNativePushActionPerformed } from "@/lib/capacitorPush";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import MinyanJoin from "./pages/MinyanJoin.tsx";
