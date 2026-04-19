@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ExternalLink, Loader2, Share2 } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
 import { fetchCerfaPdfBlob, shareCerfaPdf } from "@/lib/cerfaPdf";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
+
+const isNativeApp = Capacitor.isNativePlatform();
 
 GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
@@ -155,10 +158,12 @@ const CerfaViewer = () => {
               {sharing ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <Share2 className="h-4 w-4 sm:mr-2" />}
               <span className="hidden sm:inline">Partager PDF</span>
             </Button>
-            <Button onClick={handleOpenNewTab} disabled={!pdfBlob || loading} className="min-h-11">
-              <ExternalLink className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Ouvrir / Imprimer</span>
-            </Button>
+            {!isNativeApp && (
+              <Button onClick={handleOpenNewTab} disabled={!pdfBlob || loading} className="min-h-11">
+                <ExternalLink className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Ouvrir / Imprimer</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -185,15 +190,17 @@ const CerfaViewer = () => {
               </div>
             )}
             <div ref={pagesRef} className="space-y-4" />
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span>L'aperçu ne s'affiche pas ?</span>
-              <button
-                onClick={handleOpenNewTab}
-                className="font-semibold text-primary underline-offset-2 hover:underline"
-              >
-                Ouvrir le PDF dans un nouvel onglet
-              </button>
-            </div>
+            {!isNativeApp && (
+              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <span>L'aperçu ne s'affiche pas ?</span>
+                <button
+                  onClick={handleOpenNewTab}
+                  className="font-semibold text-primary underline-offset-2 hover:underline"
+                >
+                  Ouvrir le PDF dans un nouvel onglet
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
