@@ -6,6 +6,7 @@ import { Heart, Check, Loader2, Target, FileText, Download } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 const SUGGESTED_AMOUNTS = [1800, 3600, 5200, 10000]; // in cents
 
@@ -47,7 +48,8 @@ const DonationPage = () => {
   const [donorType, setDonorType] = useState<"particulier" | "societe">("particulier");
   const [donorCompanyName, setDonorCompanyName] = useState("");
   const [donorSiret, setDonorSiret] = useState("");
-  const [donorName, setDonorName] = useState("");
+  const [donorFirstName, setDonorFirstName] = useState("");
+  const [donorLastName, setDonorLastName] = useState("");
   const [donorEmail, setDonorEmail] = useState("");
   const [donorAddress, setDonorAddress] = useState("");
   const [donorCity, setDonorCity] = useState("");
@@ -151,7 +153,7 @@ const DonationPage = () => {
       body: {
         slug,
         amount,
-        donor_name: donorName,
+        donor_name: `${donorFirstName.trim()} ${donorLastName.trim()}`.trim(),
         donor_email: donorEmail,
         donor_address: `${donorAddress}, ${donorPostal} ${donorCity}`,
         campaign_id: selectedCampaignId,
@@ -210,6 +212,20 @@ const DonationPage = () => {
   }
 
   if (success) {
+    const openCerfa = async (url: string) => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (Capacitor.isNativePlatform()) {
+          const { Browser } = await import("@capacitor/browser");
+          await Browser.open({ url, presentationStyle: "fullscreen" });
+          return;
+        }
+      } catch (e) {
+        // fall through to window.open
+      }
+      window.open(url, "_blank", "noopener,noreferrer");
+    };
+
     const fetchCerfa = async () => {
       if (!sessionId) {
         setCerfaError("Identifiant de session manquant");
@@ -225,8 +241,7 @@ const DonationPage = () => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Erreur");
         setCerfaUrl(data.cerfa_url);
-        // Auto-open in new tab
-        window.open(data.cerfa_url, "_blank");
+        await openCerfa(data.cerfa_url);
       } catch (e: any) {
         setCerfaError(e.message || "Reçu non disponible pour l'instant");
       } finally {
@@ -256,20 +271,14 @@ const DonationPage = () => {
             </p>
 
             {cerfaUrl ? (
-              <a
-                href={cerfaUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full"
+              <Button
+                onClick={() => openCerfa(cerfaUrl)}
+                className="w-full py-6 text-base font-bold rounded-xl"
+                style={{ background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))" }}
               >
-                <Button
-                  className="w-full py-6 text-base font-bold rounded-xl"
-                  style={{ background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))" }}
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  Télécharger mon CERFA
-                </Button>
-              </a>
+                <Download className="w-5 h-5 mr-2" />
+                Télécharger mon CERFA
+              </Button>
             ) : (
               <Button
                 onClick={fetchCerfa}
@@ -512,15 +521,27 @@ const DonationPage = () => {
                 </>
               )}
 
-              <div>
-                <Label className="text-xs font-semibold">
-                  {donorType === "societe" ? "Représentant (Prénom Nom)" : "Votre nom"}
-                </Label>
-                <Input
-                  placeholder="Prénom Nom"
-                  value={donorName}
-                  onChange={(e) => setDonorName(e.target.value)}
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs font-semibold">Prénom *</Label>
+                  <Input
+                    placeholder="Prénom"
+                    value={donorFirstName}
+                    onChange={(e) => setDonorFirstName(e.target.value)}
+                    autoComplete="given-name"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Nom *</Label>
+                  <Input
+                    placeholder="Nom"
+                    value={donorLastName}
+                    onChange={(e) => setDonorLastName(e.target.value)}
+                    autoComplete="family-name"
+                    required
+                  />
+                </div>
               </div>
               <div>
                 <Label className="text-xs font-semibold">Votre email *</Label>
@@ -529,6 +550,7 @@ const DonationPage = () => {
                   placeholder="email@exemple.com"
                   value={donorEmail}
                   onChange={(e) => setDonorEmail(e.target.value)}
+                  autoComplete="email"
                   required
                 />
                 <p className="text-[10px] text-muted-foreground mt-1">
@@ -537,12 +559,19 @@ const DonationPage = () => {
               </div>
               <div>
                 <Label className="text-xs font-semibold">Adresse postale *</Label>
-                <Input
-                  placeholder="12 rue de la Paix"
+                <AddressAutocomplete
                   value={donorAddress}
-                  onChange={(e) => setDonorAddress(e.target.value)}
+                  onChange={setDonorAddress}
+                  onSelect={(d) => {
+                    if (d.city) setDonorCity(d.city);
+                    if (d.postal_code) setDonorPostal(d.postal_code);
+                  }}
+                  placeholder="Commencez à taper votre adresse…"
                   required
                 />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Sélectionnez une suggestion pour remplir automatiquement la ville et le code postal
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
