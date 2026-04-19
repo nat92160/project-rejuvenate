@@ -128,6 +128,34 @@ const DonationPage = () => {
     })();
   }, [slug]);
 
+  // Prefill donor info from connected user profile
+  useEffect(() => {
+    if (!user) return;
+    if (!donorEmail && user.email) setDonorEmail(user.email);
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!data) return;
+      const first = (data as any).first_name || "";
+      const last = (data as any).last_name || "";
+      if (!donorFirstName && first) setDonorFirstName(first);
+      if (!donorLastName && last) setDonorLastName(last);
+      if (!donorFirstName && !first && (data as any).display_name) {
+        const parts = String((data as any).display_name).trim().split(/\s+/);
+        if (parts.length >= 2) {
+          setDonorFirstName(parts[0]);
+          setDonorLastName(parts.slice(1).join(" "));
+        } else {
+          setDonorFirstName(parts[0]);
+        }
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   const handleDonate = async () => {
     if (!cerfaReady) {
       toast.error("Cette synagogue n'a pas finalisé sa configuration fiscale. Les dons sont temporairement indisponibles.");
