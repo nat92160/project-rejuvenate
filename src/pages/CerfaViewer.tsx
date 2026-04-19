@@ -1,17 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Printer, Share2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Printer, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchCerfaPdfBlob, shareCerfaPdf } from "@/lib/cerfaPdf";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
 const CerfaViewer = () => {
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+
+  // URL directe vers l'edge function (utilisée pour iframe + lien "ouvrir")
+  const directUrl = useMemo(
+    () => (token ? `${SUPABASE_URL}/functions/v1/generate-cerfa?token=${encodeURIComponent(token)}` : null),
+    [token],
+  );
 
   useEffect(() => {
     if (!token) {
@@ -30,7 +38,7 @@ const CerfaViewer = () => {
         const blob = await fetchCerfaPdfBlob(token);
         if (controller.signal.aborted) return;
         activeUrl = URL.createObjectURL(blob);
-        setPdfUrl(activeUrl);
+        setBlobUrl(activeUrl);
       } catch (err) {
         if (controller.signal.aborted) return;
         console.error("CERFA viewer error:", err);
@@ -46,14 +54,9 @@ const CerfaViewer = () => {
     };
   }, [token]);
 
-  const handlePrint = () => {
-    if (!pdfUrl) return;
-    // Ouvre le PDF dans un nouvel onglet pour impression native (plus fiable que iframe.print)
-    const w = window.open(pdfUrl, "_blank");
-    if (!w) {
-      // Fallback : tente l'impression iframe
-      iframeRef.current?.contentWindow?.print();
-    }
+  const handleOpenNewTab = () => {
+    if (!directUrl) return;
+    window.open(directUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleShare = async () => {
@@ -78,14 +81,14 @@ const CerfaViewer = () => {
             <Button
               variant="outline"
               onClick={handleShare}
-              disabled={!pdfUrl || loading || sharing}
+              disabled={loading || sharing}
               className="min-h-11"
             >
               {sharing ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <Share2 className="h-4 w-4 sm:mr-2" />}
               <span className="hidden sm:inline">Partager PDF</span>
             </Button>
-            <Button onClick={handlePrint} disabled={!pdfUrl || loading} className="min-h-11">
-              <Printer className="h-4 w-4 sm:mr-2" />
+            <Button onClick={handleOpenNewTab} disabled={!directUrl || loading} className="min-h-11">
+              <ExternalLink className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Ouvrir / Imprimer</span>
             </Button>
           </div>
@@ -98,7 +101,7 @@ const CerfaViewer = () => {
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Chargement du CERFA…</p>
           </div>
-        ) : error || !pdfUrl ? (
+        ) : error || !directUrl ? (
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 rounded-xl border border-border bg-card p-6 text-center">
             <p className="text-sm text-muted-foreground">{error || "Reçu introuvable."}</p>
             <Button variant="outline" onClick={() => navigate(-1)} className="min-h-11">
@@ -106,31 +109,24 @@ const CerfaViewer = () => {
             </Button>
           </div>
         ) : (
-          <object
-            data={pdfUrl}
-            type="application/pdf"
-            className="h-[calc(100vh-7rem)] min-h-[640px] w-full rounded-xl border border-border bg-background"
-          >
+          <div className="space-y-3">
+            {/* Aperçu : iframe direct vers l'URL (plus fiable que blob: dans iframes imbriquées) */}
             <iframe
               ref={iframeRef}
-              title="CERFA"
-              src={pdfUrl}
-              className="h-full w-full rounded-xl border-0 bg-background"
+              title="Reçu CERFA"
+              src={blobUrl || directUrl}
+              className="h-[calc(100vh-9rem)] min-h-[640px] w-full rounded-xl border border-border bg-white"
             />
-            <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Votre navigateur ne peut pas afficher le PDF directement.
-              </p>
-              <a
-                href={pdfUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-primary underline"
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <span>L'aperçu ne s'affiche pas&nbsp;?</span>
+              <button
+                onClick={handleOpenNewTab}
+                className="font-semibold text-primary underline-offset-2 hover:underline"
               >
                 Ouvrir le PDF dans un nouvel onglet
-              </a>
+              </button>
             </div>
-          </object>
+          </div>
         )}
       </div>
     </main>
