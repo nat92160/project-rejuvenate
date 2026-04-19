@@ -98,48 +98,48 @@ serve(async (req) => {
   <title>Reçu Fiscal CERFA n° ${esc(finalCerfaNumber)}</title>
   <style>
     @page { size: A4; margin: 8mm; }
-    @media print { body { margin: 0; } .no-print { display: none; } .frame { page-break-inside: avoid; } }
+    @media print { body { margin: 0; background: #fff; } .no-print { display: none; } .frame { page-break-inside: avoid; } }
     * { box-sizing: border-box; }
-    html, body { font-family: Arial, Helvetica, sans-serif; color: #111; font-size: 10.5px; line-height: 1.3; }
+    html, body { font-family: 'Lora', Georgia, 'Times New Roman', serif; color: #2a2a2a; font-size: 10.5px; line-height: 1.3; background: #fff; }
     body { max-width: 800px; margin: 12px auto; padding: 8px; }
-    .print-btn { display: block; margin: 0 auto 10px; padding: 8px 18px; background: #1e3a5f; color: #fff; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }
-    .warn { background: #fff4e5; border: 1px solid #f0a35e; color: #8a4b00; padding: 6px 10px; border-radius: 6px; font-size: 10.5px; margin-bottom: 8px; text-align: center; font-weight: 600; }
-    .frame { border: 1px solid #111; }
-    .top { display: grid; grid-template-columns: 170px 1fr 150px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #111; gap: 10px; }
-    .top .left { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9.5px; }
+    .print-btn { display: block; margin: 0 auto 10px; padding: 8px 18px; background: #996515; color: #fff; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; letter-spacing: 0.5px; }
+    .warn { background: #fffaf2; border: 1px solid #d9a85f; color: #6b4810; padding: 6px 10px; border-radius: 6px; font-size: 10.5px; margin-bottom: 8px; text-align: center; font-weight: 600; }
+    .frame { border: 1.5px solid #996515; background: #fff; }
+    .top { display: grid; grid-template-columns: 170px 1fr 150px; align-items: center; padding: 10px 14px; border-bottom: 1.5px solid #996515; gap: 10px; background: #fffdf7; }
+    .top .left { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9.5px; color: #996515; }
     .top .left .small { font-size: 9px; }
-    .cerfa-bubble { display: inline-block; border: 1.3px solid #111; border-radius: 999px; padding: 2px 18px; font-style: italic; font-weight: 700; letter-spacing: 1px; font-size: 11px; }
-    .top .center { text-align: center; font-weight: 700; font-size: 11px; line-height: 1.3; }
-    .top .right { text-align: right; font-size: 10px; }
-    .top .right .num { font-weight: 700; font-size: 11.5px; margin-top: 2px; }
-    .donor-bar { display: grid; grid-template-columns: 170px 1fr; padding: 8px 12px; border-bottom: 1px solid #111; gap: 12px; align-items: center; }
-    .donor-bar .logo { display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 700; font-size: 10px; text-align: center; }
+    .cerfa-bubble { display: inline-block; border: 1.3px solid #996515; color: #996515; border-radius: 999px; padding: 2px 18px; font-style: italic; font-weight: 700; letter-spacing: 1px; font-size: 11px; }
+    .top .center { text-align: center; font-weight: 700; font-size: 11px; line-height: 1.3; color: #2a2a2a; }
+    .top .right { text-align: right; font-size: 10px; color: #996515; }
+    .top .right .num { font-weight: 700; font-size: 12.5px; margin-top: 2px; color: #996515; letter-spacing: 0.5px; }
+    .donor-bar { display: grid; grid-template-columns: 170px 1fr; padding: 10px 14px; border-bottom: 1px solid #e0c693; gap: 12px; align-items: center; background: #fff; }
+    .donor-bar .logo { display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 700; font-size: 10px; text-align: center; color: #996515; }
     .donor-bar .logo img { max-width: 70px; max-height: 70px; object-fit: contain; }
     .donor-bar .donor-block { font-size: 11px; line-height: 1.45; }
-    .donor-bar .donor-block .donor-name { font-weight: 700; }
-    .section-title { background: #d6d6d6; text-align: center; padding: 4px 0; font-weight: 700; letter-spacing: 0.5px; font-size: 10.5px; border-bottom: 1px solid #111; }
+    .donor-bar .donor-block .donor-name { font-weight: 700; color: #2a2a2a; }
+    .section-title { background: #996515; color: #fff; text-align: center; padding: 5px 0; font-weight: 700; letter-spacing: 1.2px; font-size: 10.5px; border-bottom: 1px solid #996515; text-transform: uppercase; }
     .grid-2col { display: grid; grid-template-columns: 200px 1fr; }
-    .grid-2col > div { padding: 4px 12px; border-bottom: 1px solid #cfcfcf; font-size: 10.5px; }
-    .grid-2col .lbl { font-weight: 700; background: #fafafa; }
+    .grid-2col > div { padding: 5px 12px; border-bottom: 1px solid #f0e2c3; font-size: 10.5px; }
+    .grid-2col .lbl { font-weight: 700; background: #fffdf7; color: #6b4810; }
     .grid-2col > div:nth-last-child(-n+2) { border-bottom: none; }
     .missing { color: #b8410f; font-weight: 700; }
-    .amount-section { padding: 8px 12px; border-bottom: 1px solid #111; }
-    .amount-line { text-align: center; font-size: 10.5px; margin-bottom: 5px; }
+    .amount-section { padding: 10px 14px; border-bottom: 1px solid #e0c693; background: #fffdf7; }
+    .amount-line { text-align: center; font-size: 10.5px; margin-bottom: 6px; color: #2a2a2a; }
     .amount-box { display: flex; justify-content: center; }
-    .amount-box .pill { border: 1.3px solid #111; padding: 5px 18px; font-weight: 700; font-size: 11.5px; letter-spacing: 0.2px; text-align: center; }
-    .checks { padding: 6px 12px; border-bottom: 1px solid #111; }
-    .checks .center-h { text-align: center; font-weight: 700; font-size: 10.5px; margin-bottom: 6px; line-height: 1.4; }
+    .amount-box .pill { border: 1.5px solid #996515; color: #996515; padding: 6px 22px; font-weight: 700; font-size: 12px; letter-spacing: 0.3px; text-align: center; background: #fff; border-radius: 4px; }
+    .checks { padding: 8px 14px; border-bottom: 1px solid #e0c693; }
+    .checks .center-h { text-align: center; font-weight: 700; font-size: 10.5px; margin-bottom: 6px; line-height: 1.4; color: #2a2a2a; }
     .checks .row { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin: 3px 0 8px; }
-    .checks .group-title { font-weight: 700; text-decoration: underline; font-size: 10.5px; margin-top: 3px; }
+    .checks .group-title { font-weight: 700; text-decoration: underline; font-size: 10.5px; margin-top: 3px; color: #996515; }
     .check { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; }
-    .check .box { width: 13px; height: 13px; border: 1.1px solid #111; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; }
-    .footer-row { display: grid; grid-template-columns: 1fr 1fr; padding: 8px 12px; gap: 10px; }
+    .check .box { width: 13px; height: 13px; border: 1.2px solid #996515; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; color: #996515; }
+    .footer-row { display: grid; grid-template-columns: 1fr 1fr; padding: 10px 14px; gap: 10px; background: #fffdf7; border-bottom: 1px solid #e0c693; }
     .footer-row .right { text-align: right; }
-    .footer-row .right .date { font-weight: 700; }
-    .footer-row .right .pres { margin-top: 3px; font-style: italic; font-size: 10.5px; }
+    .footer-row .right .date { font-weight: 700; color: #2a2a2a; }
+    .footer-row .right .pres { margin-top: 3px; font-style: italic; font-size: 10.5px; color: #6b4810; }
     .footer-row .right .sig img { max-height: 55px; margin-top: 3px; }
-    .footer-mention { text-align: center; font-weight: 700; padding: 6px 12px 0; font-size: 10.5px; }
-    .footer-note { text-align: center; font-size: 9px; color: #555; padding: 4px 12px 4px; }
+    .footer-mention { text-align: center; font-weight: 700; padding: 8px 12px 2px; font-size: 11px; color: #996515; letter-spacing: 1px; text-transform: uppercase; font-family: 'Playfair Display', Georgia, serif; }
+    .footer-note { text-align: center; font-size: 9px; color: #888; padding: 2px 12px 6px; font-style: italic; }
   </style>
 </head>
 <body>
