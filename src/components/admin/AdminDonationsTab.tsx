@@ -15,6 +15,8 @@ interface Donation {
   synagogue_id: string;
   fiscal_year: number;
   created_at: string;
+  payout_marked_at: string | null;
+  payout_note: string | null;
   synagogue_name?: string;
 }
 
