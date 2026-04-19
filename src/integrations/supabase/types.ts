@@ -291,6 +291,9 @@ export type Database = {
           donor_user_id: string | null
           fiscal_year: number
           id: string
+          payout_marked_at: string | null
+          payout_marked_by: string | null
+          payout_note: string | null
           stripe_checkout_session_id: string | null
           stripe_payment_id: string | null
           synagogue_id: string
@@ -312,6 +315,9 @@ export type Database = {
           donor_user_id?: string | null
           fiscal_year?: number
           id?: string
+          payout_marked_at?: string | null
+          payout_marked_by?: string | null
+          payout_note?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_id?: string | null
           synagogue_id: string
@@ -333,6 +339,9 @@ export type Database = {
           donor_user_id?: string | null
           fiscal_year?: number
           id?: string
+          payout_marked_at?: string | null
+          payout_marked_by?: string | null
+          payout_note?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_id?: string | null
           synagogue_id?: string
