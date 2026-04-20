@@ -21,6 +21,11 @@ interface SynaSummary {
   arvit_time_2: string | null;
   primary_color: string | null;
   secondary_color: string | null;
+  mikve_enabled?: boolean | null;
+  mikve_winter_hours?: string | null;
+  mikve_summer_hours?: string | null;
+  mikve_phone?: string | null;
+  mikve_maps_link?: string | null;
 }
 
 interface AnnonceRow {
