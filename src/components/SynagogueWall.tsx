@@ -349,12 +349,12 @@ const SynagogueWall = () => {
         >
           {/* — Horaires : grande carte centrale — */}
           {activeSyna && (
-            <PaperCard color={{ bg: "#FFFBE9", tape: "#E8D26A" }} tilt="-1deg">
+            <PaperCard color={{ bg: "#FBF8F1", tape: PALETTE.goldLight }} tilt="-1deg">
               <h3
                 style={{
                   fontFamily: "'Caveat', cursive",
-                  fontSize: 26,
-                  color: "#3a2410",
+                  fontSize: 28,
+                  color: PALETTE.ink,
                   fontWeight: 700,
                   textAlign: "center",
                 }}
@@ -363,27 +363,27 @@ const SynagogueWall = () => {
               </h3>
               <div
                 className="mt-3 grid grid-cols-3 gap-3 text-center"
-                style={{ fontFamily: "'Patrick Hand', cursive", color: "#3a2410" }}
+                style={{ fontFamily: "'Patrick Hand', cursive", color: PALETTE.ink }}
               >
                 <div>
-                  <p style={{ fontSize: 14, opacity: 0.7 }}>🌅 Cha'harit</p>
-                  <p style={{ fontSize: 22, fontWeight: 700 }}>{formatTime(activeSyna.shacharit_time)}</p>
+                  <p style={{ fontSize: 13, color: PALETTE.gold, letterSpacing: "0.05em", textTransform: "uppercase" }}>Cha'harit</p>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: PALETTE.ink }}>{formatTime(activeSyna.shacharit_time)}</p>
                   {activeSyna.shacharit_time_2 && (
-                    <p style={{ fontSize: 16 }}>{formatTime(activeSyna.shacharit_time_2)}</p>
+                    <p style={{ fontSize: 16, color: PALETTE.inkSoft }}>{formatTime(activeSyna.shacharit_time_2)}</p>
                   )}
                 </div>
                 <div>
-                  <p style={{ fontSize: 14, opacity: 0.7 }}>🌇 Min'ha</p>
-                  <p style={{ fontSize: 22, fontWeight: 700 }}>{formatTime(activeSyna.minha_time)}</p>
+                  <p style={{ fontSize: 13, color: PALETTE.gold, letterSpacing: "0.05em", textTransform: "uppercase" }}>Min'ha</p>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: PALETTE.ink }}>{formatTime(activeSyna.minha_time)}</p>
                   {activeSyna.minha_time_2 && (
-                    <p style={{ fontSize: 16 }}>{formatTime(activeSyna.minha_time_2)}</p>
+                    <p style={{ fontSize: 16, color: PALETTE.inkSoft }}>{formatTime(activeSyna.minha_time_2)}</p>
                   )}
                 </div>
                 <div>
-                  <p style={{ fontSize: 14, opacity: 0.7 }}>🌙 Arvit</p>
-                  <p style={{ fontSize: 22, fontWeight: 700 }}>{formatTime(activeSyna.arvit_time)}</p>
+                  <p style={{ fontSize: 13, color: PALETTE.gold, letterSpacing: "0.05em", textTransform: "uppercase" }}>Arvit</p>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: PALETTE.ink }}>{formatTime(activeSyna.arvit_time)}</p>
                   {activeSyna.arvit_time_2 && (
-                    <p style={{ fontSize: 16 }}>{formatTime(activeSyna.arvit_time_2)}</p>
+                    <p style={{ fontSize: 16, color: PALETTE.inkSoft }}>{formatTime(activeSyna.arvit_time_2)}</p>
                   )}
                 </div>
               </div>
