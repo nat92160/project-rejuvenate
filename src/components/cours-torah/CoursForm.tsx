@@ -115,7 +115,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
         userId,
         title: meetingTitle,
         timezone: "Europe/Paris",
-        duration: 60,
+        duration,
         usePmi,
       };
 
