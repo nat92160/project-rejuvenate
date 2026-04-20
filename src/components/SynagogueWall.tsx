@@ -397,14 +397,14 @@ const SynagogueWall = () => {
               style={{
                 fontFamily: "'Kalam', cursive",
                 fontSize: 22,
-                color: "#3a2410",
+                color: PALETTE.ink,
                 fontWeight: 700,
               }}
             >
               📣 Annonces de la semaine
             </h3>
             {annonces.length === 0 ? (
-              <p className="px-1 text-sm" style={{ fontFamily: "'Patrick Hand', cursive", color: "#7a5a30" }}>
+              <p className="px-1 text-sm" style={{ fontFamily: "'Patrick Hand', cursive", color: PALETTE.inkMuted }}>
                 Pas d'annonce pour l'instant — le tableau est calme.
               </p>
             ) : (
@@ -419,7 +419,7 @@ const SynagogueWall = () => {
                           fontFamily: "'Caveat', cursive",
                           fontSize: 22,
                           fontWeight: 700,
-                          color: "#2a1a08",
+                          color: PALETTE.ink,
                           lineHeight: 1.1,
                         }}
                       >
@@ -430,13 +430,13 @@ const SynagogueWall = () => {
                         style={{
                           fontFamily: "'Patrick Hand', cursive",
                           fontSize: 16,
-                          color: "#3a2410",
+                          color: PALETTE.inkSoft,
                           lineHeight: 1.35,
                         }}
                       >
                         {a.content}
                       </p>
-                      <p className="mt-2" style={{ fontFamily: "'Caveat', cursive", fontSize: 14, color: "#7a5a30" }}>
+                      <p className="mt-2" style={{ fontFamily: "'Caveat', cursive", fontSize: 14, color: PALETTE.gold }}>
                         ✍️ {formatRelative(a.created_at)}
                       </p>
                     </PaperCard>
@@ -453,14 +453,14 @@ const SynagogueWall = () => {
               style={{
                 fontFamily: "'Kalam', cursive",
                 fontSize: 22,
-                color: "#3a2410",
+                color: PALETTE.ink,
                 fontWeight: 700,
               }}
             >
               📖 Cours de la semaine
             </h3>
             {cours.length === 0 ? (
-              <p className="px-1 text-sm" style={{ fontFamily: "'Patrick Hand', cursive", color: "#7a5a30" }}>
+              <p className="px-1 text-sm" style={{ fontFamily: "'Patrick Hand', cursive", color: PALETTE.inkMuted }}>
                 Aucun cours programmé pour l'instant.
               </p>
             ) : (
@@ -468,22 +468,22 @@ const SynagogueWall = () => {
                 {cours.map((c, i) => {
                   const tilt = TILTS[(i + 2) % TILTS.length];
                   return (
-                    <PaperCard key={c.id} color={{ bg: "#FFFBE9", tape: "#E8D26A" }} tilt={tilt}>
+                    <PaperCard key={c.id} color={{ bg: "#FBF8F1", tape: PALETTE.goldLight }} tilt={tilt}>
                       <div className="flex items-baseline justify-between gap-2">
-                        <p style={{ fontFamily: "'Caveat', cursive", fontSize: 22, fontWeight: 700, color: "#2a1a08", lineHeight: 1.1 }}>
+                        <p style={{ fontFamily: "'Caveat', cursive", fontSize: 22, fontWeight: 700, color: PALETTE.ink, lineHeight: 1.1 }}>
                           📖 {c.title}
                         </p>
-                        <span style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: "#7a5a30" }}>
+                        <span style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: PALETTE.gold }}>
                           {c.day_of_week} · {formatTime(c.course_time)}
                         </span>
                       </div>
                       {c.rav && (
-                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 16, color: "#3a2410" }}>
+                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 16, color: PALETTE.inkSoft }}>
                           ✡️ {c.rav}
                         </p>
                       )}
                       {c.description && (
-                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: "#3a2410", lineHeight: 1.3 }}>
+                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.inkSoft, lineHeight: 1.3 }}>
                           {c.description}
                         </p>
                       )}
@@ -493,12 +493,12 @@ const SynagogueWall = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="mt-2 inline-block rounded-lg px-3 py-1 text-xs font-bold no-underline active:scale-95"
-                          style={{ background: "#3a2410", color: "#FDF6E3", fontFamily: "'Patrick Hand', cursive" }}
+                          style={{ background: PALETTE.ink, color: "#F4EFE6", fontFamily: "'Patrick Hand', cursive", boxShadow: `0 4px 10px -4px ${PALETTE.ink}66` }}
                         >
                           🎥 Rejoindre Zoom
                         </a>
                       ) : c.address ? (
-                        <p className="mt-1" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: "#7a5a30" }}>
+                        <p className="mt-1" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: PALETTE.gold }}>
                           📍 {c.address}
                         </p>
                       ) : null}
