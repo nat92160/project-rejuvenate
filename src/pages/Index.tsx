@@ -274,6 +274,19 @@ const IndexContent = () => {
     return () => window.removeEventListener("open-auth-modal", handler);
   }, []);
 
+  // Listen for navigate-tab events (e.g. from SynagogueChooser → "Modifier ma fiche")
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { tab?: string } | undefined;
+      if (detail?.tab) {
+        setActiveTab(detail.tab);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
+    window.addEventListener("navigate-tab", handler);
+    return () => window.removeEventListener("navigate-tab", handler);
+  }, []);
+
   useEffect(() => {
     const onScroll = () => setShowHomeBtn(window.scrollY > 200 && activeTab !== "dashboard");
     onScroll();
