@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Building2, MapPin, Phone, Mail, Save } from "lucide-react";
+import { Building2, MapPin, Phone, Mail, Save, ChevronDown } from "lucide-react";
 import { useRef } from "react";
 
 interface SynaProfile {
@@ -47,17 +47,38 @@ const SynaProfileManager = () => {
   const [uploading, setUploading] = useState(false);
   const [newSpeaker, setNewSpeaker] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const [synaList, setSynaList] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  // Load list of synagogues this user can manage (as president OR adjoint)
   useEffect(() => {
     if (!user) return;
-    const load = async () => {
+    (async () => {
       const { data: rows } = await supabase
         .from("synagogue_profiles")
+        .select("id, name")
+        .or(`president_id.eq.${user.id},adjoint_id.eq.${user.id}`)
+        .order("created_at", { ascending: true });
+      const list = (rows || []).map((r: any) => ({ id: r.id, name: r.name || "Sans nom" }));
+      setSynaList(list);
+      if (list.length > 0 && !selectedId) {
+        setSelectedId(list[0].id);
+      } else if (list.length === 0) {
+        setLoading(false);
+      }
+    })();
+  }, [user]);
+
+  // Load full profile of selected synagogue
+  useEffect(() => {
+    if (!user || !selectedId) return;
+    setLoading(true);
+    (async () => {
+      const { data } = await supabase
+        .from("synagogue_profiles")
         .select("*")
-        .eq("president_id", user.id)
-        .order("created_at", { ascending: true })
-        .limit(1);
-      const data = rows && rows[0];
+        .eq("id", selectedId)
+        .maybeSingle();
       if (data) {
         setProfile({
           id: data.id,
@@ -76,9 +97,8 @@ const SynaProfileManager = () => {
         });
       }
       setLoading(false);
-    };
-    void load();
-  }, [user]);
+    })();
+  }, [user, selectedId]);
 
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
