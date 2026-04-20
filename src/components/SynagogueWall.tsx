@@ -247,13 +247,12 @@ const SynagogueWall = () => {
       <div
         className="rounded-2xl p-8 text-center"
         style={{
-          background:
-            "repeating-linear-gradient(45deg, #FDF6E3, #FDF6E3 10px, #F5ECCF 10px, #F5ECCF 20px)",
-          border: "1px dashed #C9B07A",
+          background: PALETTE.bgBoard,
+          border: `1px dashed ${PALETTE.border}`,
         }}
       >
         <span className="text-5xl">📌</span>
-        <p className="mt-3" style={{ fontFamily: "'Caveat', cursive", fontSize: 24, color: "#5a3a1a" }}>
+        <p className="mt-3" style={{ fontFamily: "'Caveat', cursive", fontSize: 24, color: PALETTE.ink }}>
           Le tableau d'affichage est vide…
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -276,11 +275,11 @@ const SynagogueWall = () => {
     <div
       className="rounded-2xl p-3 sm:p-5"
       style={{
-        // fond papier kraft / parchemin avec subtile texture
+        // fond ivoire perlé avec vignettage chic + filet doré
         background:
-          "radial-gradient(circle at 20% 10%, rgba(255,255,255,0.55), transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.4), transparent 40%), #FDF6E3",
-        border: "1px solid #E5D6A8",
-        boxShadow: "inset 0 0 60px rgba(140,100,40,0.08)",
+          `radial-gradient(circle at 20% 0%, rgba(255,255,255,0.7), transparent 45%), radial-gradient(circle at 100% 100%, ${PALETTE.bgBoardAlt}, transparent 50%), ${PALETTE.bgBoard}`,
+        border: `1px solid ${PALETTE.border}`,
+        boxShadow: `inset 0 0 80px rgba(0,20,40,0.05), 0 1px 0 ${PALETTE.goldLight}33`,
       }}
     >
       {/* — Sélecteur de synagogue — */}
@@ -298,9 +297,10 @@ const SynagogueWall = () => {
                     minHeight: 40,
                     fontFamily: "'Patrick Hand', cursive",
                     fontSize: 15,
-                    background: active ? "#5a3a1a" : "rgba(255,255,255,0.7)",
-                    color: active ? "#FDF6E3" : "#5a3a1a",
-                    borderColor: "#C9B07A",
+                    background: active ? PALETTE.ink : "rgba(255,255,255,0.85)",
+                    color: active ? "#F4EFE6" : PALETTE.ink,
+                    borderColor: active ? PALETTE.ink : PALETTE.border,
+                    boxShadow: active ? `0 4px 12px -4px ${PALETTE.ink}55` : "none",
                   }}
                 >
                   🏛️ {s.name}
