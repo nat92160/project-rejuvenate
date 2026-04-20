@@ -2,12 +2,10 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 
 /**
- * SynagogueWall — "Tableau d'affichage" manuscrit pour les fidèles.
- * Affiche les horaires, annonces, cours et événements d'une synagogue
- * abonnée, dans une esthétique papier kraft / post-its épinglés.
+ * SynagogueWall — Tableau de la synagogue, esthétique minimaliste & chic.
+ * Typographie sobre, fond ivoire, filets or mat, sans post-its ni manuscrits.
  */
 
 interface SynaSummary {
@@ -58,35 +56,25 @@ interface EventRow {
   event_type: string;
 }
 
-/* — palette CHIC : tons feutrés sur fond ivoire (charte bleu nuit / or mat) — */
 const PALETTE = {
-  bgBoard: "#F4EFE6",      // ivoire perle (fond du tableau)
-  bgBoardAlt: "#EDE6D6",   // sable clair (vignettage)
-  ink: "#001F3F",          // bleu nuit (texte principal)
-  inkSoft: "#3A4A60",      // bleu nuit doux (texte secondaire)
-  inkMuted: "#7A8294",     // gris bleuté (méta)
-  gold: "#996515",         // or mat (accents)
-  goldLight: "#C5A059",    // or clair (filets)
-  border: "#D9CFB8",       // sable taupe (bordures)
+  bg: "#FBFAF6",       // ivoire très clair
+  surface: "#FFFFFF",  // cards blanches
+  ink: "#001F3F",      // bleu nuit
+  inkSoft: "#3A4A60",
+  inkMuted: "#8A92A2",
+  gold: "#996515",
+  goldSoft: "#C5A059",
+  border: "#ECE7DC",
+  hairline: "#E4DFD2",
 };
-/* Post-its en tons sourds, élégants, sans saturation criarde */
-const NOTE_COLORS = [
-  { bg: "#EFEDE3", tape: "#C8C2B0" }, // ivoire grège
-  { bg: "#E4E9E4", tape: "#A9B6A9" }, // sauge poudrée
-  { bg: "#E2E7EE", tape: "#A6B3C2" }, // bleu brume
-  { bg: "#EFE4DC", tape: "#C9B29A" }, // rosé sable
-  { bg: "#E8E2D4", tape: "#BFB295" }, // or pâle
-];
-
-const TILTS = ["-2deg", "1.5deg", "-1deg", "2deg", "-1.5deg"];
 
 const formatTime = (t?: string | null) => (t ? t.slice(0, 5) : "—");
 
 const formatDate = (iso: string) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString("fr-FR", {
-    weekday: "short",
+    weekday: "long",
     day: "numeric",
-    month: "short",
+    month: "long",
   });
 
 const formatRelative = (iso: string) => {
@@ -98,52 +86,67 @@ const formatRelative = (iso: string) => {
   return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 };
 
-const Pin = ({ color = PALETTE.gold }: { color?: string }) => (
-  <span
-    aria-hidden
-    className="absolute -top-2 left-1/2 -translate-x-1/2 z-10"
-    style={{
-      width: 12,
-      height: 12,
-      borderRadius: "50%",
-      background: `radial-gradient(circle at 30% 30%, ${color}, #4a3008 80%)`,
-      boxShadow: "0 2px 3px rgba(0,20,40,0.25), inset 0 -1px 1px rgba(0,0,0,0.2)",
-    }}
-  />
-);
-
-const PaperCard = ({
+/* — Card sobre, blanche, filet doré discret — */
+const Card = ({
   children,
-  color,
-  tilt,
-  pin = true,
   className = "",
+  accent = false,
 }: {
   children: React.ReactNode;
-  color?: { bg: string; tape: string };
-  tilt?: string;
-  pin?: boolean;
   className?: string;
+  accent?: boolean;
 }) => (
   <motion.div
-    initial={{ opacity: 0, y: 18 }}
+    initial={{ opacity: 0, y: 10 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.2 }}
-    whileTap={{ rotate: 0, scale: 0.98 }}
-    transition={{ duration: 0.45, ease: "easeOut" }}
-    className={`relative ${className}`}
+    viewport={{ once: true, amount: 0.15 }}
+    transition={{ duration: 0.4, ease: "easeOut" }}
+    className={`relative overflow-hidden ${className}`}
     style={{
-      background: color?.bg ?? "#FBF8F1",
-      transform: `rotate(${tilt ?? "0deg"})`,
-      boxShadow:
-        "0 8px 20px -10px rgba(0,20,40,0.18), 0 2px 6px rgba(0,20,40,0.08), inset 0 0 0 1px rgba(255,255,255,0.4)",
-      borderRadius: 8,
-      padding: "18px 16px 16px",
+      background: PALETTE.surface,
+      border: `1px solid ${PALETTE.border}`,
+      borderRadius: 4,
+      padding: "20px 22px",
+      boxShadow: "0 1px 2px rgba(0,20,40,0.03)",
     }}
   >
-    {pin && <Pin />}
+    {accent && (
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 2,
+          background: `linear-gradient(90deg, transparent, ${PALETTE.goldSoft}, transparent)`,
+        }}
+      />
+    )}
     {children}
   </motion.div>
+);
+
+/* — Titre de section : petit eyebrow + filet doré — */
+const SectionTitle = ({ label }: { label: string }) => (
+  <div className="mb-4 flex items-center gap-3 px-1">
+    <span
+      style={{
+        fontFamily: "'Montserrat', sans-serif",
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: "0.22em",
+        textTransform: "uppercase",
+        color: PALETTE.gold,
+      }}
+    >
+      {label}
+    </span>
+    <span
+      aria-hidden
+      style={{ flex: 1, height: 1, background: PALETTE.hairline }}
+    />
+  </div>
 );
 
 const SynagogueWall = () => {
@@ -155,7 +158,6 @@ const SynagogueWall = () => {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  /* — Récupère les synagogues auxquelles le fidèle est abonné — */
   const fetchSynas = useCallback(async () => {
     if (!user) {
       setSynas([]);
@@ -188,11 +190,8 @@ const SynagogueWall = () => {
     setLoading(false);
   }, [user]);
 
-  useEffect(() => {
-    void fetchSynas();
-  }, [fetchSynas]);
+  useEffect(() => { void fetchSynas(); }, [fetchSynas]);
 
-  /* — Charge le contenu de la synagogue active — */
   const fetchWallContent = useCallback(async (synaId: string) => {
     const today = new Date().toISOString().slice(0, 10);
     const [a, c, e] = await Promise.all([
@@ -229,7 +228,6 @@ const SynagogueWall = () => {
     void fetchWallContent(activeId);
   }, [activeId, fetchWallContent]);
 
-  /* — Realtime : nouvelles annonces / cours / événements — */
   useEffect(() => {
     if (!activeId) return;
     const channel = supabase
@@ -246,23 +244,41 @@ const SynagogueWall = () => {
     [synas, activeId]
   );
 
-  /* — Empty state : aucune syna abonnée — */
   if (!loading && synas.length === 0) {
     return (
       <div
-        className="rounded-2xl p-8 text-center"
+        className="rounded-sm p-10 text-center"
         style={{
-          background: PALETTE.bgBoard,
-          border: `1px dashed ${PALETTE.border}`,
+          background: PALETTE.surface,
+          border: `1px solid ${PALETTE.border}`,
         }}
       >
-        <span className="text-5xl">📌</span>
-        <p className="mt-3" style={{ fontFamily: "'Caveat', cursive", fontSize: 24, color: PALETTE.ink }}>
-          Le tableau d'affichage est vide…
+        <p
+          style={{
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.22em",
+            textTransform: "uppercase",
+            color: PALETTE.gold,
+          }}
+        >
+          Tableau vide
         </p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Abonnez-vous à votre synagogue dans l'onglet « Annuaire » ou « Proches »
-          pour voir ses horaires, annonces et cours sur ce mur.
+        <p
+          className="mt-3"
+          style={{
+            fontFamily: "'Lora', serif",
+            fontSize: 18,
+            color: PALETTE.ink,
+            fontWeight: 500,
+          }}
+        >
+          Aucune synagogue suivie pour l'instant.
+        </p>
+        <p className="mt-2 text-sm" style={{ color: PALETTE.inkMuted, fontFamily: "'Montserrat', sans-serif" }}>
+          Abonnez-vous à votre synagogue dans l'onglet « Annuaire »
+          pour retrouver ici ses horaires, annonces et cours.
         </p>
       </div>
     );
@@ -270,45 +286,46 @@ const SynagogueWall = () => {
 
   if (loading) {
     return (
-      <div className="py-10 text-center text-sm text-muted-foreground">
-        Chargement du tableau d'affichage…
+      <div className="py-12 text-center text-sm" style={{ color: PALETTE.inkMuted, fontFamily: "'Montserrat', sans-serif" }}>
+        Chargement…
       </div>
     );
   }
 
   return (
     <div
-      className="rounded-2xl p-3 sm:p-5"
+      className="rounded-sm p-4 sm:p-8"
       style={{
-        // fond ivoire perlé avec vignettage chic + filet doré
-        background:
-          `radial-gradient(circle at 20% 0%, rgba(255,255,255,0.7), transparent 45%), radial-gradient(circle at 100% 100%, ${PALETTE.bgBoardAlt}, transparent 50%), ${PALETTE.bgBoard}`,
+        background: PALETTE.bg,
         border: `1px solid ${PALETTE.border}`,
-        boxShadow: `inset 0 0 80px rgba(0,20,40,0.05), 0 1px 0 ${PALETTE.goldLight}33`,
       }}
     >
-      {/* — Sélecteur de synagogue — */}
+      {/* — Sélecteur de synagogue (onglets discrets) — */}
       {synas.length > 1 && (
-        <div className="mb-4 -mx-1 overflow-x-auto" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
-          <div className="flex gap-2 px-1" style={{ minWidth: "max-content" }}>
+        <div className="mb-6 -mx-1 overflow-x-auto" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+          <div className="flex gap-1 px-1" style={{ minWidth: "max-content" }}>
             {synas.map((s) => {
               const active = s.id === activeId;
               return (
                 <button
                   key={s.id}
                   onClick={() => setActiveId(s.id)}
-                  className="rounded-full border px-4 py-2 text-xs font-bold transition-all active:scale-95"
+                  className="transition-all active:scale-[0.98]"
                   style={{
                     minHeight: 40,
-                    fontFamily: "'Patrick Hand', cursive",
-                    fontSize: 15,
-                    background: active ? PALETTE.ink : "rgba(255,255,255,0.85)",
-                    color: active ? "#F4EFE6" : PALETTE.ink,
-                    borderColor: active ? PALETTE.ink : PALETTE.border,
-                    boxShadow: active ? `0 4px 12px -4px ${PALETTE.ink}55` : "none",
+                    padding: "8px 16px",
+                    fontFamily: "'Montserrat', sans-serif",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: "0.06em",
+                    background: "transparent",
+                    color: active ? PALETTE.ink : PALETTE.inkMuted,
+                    border: "none",
+                    borderBottom: active ? `2px solid ${PALETTE.gold}` : `2px solid transparent`,
+                    borderRadius: 0,
                   }}
                 >
-                  🏛️ {s.name}
+                  {s.name}
                 </button>
               );
             })}
@@ -316,29 +333,40 @@ const SynagogueWall = () => {
         </div>
       )}
 
-      {/* — Titre du mur — */}
-      <div className="mb-4 text-center">
-        <h2
+      {/* — En-tête sobre — */}
+      <div className="mb-8 text-center">
+        <p
           style={{
-            fontFamily: "'Caveat', cursive",
-            fontSize: 36,
-            lineHeight: 1.1,
-            color: PALETTE.ink,
-            fontWeight: 700,
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: "0.32em",
+            textTransform: "uppercase",
+            color: PALETTE.gold,
           }}
         >
-          📌 Le mur de {activeSyna?.name ?? "ma synagogue"}
-        </h2>
-        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.gold, letterSpacing: "0.04em" }}>
-          Tout ce qu'il faut savoir cette semaine
+          Le tableau
         </p>
+        <h2
+          className="mt-2"
+          style={{
+            fontFamily: "'Lora', serif",
+            fontSize: 28,
+            lineHeight: 1.15,
+            color: PALETTE.ink,
+            fontWeight: 500,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {activeSyna?.name ?? "Ma synagogue"}
+        </h2>
         <div
           aria-hidden
-          className="mx-auto mt-2"
+          className="mx-auto mt-4"
           style={{
             height: 1,
-            width: 80,
-            background: `linear-gradient(90deg, transparent, ${PALETTE.goldLight}, transparent)`,
+            width: 48,
+            background: PALETTE.goldSoft,
           }}
         />
       </div>
@@ -350,279 +378,386 @@ const SynagogueWall = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="space-y-5"
+          className="space-y-8"
         >
-          {/* — Horaires : grande carte centrale — */}
+          {/* — Horaires de prière — */}
           {activeSyna && (
-            <PaperCard color={{ bg: "#FBF8F1", tape: PALETTE.goldLight }} tilt="-1deg">
-              <h3
-                style={{
-                  fontFamily: "'Caveat', cursive",
-                  fontSize: 28,
-                  color: PALETTE.ink,
-                  fontWeight: 700,
-                  textAlign: "center",
-                }}
-              >
-                🕐 Horaires de prières
-              </h3>
-              <div
-                className="mt-3 grid grid-cols-3 gap-3 text-center"
-                style={{ fontFamily: "'Patrick Hand', cursive", color: PALETTE.ink }}
-              >
-                <div>
-                  <p style={{ fontSize: 13, color: PALETTE.gold, letterSpacing: "0.05em", textTransform: "uppercase" }}>Cha'harit</p>
-                  <p style={{ fontSize: 24, fontWeight: 700, color: PALETTE.ink }}>{formatTime(activeSyna.shacharit_time)}</p>
-                  {activeSyna.shacharit_time_2 && (
-                    <p style={{ fontSize: 16, color: PALETTE.inkSoft }}>{formatTime(activeSyna.shacharit_time_2)}</p>
-                  )}
+            <section>
+              <SectionTitle label="Horaires de prière" />
+              <Card accent>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { label: "Cha'harit", t1: activeSyna.shacharit_time, t2: activeSyna.shacharit_time_2 },
+                    { label: "Min'ha", t1: activeSyna.minha_time, t2: activeSyna.minha_time_2 },
+                    { label: "Arvit", t1: activeSyna.arvit_time, t2: activeSyna.arvit_time_2 },
+                  ].map((o, idx) => (
+                    <div
+                      key={o.label}
+                      style={{
+                        borderLeft: idx > 0 ? `1px solid ${PALETTE.hairline}` : "none",
+                        padding: "4px 8px",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 10,
+                          fontWeight: 600,
+                          letterSpacing: "0.18em",
+                          textTransform: "uppercase",
+                          color: PALETTE.gold,
+                        }}
+                      >
+                        {o.label}
+                      </p>
+                      <p
+                        className="mt-2"
+                        style={{
+                          fontFamily: "'Lora', serif",
+                          fontSize: 24,
+                          fontWeight: 500,
+                          color: PALETTE.ink,
+                          letterSpacing: "-0.01em",
+                        }}
+                      >
+                        {formatTime(o.t1)}
+                      </p>
+                      {o.t2 && (
+                        <p
+                          className="mt-0.5"
+                          style={{
+                            fontFamily: "'Lora', serif",
+                            fontSize: 14,
+                            color: PALETTE.inkMuted,
+                          }}
+                        >
+                          {formatTime(o.t2)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <p style={{ fontSize: 13, color: PALETTE.gold, letterSpacing: "0.05em", textTransform: "uppercase" }}>Min'ha</p>
-                  <p style={{ fontSize: 24, fontWeight: 700, color: PALETTE.ink }}>{formatTime(activeSyna.minha_time)}</p>
-                  {activeSyna.minha_time_2 && (
-                    <p style={{ fontSize: 16, color: PALETTE.inkSoft }}>{formatTime(activeSyna.minha_time_2)}</p>
-                  )}
-                </div>
-                <div>
-                  <p style={{ fontSize: 13, color: PALETTE.gold, letterSpacing: "0.05em", textTransform: "uppercase" }}>Arvit</p>
-                  <p style={{ fontSize: 24, fontWeight: 700, color: PALETTE.ink }}>{formatTime(activeSyna.arvit_time)}</p>
-                  {activeSyna.arvit_time_2 && (
-                    <p style={{ fontSize: 16, color: PALETTE.inkSoft }}>{formatTime(activeSyna.arvit_time_2)}</p>
-                  )}
-                </div>
-              </div>
-            </PaperCard>
+              </Card>
+            </section>
           )}
 
-          {/* — Mikvé : carte affichée uniquement si la syna l'a activée — */}
+          {/* — Mikvé — */}
           {activeSyna?.mikve_enabled && (
-            <PaperCard color={{ bg: "#E2E7EE", tape: "#A6B3C2" }} tilt="1.5deg">
-              <h3
-                style={{
-                  fontFamily: "'Caveat', cursive",
-                  fontSize: 26,
-                  color: PALETTE.ink,
-                  fontWeight: 700,
-                  textAlign: "center",
-                }}
-              >
-                💧 Horaires du Mikvé
-              </h3>
-              <div
-                className="mt-2 space-y-1 text-center"
-                style={{ fontFamily: "'Patrick Hand', cursive", color: PALETTE.ink }}
-              >
-                {activeSyna.mikve_winter_hours && (
-                  <p style={{ fontSize: 16 }}>
-                    <span style={{ color: PALETTE.gold, fontWeight: 700 }}>❄️ Hiver :</span>{" "}
-                    <span style={{ color: PALETTE.inkSoft }}>{activeSyna.mikve_winter_hours}</span>
-                  </p>
+            <section>
+              <SectionTitle label="Mikvé" />
+              <Card>
+                <div className="space-y-2">
+                  {activeSyna.mikve_winter_hours && (
+                    <div className="flex items-baseline gap-3">
+                      <span
+                        style={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 10,
+                          fontWeight: 600,
+                          letterSpacing: "0.18em",
+                          textTransform: "uppercase",
+                          color: PALETTE.gold,
+                          minWidth: 60,
+                        }}
+                      >
+                        Hiver
+                      </span>
+                      <span style={{ fontFamily: "'Lora', serif", fontSize: 15, color: PALETTE.ink }}>
+                        {activeSyna.mikve_winter_hours}
+                      </span>
+                    </div>
+                  )}
+                  {activeSyna.mikve_summer_hours && (
+                    <div className="flex items-baseline gap-3">
+                      <span
+                        style={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 10,
+                          fontWeight: 600,
+                          letterSpacing: "0.18em",
+                          textTransform: "uppercase",
+                          color: PALETTE.gold,
+                          minWidth: 60,
+                        }}
+                      >
+                        Été
+                      </span>
+                      <span style={{ fontFamily: "'Lora', serif", fontSize: 15, color: PALETTE.ink }}>
+                        {activeSyna.mikve_summer_hours}
+                      </span>
+                    </div>
+                  )}
+                  {!activeSyna.mikve_winter_hours && !activeSyna.mikve_summer_hours && (
+                    <p style={{ fontFamily: "'Lora', serif", fontSize: 14, color: PALETTE.inkMuted }}>
+                      Contactez la synagogue pour les horaires.
+                    </p>
+                  )}
+                </div>
+                {(activeSyna.mikve_phone || activeSyna.mikve_maps_link) && (
+                  <div className="mt-4 flex flex-wrap gap-2 pt-4" style={{ borderTop: `1px solid ${PALETTE.hairline}` }}>
+                    {activeSyna.mikve_phone && (
+                      <a
+                        href={`tel:${activeSyna.mikve_phone}`}
+                        className="no-underline active:scale-[0.98] transition-transform"
+                        style={{
+                          padding: "8px 16px",
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          background: PALETTE.ink,
+                          color: PALETTE.bg,
+                          borderRadius: 2,
+                        }}
+                      >
+                        Appeler
+                      </a>
+                    )}
+                    {activeSyna.mikve_maps_link && (
+                      <a
+                        href={activeSyna.mikve_maps_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="no-underline active:scale-[0.98] transition-transform"
+                        style={{
+                          padding: "8px 16px",
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          background: "transparent",
+                          color: PALETTE.ink,
+                          border: `1px solid ${PALETTE.ink}`,
+                          borderRadius: 2,
+                        }}
+                      >
+                        Itinéraire
+                      </a>
+                    )}
+                  </div>
                 )}
-                {activeSyna.mikve_summer_hours && (
-                  <p style={{ fontSize: 16 }}>
-                    <span style={{ color: PALETTE.gold, fontWeight: 700 }}>☀️ Été :</span>{" "}
-                    <span style={{ color: PALETTE.inkSoft }}>{activeSyna.mikve_summer_hours}</span>
-                  </p>
-                )}
-                {!activeSyna.mikve_winter_hours && !activeSyna.mikve_summer_hours && (
-                  <p style={{ fontSize: 15, color: PALETTE.inkMuted }}>
-                    Contactez la synagogue pour les horaires.
-                  </p>
-                )}
-              </div>
-              <div className="mt-3 flex flex-wrap justify-center gap-2">
-                {activeSyna.mikve_phone && (
-                  <a
-                    href={`tel:${activeSyna.mikve_phone}`}
-                    className="rounded-lg px-3 py-1 text-xs font-bold no-underline active:scale-95"
-                    style={{
-                      background: PALETTE.ink,
-                      color: "#F4EFE6",
-                      fontFamily: "'Patrick Hand', cursive",
-                      boxShadow: `0 4px 10px -4px ${PALETTE.ink}66`,
-                    }}
-                  >
-                    📞 Appeler
-                  </a>
-                )}
-                {activeSyna.mikve_maps_link && (
-                  <a
-                    href={activeSyna.mikve_maps_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg px-3 py-1 text-xs font-bold no-underline active:scale-95"
-                    style={{
-                      background: PALETTE.gold,
-                      color: "#FBF8F1",
-                      fontFamily: "'Patrick Hand', cursive",
-                      boxShadow: `0 4px 10px -4px ${PALETTE.gold}66`,
-                    }}
-                  >
-                    📍 Itinéraire
-                  </a>
-                )}
-              </div>
-            </PaperCard>
+              </Card>
+            </section>
           )}
 
           {/* — Annonces — */}
           <section>
-            <h3
-              className="mb-2 px-1"
-              style={{
-                fontFamily: "'Kalam', cursive",
-                fontSize: 22,
-                color: PALETTE.ink,
-                fontWeight: 700,
-              }}
-            >
-              📣 Annonces de la semaine
-            </h3>
+            <SectionTitle label="Annonces" />
             {annonces.length === 0 ? (
-              <p className="px-1 text-sm" style={{ fontFamily: "'Patrick Hand', cursive", color: PALETTE.inkMuted }}>
-                Pas d'annonce pour l'instant — le tableau est calme.
+              <p className="px-1 text-sm" style={{ fontFamily: "'Lora', serif", color: PALETTE.inkMuted, fontStyle: "italic" }}>
+                Aucune annonce pour le moment.
               </p>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {annonces.map((a, i) => {
-                  const color = NOTE_COLORS[i % NOTE_COLORS.length];
-                  const tilt = TILTS[i % TILTS.length];
-                  return (
-                    <PaperCard key={a.id} color={color} tilt={tilt}>
-                      <p
-                        style={{
-                          fontFamily: "'Caveat', cursive",
-                          fontSize: 22,
-                          fontWeight: 700,
-                          color: PALETTE.ink,
-                          lineHeight: 1.1,
-                        }}
-                      >
-                        {a.title}
-                      </p>
-                      <p
-                        className="mt-1 whitespace-pre-line"
-                        style={{
-                          fontFamily: "'Patrick Hand', cursive",
-                          fontSize: 16,
-                          color: PALETTE.inkSoft,
-                          lineHeight: 1.35,
-                        }}
-                      >
-                        {a.content}
-                      </p>
-                      <p className="mt-2" style={{ fontFamily: "'Caveat', cursive", fontSize: 14, color: PALETTE.gold }}>
-                        ✍️ {formatRelative(a.created_at)}
-                      </p>
-                    </PaperCard>
-                  );
-                })}
+              <div className="space-y-3">
+                {annonces.map((a) => (
+                  <Card key={a.id}>
+                    <h4
+                      style={{
+                        fontFamily: "'Lora', serif",
+                        fontSize: 17,
+                        fontWeight: 600,
+                        color: PALETTE.ink,
+                        lineHeight: 1.3,
+                        letterSpacing: "-0.005em",
+                      }}
+                    >
+                      {a.title}
+                    </h4>
+                    <p
+                      className="mt-2 whitespace-pre-line"
+                      style={{
+                        fontFamily: "'Lora', serif",
+                        fontSize: 15,
+                        color: PALETTE.inkSoft,
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      {a.content}
+                    </p>
+                    <p
+                      className="mt-3"
+                      style={{
+                        fontFamily: "'Montserrat', sans-serif",
+                        fontSize: 10,
+                        fontWeight: 500,
+                        letterSpacing: "0.16em",
+                        textTransform: "uppercase",
+                        color: PALETTE.inkMuted,
+                      }}
+                    >
+                      {formatRelative(a.created_at)}
+                    </p>
+                  </Card>
+                ))}
               </div>
             )}
           </section>
 
           {/* — Cours — */}
           <section>
-            <h3
-              className="mb-2 px-1"
-              style={{
-                fontFamily: "'Kalam', cursive",
-                fontSize: 22,
-                color: PALETTE.ink,
-                fontWeight: 700,
-              }}
-            >
-              📖 Cours de la semaine
-            </h3>
+            <SectionTitle label="Cours" />
             {cours.length === 0 ? (
-              <p className="px-1 text-sm" style={{ fontFamily: "'Patrick Hand', cursive", color: PALETTE.inkMuted }}>
-                Aucun cours programmé pour l'instant.
+              <p className="px-1 text-sm" style={{ fontFamily: "'Lora', serif", color: PALETTE.inkMuted, fontStyle: "italic" }}>
+                Aucun cours programmé.
               </p>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {cours.map((c, i) => {
-                  const tilt = TILTS[(i + 2) % TILTS.length];
-                  return (
-                    <PaperCard key={c.id} color={{ bg: "#FBF8F1", tape: PALETTE.goldLight }} tilt={tilt}>
-                      <div className="flex items-baseline justify-between gap-2">
-                        <p style={{ fontFamily: "'Caveat', cursive", fontSize: 22, fontWeight: 700, color: PALETTE.ink, lineHeight: 1.1 }}>
-                          📖 {c.title}
-                        </p>
-                        <span style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: PALETTE.gold }}>
-                          {c.day_of_week} · {formatTime(c.course_time)}
-                        </span>
-                      </div>
-                      {c.rav && (
-                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 16, color: PALETTE.inkSoft }}>
-                          ✡️ {c.rav}
-                        </p>
-                      )}
-                      {c.description && (
-                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.inkSoft, lineHeight: 1.3 }}>
-                          {c.description}
-                        </p>
-                      )}
-                      {c.course_type === "zoom" && c.zoom_link ? (
-                        <a
-                          href={c.zoom_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-block rounded-lg px-3 py-1 text-xs font-bold no-underline active:scale-95"
-                          style={{ background: PALETTE.ink, color: "#F4EFE6", fontFamily: "'Patrick Hand', cursive", boxShadow: `0 4px 10px -4px ${PALETTE.ink}66` }}
-                        >
-                          🎥 Rejoindre Zoom
-                        </a>
-                      ) : c.address ? (
-                        <p className="mt-1" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: PALETTE.gold }}>
-                          📍 {c.address}
-                        </p>
-                      ) : null}
-                    </PaperCard>
-                  );
-                })}
+              <div className="space-y-3">
+                {cours.map((c) => (
+                  <Card key={c.id}>
+                    <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                      <h4
+                        style={{
+                          fontFamily: "'Lora', serif",
+                          fontSize: 17,
+                          fontWeight: 600,
+                          color: PALETTE.ink,
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {c.title}
+                      </h4>
+                      <span
+                        style={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 10,
+                          fontWeight: 600,
+                          letterSpacing: "0.14em",
+                          textTransform: "uppercase",
+                          color: PALETTE.gold,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {c.day_of_week} · {formatTime(c.course_time)}
+                      </span>
+                    </div>
+                    {c.rav && (
+                      <p
+                        className="mt-1"
+                        style={{
+                          fontFamily: "'Lora', serif",
+                          fontSize: 14,
+                          fontStyle: "italic",
+                          color: PALETTE.inkSoft,
+                        }}
+                      >
+                        {c.rav}
+                      </p>
+                    )}
+                    {c.description && (
+                      <p
+                        className="mt-2"
+                        style={{
+                          fontFamily: "'Lora', serif",
+                          fontSize: 14,
+                          color: PALETTE.inkSoft,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {c.description}
+                      </p>
+                    )}
+                    {c.course_type === "zoom" && c.zoom_link ? (
+                      <a
+                        href={c.zoom_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-block no-underline active:scale-[0.98] transition-transform"
+                        style={{
+                          padding: "8px 16px",
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          background: PALETTE.ink,
+                          color: PALETTE.bg,
+                          borderRadius: 2,
+                        }}
+                      >
+                        Rejoindre
+                      </a>
+                    ) : c.address ? (
+                      <p
+                        className="mt-2"
+                        style={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 11,
+                          color: PALETTE.inkMuted,
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        {c.address}
+                      </p>
+                    ) : null}
+                  </Card>
+                ))}
               </div>
             )}
           </section>
 
-          {/* — Événements à venir — */}
+          {/* — Événements — */}
           {events.length > 0 && (
             <section>
-              <h3
-                className="mb-2 px-1"
-                style={{
-                  fontFamily: "'Kalam', cursive",
-                  fontSize: 22,
-                  color: PALETTE.ink,
-                  fontWeight: 700,
-                }}
-              >
-                🎉 Événements à venir
-              </h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {events.map((ev, i) => {
-                  const tilt = TILTS[(i + 1) % TILTS.length];
-                  return (
-                    <PaperCard key={ev.id} color={{ bg: "#EFE4DC", tape: "#C9B29A" }} tilt={tilt}>
-                      <p style={{ fontFamily: "'Caveat', cursive", fontSize: 24, fontWeight: 700, color: PALETTE.ink, lineHeight: 1.1 }}>
+              <SectionTitle label="Événements" />
+              <div className="space-y-3">
+                {events.map((ev) => (
+                  <Card key={ev.id}>
+                    <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                      <h4
+                        style={{
+                          fontFamily: "'Lora', serif",
+                          fontSize: 17,
+                          fontWeight: 600,
+                          color: PALETTE.ink,
+                          lineHeight: 1.3,
+                        }}
+                      >
                         {ev.title}
+                      </h4>
+                      <span
+                        style={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 10,
+                          fontWeight: 600,
+                          letterSpacing: "0.14em",
+                          textTransform: "uppercase",
+                          color: PALETTE.gold,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {formatDate(ev.event_date)} · {ev.event_time}
+                      </span>
+                    </div>
+                    {ev.location && (
+                      <p
+                        className="mt-1"
+                        style={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 11,
+                          color: PALETTE.inkMuted,
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        {ev.location}
                       </p>
-                      <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.gold }}>
-                        🗓️ {formatDate(ev.event_date)} · {ev.event_time}
+                    )}
+                    {ev.description && (
+                      <p
+                        className="mt-2"
+                        style={{
+                          fontFamily: "'Lora', serif",
+                          fontSize: 14,
+                          color: PALETTE.inkSoft,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {ev.description}
                       </p>
-                      {ev.location && (
-                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: PALETTE.inkSoft }}>
-                          📍 {ev.location}
-                        </p>
-                      )}
-                      {ev.description && (
-                        <p className="mt-1" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.inkSoft, lineHeight: 1.3 }}>
-                          {ev.description}
-                        </p>
-                      )}
-                    </PaperCard>
-                  );
-                })}
+                    )}
+                  </Card>
+                ))}
               </div>
             </section>
           )}
