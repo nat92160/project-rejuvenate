@@ -316,17 +316,26 @@ const SynagogueWall = () => {
         <h2
           style={{
             fontFamily: "'Caveat', cursive",
-            fontSize: 34,
+            fontSize: 36,
             lineHeight: 1.1,
-            color: "#3a2410",
+            color: PALETTE.ink,
             fontWeight: 700,
           }}
         >
           📌 Le mur de {activeSyna?.name ?? "ma synagogue"}
         </h2>
-        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: "#7a5a30" }}>
+        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.gold, letterSpacing: "0.04em" }}>
           Tout ce qu'il faut savoir cette semaine
         </p>
+        <div
+          aria-hidden
+          className="mx-auto mt-2"
+          style={{
+            height: 1,
+            width: 80,
+            background: `linear-gradient(90deg, transparent, ${PALETTE.goldLight}, transparent)`,
+          }}
+        />
       </div>
 
       <AnimatePresence mode="wait">
