@@ -10,6 +10,7 @@ import SynaInfoCard from "./SynaInfoCard";
 import PrayerTimeSuggestionForm from "./PrayerTimeSuggestionForm";
 import VerifiedSuggestionsDisplay from "./VerifiedSuggestionsDisplay";
 import SynagogueFormSheet from "./SynagogueFormSheet";
+import SynagogueWall from "./SynagogueWall";
 
 interface SynaDirectoryItem {
   id: string;
@@ -67,7 +68,7 @@ const getDistanceInMeters = (originLat: number, originLng: number, targetLat: nu
 const FideleSynagogueView = () => {
   const { user, dbRole } = useAuth();
   const { city, geolocate, isGeolocating, locationError } = useCity();
-  const [tab, setTab] = useState<"annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat" | "horaires" | "tehilim" | "minyan">("synagogues");
+  const [tab, setTab] = useState<"wall" | "annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat" | "horaires" | "tehilim" | "minyan">("wall");
   const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
   const [suggestingSynaId, setSuggestingSynaId] = useState<string | null>(null);
   const [showCreateSyna, setShowCreateSyna] = useState(false);
@@ -311,6 +312,7 @@ const FideleSynagogueView = () => {
   const subscribedSynas = directory.filter(d => d.isSubscribed);
 
   const tabs = [
+    { id: "wall" as const, icon: "📌", label: "Mur", count: 0 },
     { id: "synagogues" as const, icon: "🕍", label: "Proches", count: totalNearbyCount },
     { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
     { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
@@ -375,6 +377,9 @@ const FideleSynagogueView = () => {
           ))}
         </div>
       </div>
+
+      {/* Mur tab — tableau d'affichage manuscrit */}
+      {tab === "wall" && <SynagogueWall />}
 
       {/* Annuaire tab */}
       {tab === "annuaire" && (
