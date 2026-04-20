@@ -53,6 +53,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
   const [teacher, setTeacher] = useState("");
   const [day, setDay] = useState("Lundi");
   const [time, setTime] = useState("");
+  const [duration, setDuration] = useState<number>(60); // minutes
   const [specificDate, setSpecificDate] = useState<Date | undefined>();
   const [address, setAddress] = useState("");
   const [manualZoomLink, setManualZoomLink] = useState("");
@@ -114,7 +115,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
         userId,
         title: meetingTitle,
         timezone: "Europe/Paris",
-        duration: 60,
+        duration,
         usePmi,
       };
 
@@ -418,6 +419,26 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
             </div>
           </div>
         )}
+
+        {/* Durée du cours (utile pour Zoom + indicatif pour le présentiel) */}
+        <div className="relative">
+          <label className="absolute left-4 top-1 text-[10px] text-muted-foreground font-medium">
+            Durée du cours
+          </label>
+          <select
+            value={duration}
+            onChange={(e) => setDuration(Number(e.target.value))}
+            className={`${inputClass} pt-5`}
+          >
+            <option value={15}>15 minutes</option>
+            <option value={30}>30 minutes</option>
+            <option value={45}>45 minutes</option>
+            <option value={60}>1 heure</option>
+            <option value={90}>1 h 30</option>
+            <option value={120}>2 heures</option>
+            <option value={180}>3 heures</option>
+          </select>
+        </div>
 
         {courseType === "zoom" ? (
           <>
