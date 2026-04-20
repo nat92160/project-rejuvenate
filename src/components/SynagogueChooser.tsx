@@ -471,6 +471,19 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                   </button>
                 )}
 
+                {/* Manage profile button — only visible to president/adjoint of this synagogue */}
+                {isPartner && managedIds.has(item.id) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.dispatchEvent(new CustomEvent("navigate-tab", { detail: { tab: "infosyna" } }));
+                    }}
+                    className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold border cursor-pointer transition-all active:scale-[0.98]"
+                    style={{ background: "hsl(var(--gold) / 0.1)", borderColor: "hsl(var(--gold) / 0.35)", color: "hsl(var(--gold-matte))" }}
+                  >
+                    ✏️ Modifier la fiche de ma synagogue
+                  </button>
+                )}
 
                 {/* Edit horaires button */}
                 {confirmedIds.has(editKey) ? (
