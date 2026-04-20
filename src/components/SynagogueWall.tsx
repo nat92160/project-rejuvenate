@@ -178,7 +178,7 @@ const SynagogueWall = () => {
     const { data: profiles } = await (supabase
       .from("synagogue_profiles")
       .select(
-        "id, name, shacharit_time, shacharit_time_2, minha_time, minha_time_2, arvit_time, arvit_time_2, primary_color, secondary_color"
+        "id, name, shacharit_time, shacharit_time_2, minha_time, minha_time_2, arvit_time, arvit_time_2, primary_color, secondary_color, mikve_enabled, mikve_winter_hours, mikve_summer_hours, mikve_phone, mikve_maps_link"
       ) as any)
       .in("id", ids)
       .order("name");
