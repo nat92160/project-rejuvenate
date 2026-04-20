@@ -378,6 +378,9 @@ const FideleSynagogueView = () => {
         </div>
       </div>
 
+      {/* Mur tab — tableau d'affichage manuscrit */}
+      {tab === "wall" && <SynagogueWall />}
+
       {/* Annuaire tab */}
       {tab === "annuaire" && (
         <div className="space-y-3">
