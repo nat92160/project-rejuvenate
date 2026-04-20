@@ -123,20 +123,6 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
     setLoading(false);
   };
 
-  const handleGoogle = async () => {
-    setLoading(true);
-    setError(null);
-
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-
-    if (error) {
-      setError(error instanceof Error ? error.message : String(error));
-      setLoading(false);
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent
