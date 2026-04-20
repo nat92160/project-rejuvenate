@@ -53,13 +53,24 @@ interface EventRow {
   event_type: string;
 }
 
-/* — palette des post-its (couleurs pastel sur papier kraft) — */
+/* — palette CHIC : tons feutrés sur fond ivoire (charte bleu nuit / or mat) — */
+const PALETTE = {
+  bgBoard: "#F4EFE6",      // ivoire perle (fond du tableau)
+  bgBoardAlt: "#EDE6D6",   // sable clair (vignettage)
+  ink: "#001F3F",          // bleu nuit (texte principal)
+  inkSoft: "#3A4A60",      // bleu nuit doux (texte secondaire)
+  inkMuted: "#7A8294",     // gris bleuté (méta)
+  gold: "#996515",         // or mat (accents)
+  goldLight: "#C5A059",    // or clair (filets)
+  border: "#D9CFB8",       // sable taupe (bordures)
+};
+/* Post-its en tons sourds, élégants, sans saturation criarde */
 const NOTE_COLORS = [
-  { bg: "#FFF6A8", tape: "#E8D26A" }, // jaune
-  { bg: "#FFD6E0", tape: "#E89AAA" }, // rose
-  { bg: "#CFE8FF", tape: "#7FB6E0" }, // bleu
-  { bg: "#D8F0C8", tape: "#8BC07A" }, // vert
-  { bg: "#FFE3C2", tape: "#E8B070" }, // orange doux
+  { bg: "#EFEDE3", tape: "#C8C2B0" }, // ivoire grège
+  { bg: "#E4E9E4", tape: "#A9B6A9" }, // sauge poudrée
+  { bg: "#E2E7EE", tape: "#A6B3C2" }, // bleu brume
+  { bg: "#EFE4DC", tape: "#C9B29A" }, // rosé sable
+  { bg: "#E8E2D4", tape: "#BFB295" }, // or pâle
 ];
 
 const TILTS = ["-2deg", "1.5deg", "-1deg", "2deg", "-1.5deg"];
