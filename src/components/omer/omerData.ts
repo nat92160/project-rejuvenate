@@ -1,4 +1,45 @@
 import { HebrewCalendar, HDate, flags } from "@hebcal/core";
+import { ComplexZmanimCalendar, GeoLocation } from "kosher-zmanim";
+
+const ANGLE_TZEIT = 98.5; // 90 + 8.5° — Sortie des étoiles (Consistoire)
+
+/**
+ * Retourne true si maintenant >= Tzeit HaKochavim (8.5°) du jour `now`
+ * pour la position GPS donnée. Fallback Paris si pas de coords valides.
+ */
+function isAfterTzeit(now: Date, lat: number, lng: number, tz = "Europe/Paris"): boolean {
+  try {
+    const geo = new GeoLocation("user", lat, lng, 0, tz);
+    const czc = new ComplexZmanimCalendar(geo);
+    czc.setDate(now);
+    const tzeit = czc.getSunsetOffsetByDegrees(ANGLE_TZEIT);
+    if (!tzeit) return false;
+    const tzeitDate: Date | null =
+      tzeit instanceof Date
+        ? tzeit
+        : typeof (tzeit as any)?.toJSDate === "function"
+          ? (tzeit as any).toJSDate()
+          : null;
+    if (!tzeitDate || Number.isNaN(tzeitDate.getTime())) return false;
+    return now.getTime() >= tzeitDate.getTime();
+  } catch {
+    return false;
+  }
+}
+
+/** Récupère la position GPS sauvegardée par useGpsProfileSync, sinon Paris. */
+function getStoredCoords(): { lat: number; lng: number; tz: string } {
+  try {
+    const raw = localStorage.getItem("calj_gps_city");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Number.isFinite(parsed.lat) && Number.isFinite(parsed.lng)) {
+        return { lat: parsed.lat, lng: parsed.lng, tz: parsed.tz || "Europe/Paris" };
+      }
+    }
+  } catch { /* ignore */ }
+  return { lat: 48.8566, lng: 2.3522, tz: "Europe/Paris" };
+}
 
 // Hebrew number words for the Omer blessing
 const HEBREW_ONES = ["", "אֶחָד", "שְׁנַיִם", "שְׁלֹשָׁה", "אַרְבָּעָה", "חֲמִשָּׁה", "שִׁשָּׁה", "שִׁבְעָה", "שְׁמוֹנָה", "תִּשְׁעָה", "עֲשָׂרָה"];
@@ -49,11 +90,11 @@ export function getOmerBlessing(day: number): { hebrew: string; phonetic: string
 export function getTodayOmerDay(): number | null {
   try {
     const now = new Date();
-    const hour = now.getHours();
+    const { lat, lng, tz } = getStoredCoords();
 
-    // After 17h (safe margin before any sunset in France/Israel),
-    // the user needs tonight's count → use tomorrow's Gregorian date
-    if (hour >= 17) {
+    // Bascule sur le jour suivant UNIQUEMENT après la vraie sortie des étoiles
+    // (Tzeit HaKochavim 8.5° basé sur la position GPS de l'utilisateur).
+    if (isAfterTzeit(now, lat, lng, tz)) {
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
       const events = HebrewCalendar.calendar({ start: tomorrow, end: tomorrow, omer: true });
