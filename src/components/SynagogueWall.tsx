@@ -395,6 +395,77 @@ const SynagogueWall = () => {
             </PaperCard>
           )}
 
+          {/* — Mikvé : carte affichée uniquement si la syna l'a activée — */}
+          {activeSyna?.mikve_enabled && (
+            <PaperCard color={{ bg: "#E2E7EE", tape: "#A6B3C2" }} tilt="1.5deg">
+              <h3
+                style={{
+                  fontFamily: "'Caveat', cursive",
+                  fontSize: 26,
+                  color: PALETTE.ink,
+                  fontWeight: 700,
+                  textAlign: "center",
+                }}
+              >
+                💧 Horaires du Mikvé
+              </h3>
+              <div
+                className="mt-2 space-y-1 text-center"
+                style={{ fontFamily: "'Patrick Hand', cursive", color: PALETTE.ink }}
+              >
+                {activeSyna.mikve_winter_hours && (
+                  <p style={{ fontSize: 16 }}>
+                    <span style={{ color: PALETTE.gold, fontWeight: 700 }}>❄️ Hiver :</span>{" "}
+                    <span style={{ color: PALETTE.inkSoft }}>{activeSyna.mikve_winter_hours}</span>
+                  </p>
+                )}
+                {activeSyna.mikve_summer_hours && (
+                  <p style={{ fontSize: 16 }}>
+                    <span style={{ color: PALETTE.gold, fontWeight: 700 }}>☀️ Été :</span>{" "}
+                    <span style={{ color: PALETTE.inkSoft }}>{activeSyna.mikve_summer_hours}</span>
+                  </p>
+                )}
+                {!activeSyna.mikve_winter_hours && !activeSyna.mikve_summer_hours && (
+                  <p style={{ fontSize: 15, color: PALETTE.inkMuted }}>
+                    Contactez la synagogue pour les horaires.
+                  </p>
+                )}
+              </div>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                {activeSyna.mikve_phone && (
+                  <a
+                    href={`tel:${activeSyna.mikve_phone}`}
+                    className="rounded-lg px-3 py-1 text-xs font-bold no-underline active:scale-95"
+                    style={{
+                      background: PALETTE.ink,
+                      color: "#F4EFE6",
+                      fontFamily: "'Patrick Hand', cursive",
+                      boxShadow: `0 4px 10px -4px ${PALETTE.ink}66`,
+                    }}
+                  >
+                    📞 Appeler
+                  </a>
+                )}
+                {activeSyna.mikve_maps_link && (
+                  <a
+                    href={activeSyna.mikve_maps_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg px-3 py-1 text-xs font-bold no-underline active:scale-95"
+                    style={{
+                      background: PALETTE.gold,
+                      color: "#FBF8F1",
+                      fontFamily: "'Patrick Hand', cursive",
+                      boxShadow: `0 4px 10px -4px ${PALETTE.gold}66`,
+                    }}
+                  >
+                    📍 Itinéraire
+                  </a>
+                )}
+              </div>
+            </PaperCard>
+          )}
+
           {/* — Annonces — */}
           <section>
             <h3
