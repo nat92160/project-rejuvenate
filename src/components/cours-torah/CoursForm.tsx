@@ -53,6 +53,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
   const [teacher, setTeacher] = useState("");
   const [day, setDay] = useState("Lundi");
   const [time, setTime] = useState("");
+  const [duration, setDuration] = useState<number>(60); // minutes
   const [specificDate, setSpecificDate] = useState<Date | undefined>();
   const [address, setAddress] = useState("");
   const [manualZoomLink, setManualZoomLink] = useState("");
