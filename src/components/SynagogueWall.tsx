@@ -517,7 +517,7 @@ const SynagogueWall = () => {
                 style={{
                   fontFamily: "'Kalam', cursive",
                   fontSize: 22,
-                  color: "#3a2410",
+                  color: PALETTE.ink,
                   fontWeight: 700,
                 }}
               >
@@ -527,20 +527,20 @@ const SynagogueWall = () => {
                 {events.map((ev, i) => {
                   const tilt = TILTS[(i + 1) % TILTS.length];
                   return (
-                    <PaperCard key={ev.id} color={{ bg: "#FFE3C2", tape: "#E8B070" }} tilt={tilt}>
-                      <p style={{ fontFamily: "'Caveat', cursive", fontSize: 24, fontWeight: 700, color: "#2a1a08", lineHeight: 1.1 }}>
+                    <PaperCard key={ev.id} color={{ bg: "#EFE4DC", tape: "#C9B29A" }} tilt={tilt}>
+                      <p style={{ fontFamily: "'Caveat', cursive", fontSize: 24, fontWeight: 700, color: PALETTE.ink, lineHeight: 1.1 }}>
                         {ev.title}
                       </p>
-                      <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: "#7a5a30" }}>
+                      <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.gold }}>
                         🗓️ {formatDate(ev.event_date)} · {ev.event_time}
                       </p>
                       {ev.location && (
-                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: "#3a2410" }}>
+                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: PALETTE.inkSoft }}>
                           📍 {ev.location}
                         </p>
                       )}
                       {ev.description && (
-                        <p className="mt-1" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: "#3a2410", lineHeight: 1.3 }}>
+                        <p className="mt-1" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.inkSoft, lineHeight: 1.3 }}>
                           {ev.description}
                         </p>
                       )}
