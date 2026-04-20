@@ -53,13 +53,24 @@ interface EventRow {
   event_type: string;
 }
 
-/* — palette des post-its (couleurs pastel sur papier kraft) — */
+/* — palette CHIC : tons feutrés sur fond ivoire (charte bleu nuit / or mat) — */
+const PALETTE = {
+  bgBoard: "#F4EFE6",      // ivoire perle (fond du tableau)
+  bgBoardAlt: "#EDE6D6",   // sable clair (vignettage)
+  ink: "#001F3F",          // bleu nuit (texte principal)
+  inkSoft: "#3A4A60",      // bleu nuit doux (texte secondaire)
+  inkMuted: "#7A8294",     // gris bleuté (méta)
+  gold: "#996515",         // or mat (accents)
+  goldLight: "#C5A059",    // or clair (filets)
+  border: "#D9CFB8",       // sable taupe (bordures)
+};
+/* Post-its en tons sourds, élégants, sans saturation criarde */
 const NOTE_COLORS = [
-  { bg: "#FFF6A8", tape: "#E8D26A" }, // jaune
-  { bg: "#FFD6E0", tape: "#E89AAA" }, // rose
-  { bg: "#CFE8FF", tape: "#7FB6E0" }, // bleu
-  { bg: "#D8F0C8", tape: "#8BC07A" }, // vert
-  { bg: "#FFE3C2", tape: "#E8B070" }, // orange doux
+  { bg: "#EFEDE3", tape: "#C8C2B0" }, // ivoire grège
+  { bg: "#E4E9E4", tape: "#A9B6A9" }, // sauge poudrée
+  { bg: "#E2E7EE", tape: "#A6B3C2" }, // bleu brume
+  { bg: "#EFE4DC", tape: "#C9B29A" }, // rosé sable
+  { bg: "#E8E2D4", tape: "#BFB295" }, // or pâle
 ];
 
 const TILTS = ["-2deg", "1.5deg", "-1deg", "2deg", "-1.5deg"];
@@ -82,16 +93,16 @@ const formatRelative = (iso: string) => {
   return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 };
 
-const Pin = ({ color = "#C53030" }: { color?: string }) => (
+const Pin = ({ color = PALETTE.gold }: { color?: string }) => (
   <span
     aria-hidden
     className="absolute -top-2 left-1/2 -translate-x-1/2 z-10"
     style={{
-      width: 14,
-      height: 14,
+      width: 12,
+      height: 12,
       borderRadius: "50%",
-      background: `radial-gradient(circle at 30% 30%, ${color}, #5a0a0a 80%)`,
-      boxShadow: "0 2px 3px rgba(0,0,0,0.35)",
+      background: `radial-gradient(circle at 30% 30%, ${color}, #4a3008 80%)`,
+      boxShadow: "0 2px 3px rgba(0,20,40,0.25), inset 0 -1px 1px rgba(0,0,0,0.2)",
     }}
   />
 );
@@ -117,11 +128,11 @@ const PaperCard = ({
     transition={{ duration: 0.45, ease: "easeOut" }}
     className={`relative ${className}`}
     style={{
-      background: color?.bg ?? "#FFFBE9",
+      background: color?.bg ?? "#FBF8F1",
       transform: `rotate(${tilt ?? "0deg"})`,
       boxShadow:
-        "0 6px 14px -6px rgba(60,40,10,0.25), 0 2px 4px rgba(60,40,10,0.12)",
-      borderRadius: 10,
+        "0 8px 20px -10px rgba(0,20,40,0.18), 0 2px 6px rgba(0,20,40,0.08), inset 0 0 0 1px rgba(255,255,255,0.4)",
+      borderRadius: 8,
       padding: "18px 16px 16px",
     }}
   >
@@ -236,13 +247,12 @@ const SynagogueWall = () => {
       <div
         className="rounded-2xl p-8 text-center"
         style={{
-          background:
-            "repeating-linear-gradient(45deg, #FDF6E3, #FDF6E3 10px, #F5ECCF 10px, #F5ECCF 20px)",
-          border: "1px dashed #C9B07A",
+          background: PALETTE.bgBoard,
+          border: `1px dashed ${PALETTE.border}`,
         }}
       >
         <span className="text-5xl">📌</span>
-        <p className="mt-3" style={{ fontFamily: "'Caveat', cursive", fontSize: 24, color: "#5a3a1a" }}>
+        <p className="mt-3" style={{ fontFamily: "'Caveat', cursive", fontSize: 24, color: PALETTE.ink }}>
           Le tableau d'affichage est vide…
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -265,11 +275,11 @@ const SynagogueWall = () => {
     <div
       className="rounded-2xl p-3 sm:p-5"
       style={{
-        // fond papier kraft / parchemin avec subtile texture
+        // fond ivoire perlé avec vignettage chic + filet doré
         background:
-          "radial-gradient(circle at 20% 10%, rgba(255,255,255,0.55), transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.4), transparent 40%), #FDF6E3",
-        border: "1px solid #E5D6A8",
-        boxShadow: "inset 0 0 60px rgba(140,100,40,0.08)",
+          `radial-gradient(circle at 20% 0%, rgba(255,255,255,0.7), transparent 45%), radial-gradient(circle at 100% 100%, ${PALETTE.bgBoardAlt}, transparent 50%), ${PALETTE.bgBoard}`,
+        border: `1px solid ${PALETTE.border}`,
+        boxShadow: `inset 0 0 80px rgba(0,20,40,0.05), 0 1px 0 ${PALETTE.goldLight}33`,
       }}
     >
       {/* — Sélecteur de synagogue — */}
@@ -287,9 +297,10 @@ const SynagogueWall = () => {
                     minHeight: 40,
                     fontFamily: "'Patrick Hand', cursive",
                     fontSize: 15,
-                    background: active ? "#5a3a1a" : "rgba(255,255,255,0.7)",
-                    color: active ? "#FDF6E3" : "#5a3a1a",
-                    borderColor: "#C9B07A",
+                    background: active ? PALETTE.ink : "rgba(255,255,255,0.85)",
+                    color: active ? "#F4EFE6" : PALETTE.ink,
+                    borderColor: active ? PALETTE.ink : PALETTE.border,
+                    boxShadow: active ? `0 4px 12px -4px ${PALETTE.ink}55` : "none",
                   }}
                 >
                   🏛️ {s.name}
@@ -305,17 +316,26 @@ const SynagogueWall = () => {
         <h2
           style={{
             fontFamily: "'Caveat', cursive",
-            fontSize: 34,
+            fontSize: 36,
             lineHeight: 1.1,
-            color: "#3a2410",
+            color: PALETTE.ink,
             fontWeight: 700,
           }}
         >
           📌 Le mur de {activeSyna?.name ?? "ma synagogue"}
         </h2>
-        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: "#7a5a30" }}>
+        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.gold, letterSpacing: "0.04em" }}>
           Tout ce qu'il faut savoir cette semaine
         </p>
+        <div
+          aria-hidden
+          className="mx-auto mt-2"
+          style={{
+            height: 1,
+            width: 80,
+            background: `linear-gradient(90deg, transparent, ${PALETTE.goldLight}, transparent)`,
+          }}
+        />
       </div>
 
       <AnimatePresence mode="wait">
@@ -329,12 +349,12 @@ const SynagogueWall = () => {
         >
           {/* — Horaires : grande carte centrale — */}
           {activeSyna && (
-            <PaperCard color={{ bg: "#FFFBE9", tape: "#E8D26A" }} tilt="-1deg">
+            <PaperCard color={{ bg: "#FBF8F1", tape: PALETTE.goldLight }} tilt="-1deg">
               <h3
                 style={{
                   fontFamily: "'Caveat', cursive",
-                  fontSize: 26,
-                  color: "#3a2410",
+                  fontSize: 28,
+                  color: PALETTE.ink,
                   fontWeight: 700,
                   textAlign: "center",
                 }}
@@ -343,27 +363,27 @@ const SynagogueWall = () => {
               </h3>
               <div
                 className="mt-3 grid grid-cols-3 gap-3 text-center"
-                style={{ fontFamily: "'Patrick Hand', cursive", color: "#3a2410" }}
+                style={{ fontFamily: "'Patrick Hand', cursive", color: PALETTE.ink }}
               >
                 <div>
-                  <p style={{ fontSize: 14, opacity: 0.7 }}>🌅 Cha'harit</p>
-                  <p style={{ fontSize: 22, fontWeight: 700 }}>{formatTime(activeSyna.shacharit_time)}</p>
+                  <p style={{ fontSize: 13, color: PALETTE.gold, letterSpacing: "0.05em", textTransform: "uppercase" }}>Cha'harit</p>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: PALETTE.ink }}>{formatTime(activeSyna.shacharit_time)}</p>
                   {activeSyna.shacharit_time_2 && (
-                    <p style={{ fontSize: 16 }}>{formatTime(activeSyna.shacharit_time_2)}</p>
+                    <p style={{ fontSize: 16, color: PALETTE.inkSoft }}>{formatTime(activeSyna.shacharit_time_2)}</p>
                   )}
                 </div>
                 <div>
-                  <p style={{ fontSize: 14, opacity: 0.7 }}>🌇 Min'ha</p>
-                  <p style={{ fontSize: 22, fontWeight: 700 }}>{formatTime(activeSyna.minha_time)}</p>
+                  <p style={{ fontSize: 13, color: PALETTE.gold, letterSpacing: "0.05em", textTransform: "uppercase" }}>Min'ha</p>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: PALETTE.ink }}>{formatTime(activeSyna.minha_time)}</p>
                   {activeSyna.minha_time_2 && (
-                    <p style={{ fontSize: 16 }}>{formatTime(activeSyna.minha_time_2)}</p>
+                    <p style={{ fontSize: 16, color: PALETTE.inkSoft }}>{formatTime(activeSyna.minha_time_2)}</p>
                   )}
                 </div>
                 <div>
-                  <p style={{ fontSize: 14, opacity: 0.7 }}>🌙 Arvit</p>
-                  <p style={{ fontSize: 22, fontWeight: 700 }}>{formatTime(activeSyna.arvit_time)}</p>
+                  <p style={{ fontSize: 13, color: PALETTE.gold, letterSpacing: "0.05em", textTransform: "uppercase" }}>Arvit</p>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: PALETTE.ink }}>{formatTime(activeSyna.arvit_time)}</p>
                   {activeSyna.arvit_time_2 && (
-                    <p style={{ fontSize: 16 }}>{formatTime(activeSyna.arvit_time_2)}</p>
+                    <p style={{ fontSize: 16, color: PALETTE.inkSoft }}>{formatTime(activeSyna.arvit_time_2)}</p>
                   )}
                 </div>
               </div>
@@ -377,14 +397,14 @@ const SynagogueWall = () => {
               style={{
                 fontFamily: "'Kalam', cursive",
                 fontSize: 22,
-                color: "#3a2410",
+                color: PALETTE.ink,
                 fontWeight: 700,
               }}
             >
               📣 Annonces de la semaine
             </h3>
             {annonces.length === 0 ? (
-              <p className="px-1 text-sm" style={{ fontFamily: "'Patrick Hand', cursive", color: "#7a5a30" }}>
+              <p className="px-1 text-sm" style={{ fontFamily: "'Patrick Hand', cursive", color: PALETTE.inkMuted }}>
                 Pas d'annonce pour l'instant — le tableau est calme.
               </p>
             ) : (
@@ -399,7 +419,7 @@ const SynagogueWall = () => {
                           fontFamily: "'Caveat', cursive",
                           fontSize: 22,
                           fontWeight: 700,
-                          color: "#2a1a08",
+                          color: PALETTE.ink,
                           lineHeight: 1.1,
                         }}
                       >
@@ -410,13 +430,13 @@ const SynagogueWall = () => {
                         style={{
                           fontFamily: "'Patrick Hand', cursive",
                           fontSize: 16,
-                          color: "#3a2410",
+                          color: PALETTE.inkSoft,
                           lineHeight: 1.35,
                         }}
                       >
                         {a.content}
                       </p>
-                      <p className="mt-2" style={{ fontFamily: "'Caveat', cursive", fontSize: 14, color: "#7a5a30" }}>
+                      <p className="mt-2" style={{ fontFamily: "'Caveat', cursive", fontSize: 14, color: PALETTE.gold }}>
                         ✍️ {formatRelative(a.created_at)}
                       </p>
                     </PaperCard>
@@ -433,14 +453,14 @@ const SynagogueWall = () => {
               style={{
                 fontFamily: "'Kalam', cursive",
                 fontSize: 22,
-                color: "#3a2410",
+                color: PALETTE.ink,
                 fontWeight: 700,
               }}
             >
               📖 Cours de la semaine
             </h3>
             {cours.length === 0 ? (
-              <p className="px-1 text-sm" style={{ fontFamily: "'Patrick Hand', cursive", color: "#7a5a30" }}>
+              <p className="px-1 text-sm" style={{ fontFamily: "'Patrick Hand', cursive", color: PALETTE.inkMuted }}>
                 Aucun cours programmé pour l'instant.
               </p>
             ) : (
@@ -448,22 +468,22 @@ const SynagogueWall = () => {
                 {cours.map((c, i) => {
                   const tilt = TILTS[(i + 2) % TILTS.length];
                   return (
-                    <PaperCard key={c.id} color={{ bg: "#FFFBE9", tape: "#E8D26A" }} tilt={tilt}>
+                    <PaperCard key={c.id} color={{ bg: "#FBF8F1", tape: PALETTE.goldLight }} tilt={tilt}>
                       <div className="flex items-baseline justify-between gap-2">
-                        <p style={{ fontFamily: "'Caveat', cursive", fontSize: 22, fontWeight: 700, color: "#2a1a08", lineHeight: 1.1 }}>
+                        <p style={{ fontFamily: "'Caveat', cursive", fontSize: 22, fontWeight: 700, color: PALETTE.ink, lineHeight: 1.1 }}>
                           📖 {c.title}
                         </p>
-                        <span style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: "#7a5a30" }}>
+                        <span style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: PALETTE.gold }}>
                           {c.day_of_week} · {formatTime(c.course_time)}
                         </span>
                       </div>
                       {c.rav && (
-                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 16, color: "#3a2410" }}>
+                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 16, color: PALETTE.inkSoft }}>
                           ✡️ {c.rav}
                         </p>
                       )}
                       {c.description && (
-                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: "#3a2410", lineHeight: 1.3 }}>
+                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.inkSoft, lineHeight: 1.3 }}>
                           {c.description}
                         </p>
                       )}
@@ -473,12 +493,12 @@ const SynagogueWall = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="mt-2 inline-block rounded-lg px-3 py-1 text-xs font-bold no-underline active:scale-95"
-                          style={{ background: "#3a2410", color: "#FDF6E3", fontFamily: "'Patrick Hand', cursive" }}
+                          style={{ background: PALETTE.ink, color: "#F4EFE6", fontFamily: "'Patrick Hand', cursive", boxShadow: `0 4px 10px -4px ${PALETTE.ink}66` }}
                         >
                           🎥 Rejoindre Zoom
                         </a>
                       ) : c.address ? (
-                        <p className="mt-1" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: "#7a5a30" }}>
+                        <p className="mt-1" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: PALETTE.gold }}>
                           📍 {c.address}
                         </p>
                       ) : null}
@@ -497,7 +517,7 @@ const SynagogueWall = () => {
                 style={{
                   fontFamily: "'Kalam', cursive",
                   fontSize: 22,
-                  color: "#3a2410",
+                  color: PALETTE.ink,
                   fontWeight: 700,
                 }}
               >
@@ -507,20 +527,20 @@ const SynagogueWall = () => {
                 {events.map((ev, i) => {
                   const tilt = TILTS[(i + 1) % TILTS.length];
                   return (
-                    <PaperCard key={ev.id} color={{ bg: "#FFE3C2", tape: "#E8B070" }} tilt={tilt}>
-                      <p style={{ fontFamily: "'Caveat', cursive", fontSize: 24, fontWeight: 700, color: "#2a1a08", lineHeight: 1.1 }}>
+                    <PaperCard key={ev.id} color={{ bg: "#EFE4DC", tape: "#C9B29A" }} tilt={tilt}>
+                      <p style={{ fontFamily: "'Caveat', cursive", fontSize: 24, fontWeight: 700, color: PALETTE.ink, lineHeight: 1.1 }}>
                         {ev.title}
                       </p>
-                      <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: "#7a5a30" }}>
+                      <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.gold }}>
                         🗓️ {formatDate(ev.event_date)} · {ev.event_time}
                       </p>
                       {ev.location && (
-                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: "#3a2410" }}>
+                        <p style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 14, color: PALETTE.inkSoft }}>
                           📍 {ev.location}
                         </p>
                       )}
                       {ev.description && (
-                        <p className="mt-1" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: "#3a2410", lineHeight: 1.3 }}>
+                        <p className="mt-1" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 15, color: PALETTE.inkSoft, lineHeight: 1.3 }}>
                           {ev.description}
                         </p>
                       )}
