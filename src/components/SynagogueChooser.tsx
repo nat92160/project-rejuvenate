@@ -126,6 +126,19 @@ const SynagogueChooser = ({ onSelect }: Props) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [managedIds, setManagedIds] = useState<Set<string>>(new Set());
+
+  // Fetch synagogues this user manages (as president or adjoint)
+  useEffect(() => {
+    if (!user) { setManagedIds(new Set()); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("synagogue_profiles")
+        .select("id")
+        .or(`president_id.eq.${user.id},adjoint_id.eq.${user.id}`);
+      setManagedIds(new Set((data || []).map((r: any) => r.id)));
+    })();
+  }, [user]);
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(() => {
     try {
       const stored = JSON.parse(localStorage.getItem("confirmed_synas_today") || "{}");
@@ -458,6 +471,19 @@ const SynagogueChooser = ({ onSelect }: Props) => {
                   </button>
                 )}
 
+                {/* Manage profile button — only visible to president/adjoint of this synagogue */}
+                {isPartner && managedIds.has(item.id) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.dispatchEvent(new CustomEvent("navigate-tab", { detail: { tab: "infosyna" } }));
+                    }}
+                    className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold border cursor-pointer transition-all active:scale-[0.98]"
+                    style={{ background: "hsl(var(--gold) / 0.1)", borderColor: "hsl(var(--gold) / 0.35)", color: "hsl(var(--gold-matte))" }}
+                  >
+                    ✏️ Modifier la fiche de ma synagogue
+                  </button>
+                )}
 
                 {/* Edit horaires button */}
                 {confirmedIds.has(editKey) ? (
