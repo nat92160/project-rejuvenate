@@ -93,16 +93,16 @@ const formatRelative = (iso: string) => {
   return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 };
 
-const Pin = ({ color = "#C53030" }: { color?: string }) => (
+const Pin = ({ color = PALETTE.gold }: { color?: string }) => (
   <span
     aria-hidden
     className="absolute -top-2 left-1/2 -translate-x-1/2 z-10"
     style={{
-      width: 14,
-      height: 14,
+      width: 12,
+      height: 12,
       borderRadius: "50%",
-      background: `radial-gradient(circle at 30% 30%, ${color}, #5a0a0a 80%)`,
-      boxShadow: "0 2px 3px rgba(0,0,0,0.35)",
+      background: `radial-gradient(circle at 30% 30%, ${color}, #4a3008 80%)`,
+      boxShadow: "0 2px 3px rgba(0,20,40,0.25), inset 0 -1px 1px rgba(0,0,0,0.2)",
     }}
   />
 );
@@ -128,11 +128,11 @@ const PaperCard = ({
     transition={{ duration: 0.45, ease: "easeOut" }}
     className={`relative ${className}`}
     style={{
-      background: color?.bg ?? "#FFFBE9",
+      background: color?.bg ?? "#FBF8F1",
       transform: `rotate(${tilt ?? "0deg"})`,
       boxShadow:
-        "0 6px 14px -6px rgba(60,40,10,0.25), 0 2px 4px rgba(60,40,10,0.12)",
-      borderRadius: 10,
+        "0 8px 20px -10px rgba(0,20,40,0.18), 0 2px 6px rgba(0,20,40,0.08), inset 0 0 0 1px rgba(255,255,255,0.4)",
+      borderRadius: 8,
       padding: "18px 16px 16px",
     }}
   >
