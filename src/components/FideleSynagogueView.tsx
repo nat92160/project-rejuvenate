@@ -72,6 +72,8 @@ const FideleSynagogueView = () => {
   const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
   const [suggestingSynaId, setSuggestingSynaId] = useState<string | null>(null);
   const [showCreateSyna, setShowCreateSyna] = useState(false);
+  const [editSynaData, setEditSynaData] = useState<any | null>(null);
+  const [mySynas, setMySynas] = useState<Array<{ id: string; name: string }>>([]);
   const isPresident = dbRole === "president";
 
   // Directory state
