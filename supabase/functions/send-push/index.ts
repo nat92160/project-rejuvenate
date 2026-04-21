@@ -308,7 +308,7 @@ async function sendApnsPush(
   title: string,
   body: string,
   apnsJwt: string
-): Promise<{ success: boolean; error?: { status: number; body: string; host: string } }> {
+): Promise<{ success: boolean; status?: number; apnsId?: string | null; error?: { status: number; body: string; host: string; reason?: string; apnsId?: string | null; tokenPrefix: string } }> {
   const bundleId = Deno.env.get("APNS_BUNDLE_ID") || Deno.env.get("ID_DE_LOT_APNS") || "com.chabbatchalom.15app";
   const isProduction = Deno.env.get("APNS_PRODUCTION") !== "false";
   const host = isProduction
@@ -336,14 +336,25 @@ async function sendApnsPush(
       body: JSON.stringify(apnsPayload),
     });
 
-    if (res.status === 200) return { success: true };
-    
+    const apnsId = res.headers.get("apns-id");
+    const tokenPrefix = deviceToken.slice(0, 12) + "…";
+
+    if (res.status === 200) {
+      console.log(`[APNs] ✅ 200 OK token=${tokenPrefix} apns-id=${apnsId} host=${host} topic=${bundleId}`);
+      return { success: true, status: 200, apnsId };
+    }
+
     const errText = await res.text();
-    console.error(`APNs error for ${deviceToken}: ${res.status} ${errText}`);
-    return { success: false, error: { status: res.status, body: errText, host } };
+    let reason: string | undefined;
+    try { reason = JSON.parse(errText)?.reason; } catch { /* ignore */ }
+    console.error(
+      `[APNs] ❌ status=${res.status} reason=${reason ?? "?"} token=${tokenPrefix} apns-id=${apnsId} host=${host} topic=${bundleId} body=${errText}`
+    );
+    return { success: false, status: res.status, apnsId, error: { status: res.status, body: errText, host, reason, apnsId, tokenPrefix } };
   } catch (e) {
-    console.error(`APNs fetch error for ${deviceToken}:`, e);
-    return { success: false, error: { status: 0, body: String(e), host } };
+    const tokenPrefix = deviceToken.slice(0, 12) + "…";
+    console.error(`[APNs] 💥 fetch error token=${tokenPrefix} host=${host}:`, e);
+    return { success: false, error: { status: 0, body: String(e), host, tokenPrefix } };
   }
 }
 
@@ -436,7 +447,8 @@ Deno.serve(async (req) => {
     let sent = 0;
     const staleIds: string[] = [];
     let apnsJwtCreated = false;
-    const apnsErrors: { status: number; body: string; host: string }[] = [];
+    const apnsErrors: { status: number; body: string; host: string; reason?: string; apnsId?: string | null; tokenPrefix: string }[] = [];
+    const apnsResults: { tokenPrefix: string; status: number; apnsId: string | null; reason?: string }[] = [];
 
     // --- Send Web Push ---
     for (const sub of webSubs) {
@@ -473,6 +485,7 @@ Deno.serve(async (req) => {
 
     // --- Send Native Push (APNs) ---
     if (nativeSubs.length > 0) {
+      console.log(`[send-push] Dispatching to ${nativeSubs.length} native device(s)`);
       const apnsJwt = await createApnsJwt();
       apnsJwtCreated = !!apnsJwt;
       if (apnsJwt) {
@@ -483,8 +496,18 @@ Deno.serve(async (req) => {
             pushBody,
             apnsJwt
           );
+          const tokenPrefix = (sub.device_token as string).slice(0, 12) + "…";
+          apnsResults.push({
+            tokenPrefix,
+            status: result.status ?? 0,
+            apnsId: result.apnsId ?? null,
+            reason: result.error?.reason,
+          });
           if (result.success) {
             sent++;
+          } else if (result.error && (result.error.status === 410 || result.error.reason === "BadDeviceToken" || result.error.reason === "Unregistered")) {
+            staleIds.push(sub.id);
+            apnsErrors.push(result.error);
           } else if (result.error) {
             apnsErrors.push(result.error);
           }
@@ -499,7 +522,7 @@ Deno.serve(async (req) => {
       await supabase.from("push_subscriptions").delete().in("id", staleIds);
     }
 
-    return new Response(JSON.stringify({ sent, cleaned: staleIds.length, debug: { totalSubs: subs.length, webSubs: webSubs.length, nativeSubs: nativeSubs.length, apnsJwtCreated, apnsErrors } }), {
+    return new Response(JSON.stringify({ sent, cleaned: staleIds.length, debug: { totalSubs: subs.length, webSubs: webSubs.length, nativeSubs: nativeSubs.length, apnsJwtCreated, apnsResults, apnsErrors } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.places-autocomplete]
 verify_jwt = false
+
+[functions.send-apns-test]
+verify_jwt = false
