@@ -145,6 +145,16 @@ const FideleSynagogueView = () => {
           verified: s.verified ?? false,
         }))
     );
+    // Store synas managed by current user (president or adjoint) for "edit" button
+    if (user) {
+      setMySynas(
+        (allSynas || [])
+          .filter((s: any) => s.president_id === user.id || s.adjoint_id === user.id)
+          .map((s: any) => ({ id: s.id, name: s.name }))
+      );
+    } else {
+      setMySynas([]);
+    }
     setDirLoading(false);
   };
 
