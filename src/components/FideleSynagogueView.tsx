@@ -351,20 +351,36 @@ const FideleSynagogueView = () => {
             : `${city.name} — Abonnez-vous à une synagogue pour recevoir ses actualités`}
         </p>
         {isPresident && (
-          <button
-            onClick={() => setShowCreateSyna(true)}
-            className="inline-flex items-center gap-2 rounded-xl border-none px-4 py-2.5 text-xs font-bold text-primary-foreground cursor-pointer transition-all active:scale-95"
-            style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
-          >
-            ➕ Créer ma fiche synagogue
-          </button>
+          <div className="flex flex-wrap justify-center gap-2">
+            {mySynas.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => { setEditSynaData(s); setShowCreateSyna(true); }}
+                className="inline-flex items-center gap-2 rounded-xl border-none px-4 py-2.5 text-xs font-bold text-primary-foreground cursor-pointer transition-all active:scale-95"
+                style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+              >
+                ✏️ Modifier {mySynas.length > 1 ? s.name : "ma fiche"}
+              </button>
+            ))}
+            <button
+              onClick={() => { setEditSynaData(null); setShowCreateSyna(true); }}
+              className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-background px-4 py-2.5 text-xs font-bold text-primary cursor-pointer transition-all active:scale-95"
+            >
+              ➕ {mySynas.length > 0 ? "Ajouter une autre fiche" : "Créer ma fiche synagogue"}
+            </button>
+          </div>
         )}
       </div>
 
       <SynagogueFormSheet
         open={showCreateSyna}
-        onOpenChange={setShowCreateSyna}
-        onCreated={() => { void fetchDirectory(); toast.success("📤 Fiche envoyée — en attente de validation par un administrateur"); }}
+        onOpenChange={(o) => { setShowCreateSyna(o); if (!o) setEditSynaData(null); }}
+        editData={editSynaData}
+        onCreated={() => {
+          void fetchDirectory();
+          toast.success(editSynaData ? "✏️ Fiche mise à jour" : "📤 Fiche envoyée — en attente de validation");
+          setEditSynaData(null);
+        }}
       />
 
       {/* Tabs – h-scroll, aerated */}
