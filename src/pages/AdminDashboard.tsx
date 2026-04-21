@@ -129,6 +129,97 @@ const TestPushButton = () => {
   );
 };
 
+interface ApnsTestResult {
+  ok?: boolean;
+  host?: string;
+  bundleId?: string;
+  production?: boolean;
+  tokensChecked?: number;
+  results?: Array<{
+    tokenPrefix: string;
+    status: number;
+    apnsId: string | null;
+    reason?: string;
+    body?: string;
+    success: boolean;
+  }>;
+  error?: string;
+  message?: string;
+  missing?: string[];
+}
+
+const TestApnsButton = () => {
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<ApnsTestResult | null>(null);
+
+  const handleTest = async () => {
+    setSending(true);
+    setResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-apns-test", { body: {} });
+      if (error) {
+        setResult({ error: error.message });
+        toast.error("Erreur APNs — voir les détails");
+      } else {
+        setResult(data as ApnsTestResult);
+        if ((data as ApnsTestResult)?.ok) toast.success("✅ APNs : 200 OK");
+        else toast.error("❌ APNs a refusé l'envoi — voir détails");
+      }
+    } catch (err) {
+      setResult({ error: String(err) });
+      toast.error("Erreur lors du test APNs");
+    }
+    setSending(false);
+  };
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={handleTest}
+        disabled={sending}
+        className="w-full py-3 rounded-xl font-bold text-sm text-white border-none cursor-pointer disabled:opacity-50 transition-all active:scale-[0.98]"
+        style={{ background: "linear-gradient(135deg, #001F3F, #003366)" }}
+      >
+        {sending ? "⏳ Envoi APNs…" : "🍎 Tester APNs natif (iOS)"}
+      </button>
+
+      {result && (
+        <div className="rounded-xl border border-border bg-muted/40 p-3 text-xs space-y-2">
+          {result.error && (
+            <div className="text-destructive font-mono break-all">
+              <strong>Erreur :</strong> {result.error}
+              {result.message && <div className="mt-1 text-muted-foreground">{result.message}</div>}
+              {result.missing?.length ? (
+                <div className="mt-1">Secrets manquants : {result.missing.join(", ")}</div>
+              ) : null}
+            </div>
+          )}
+          {result.host && (
+            <div className="font-mono text-muted-foreground">
+              <div>Host : <span className="text-foreground">{result.host}</span></div>
+              <div>Bundle : <span className="text-foreground">{result.bundleId}</span></div>
+              <div>Prod : <span className="text-foreground">{String(result.production)}</span></div>
+              <div>Tokens testés : <span className="text-foreground">{result.tokensChecked}</span></div>
+            </div>
+          )}
+          {result.results?.map((r, i) => (
+            <div
+              key={i}
+              className={`rounded-md p-2 font-mono ${r.success ? "bg-green-50 text-green-900 dark:bg-green-950/30 dark:text-green-200" : "bg-red-50 text-red-900 dark:bg-red-950/30 dark:text-red-200"}`}
+            >
+              <div><strong>Token :</strong> {r.tokenPrefix}</div>
+              <div><strong>Status :</strong> {r.status}</div>
+              {r.reason && <div><strong>Reason :</strong> {r.reason}</div>}
+              {r.apnsId && <div><strong>apns-id :</strong> {r.apnsId}</div>}
+              {r.body && !r.success && <div className="break-all opacity-80"><strong>Body :</strong> {r.body}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const NOTIF_SETTINGS = [
   { key: "notif_chabbat", icon: "🕯️", label: "Rappel Chabbat", desc: "Push 18 min avant l'allumage des bougies chaque vendredi" },
   { key: "notif_omer", icon: "🌾", label: "Rappel Omer", desc: "Push quotidien pendant les 49 jours du Omer" },
@@ -227,6 +318,15 @@ const SettingsTab = () => {
           Envoyez-vous une notification push de test pour vérifier que tout fonctionne.
         </p>
         <TestPushButton />
+      </div>
+
+      {/* Test APNs natif (iOS) */}
+      <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+        <h3 className="font-bold text-foreground mb-1">🍎 Test APNs natif (iOS)</h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Envoie une notification directement à votre iPhone via Apple. Affiche le code de réponse exact (200, 400, 403, 410…) et le motif Apple en cas d'échec.
+        </p>
+        <TestApnsButton />
       </div>
     </div>
   );
