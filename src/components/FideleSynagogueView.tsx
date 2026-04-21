@@ -72,6 +72,8 @@ const FideleSynagogueView = () => {
   const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
   const [suggestingSynaId, setSuggestingSynaId] = useState<string | null>(null);
   const [showCreateSyna, setShowCreateSyna] = useState(false);
+  const [editSynaData, setEditSynaData] = useState<any | null>(null);
+  const [mySynas, setMySynas] = useState<any[]>([]);
   const isPresident = dbRole === "president";
 
   // Directory state
@@ -97,7 +99,7 @@ const FideleSynagogueView = () => {
     setDirLoading(true);
     const { data: allSynas } = await (supabase
       .from("synagogue_profiles")
-      .select("id, name, logo_url, primary_color, secondary_color, shacharit_time, minha_time, arvit_time, address, phone, email, latitude, longitude, verified, president_id, adjoint_id") as any)
+      .select("id, name, logo_url, primary_color, secondary_color, shacharit_time, minha_time, arvit_time, address, phone, email, latitude, longitude, verified, president_id, adjoint_id, signature") as any)
       .neq("name", "")
       .order("name");
 
@@ -143,6 +145,16 @@ const FideleSynagogueView = () => {
           verified: s.verified ?? false,
         }))
     );
+    // Store full synas managed by current user (president or adjoint) for "edit" button
+    if (user) {
+      setMySynas(
+        (allSynas || []).filter(
+          (s: any) => s.president_id === user.id || s.adjoint_id === user.id
+        )
+      );
+    } else {
+      setMySynas([]);
+    }
     setDirLoading(false);
   };
 
@@ -339,20 +351,36 @@ const FideleSynagogueView = () => {
             : `${city.name} — Abonnez-vous à une synagogue pour recevoir ses actualités`}
         </p>
         {isPresident && (
-          <button
-            onClick={() => setShowCreateSyna(true)}
-            className="inline-flex items-center gap-2 rounded-xl border-none px-4 py-2.5 text-xs font-bold text-primary-foreground cursor-pointer transition-all active:scale-95"
-            style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
-          >
-            ➕ Créer ma fiche synagogue
-          </button>
+          <div className="flex flex-wrap justify-center gap-2">
+            {mySynas.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => { setEditSynaData(s); setShowCreateSyna(true); }}
+                className="inline-flex items-center gap-2 rounded-xl border-none px-4 py-2.5 text-xs font-bold text-primary-foreground cursor-pointer transition-all active:scale-95"
+                style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+              >
+                ✏️ Modifier {mySynas.length > 1 ? s.name : "ma fiche"}
+              </button>
+            ))}
+            <button
+              onClick={() => { setEditSynaData(null); setShowCreateSyna(true); }}
+              className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-background px-4 py-2.5 text-xs font-bold text-primary cursor-pointer transition-all active:scale-95"
+            >
+              ➕ {mySynas.length > 0 ? "Ajouter une autre fiche" : "Créer ma fiche synagogue"}
+            </button>
+          </div>
         )}
       </div>
 
       <SynagogueFormSheet
         open={showCreateSyna}
-        onOpenChange={setShowCreateSyna}
-        onCreated={() => { void fetchDirectory(); toast.success("📤 Fiche envoyée — en attente de validation par un administrateur"); }}
+        onOpenChange={(o) => { setShowCreateSyna(o); if (!o) setEditSynaData(null); }}
+        editData={editSynaData}
+        onCreated={() => {
+          void fetchDirectory();
+          toast.success(editSynaData ? "✏️ Fiche mise à jour" : "📤 Fiche envoyée — en attente de validation");
+          setEditSynaData(null);
+        }}
       />
 
       {/* Tabs – h-scroll, aerated */}
