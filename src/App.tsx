@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { useGpsProfileSync } from "@/hooks/useGpsProfileSync";
 import { supabase } from "@/integrations/supabase/client";
-import { registerNativePush, clearPushBadge, onNativePushActionPerformed } from "@/lib/capacitorPush";
+import { registerNativePush, clearPushBadge, onNativePushActionPerformed, requestNativePushPermission } from "@/lib/capacitorPush";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import MinyanJoin from "./pages/MinyanJoin.tsx";
@@ -97,14 +97,10 @@ function AppInner() {
 
   const isNative = Capacitor.isNativePlatform();
 
-  // ─── Push permissions are NOT requested on launch.
-  // Only GPS is requested automatically (via useGpsProfileSync).
-  // Notification permission is requested only when the user opts in
-  // (e.g. activating Shabbat reminders from settings or the Omer page).
-  // This keeps the first-launch experience light and respectful.
-  //
-  // If a token has already been granted in a previous session, we still
-  // refresh it silently — but we never trigger the OS prompt here.
+  // ─── Push permissions: request on launch (with small delay) so that
+  // even users who reinstalled the app or never opted in get the prompt
+  // and can receive Shabbat / Omer / community notifications.
+  // If already granted, we refresh the token silently.
   useEffect(() => {
     if (!isNative) return;
     if (permissionRequestedRef.current) return;
@@ -113,12 +109,25 @@ function AppInner() {
     (async () => {
       try {
         const { PushNotifications } = await import("@capacitor/push-notifications");
-        const status = await PushNotifications.checkPermissions();
+        let status = await PushNotifications.checkPermissions();
+        console.log("[App] Push permission status:", status.receive);
+
+        if (status.receive === "prompt" || status.receive === "prompt-with-rationale") {
+          // Small delay so the OS prompt doesn't appear immediately on cold start
+          await new Promise((r) => setTimeout(r, 1500));
+          console.log("[App] Requesting push permission from OS…");
+          const granted = await requestNativePushPermission();
+          console.log("[App] Permission request result:", granted);
+          if (!granted) return;
+          status = await PushNotifications.checkPermissions();
+        }
+
         if (status.receive !== "granted") {
-          console.log("[App] Push permission not yet granted — skipping silent token refresh");
+          console.log("[App] Push permission denied — skipping registration");
           return;
         }
-        console.log("[App] 🔕 Push already authorized, refreshing token silently…");
+
+        console.log("[App] ✅ Push authorized, registering for token…");
         const token = await registerNativePush();
         deviceTokenRef.current = token;
         if (user && token) {
@@ -126,7 +135,7 @@ function AppInner() {
           if (saved) tokenSavedForUserRef.current = user.id;
         }
       } catch (err) {
-        console.warn("[App] Silent push token refresh skipped:", err);
+        console.warn("[App] Push permission/registration failed:", err);
       }
     })();
   }, [isNative, user]);
