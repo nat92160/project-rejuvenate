@@ -1,7 +1,11 @@
 import { useCity } from "@/hooks/useCity";
+import { CITIES } from "@/lib/cities";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CitySelector = () => {
-  const { geolocate, isGeolocating, city, locationError } = useCity();
+  const { geolocate, isGeolocating, city, cityKey, setCityKey, locationError } = useCity();
+
+  const sortedCities = Object.entries(CITIES).sort(([, a], [, b]) => a.name.localeCompare(b.name));
 
   return (
     <div className="mx-4 mb-5 flex flex-col items-center gap-1.5">
@@ -16,6 +20,19 @@ const CitySelector = () => {
           {isGeolocating ? "⏳ Localisation..." : city._gps ? "📍 Actualiser" : "📍 Me localiser"}
         </button>
       </div>
+
+      <Select value={cityKey === "__gps__" ? "" : cityKey} onValueChange={setCityKey}>
+        <SelectTrigger className="h-9 w-[220px] text-xs rounded-xl">
+          <SelectValue placeholder="🏙️ Choisir une ville manuellement" />
+        </SelectTrigger>
+        <SelectContent className="max-h-[300px]">
+          {sortedCities.map(([key, c]) => (
+            <SelectItem key={key} value={key} className="text-xs">
+              {c.name} <span className="text-muted-foreground">· {c.country}</span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {city._gps && city.accuracyMeters ? (
         <p className="text-center text-[11px] text-muted-foreground">
