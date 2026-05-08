@@ -80,7 +80,12 @@ export function previewSound(type: AlarmSound) {
   audio.volume = 0.5;
   previewAudio = audio;
 
-  audio.play().catch((err) => console.error("[alarm preview] play failed:", err));
+  audio.play().catch((err) => {
+    // AbortError when user re-clicks quickly — bénin
+    if (err?.name !== "AbortError") {
+      console.error("[alarm preview] play failed:", err);
+    }
+  });
 
   // Play first 10 seconds of the melody
   previewStop = window.setTimeout(() => stopPreview(), 10000);
