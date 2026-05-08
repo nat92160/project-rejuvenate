@@ -7,7 +7,7 @@ import { type AlarmSound, SOUND_LIST, startAlarm, previewSound, type AlarmPlayer
 const AlarmWidget = () => {
   const [hours, setHours] = useState(6);
   const [minutes, setMinutes] = useState(30);
-  const [sound, setSound] = useState<AlarmSound>("harpe");
+  const [sound, setSound] = useState<AlarmSound>("douce");
   const [rings, setRings] = useState(3);
   const [alarmSet, setAlarmSet] = useState(false);
   const [nightMode, setNightMode] = useState(false);
