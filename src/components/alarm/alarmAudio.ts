@@ -1,5 +1,7 @@
 // Real melodic alarm sounds (Kevin MacLeod, CC-BY incompetech.com).
-// Files in public/sounds/*.mp3 — gentle 40s loops.
+// Each "ring" = 1 lecture complète de la mélodie (~40s).
+// L'alarme joue N fois la mélodie puis s'arrête automatiquement.
+// Tant qu'elle joue, elle joue à plein volume après le fade-in.
 
 export type AlarmSound = "meditation" | "carefree" | "brittle";
 
@@ -22,8 +24,7 @@ export interface AlarmPlayer {
   stop: () => void;
 }
 
-const FADE_IN_SECONDS = 30;
-const RING_CYCLE_SECONDS = 30;
+const FADE_IN_SECONDS = 25;
 
 export function startAlarm(
   type: AlarmSound,
@@ -31,26 +32,49 @@ export function startAlarm(
   onProgress?: (progress: number) => void,
 ): AlarmPlayer {
   const audio = new Audio(SOUNDS[type].url);
-  audio.loop = true;
   audio.preload = "auto";
+  audio.loop = false; // on gère le loop manuellement pour compter
   audio.volume = 0.05;
 
   let stopped = false;
+  let played = 0;
   const startedAt = Date.now();
-  const totalDurationMs = rings * RING_CYCLE_SECONDS * 1000;
 
+  // Fade-in volume progressif
   const fadeInterval = window.setInterval(() => {
     if (stopped) return;
     const elapsed = (Date.now() - startedAt) / 1000;
     const p = Math.min(1, elapsed / FADE_IN_SECONDS);
     audio.volume = Math.min(1, 0.05 + p * 0.95);
     onProgress?.(p);
-    if (elapsed * 1000 > totalDurationMs) cleanup();
+    if (p >= 1) clearInterval(fadeInterval);
   }, 200);
 
+  const onEnded = () => {
+    if (stopped) return;
+    played += 1;
+    if (played >= rings) {
+      cleanup();
+      return;
+    }
+    // Relancer la mélodie suivante
+    try {
+      audio.currentTime = 0;
+      audio.play().catch((err) => {
+        if (err?.name !== "AbortError") console.error("[alarm] replay failed:", err);
+      });
+    } catch (err) {
+      console.error("[alarm] replay error:", err);
+    }
+  };
+
+  audio.addEventListener("ended", onEnded);
+
   const cleanup = () => {
+    if (stopped) return;
     stopped = true;
     clearInterval(fadeInterval);
+    audio.removeEventListener("ended", onEnded);
     try {
       audio.pause();
       audio.currentTime = 0;
@@ -58,18 +82,14 @@ export function startAlarm(
     } catch { /* noop */ }
   };
 
-  const stopTimer = window.setTimeout(cleanup, totalDurationMs + 1000);
+  audio.play().catch((err) => {
+    if (err?.name !== "AbortError") console.error("[alarm] play failed:", err);
+  });
 
-  audio.play().catch((err) => console.error("[alarm] play failed:", err));
-
-  return {
-    stop: () => {
-      clearTimeout(stopTimer);
-      cleanup();
-    },
-  };
+  return { stop: cleanup };
 }
 
+// ─── Preview (10s) ───
 let previewAudio: HTMLAudioElement | null = null;
 let previewStop: number | null = null;
 
@@ -81,13 +101,9 @@ export function previewSound(type: AlarmSound) {
   previewAudio = audio;
 
   audio.play().catch((err) => {
-    // AbortError when user re-clicks quickly — bénin
-    if (err?.name !== "AbortError") {
-      console.error("[alarm preview] play failed:", err);
-    }
+    if (err?.name !== "AbortError") console.error("[alarm preview] play failed:", err);
   });
 
-  // Play first 10 seconds of the melody
   previewStop = window.setTimeout(() => stopPreview(), 10000);
 }
 
