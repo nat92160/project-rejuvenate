@@ -24,8 +24,8 @@ export interface AlarmPlayer {
   stop: () => void;
 }
 
-const FADE_IN_SECONDS = 25;
-const RING_DURATION_SECONDS = 30; // 1 sonnerie = 30s
+const FADE_IN_SECONDS = 3;
+const RING_DURATION_SECONDS = 5; // 1 sonnerie = 5s
 
 export function startAlarm(
   type: AlarmSound,
