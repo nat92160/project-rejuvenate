@@ -1,7 +1,7 @@
-// Real MP3 alarm sounds with progressive fade-in.
-// Files served from /sounds/*.mp3 (public/).
+// Real melodic alarm sounds (Kevin MacLeod, CC-BY incompetech.com).
+// Files in public/sounds/*.mp3 — gentle 40s loops.
 
-export type AlarmSound = "douce" | "classique" | "cristal";
+export type AlarmSound = "meditation" | "carefree" | "brittle";
 
 interface SoundDef {
   label: string;
@@ -10,9 +10,9 @@ interface SoundDef {
 }
 
 const SOUNDS: Record<AlarmSound, SoundDef> = {
-  douce:     { label: "Harpe douce",  emoji: "🎵", url: "/sounds/douce.mp3" },
-  classique: { label: "Classique",    emoji: "⏰", url: "/sounds/classique.mp3" },
-  cristal:   { label: "Cristallin",   emoji: "✨", url: "/sounds/cristal.mp3" },
+  meditation: { label: "Méditation",  emoji: "🎵", url: "/sounds/meditation.mp3" },
+  carefree:   { label: "Sérénité",    emoji: "🌅", url: "/sounds/carefree.mp3" },
+  brittle:    { label: "Lumière",     emoji: "✨", url: "/sounds/brittle.mp3" },
 };
 
 export const SOUND_LIST = (Object.entries(SOUNDS) as [AlarmSound, SoundDef][])
@@ -25,7 +25,6 @@ export interface AlarmPlayer {
 const FADE_IN_SECONDS = 30;
 const RING_CYCLE_SECONDS = 30;
 
-// ─── Main alarm (with fade-in) ───
 export function startAlarm(
   type: AlarmSound,
   rings: number,
@@ -34,22 +33,19 @@ export function startAlarm(
   const audio = new Audio(SOUNDS[type].url);
   audio.loop = true;
   audio.preload = "auto";
-  audio.volume = 0.05; // start quiet
+  audio.volume = 0.05;
 
   let stopped = false;
   const startedAt = Date.now();
   const totalDurationMs = rings * RING_CYCLE_SECONDS * 1000;
 
-  // Fade-in via volume ramp every 200ms
   const fadeInterval = window.setInterval(() => {
     if (stopped) return;
     const elapsed = (Date.now() - startedAt) / 1000;
     const p = Math.min(1, elapsed / FADE_IN_SECONDS);
     audio.volume = Math.min(1, 0.05 + p * 0.95);
     onProgress?.(p);
-    if (elapsed * 1000 > totalDurationMs) {
-      cleanup();
-    }
+    if (elapsed * 1000 > totalDurationMs) cleanup();
   }, 200);
 
   const cleanup = () => {
@@ -62,13 +58,9 @@ export function startAlarm(
     } catch { /* noop */ }
   };
 
-  // Auto-stop safety
   const stopTimer = window.setTimeout(cleanup, totalDurationMs + 1000);
 
-  // Try to play (must be in a user gesture)
-  audio.play().catch((err) => {
-    console.error("[alarm] play failed:", err);
-  });
+  audio.play().catch((err) => console.error("[alarm] play failed:", err));
 
   return {
     stop: () => {
@@ -78,34 +70,23 @@ export function startAlarm(
   };
 }
 
-// ─── Preview (short, fade-in 2s, auto-stop ~6s) ───
 let previewAudio: HTMLAudioElement | null = null;
-let previewFade: number | null = null;
 let previewStop: number | null = null;
 
 export function previewSound(type: AlarmSound) {
   stopPreview();
   const audio = new Audio(SOUNDS[type].url);
-  audio.loop = true;
-  audio.volume = 0.1;
+  audio.loop = false;
+  audio.volume = 0.5;
   previewAudio = audio;
 
-  audio.play().catch((err) => {
-    console.error("[alarm preview] play failed:", err);
-  });
+  audio.play().catch((err) => console.error("[alarm preview] play failed:", err));
 
-  const start = Date.now();
-  previewFade = window.setInterval(() => {
-    const elapsed = (Date.now() - start) / 1000;
-    const p = Math.min(1, elapsed / 2);
-    if (previewAudio) previewAudio.volume = Math.min(0.7, 0.1 + p * 0.6);
-  }, 100);
-
-  previewStop = window.setTimeout(() => stopPreview(), 6000);
+  // Play first 10 seconds of the melody
+  previewStop = window.setTimeout(() => stopPreview(), 10000);
 }
 
 export function stopPreview() {
-  if (previewFade) { clearInterval(previewFade); previewFade = null; }
   if (previewStop) { clearTimeout(previewStop); previewStop = null; }
   if (previewAudio) {
     try {
