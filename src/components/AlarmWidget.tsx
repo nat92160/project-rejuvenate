@@ -63,8 +63,8 @@ const AlarmWidget = () => {
       // Start audio. La mélodie est lue `rings` fois (≈40s chacune) puis s'arrête.
       playerRef.current = startAlarm(sound, rings);
 
-      // Auto-stop UI : 30s par sonnerie + marge
-      const totalDuration = rings * 30 * 1000 + 2000;
+      // Auto-stop UI : 5s par sonnerie + marge
+      const totalDuration = rings * 5 * 1000 + 1000;
       setTimeout(() => {
         stopAlarm();
       }, totalDuration);
@@ -165,8 +165,8 @@ const AlarmWidget = () => {
                 key={n}
                 onClick={() => {
                   setRings(n);
-                  // Preview de la durée réelle : n × 30s
-                  previewSound(sound, n * 30 * 1000);
+                  // Preview de la durée réelle : n × 5s
+                  previewSound(sound, n * 5 * 1000);
                 }}
                 className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer ${
                   rings === n
