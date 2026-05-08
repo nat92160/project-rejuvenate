@@ -60,11 +60,11 @@ const AlarmWidget = () => {
         if (p >= 1 && dawnRef.current) clearInterval(dawnRef.current);
       }, 100);
 
-      // Start audio. startAlarm() s'arrête automatiquement après rings * 30s.
+      // Start audio. La mélodie est lue `rings` fois (≈40s chacune) puis s'arrête.
       playerRef.current = startAlarm(sound, rings);
 
-      // Auto-stop UI cohérent avec la durée audio (rings × 30s + 2s marge)
-      const totalDuration = rings * 30 * 1000 + 2000;
+      // Auto-stop UI : durée d'une mélodie (40s) × rings + marge
+      const totalDuration = rings * 40 * 1000 + 3000;
       setTimeout(() => {
         stopAlarm();
       }, totalDuration);
