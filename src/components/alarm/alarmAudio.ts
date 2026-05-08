@@ -78,10 +78,10 @@ export function startAlarm(
 let previewAudio: HTMLAudioElement | null = null;
 let previewStop: number | null = null;
 
-export function previewSound(type: AlarmSound) {
+export function previewSound(type: AlarmSound, durationMs = 10000) {
   stopPreview();
   const audio = new Audio(SOUNDS[type].url);
-  audio.loop = false;
+  audio.loop = true;
   audio.volume = 0.5;
   previewAudio = audio;
 
@@ -89,7 +89,7 @@ export function previewSound(type: AlarmSound) {
     if (err?.name !== "AbortError") console.error("[alarm preview] play failed:", err);
   });
 
-  previewStop = window.setTimeout(() => stopPreview(), 10000);
+  previewStop = window.setTimeout(() => stopPreview(), durationMs);
 }
 
 export function stopPreview() {

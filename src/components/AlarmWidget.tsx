@@ -163,7 +163,11 @@ const AlarmWidget = () => {
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 key={n}
-                onClick={() => setRings(n)}
+                onClick={() => {
+                  setRings(n);
+                  // Preview de la durée réelle : n × 30s
+                  previewSound(sound, n * 30 * 1000);
+                }}
                 className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer ${
                   rings === n
                     ? "bg-card text-primary shadow-sm"
