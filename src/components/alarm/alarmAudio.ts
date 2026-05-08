@@ -25,6 +25,7 @@ export interface AlarmPlayer {
 }
 
 const FADE_IN_SECONDS = 25;
+const RING_DURATION_SECONDS = 30; // 1 sonnerie = 30s
 
 export function startAlarm(
   type: AlarmSound,
@@ -37,8 +38,8 @@ export function startAlarm(
   audio.volume = 0.05;
 
   let stopped = false;
-  let played = 0;
   const startedAt = Date.now();
+  const totalDurationMs = rings * RING_DURATION_SECONDS * 1000;
 
   // Fade-in volume progressif
   const fadeInterval = window.setInterval(() => {
@@ -50,31 +51,15 @@ export function startAlarm(
     if (p >= 1) clearInterval(fadeInterval);
   }, 200);
 
-  const onEnded = () => {
-    if (stopped) return;
-    played += 1;
-    if (played >= rings) {
-      cleanup();
-      return;
-    }
-    // Relancer la mélodie suivante
-    try {
-      audio.currentTime = 0;
-      audio.play().catch((err) => {
-        if (err?.name !== "AbortError") console.error("[alarm] replay failed:", err);
-      });
-    } catch (err) {
-      console.error("[alarm] replay error:", err);
-    }
-  };
-
-  audio.addEventListener("ended", onEnded);
+  // Boucle continue pendant la durée totale
+  audio.loop = true;
+  const stopTimer = window.setTimeout(() => cleanup(), totalDurationMs);
 
   const cleanup = () => {
     if (stopped) return;
     stopped = true;
     clearInterval(fadeInterval);
-    audio.removeEventListener("ended", onEnded);
+    clearTimeout(stopTimer);
     try {
       audio.pause();
       audio.currentTime = 0;
