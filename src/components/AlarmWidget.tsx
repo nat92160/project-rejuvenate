@@ -60,13 +60,11 @@ const AlarmWidget = () => {
         if (p >= 1 && dawnRef.current) clearInterval(dawnRef.current);
       }, 100);
 
-      // Start audio
-      playerRef.current = startAlarm(sound, rings, (p) => {
-        // Audio progress callback — could sync with dawn
-      });
+      // Start audio. startAlarm() s'arrête automatiquement après rings * 30s.
+      playerRef.current = startAlarm(sound, rings);
 
-      // Auto-stop after all rings played
-      const totalDuration = rings * 6 * 1000 + 2000;
+      // Auto-stop UI cohérent avec la durée audio (rings × 30s + 2s marge)
+      const totalDuration = rings * 30 * 1000 + 2000;
       setTimeout(() => {
         stopAlarm();
       }, totalDuration);
