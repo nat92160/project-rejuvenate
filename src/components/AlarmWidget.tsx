@@ -63,8 +63,8 @@ const AlarmWidget = () => {
       // Start audio. La mélodie est lue `rings` fois (≈40s chacune) puis s'arrête.
       playerRef.current = startAlarm(sound, rings);
 
-      // Auto-stop UI : durée d'une mélodie (40s) × rings + marge
-      const totalDuration = rings * 40 * 1000 + 3000;
+      // Auto-stop UI : 30s par sonnerie + marge
+      const totalDuration = rings * 30 * 1000 + 2000;
       setTimeout(() => {
         stopAlarm();
       }, totalDuration);
