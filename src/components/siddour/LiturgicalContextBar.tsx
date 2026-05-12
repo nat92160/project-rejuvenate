@@ -130,7 +130,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
       >
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: pmMuted || "hsl(var(--muted-foreground))" }}>
-            📅 Période liturgique
+            📜 Contexte du jour
           </span>
           {activeLabels.slice(0, 3).map((label, i) => (
             <span
