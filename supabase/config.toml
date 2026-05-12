@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.send-apns-test]
 verify_jwt = false
+
+[functions.hazkara-reminder]
+verify_jwt = false
+
+[functions.backup-accounts]
+verify_jwt = false
