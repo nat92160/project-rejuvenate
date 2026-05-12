@@ -58,6 +58,16 @@ export interface LiturgicalPeriod {
   skipTahanun: boolean;
   // Hallel
   hallel: "none" | "half" | "full";
+  // Aseret Yemei Techouva (Roch HaChana → Yom Kippour)
+  isAseretYemeiTeshuva: boolean;
+  // Erev Pessah, 'Hol haMo'ed Pessa'h, Erev Yom Kippour → on omet Mizmor LeToda
+  skipMizmorLetoda: boolean;
+  // Lundi ou jeudi (Ta'hanoun étendu : Vehou Rahoum + 13 Middot)
+  isMondayOrThursday: boolean;
+  // Jour de Mussaf
+  hasMussaf: boolean;
+  // Période de l'Omer (entre Pessa'h et Chavou'ot)
+  isOmer: boolean;
 }
 
 function isBetweenHebrewDates(hd: HDate, fromMonth: number, fromDay: number, toMonth: number, toDay: number): boolean {
@@ -134,6 +144,29 @@ export function detectPeriod(now: Date = new Date(), inIsrael = false): Liturgic
       ? "half"
       : "none";
 
+  // Aseret Yemei Techouva : 1 Tichri (R.H.) → 10 Tichri (Yom Kippour) inclus
+  const isAseretYemeiTeshuva = hd.getMonth() === 7 && hd.getDate() <= 10;
+
+  // Mizmor LeToda omis : Chabbat, Yom Tov, 'Hol haMo'ed Pessa'h, Erev Pessa'h, Erev Yom Kippour
+  const isErevPesach = hd.getMonth() === 1 && hd.getDate() === 14;
+  const isErevYomKippur = hd.getMonth() === 7 && hd.getDate() === 9;
+  const isCholHamoedPesach = isCholHamoed && hd.getMonth() === 1;
+  const skipMizmorLetoda =
+    dow === 6 || isYomTov || isCholHamoedPesach || isErevPesach || isErevYomKippur;
+
+  const isMondayOrThursday = dow === 1 || dow === 4;
+
+  const hasMussaf =
+    dow === 6 || // Chabbat
+    isRoshChodesh ||
+    isYomTov ||
+    isCholHamoed;
+
+  // Omer : 16 Nissan → 5 Sivan
+  const isOmer = (hd.getMonth() === 1 && hd.getDate() >= 16) ||
+                 (hd.getMonth() === 2) ||
+                 (hd.getMonth() === 3 && hd.getDate() <= 5);
+
   return {
     hdate: hd,
     isInIsrael: inIsrael,
@@ -147,6 +180,11 @@ export function detectPeriod(now: Date = new Date(), inIsrael = false): Liturgic
     isFastDay,
     skipTahanun,
     hallel,
+    isAseretYemeiTeshuva,
+    skipMizmorLetoda,
+    isMondayOrThursday,
+    hasMussaf,
+    isOmer,
   };
 }
 
@@ -347,6 +385,151 @@ const RULES: Rule[] = [
         };
       }
       return null;
+    },
+  },
+
+  // 8. HaMelech HaKadosh / HaMelech HaMishpat (Asseret Yemei Techouva)
+  {
+    id: "hamelech-hakadosh",
+    patterns: ["האל הקדוש", "מלך אוהב צדקה ומשפט"],
+    build: (p) => {
+      if (!p.isAseretYemeiTeshuva) return null;
+      return {
+        id: "hamelech-hakadosh",
+        tone: "warn",
+        title: "10 Jours de Techouva",
+        body:
+          "Pendant les 10 Jours de Techouva (de Roch HaChana à Yom Kippour), on remplace « haEl haKadoch » par « haMélèkh haKadoch », et « Mélèkh ohev Tsedaka uMichpat » par « haMélèkh haMichpat ». Si oublié sur la 3ᵉ brakha → recommencer la Amida.",
+        todaySay: "הַמֶּלֶךְ הַקָּדוֹשׁ / הַמֶּלֶךְ הַמִּשְׁפָּט",
+      };
+    },
+  },
+
+  // 9. Zokhrénou / Mi Khamokha / Oukhetov / BeSefer Hayim (4 ajouts Aseret Yemei Tshuva)
+  {
+    id: "zochreinu",
+    patterns: ["זכרנו לחיים", "מי כמוך אב הרחמים", "וכתוב לחיים", "בספר חיים"],
+    build: (p) => {
+      if (!p.isAseretYemeiTeshuva) {
+        return {
+          id: "zochreinu",
+          tone: "info",
+          title: "Ajouts des 10 Jours de Techouva",
+          body:
+            "Ces 4 ajouts (Zokhrénou, Mi Khamokha, Oukhetov, BeSéfer 'Hayim) sont insérés uniquement entre Roch HaChana et Yom Kippour. Aujourd'hui : on omet.",
+        };
+      }
+      return {
+        id: "zochreinu",
+        tone: "fete",
+        title: "10 Jours de Techouva — 4 ajouts",
+        body:
+          "On insère « Zokhrénou leHayim » (1ʳᵉ brakha), « Mi Khamokha Av haRahamim » (2ᵉ), « Oukhetov leHayim » (Modim) et « BeSéfer Hayim » (dernière brakha).",
+      };
+    },
+  },
+
+  // 10. Mizmor LeToda — omis certains jours
+  {
+    id: "mizmor-letoda",
+    patterns: ["מזמור לתודה", "הריעו לה' כל הארץ"],
+    build: (p) => {
+      if (p.skipMizmorLetoda) {
+        return {
+          id: "mizmor-letoda",
+          tone: "info",
+          title: "Pas de Mizmor LeToda aujourd'hui",
+          body:
+            "On omet « Mizmor LeToda » : Chabbat, Yom Tov, 'Hol haMo'ed Pessa'h, veille de Pessa'h et veille de Yom Kippour (le sacrifice de Toda n'était pas offert).",
+        };
+      }
+      return null;
+    },
+  },
+
+  // 11. Borkhi Nafshi (Tehilim 104) à Roch 'Hodech
+  {
+    id: "borchi-nafshi",
+    patterns: ["ברכי נפשי את ה'", "תהלים קד"],
+    build: (p) => {
+      if (p.isRoshChodesh) {
+        return {
+          id: "borchi-nafshi",
+          tone: "fete",
+          title: "Roch 'Hodech — Borkhi Nafchi",
+          body: "À Roch 'Hodech, on lit Tehilim 104 (« Borkhi Nafchi ») après la Amida.",
+        };
+      }
+      return null;
+    },
+  },
+
+  // 12. Ta'hanoun étendu (lundi / jeudi)
+  {
+    id: "tahanun-long",
+    patterns: ["והוא רחום", "ויעבור", "יג מדות", "יג' מדות"],
+    build: (p) => {
+      if (p.skipTahanun) return null;
+      if (p.isMondayOrThursday) {
+        return {
+          id: "tahanun-long",
+          tone: "fete",
+          title: "Lundi / Jeudi — Ta'hanoun long",
+          body:
+            "Le lundi et le jeudi, on dit la version longue de Ta'hanoun (« Vehou Rahoum » et les 13 Attributs de miséricorde).",
+        };
+      }
+      return null;
+    },
+  },
+
+  // 13. Mussaf — sera-t-il dit aujourd'hui ?
+  {
+    id: "mussaf",
+    patterns: ["מוסף", "תפילת מוסף"],
+    build: (p) => {
+      if (p.hasMussaf) {
+        const occ: string[] = [];
+        if (p.hdate.getDay() === 6) occ.push("Chabbat");
+        if (p.isRoshChodesh) occ.push("Roch 'Hodech");
+        if (p.isYomTov) occ.push("Yom Tov");
+        if (p.isCholHamoed) occ.push("'Hol haMo'ed");
+        return {
+          id: "mussaf",
+          tone: "fete",
+          title: `Mussaf — ${occ.join(" / ") || "Aujourd'hui"}`,
+          body: "On dit Mussaf après la lecture de la Torah.",
+        };
+      }
+      return {
+        id: "mussaf",
+        tone: "info",
+        title: "Pas de Mussaf aujourd'hui",
+        body: "Mussaf se dit uniquement Chabbat, Roch 'Hodech, Yom Tov et 'Hol haMo'ed.",
+      };
+    },
+  },
+
+  // 14. Sefirat haOmer
+  {
+    id: "omer",
+    patterns: ["ספירת העומר", "היום יום אחד לעומר", "לעומר"],
+    build: (p) => {
+      if (p.isOmer) {
+        return {
+          id: "omer",
+          tone: "fete",
+          title: "Compte du Omer",
+          body:
+            "Aujourd'hui, on compte le Omer après 'Arvit (entre Pessa'h et Chavou'ot). Voir l'office « Omer » pour le compte du jour avec sa brakha.",
+        };
+      }
+      return {
+        id: "omer",
+        tone: "info",
+        title: "Hors période du Omer",
+        body: "Le compte du Omer ne se dit qu'entre le 16 Nissan (lendemain de Pessa'h) et la veille de Chavou'ot.",
+      };
     },
   },
 ];
