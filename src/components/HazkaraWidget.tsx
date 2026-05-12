@@ -734,6 +734,106 @@ const HazkaraWidget = () => {
           </p>
         </div>
       </div>
+
+      {/* Hidden poster for sharing */}
+      {posterData && (
+        <div
+          ref={posterRef}
+          style={{
+            position: "fixed",
+            left: "-9999px",
+            top: 0,
+            zIndex: -1,
+            width: "1080px",
+            height: "1350px",
+            background: "linear-gradient(160deg, #001F3F 0%, #002a55 60%, #001528 100%)",
+            color: "#F5E9C8",
+            fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+            padding: "100px 80px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "space-between",
+            textAlign: "center",
+            boxSizing: "border-box",
+          }}
+        >
+          <div style={{ width: "100%" }}>
+            <div style={{ fontSize: "80px", marginBottom: "20px" }}>🕯️</div>
+            <div style={{
+              fontSize: "32px",
+              letterSpacing: "8px",
+              color: "#996515",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              marginBottom: "12px",
+            }}>Hazkara</div>
+            <div style={{ fontSize: "22px", color: "#F5E9C8", opacity: 0.8, letterSpacing: "3px" }}>
+              לעילוי נשמת
+            </div>
+          </div>
+
+          <div style={{ width: "100%" }}>
+            <div style={{
+              fontSize: "28px",
+              color: "#F5E9C8",
+              opacity: 0.7,
+              marginBottom: "24px",
+              letterSpacing: "2px",
+            }}>En mémoire de</div>
+            <div style={{
+              fontSize: "84px",
+              fontWeight: 700,
+              color: "#F5E9C8",
+              lineHeight: 1.15,
+              padding: "0 20px",
+              textShadow: "0 2px 8px rgba(0,0,0,0.4)",
+            }}>{posterData.name}</div>
+            <div style={{
+              width: "120px",
+              height: "2px",
+              background: "#996515",
+              margin: "40px auto",
+            }} />
+            <div style={{
+              fontSize: "44px",
+              color: "#996515",
+              fontWeight: 600,
+              marginBottom: "16px",
+              textTransform: "capitalize",
+            }}>
+              {posterData.greg.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            </div>
+            <div style={{ fontSize: "36px", color: "#F5E9C8", opacity: 0.85, direction: "rtl" }}>
+              {posterData.hebrew}
+            </div>
+          </div>
+
+          <div style={{ width: "100%" }}>
+            <div style={{
+              fontSize: "26px",
+              color: "#F5E9C8",
+              opacity: 0.85,
+              fontStyle: "italic",
+              lineHeight: 1.5,
+              marginBottom: "30px",
+            }}>
+              תְּהֵא נִשְׁמָתוֹ צְרוּרָה בִּצְרוֹר הַחַיִּים
+              <br />
+              <span style={{ fontSize: "22px", opacity: 0.75 }}>
+                Que son âme soit liée au faisceau des vivants
+              </span>
+            </div>
+            <div style={{
+              fontSize: "20px",
+              color: "#996515",
+              letterSpacing: "4px",
+              textTransform: "uppercase",
+              fontWeight: 600,
+            }}>Chabbat Chalom</div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };
