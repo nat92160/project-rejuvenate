@@ -106,11 +106,21 @@ const Siddour = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className="min-h-screen"
+      style={{
+        background: "linear-gradient(180deg, hsl(38 70% 94%) 0%, hsl(38 65% 91%) 100%)",
+        color: "hsl(25 30% 18%)",
+      }}
+    >
       {/* Header sticky */}
       <header
-        className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border/40"
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+        className="sticky top-0 z-30 backdrop-blur border-b"
+        style={{
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          background: "hsla(38, 70%, 94%, 0.92)",
+          borderColor: "hsl(var(--gold) / 0.3)",
+        }}
       >
         <div className="flex items-center gap-2 px-3 py-2 sm:px-6">
           <button
@@ -259,6 +269,7 @@ const Siddour = () => {
                 rite={rite}
                 office={office}
                 autoTranslateIndices={autoTranslateIndices}
+                onJumpToSection={handleSelectSection}
               />
             )}
           </div>

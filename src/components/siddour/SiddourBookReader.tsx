@@ -2,6 +2,8 @@ import { forwardRef } from "react";
 import { isInstructionOnly } from "@/lib/utils";
 import type { FullSection } from "@/hooks/useSiddourFullOffice";
 import SiddourSectionTranslation from "./SiddourSectionTranslation";
+import SiddourSectionCommentary from "./SiddourSectionCommentary";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { SiddourRite } from "@/hooks/useSiddourRite";
 
 interface Props {
@@ -13,6 +15,8 @@ interface Props {
   office: string;
   /** Indices des sections à traduire automatiquement (déclenché par "Tout traduire") */
   autoTranslateIndices?: Set<number>;
+  /** Naviguer vers la section index dans la liste */
+  onJumpToSection?: (index: number) => void;
 }
 
 function normalizeHebrewMatch(html: string): string {
@@ -43,7 +47,7 @@ function isShemaSecondaryLine(html: string): boolean {
 }
 
 const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
-  ({ sections, fontSize, registerSectionRef, rite, office, autoTranslateIndices }, ref) => {
+  ({ sections, fontSize, registerSectionRef, rite, office, autoTranslateIndices, onJumpToSection }, ref) => {
     return (
       <div ref={ref} className="space-y-12 pb-32">
         {sections.map((sec, sIdx) => (
@@ -53,27 +57,36 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
             ref={(el) => registerSectionRef(sIdx, el)}
             className="scroll-mt-24"
           >
-            {/* En-tête ornemental de section */}
-            <header className="text-center mb-6">
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <span className="block h-[1px] w-16" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--gold) / 0.5))" }} />
+            {/* Hero bilingue style affiche */}
+            <header className="text-center mb-8">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <span className="block h-[1px] flex-1 max-w-[80px]" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--gold) / 0.55))" }} />
                 <span className="text-sm" style={{ color: "hsl(var(--gold) / 0.7)" }}>✦</span>
-                <span className="block h-[1px] w-16" style={{ background: "linear-gradient(270deg, transparent, hsl(var(--gold) / 0.5))" }} />
+                <span className="block h-[1px] flex-1 max-w-[80px]" style={{ background: "linear-gradient(270deg, transparent, hsl(var(--gold) / 0.55))" }} />
               </div>
-              <h2 className="font-display text-lg sm:text-xl font-bold" style={{ color: "hsl(var(--primary))" }}>
+              <h2
+                className="font-display font-bold uppercase tracking-[0.15em] text-base sm:text-xl"
+                style={{ color: "hsl(var(--primary))", letterSpacing: "0.15em" }}
+              >
                 {sec.title}
               </h2>
-              <p className="mt-1" style={{
-                fontFamily: "'Noto Serif Hebrew', 'Frank Ruhl Libre', serif",
-                fontSize: `${Math.min(fontSize + 4, 36)}px`,
+              <p className="mt-2" style={{
+                fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+                fontSize: `${Math.min(fontSize + 8, 40)}px`,
                 color: "hsl(var(--gold-matte))",
-                fontWeight: 600,
+                fontWeight: 700,
+                letterSpacing: "0.02em",
               }}>
                 {sec.heTitle}
               </p>
+              <div className="flex items-center justify-center gap-3 mt-4">
+                <span className="block h-[1px] flex-1 max-w-[80px]" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--gold) / 0.55))" }} />
+                <span className="text-xs" style={{ color: "hsl(var(--gold) / 0.7)" }}>❦</span>
+                <span className="block h-[1px] flex-1 max-w-[80px]" style={{ background: "linear-gradient(270deg, transparent, hsl(var(--gold) / 0.55))" }} />
+              </div>
               {sec.isHazara && (
-                <div className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full"
-                  style={{ background: "hsl(var(--gold) / 0.08)", border: "1px solid hsl(var(--gold) / 0.2)" }}>
+                <div className="inline-flex items-center gap-2 mt-4 px-3 py-1.5 rounded-full"
+                  style={{ background: "hsl(var(--gold) / 0.08)", border: "1px solid hsl(var(--gold) / 0.25)" }}>
                   <span className="text-xs">🔄</span>
                   <span className="text-[11px] font-bold" style={{ color: "hsl(var(--gold-matte))" }}>
                     Hazarat HaChats
@@ -141,6 +154,50 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
               fontSize={fontSize}
               autoTranslate={autoTranslateIndices?.has(sIdx)}
             />
+
+            {/* Commentaire d'étude IA à la demande */}
+            <SiddourSectionCommentary
+              rite={rite}
+              office={office}
+              sectionIndex={sIdx}
+              sectionTitle={sec.title}
+              hebrew={sec.hebrew}
+            />
+
+            {/* Navigation linéaire entre sections */}
+            {onJumpToSection && (
+              <div className="mt-10 pt-6 border-t flex items-center justify-between gap-2"
+                   style={{ borderColor: "hsl(var(--gold) / 0.25)" }}>
+                <button
+                  onClick={() => onJumpToSection(sIdx - 1)}
+                  disabled={sIdx === 0}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
+                  style={{
+                    background: "hsl(var(--background))",
+                    color: "hsl(var(--primary))",
+                    border: "1px solid hsl(var(--gold) / 0.35)",
+                  }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Précédent</span>
+                </button>
+                <span className="text-[11px] text-muted-foreground tabular-nums">
+                  {sIdx + 1} / {sections.length}
+                </span>
+                <button
+                  onClick={() => onJumpToSection(sIdx + 1)}
+                  disabled={sIdx === sections.length - 1}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
+                  style={{
+                    background: "hsl(var(--primary))",
+                    color: "hsl(var(--primary-foreground))",
+                  }}
+                >
+                  <span className="hidden sm:inline">Suivant</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </section>
         ))}
       </div>
