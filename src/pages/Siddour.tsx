@@ -16,6 +16,7 @@ const Siddour = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const { rite, setRite } = useSiddourRite();
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const officeParam = params.get("office");
   const initialOffice = (officeParam && officeParam !== "sommaire") ? officeParam : (detectOfficeNow() || "shacharit");
@@ -67,21 +68,20 @@ const Siddour = () => {
   const handleSelectOffice = useCallback((newOffice: string) => {
     if (newOffice === office) {
       // scroll back to top
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
       setDrawerOpen(false);
       return;
     }
     setOffice(newOffice);
     setActiveSection(0);
     setDrawerOpen(false);
-    window.scrollTo({ top: 0 });
+    scrollContainerRef.current?.scrollTo({ top: 0 });
   }, [office]);
 
   const handleSelectSection = useCallback((idx: number) => {
     const el = sectionRefs.current.get(idx);
     if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top: y, behavior: "smooth" });
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
     setDrawerOpen(false);
   }, []);
@@ -100,12 +100,14 @@ const Siddour = () => {
 
   return (
     <div
-      className="min-h-screen overflow-x-hidden"
+      ref={scrollContainerRef}
+      className="h-[100dvh] overflow-y-auto overflow-x-hidden"
       style={{
         background: "linear-gradient(180deg, hsl(38 70% 94%) 0%, hsl(38 65% 91%) 100%)",
         color: "hsl(25 30% 18%)",
         WebkitTapHighlightColor: "transparent",
-        overscrollBehaviorY: "contain",
+        WebkitOverflowScrolling: "touch",
+        overscrollBehaviorY: "auto",
       }}
     >
       {/* Header sticky */}
