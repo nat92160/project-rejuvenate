@@ -203,39 +203,6 @@ const Siddour = () => {
         {/* Main content */}
         <main className="flex-1 min-w-0">
           <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
-            {/* Bandeau IA + actions */}
-            {!loading && !error && sections.length > 0 && (
-              <div
-                className="mb-8 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"
-                style={{
-                  background: "hsl(var(--gold) / 0.06)",
-                  border: "1px solid hsl(var(--gold) / 0.2)",
-                }}
-              >
-                <div className="flex items-start gap-2 flex-1 min-w-0">
-                  <Sparkles className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "hsl(var(--gold-matte))" }} />
-                  <div className="text-[11px] sm:text-xs leading-relaxed text-muted-foreground">
-                    <span className="font-semibold" style={{ color: "hsl(var(--gold-matte))" }}>
-                      Traduction d'étude assistée par IA.
-                    </span>{" "}
-                    Pour la pratique liturgique, réfère-toi à un siddour imprimé validé par ton rav.
-                  </div>
-                </div>
-                <button
-                  onClick={handleTranslateAll}
-                  disabled={autoTranslateIndices.size === sections.length}
-                  className="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-50"
-                  style={{
-                    background: "hsl(var(--primary))",
-                    color: "hsl(var(--primary-foreground))",
-                  }}
-                >
-                  <Languages className="w-3.5 h-3.5" />
-                  {autoTranslateIndices.size === sections.length ? "Tout traduit" : "Tout traduire"}
-                </button>
-              </div>
-            )}
-
             {loading && sections.length === 0 ? (
               <div className="py-24 text-center">
                 <div className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full mx-auto"
@@ -258,7 +225,6 @@ const Siddour = () => {
                 registerSectionRef={registerSectionRef}
                 rite={rite}
                 office={office}
-                autoTranslateIndices={autoTranslateIndices}
                 onJumpToSection={handleSelectSection}
               />
             )}
