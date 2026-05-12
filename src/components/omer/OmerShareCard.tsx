@@ -102,11 +102,11 @@ const OmerShareCard = forwardRef<HTMLDivElement, OmerShareCardProps>(({ day }, r
 
       {/* Two columns */}
       <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-        <HebrewBlock title="תהלים סז" fontSize={15} flex>
-          {PSALM_67_HEBREW}
-        </HebrewBlock>
         <HebrewBlock title="אָנָּא בְּכֹחַ" fontSize={15} flex>
           {ANA_BEKOACH_HEBREW}
+        </HebrewBlock>
+        <HebrewBlock title="תהלים סז" fontSize={15} flex>
+          {PSALM_67_HEBREW}
         </HebrewBlock>
       </div>
 
