@@ -140,7 +140,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setLoading(true);
-      const nextAuth = await ensureUserBootstrap(authUser);
+      let nextAuth: Awaited<ReturnType<typeof ensureUserBootstrap>>;
+      try {
+        nextAuth = await ensureUserBootstrap(authUser);
+      } catch (error) {
+        console.error("Auth bootstrap error:", error);
+        setLoading(false);
+        return;
+      }
+
       setDbRole(nextAuth.role);
       setDbRoles(nextAuth.roles);
       setIsAdmin(nextAuth.isAdmin);
