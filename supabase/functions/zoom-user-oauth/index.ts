@@ -32,6 +32,31 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // ── HMAC helpers for OAuth state ──
+    const stateSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")! + ":zoom-oauth-state";
+    const enc = new TextEncoder();
+    const importHmacKey = () => crypto.subtle.importKey(
+      "raw", enc.encode(stateSecret),
+      { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]
+    );
+    const b64url = (buf: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buf)))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const signState = async (payload: object) => {
+      const data = btoa(JSON.stringify(payload));
+      const key = await importHmacKey();
+      const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
+      return `${data}.${b64url(sig)}`;
+    };
+    const verifyState = async (signed: string): Promise<{ userId: string; ts: number } | null> => {
+      const parts = signed.split(".");
+      if (parts.length !== 2) return null;
+      const [data, sigB64] = parts;
+      const key = await importHmacKey();
+      const expected = await crypto.subtle.sign("HMAC", key, enc.encode(data));
+      if (b64url(expected) !== sigB64) return null;
+      try { return JSON.parse(atob(data)); } catch { return null; }
+    };
+
     // ── AUTH: require valid user JWT for all actions except `callback` ──
     // For protected actions, also enforce that body.userId matches the caller (unless admin).
     let callerId: string | null = null;
@@ -85,8 +110,8 @@ Deno.serve(async (req) => {
         );
       }
 
-      // State = userId (encrypted in production you'd use a JWT, here we use base64)
-      const state = btoa(JSON.stringify({ userId, ts: Date.now() }));
+      // Signed state to prevent forgery / token-injection IDOR
+      const state = await signState({ userId, ts: Date.now() });
       const authUrl = `https://zoom.us/oauth/authorize?` +
         `response_type=code&` +
         `client_id=${ZOOM_CLIENT_ID}&` +
@@ -119,22 +144,20 @@ Deno.serve(async (req) => {
 
       // Decode state to get userId
       let userId: string;
-      try {
-        const stateData = JSON.parse(atob(state));
-        userId = stateData.userId;
-        // Check state is not too old (15 min max)
-        if (Date.now() - stateData.ts > 15 * 60 * 1000) {
-          return new Response(
-            JSON.stringify({ error: "Authorization expired, please try again" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-      } catch {
+      const stateData = await verifyState(state);
+      if (!stateData || !stateData.userId) {
         return new Response(
-          JSON.stringify({ error: "Invalid state parameter" }),
+          JSON.stringify({ error: "Invalid or tampered state parameter" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      if (Date.now() - stateData.ts > 15 * 60 * 1000) {
+        return new Response(
+          JSON.stringify({ error: "Authorization expired, please try again" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      userId = stateData.userId;
 
       // Exchange code for tokens
       const credentials = btoa(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`);
