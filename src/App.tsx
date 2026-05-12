@@ -183,6 +183,7 @@ function AppInner() {
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/index" element={<Index />} />
           <Route path="/minyan/:id" element={<MinyanJoin />} />
           <Route path="/tehilim/:id" element={<TehilimJoin />} />
           <Route path="/admin" element={<AdminDashboard />} />

@@ -4,7 +4,8 @@ import type { FullSection } from "@/hooks/useSiddourFullOffice";
 import SiddourSectionTranslation from "./SiddourSectionTranslation";
 import SiddourSectionCommentary from "./SiddourSectionCommentary";
 import SiddourSectionNotes from "./SiddourSectionNotes";
-import { detectPeriod, getNotesForSection } from "@/lib/siddourLiturgicalNotes";
+import { getLiturgicalContext, processAmidaVerses } from "@/lib/liturgicalContext";
+import { detectPeriod, getNotesForVerse } from "@/lib/siddourLiturgicalNotes";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { SiddourRite } from "@/hooks/useSiddourRite";
 
@@ -51,10 +52,17 @@ function isShemaSecondaryLine(html: string): boolean {
 const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
   ({ sections, fontSize, registerSectionRef, rite, office, autoTranslateIndices, onJumpToSection }, ref) => {
     const period = useMemo(() => detectPeriod(new Date(), false), []);
+    const liturgicalContext = useMemo(() => getLiturgicalContext(), []);
+    const processedSections = useMemo(
+      () => sections.map((sec) => processAmidaVerses(sec.hebrew, liturgicalContext)),
+      [sections, liturgicalContext]
+    );
     return (
       <div ref={ref} className="space-y-12 pb-32">
-        {sections.map((sec, sIdx) => (
-          <section
+        {sections.map((sec, sIdx) => {
+          const processedVerses = processedSections[sIdx];
+          return (
+            <section
             key={`${sec.index}-${sec.title}`}
             id={`sec-${sIdx}`}
             ref={(el) => registerSectionRef(sIdx, el)}
@@ -98,9 +106,6 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
               )}
             </header>
 
-            {/* Notes liturgiques contextuelles (Morid HaTal, Yaalé véYavo, etc.) */}
-            <SiddourSectionNotes notes={getNotesForSection(sec.hebrew, rite, period)} />
-
             {/* Texte hébreu */}
             <div
               dir="rtl"
@@ -120,32 +125,50 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                 </p>
               )}
               {sec.hebrew.map((verse, i) => {
+                const processed = processedVerses?.[i];
+                if (processed) {
+                  if (!processed.isActive || processed.isSeasonalMarker) return null;
+                  verse = processed.html;
+                }
+                const inlineNotes = getNotesForVerse(verse, rite, period);
+                const noteNode = inlineNotes.length > 0 ? (
+                  <SiddourSectionNotes key={`notes-${i}`} notes={inlineNotes} compact />
+                ) : null;
                 if (isInternalSectionTitle(verse)) {
                   const titleText = normalizeHebrewMatch(verse);
                   return (
-                    <h3 key={i} className="my-6 text-center font-bold"
-                      style={{
-                        fontFamily: "'Noto Serif Hebrew', serif",
-                        fontSize: `${Math.min(fontSize + 2, 32)}px`,
-                        color: "hsl(var(--gold-matte))",
-                        lineHeight: 1.4,
-                      }}>
-                      {titleText}
-                    </h3>
+                    <div key={i}>
+                      {noteNode}
+                      <h3 className="my-6 text-center font-bold"
+                        style={{
+                          fontFamily: "'Noto Serif Hebrew', serif",
+                          fontSize: `${Math.min(fontSize + 2, 32)}px`,
+                          color: "hsl(var(--gold-matte))",
+                          lineHeight: 1.4,
+                        }}>
+                        {titleText}
+                      </h3>
+                    </div>
                   );
                 }
                 if (isInstructionOnly(verse)) {
                   if (isShemaSecondaryLine(verse)) {
                     return (
-                      <div key={i} style={{ marginBottom: "0.75rem", lineHeight: 1.8 }}
-                        dangerouslySetInnerHTML={{ __html: verse }} />
+                      <div key={i}>
+                        {noteNode}
+                        <div style={{ marginBottom: "0.75rem", lineHeight: 1.8 }}
+                          dangerouslySetInnerHTML={{ __html: verse }} />
+                      </div>
                     );
                   }
-                  return null;
+                  return noteNode;
                 }
                 return (
-                  <p key={i} style={{ marginBottom: "1.1rem", lineHeight: 2.4 }}
-                    dangerouslySetInnerHTML={{ __html: verse }} />
+                  <div key={i}>
+                    {noteNode}
+                    <p style={{ marginBottom: "1.1rem", lineHeight: 2.4 }}
+                      dangerouslySetInnerHTML={{ __html: verse }} />
+                  </div>
                 );
               })}
             </div>
@@ -204,8 +227,9 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                 </button>
               </div>
             )}
-          </section>
-        ))}
+            </section>
+          );
+        })}
       </div>
     );
   }
