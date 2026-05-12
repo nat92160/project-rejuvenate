@@ -45,7 +45,24 @@ const OmerCounterWidget = ({ showInviteBanner = false, isBeforeCountingTime = fa
   const { user, isAdmin } = useAuth();
   const { isSubscribed: isPushSubscribed, subscribe: subscribePush, unsubscribe: unsubscribePush, supported: pushSupported } = useOmerPushSubscription();
   const [expanded, setExpanded] = useState(showInviteBanner);
-  const realOmerDay = useMemo(() => getTodayOmerDay(), []);
+  const [realOmerDay, setRealOmerDay] = useState<number | null>(() => getTodayOmerDay());
+
+  // Re-check current Omer day every 30s so the count auto-updates at Tzeit HaKochavim
+  useEffect(() => {
+    const tick = () => {
+      const next = getTodayOmerDay();
+      setRealOmerDay((prev) => (prev !== next ? next : prev));
+    };
+    const interval = setInterval(tick, 30 * 1000);
+    const onVisible = () => { if (document.visibilityState === "visible") tick(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", tick);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", tick);
+    };
+  }, []);
   const currentYear = new Date().getFullYear();
   const omerPeriod = useMemo(() => getOmerPeriodDates(currentYear), [currentYear]);
   const [counted, setCounted] = useState(false);
