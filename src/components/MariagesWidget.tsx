@@ -6,7 +6,7 @@ import { HebrewCalendar } from "@hebcal/core";
 const FORBIDDEN_PERIODS_STATIC = [
   {
     name: "Omer — Rite Séfarade",
-    start: "2026-04-03",
+    start: "2026-04-10",
     end: "2026-05-05",
     icon: "🌾",
     detail: "Du lendemain du dernier Yom Tov de Pessah jusqu'à Lag BaOmer inclus.",
@@ -14,16 +14,16 @@ const FORBIDDEN_PERIODS_STATIC = [
   },
   {
     name: "Omer — Rite Ashkénaze",
-    start: "2026-04-02",
-    end: "2026-05-24",
+    start: "2026-04-10",
+    end: "2026-05-21",
     icon: "🌾",
-    detail: "Sauf le 5 mai 2026 (Lag BaOmer). Du 2e jour de Pessah jusqu'au 3 Sivan.",
+    detail: "Sauf le 5 mai 2026 (Lag BaOmer). Du lendemain de Pessah jusqu'à la veille de Chavouot.",
     rite: "Ashkénaze",
   },
   {
     name: "Trois Semaines (Bein HaMétsarim)",
-    start: "2026-07-07",
-    end: "2026-07-28",
+    start: "2026-07-02",
+    end: "2026-07-23",
     icon: "😢",
     detail: "Du 17 Tamouz au 9 Av — Période de deuil national. Mariages strictement interdits.",
   },
@@ -58,12 +58,21 @@ function computeForbiddenPeriods(year: number) {
     if (desc.includes("tish") && desc.includes("av") && !desc.includes("erev")) tishaBeav = iso;
   }
 
+  // Mourning starts the day AFTER Pesach ends (not on Yom Tov itself)
+  const dayAfter = (iso: string | null): string | null => {
+    if (!iso) return null;
+    const dt = new Date(iso + "T12:00:00");
+    dt.setDate(dt.getDate() + 1);
+    return toIso(dt);
+  };
+  const omerStart = dayAfter(pessachEnd);
+
   const periods: { name: string; start: string; end: string; color: string; reason: string }[] = [];
-  if (pessachEnd && lagBaomer) {
-    periods.push({ name: "Omer (Séfarade)", start: pessachEnd, end: lagBaomer, color: "#F97316", reason: "Période du Omer (coutume séfarade)" });
+  if (omerStart && lagBaomer) {
+    periods.push({ name: "Omer (Séfarade)", start: omerStart, end: lagBaomer, color: "#F97316", reason: "Période du Omer (coutume séfarade)" });
   }
-  if (pessachEnd && shavuotErev) {
-    periods.push({ name: "Omer (Ashkénaze)", start: pessachEnd, end: shavuotErev, color: "#EF4444", reason: "Période du Omer (coutume ashkénaze)" });
+  if (omerStart && shavuotErev) {
+    periods.push({ name: "Omer (Ashkénaze)", start: omerStart, end: shavuotErev, color: "#EF4444", reason: "Période du Omer (coutume ashkénaze)" });
   }
   if (tammuz17 && tishaBeav) {
     periods.push({ name: "Bein HaMetsarim", start: tammuz17, end: tishaBeav, color: "#DC2626", reason: "Période de Bein HaMetsarim (3 Semaines)" });
