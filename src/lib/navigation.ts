@@ -19,7 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "fetes", icon: "📅", label: "Fêtes", modes: ["fidele", "president"] },
   { id: "roshhodesh", icon: "🌙", label: "Roch Hodech", modes: ["fidele", "president"] },
   { id: "shabbatspec", icon: "✨", label: "Chabbatot", modes: ["fidele", "president"] },
-  { id: "mariages", icon: "💍", label: "Mariages", modes: ["fidele", "president"] },
+  { id: "mariages", icon: "💍", label: "Mariages & Hazkara", modes: ["fidele", "president"] },
   { id: "convertisseur", icon: "🔄", label: "Convertir", modes: ["fidele", "president"] },
   { id: "mizrah", icon: "🧭", label: "Mizra'h", modes: ["fidele", "president"] },
   { id: "reveil", icon: "🔔", label: "Réveil", modes: ["fidele", "president"] },
