@@ -40,6 +40,25 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    // Authorization: caller must be president/adjoint of the synagogue, or admin
+    const { data: synaRow } = await supabaseAdmin
+      .from("synagogue_profiles")
+      .select("president_id, adjoint_id")
+      .eq("id", synagogue_id)
+      .maybeSingle();
+    if (!synaRow) throw new Error("Synagogue introuvable");
+    let allowed = synaRow.president_id === user.id || synaRow.adjoint_id === user.id;
+    if (!allowed) {
+      const { data: adminRow } = await supabaseAdmin
+        .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+      allowed = !!adminRow;
+    }
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: existing } = await supabaseAdmin
       .from("synagogue_stripe_accounts")
       .select("stripe_account_id, is_onboarded")
