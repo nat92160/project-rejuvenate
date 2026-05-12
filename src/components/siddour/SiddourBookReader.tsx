@@ -3,7 +3,7 @@ import { isInstructionOnly } from "@/lib/utils";
 import type { FullSection } from "@/hooks/useSiddourFullOffice";
 import SiddourSectionCommentary from "./SiddourSectionCommentary";
 import SiddourSectionNotes from "./SiddourSectionNotes";
-import { getLiturgicalContext, processAmidaVerses } from "@/lib/liturgicalContext";
+import { getLiturgicalContext, processAmidaVerses, type LiturgicalPeriod } from "@/lib/liturgicalContext";
 import { detectPeriod, getNotesForVerse } from "@/lib/siddourLiturgicalNotes";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { SiddourRite } from "@/hooks/useSiddourRite";
@@ -15,6 +15,8 @@ interface Props {
   registerSectionRef: (index: number, el: HTMLElement | null) => void;
   rite: SiddourRite;
   office: string;
+  /** Override manuel du contexte liturgique (sinon calculé automatiquement) */
+  litContext?: LiturgicalPeriod;
   /** Naviguer vers la section index dans la liste */
   onJumpToSection?: (index: number) => void;
 }
@@ -65,7 +67,7 @@ function isHazaraPrayerLine(html: string, isFastDay: boolean): boolean {
 }
 
 const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
-  ({ sections, fontSize, registerSectionRef, rite, office, onJumpToSection }, ref) => {
+  ({ sections, fontSize, registerSectionRef, rite, office, litContext, onJumpToSection }, ref) => {
     // Tick toutes les minutes pour que la période hébraïque (et donc les
     // annotations Yom Tov, Roch Hodech, Tal/Guéchèm, etc.) bascule
     // automatiquement au coucher du soleil et au passage de date.
@@ -82,7 +84,10 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
       };
     }, []);
     const period = useMemo(() => detectPeriod(now, false), [now]);
-    const liturgicalContext = useMemo(() => getLiturgicalContext(now), [now]);
+    const liturgicalContext = useMemo(
+      () => litContext ?? getLiturgicalContext(now),
+      [litContext, now]
+    );
     const processedSections = useMemo(
       () => sections.map((sec) => processAmidaVerses(sec.hebrew, liturgicalContext)),
       [sections, liturgicalContext]

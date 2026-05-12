@@ -82,7 +82,10 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
     onContextChange?.({ ...context, ...newOverrides } as LiturgicalPeriod);
   };
 
-  const activeLabels = context.activeInserts;
+  // Affiche les labels en français à partir des overrides connus
+  const activeLabels = OVERRIDE_OPTIONS
+    .filter(o => !!(context as any)[o.key])
+    .map(o => `${o.icon} ${o.labelFr}`);
 
   return (
     <div
@@ -141,7 +144,6 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                 color: "hsl(var(--gold-matte))",
                 border: "1px solid hsl(var(--gold) / 0.2)",
               }}
-              dir="rtl"
             >
               {label}
             </span>
@@ -196,7 +198,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                           boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
                         }}
                       >
-                        {opt.icon} {opt.label}
+                        {opt.icon} {opt.labelFr}
                       </button>
                     );
                   })}
@@ -222,7 +224,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                           boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
                         }}
                       >
-                        {opt.icon} {opt.label}
+                        {opt.icon} {opt.labelFr}
                       </button>
                     );
                   })}
@@ -248,7 +250,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                           boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
                         }}
                       >
-                        {opt.icon} {opt.label}
+                        {opt.icon} {opt.labelFr}
                       </button>
                     );
                   })}

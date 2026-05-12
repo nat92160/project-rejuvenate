@@ -232,6 +232,7 @@ const Siddour = () => {
                 registerSectionRef={registerSectionRef}
                 rite={rite}
                 office={office}
+                litContext={litContext}
                 onJumpToSection={handleSelectSection}
               />
             )}
