@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_backups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          display_name: string | null
+          email: string | null
+          id: string
+          reason: string
+          snapshot: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          reason?: string
+          snapshot?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          reason?: string
+          snapshot?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       annonces: {
         Row: {
           content: string
