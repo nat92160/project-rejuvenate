@@ -1,12 +1,18 @@
 import { forwardRef } from "react";
 import { isInstructionOnly } from "@/lib/utils";
 import type { FullSection } from "@/hooks/useSiddourFullOffice";
+import SiddourSectionTranslation from "./SiddourSectionTranslation";
+import type { SiddourRite } from "@/hooks/useSiddourRite";
 
 interface Props {
   sections: FullSection[];
   fontSize: number;
   onSectionVisible?: (index: number) => void;
   registerSectionRef: (index: number, el: HTMLElement | null) => void;
+  rite: SiddourRite;
+  office: string;
+  /** Indices des sections à traduire automatiquement (déclenché par "Tout traduire") */
+  autoTranslateIndices?: Set<number>;
 }
 
 function normalizeHebrewMatch(html: string): string {
@@ -37,7 +43,7 @@ function isShemaSecondaryLine(html: string): boolean {
 }
 
 const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
-  ({ sections, fontSize, registerSectionRef }, ref) => {
+  ({ sections, fontSize, registerSectionRef, rite, office, autoTranslateIndices }, ref) => {
     return (
       <div ref={ref} className="space-y-12 pb-32">
         {sections.map((sec, sIdx) => (
@@ -124,6 +130,17 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                 );
               })}
             </div>
+
+            {/* Traduction française à la demande */}
+            <SiddourSectionTranslation
+              rite={rite}
+              office={office}
+              sectionIndex={sIdx}
+              sectionTitle={sec.title}
+              hebrew={sec.hebrew}
+              fontSize={fontSize}
+              autoTranslate={autoTranslateIndices?.has(sIdx)}
+            />
           </section>
         ))}
       </div>
