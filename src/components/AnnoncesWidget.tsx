@@ -72,6 +72,21 @@ const AnnoncesWidget = () => {
       setAnnonces(prev => [data, ...prev]);
       setShowForm(false); setNewTitle(""); setNewContent(""); setNewPriority("normal");
       toast.success("✅ Annonce publiée !");
+      // Push notification to subscribed fidèles
+      if (synagogueId) {
+        try {
+          const prefix = newPriority === "urgent" ? "🚨 " : newPriority === "important" ? "⚠️ " : "📢 ";
+          const synaName = synaProfile?.name ? ` — ${synaProfile.name}` : "";
+          await supabase.functions.invoke("send-push", {
+            body: {
+              synagogue_id: synagogueId,
+              title: `${prefix}${newTitle.trim()}${synaName}`,
+              body: (newContent.trim() || "Nouvelle annonce de votre synagogue").slice(0, 180),
+              sender_id: user.id,
+            },
+          });
+        } catch (e) { console.error("Push annonce error:", e); }
+      }
     }
     setSubmitting(false);
   };

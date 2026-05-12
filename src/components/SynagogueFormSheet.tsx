@@ -184,11 +184,36 @@ const SynagogueFormSheet = ({
 
     let error;
     if (isEdit) {
+      // Detect schedule changes before update
+      const scheduleChanged = isEdit && (
+        (editData?.shacharit_time || null) !== (form.shacharit_time || null) ||
+        (editData?.minha_time || null) !== (form.minha_time || null) ||
+        (editData?.arvit_time || null) !== (form.arvit_time || null)
+      );
       // Update existing
       ({ error } = await supabase
         .from("synagogue_profiles")
         .update(payload as any)
         .eq("id", editData!.id));
+      if (!error && scheduleChanged && editData?.id) {
+        try {
+          const changes: string[] = [];
+          if ((editData?.shacharit_time || null) !== (form.shacharit_time || null))
+            changes.push(`Cha'harit ${form.shacharit_time || "—"}`);
+          if ((editData?.minha_time || null) !== (form.minha_time || null))
+            changes.push(`Min'ha ${form.minha_time || "—"}`);
+          if ((editData?.arvit_time || null) !== (form.arvit_time || null))
+            changes.push(`Arvit ${form.arvit_time || "—"}`);
+          await supabase.functions.invoke("send-push", {
+            body: {
+              synagogue_id: editData.id,
+              title: `🕐 Horaires mis à jour — ${form.name.trim()}`,
+              body: changes.join(" · ").slice(0, 180),
+              sender_id: presidentId,
+            },
+          });
+        } catch (e) { console.error("Push horaires error:", e); }
+      }
     } else {
       // Create new
       payload.president_id = presidentId;
