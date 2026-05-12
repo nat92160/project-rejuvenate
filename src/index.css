@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* iOS safe-area utility — adds notch/Dynamic Island top padding */
+@layer utilities {
+  .pt-safe {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 1rem);
+  }
+  .pt-safe-0 {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
 /* iOS input fix: prevent zoom and oversized text on iPhone */
 input,
 select,

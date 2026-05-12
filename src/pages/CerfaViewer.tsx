@@ -142,7 +142,10 @@ const CerfaViewer = () => {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div
+        className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      >
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-3 py-3 sm:px-4">
           <Button variant="ghost" onClick={() => navigate(-1)} className="min-h-11 px-2 sm:px-4">
             <ArrowLeft className="h-4 w-4 sm:mr-2" />
