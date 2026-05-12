@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";
 import AuthModal from "@/components/AuthModal";
 import MySynagogueCard from "@/components/MySynagogueCard";
+import ContactSupportDialog from "@/components/ContactSupportDialog";
 import { getCurrentPrayer } from "@/components/MySynagogueCard";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
 import { useCity } from "@/hooks/useCity";
@@ -258,6 +259,7 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
 const IndexContent = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
 
   const { role, setRole } = useRole();
   const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
@@ -443,6 +445,36 @@ const IndexContent = () => {
       {!isPresidentDashboard && <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />}
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+
+      {/* Floating contact button */}
+      {!isPresidentDashboard && (
+        <button
+          onClick={() => {
+            if (!user) { setAuthOpen(true); return; }
+            setContactOpen(true);
+          }}
+          className="fixed z-40 flex items-center justify-center rounded-full border border-border cursor-pointer transition-all active:scale-95 hover:-translate-y-0.5"
+          style={{
+            bottom: "calc(84px + env(safe-area-inset-bottom, 0px))",
+            right: "16px",
+            width: 48,
+            height: 48,
+            background: "var(--gradient-gold)",
+            color: "hsl(var(--primary-foreground))",
+            boxShadow: "var(--shadow-elevated)",
+          }}
+          aria-label="Contacter l'équipe"
+          title="Contacter l'équipe"
+        >
+          <span className="text-lg">💬</span>
+        </button>
+      )}
+
+      <ContactSupportDialog
+        open={contactOpen}
+        onClose={() => setContactOpen(false)}
+        onLoginRequired={() => setAuthOpen(true)}
+      />
     </>
   );
 };
