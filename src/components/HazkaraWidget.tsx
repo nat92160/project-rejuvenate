@@ -341,7 +341,10 @@ const HazkaraWidget = () => {
         if ((monthName === "Adar I" || monthName === "Adar II") && !isLeap) monthName = "Adar";
         const monthNum = HDate.monthFromName(monthName);
         const deathHDate = new HDate(r.hebrew_day, monthNum, r.hebrew_year);
-        const next = computeYahrzeits(deathHDate, r.rite, 1)[0];
+        const list = computeYahrzeits(deathHDate, r.rite, 3);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const next = list.find((y) => y.greg.getTime() >= today.getTime()) || list[0];
         return { record: r, next };
       } catch {
         return { record: r, next: null as Yahrzeit | null };
