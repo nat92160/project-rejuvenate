@@ -245,16 +245,10 @@ const Siddour = () => {
 
         {/* Main content */}
         <main className="flex-1 min-w-0">
-          <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
-            {/* Contexte liturgique du jour — sticky sous le header pour être visible partout */}
-            <div
-              className="sticky z-20 -mx-4 sm:-mx-8 px-4 sm:px-8 py-2 mb-5 backdrop-blur"
-              style={{
-                top: "calc(env(safe-area-inset-top, 0px) + 52px)",
-                background: "hsla(38, 70%, 94%, 0.92)",
-                borderBottom: "1px solid hsl(var(--gold) / 0.15)",
-              }}
-            >
+          <div className="max-w-3xl mx-auto px-4 sm:px-8 py-4 sm:py-8">
+            {/* Contexte liturgique du jour — scrolle avec la page pour libérer
+                l'écran sur mobile (sinon le bandeau bloquait l'accès aux prières) */}
+            <div className="mb-5">
               <LiturgicalContextBar context={litContext} onContextChange={setLitContext} />
             </div>
             {loading && sections.length === 0 ? (
