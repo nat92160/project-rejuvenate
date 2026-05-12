@@ -17,13 +17,21 @@
 
 /* iOS input fix: prevent zoom and oversized text on iPhone */
 input,
-select,
 textarea {
   font-size: 16px !important;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
   border-radius: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Selects: keep native iOS picker UX (wheel) but force 16px to prevent zoom */
+select {
+  font-size: 16px !important;
   width: 100%;
   max-width: 100%;
   min-width: 0;
