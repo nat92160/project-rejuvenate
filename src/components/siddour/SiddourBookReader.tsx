@@ -79,6 +79,9 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
       <div ref={ref} className="space-y-12 pb-32">
         {sections.map((sec, sIdx) => {
           const processedVerses = processedSections[sIdx];
+          // Dédoublonnage : chaque note (par id) ne s'affiche qu'une seule fois par section,
+          // au tout premier verset qui la déclenche.
+          const emittedNoteIds = new Set<string>();
           return (
             <section
             key={`${sec.index}-${sec.title}`}
@@ -148,9 +151,14 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                   if (!processed.isActive || processed.isSeasonalMarker) return null;
                   verse = processed.html;
                 }
-                const inlineNotes = getNotesForVerse(verse, rite, period, {
+                const rawNotes = getNotesForVerse(verse, rite, period, {
                   isHazara: sec.isHazara,
                   office,
+                });
+                const inlineNotes = rawNotes.filter((n) => {
+                  if (emittedNoteIds.has(n.id)) return false;
+                  emittedNoteIds.add(n.id);
+                  return true;
                 });
                 const noteNode = inlineNotes.length > 0 ? (
                   <SiddourSectionNotes key={`notes-${i}`} notes={inlineNotes} compact />
