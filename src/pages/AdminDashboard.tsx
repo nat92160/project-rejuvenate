@@ -534,7 +534,7 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-1 snap-x snap-mandatory scrollbar-hide">
           {[
             { id: "requests" as const, icon: "📋", label: "Demandes", count: pending.length },
             { id: "users" as const, icon: "👥", label: "Utilisateurs", count: users.length },
@@ -546,13 +546,14 @@ const AdminDashboard = () => {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className="flex-1 py-3 rounded-xl text-sm font-bold border cursor-pointer transition-all"
+              className="shrink-0 snap-start min-w-[88px] flex flex-col items-center gap-0.5 px-3 py-2.5 rounded-xl text-[11px] font-bold border cursor-pointer transition-all sm:flex-1 sm:flex-row sm:justify-center sm:text-sm sm:py-3"
               style={tab === t.id
                 ? { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", border: "none" }
                 : { background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
               }
             >
-              {t.icon} {t.label} {t.count > 0 && `(${t.count})`}
+              <span className="text-base leading-none sm:text-sm">{t.icon}</span>
+              <span className="whitespace-nowrap">{t.label}{t.count > 0 ? ` (${t.count})` : ""}</span>
             </button>
           ))}
         </div>

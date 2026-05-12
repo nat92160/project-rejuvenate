@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Phone, MapPin, Navigation, Mail, Building2, Heart } from "lucide-react";
 import { useCity } from "@/hooks/useCity";
 import { supabase } from "@/integrations/supabase/client";
+import { useDonationsEnabled } from "@/hooks/useDonationsEnabled";
 
 interface SynaInfo {
   id?: string;
@@ -22,6 +23,7 @@ const SynaInfoCard = ({ info }: Props) => {
   const { city } = useCity();
   const [distance, setDistance] = useState<string | null>(null);
   const [donationSlug, setDonationSlug] = useState<string | null>(null);
+  const { disabled: donationsDisabled } = useDonationsEnabled();
   const isGps = !!city._gps;
 
   useEffect(() => {
@@ -125,8 +127,8 @@ const SynaInfoCard = ({ info }: Props) => {
           </a>
         )}
 
-        {/* Donation button — visible only if synagogue has activated donations */}
-        {donationSlug && (
+        {/* Donation button — hidden when admin has globally disabled donations */}
+        {donationSlug && !donationsDisabled && (
           <a
             href={`/don/${donationSlug}`}
             className="flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 no-underline transition-all active:scale-[0.98] text-primary-foreground font-bold text-sm"

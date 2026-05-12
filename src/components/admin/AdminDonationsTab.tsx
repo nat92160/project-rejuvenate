@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CommissionsView } from "./CommissionsView";
+import { Switch } from "@/components/ui/switch";
+import { useDonationsEnabled, setDonationsDisabledGlobal } from "@/hooks/useDonationsEnabled";
 
 interface Donation {
   id: string;
@@ -59,6 +61,26 @@ function downloadCsv(filename: string, rows: (string | number)[][]) {
 
 const AdminDonationsTab = () => {
   const [subtab, setSubtab] = useState<"donations" | "commissions" | "counters">("donations");
+  const { disabled: donationsDisabled, loading: dgLoading } = useDonationsEnabled();
+  const [localDisabled, setLocalDisabled] = useState<boolean | null>(null);
+  const [togglingGlobal, setTogglingGlobal] = useState(false);
+  const effectiveDisabled = localDisabled ?? donationsDisabled;
+
+  const handleToggleGlobalDonations = async (next: boolean) => {
+    if (!confirm(
+      next
+        ? "⚠️ Désactiver les dons pour TOUTES les synagogues ?\n\nLes boutons « Faire un don » et la page /don/* seront masqués pour tous les fidèles."
+        : "Réactiver les dons pour toutes les synagogues ?",
+    )) return;
+    setTogglingGlobal(true);
+    const { error } = await setDonationsDisabledGlobal(next);
+    if (error) toast.error("Erreur de mise à jour");
+    else {
+      setLocalDisabled(next);
+      toast.success(next ? "🚫 Dons désactivés pour toutes les synagogues" : "✅ Dons réactivés");
+    }
+    setTogglingGlobal(false);
+  };
   const [donations, setDonations] = useState<Donation[]>([]);
   const [counters, setCounters] = useState<CounterRow[]>([]);
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
@@ -249,6 +271,34 @@ const AdminDonationsTab = () => {
 
   return (
     <div className="space-y-4">
+      {/* Global kill-switch */}
+      <div
+        className="rounded-2xl border p-4"
+        style={{
+          borderColor: effectiveDisabled ? "hsl(0 84% 60% / 0.4)" : "hsl(var(--border))",
+          background: effectiveDisabled ? "hsl(0 84% 60% / 0.05)" : "hsl(var(--card))",
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-foreground text-sm flex items-center gap-2">
+              {effectiveDisabled ? "🚫" : "💛"} Dons globaux
+            </h3>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {effectiveDisabled
+                ? "Les dons sont désactivés pour toutes les synagogues. Les boutons et pages /don/* sont masqués."
+                : "Les dons sont actifs. Désactivez ce bouton pour suspendre les dons sur toute la plateforme."}
+            </p>
+          </div>
+          <Switch
+            checked={!effectiveDisabled}
+            onCheckedChange={(checked) => handleToggleGlobalDonations(!checked)}
+            disabled={togglingGlobal || dgLoading}
+          />
+        </div>
+      </div>
+
       {/* Sub-tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1">
         {[
