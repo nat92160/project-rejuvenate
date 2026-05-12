@@ -182,7 +182,7 @@ export function detectPeriod(now: Date = new Date(), inIsrael = false): FullPeri
     has("tu bishvat") ||
     has("yom ha'atzmaut") ||                    // Yom Ha'atsmaout
     has("yom yerushalayim") ||                  // Yom Yeroushalayim
-    isErevYomTovDay(hMonth, hDay);              // Veille de chaque Yom Tov majeur
+    (hMonth === 6 && hDay === 29);              // Erev Roch Hachana (29 Eloul)
 
   const hallel: LiturgicalPeriod["hallel"] =
     has("pesach i") || has("pesach ii") || has("shavuot") || has("sukkot i") || has("sukkot ii") ||
