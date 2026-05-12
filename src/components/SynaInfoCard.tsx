@@ -46,7 +46,7 @@ const SynaInfoCard = ({ info }: Props) => {
     if (!info.id) return;
     (async () => {
       const { data } = await (supabase
-        .from("synagogue_stripe_accounts" as any)
+        .from("synagogue_donation_slugs" as any)
         .select("custom_donation_slug")
         .eq("synagogue_id", info.id)
         .maybeSingle() as any);
