@@ -135,7 +135,7 @@ const AlarmWidget = () => {
         {/* Header */}
         <div className="text-center mb-6">
           <h3 className="font-display text-lg font-bold text-foreground tracking-wide">
-            ⏰ Réveil de Chabbat
+            🔔 Réveil de Chabbat
           </h3>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">
             Mode Vigilance · Réveil garanti
