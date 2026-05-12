@@ -342,6 +342,7 @@ const RULES: Rule[] = [
   // 5. Anenou (jour de jeûne — Min'ha; pour le 'Hazan à Cha'harit aussi)
   {
     id: "anenu",
+    requireHazara: false,
     patterns: ["עננו"],
     build: (p) => {
       if (p.isFastDay) {
