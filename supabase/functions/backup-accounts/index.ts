@@ -27,8 +27,14 @@ serve(async (req) => {
     const action = body.action || "run";
     const reason = body.reason || (action === "snapshot_user" ? "pre_delete" : "auto_daily");
 
-    // Optional admin auth check (cron uses anon key + service role internally)
-    if (action !== "run") {
+    // Auth: cron 'run' must use service-role bearer; admin actions need an admin JWT
+    const authHeader = req.headers.get("Authorization") || "";
+    const bearer = authHeader.replace(/^Bearer\s+/i, "");
+    if (action === "run") {
+      if (!bearer || bearer !== serviceRoleKey) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+      }
+    } else {
       const authHeader = req.headers.get("Authorization");
       if (!authHeader) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
       const token = authHeader.replace("Bearer ", "");
