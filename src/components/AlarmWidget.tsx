@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import CircularTimePicker from "./alarm/CircularTimePicker";
 import NightModeOverlay from "./alarm/NightModeOverlay";
 import { type AlarmSound, SOUND_LIST, startAlarm, previewSound, type AlarmPlayer } from "./alarm/alarmAudio";
+import { isNativeAlarmAvailable, scheduleNativeAlarm, cancelNativeAlarm } from "./alarm/nativeAlarm";
+import { toast } from "sonner";
 
 const AlarmWidget = () => {
   const [hours, setHours] = useState(6);
@@ -33,7 +35,7 @@ const AlarmWidget = () => {
     setMinutes(m);
   }, []);
 
-  const activate = () => {
+  const activate = async () => {
     // Build alarm time for today or tomorrow
     const now = new Date();
     const target = new Date();
@@ -45,6 +47,21 @@ const AlarmWidget = () => {
     const diff = target.getTime() - now.getTime();
     setAlarmTime(target);
 
+    // ─── 1) Vraie alarme système (iOS/Android natif via Capacitor) ───
+    if (isNativeAlarmAvailable()) {
+      const ok = await scheduleNativeAlarm(target, rings);
+      if (ok) {
+        setAlarmSet(true);
+        setNightMode(true);
+        toast.success("Réveil système programmé 🔔", {
+          description: "Sonnera même écran verrouillé ou app fermée.",
+        });
+        return;
+      }
+      toast.error("Notifications refusées — repli sur mode app ouverte.");
+    }
+
+    // ─── 2) Fallback Web : nécessite app au premier plan ───
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       // Trigger alarm
@@ -75,6 +92,8 @@ const AlarmWidget = () => {
   };
 
   const stopAlarm = () => {
+    // Annule l'alarme native si présente
+    cancelNativeAlarm().catch(() => { /* noop */ });
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = null;
     playerRef.current?.stop();
