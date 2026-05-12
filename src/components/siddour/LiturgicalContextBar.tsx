@@ -198,7 +198,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                         style={{
                           background: isActive ? "hsl(var(--gold) / 0.18)" : (prayerMode ? "#222" : "hsl(var(--muted))"),
                           color: isActive ? "hsl(var(--gold-matte))" : (pmMuted || "hsl(var(--muted-foreground))"),
-                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
+                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none", minHeight: 36,
                         }}
                       >
                         {opt.icon} {opt.labelFr}
@@ -224,7 +224,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                         style={{
                           background: isActive ? "hsl(var(--gold) / 0.18)" : (prayerMode ? "#222" : "hsl(var(--muted))"),
                           color: isActive ? "hsl(var(--gold-matte))" : (pmMuted || "hsl(var(--muted-foreground))"),
-                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
+                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none", minHeight: 36,
                         }}
                       >
                         {opt.icon} {opt.labelFr}
@@ -250,7 +250,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                         style={{
                           background: isActive ? "hsl(var(--gold) / 0.18)" : (prayerMode ? "#222" : "hsl(var(--muted))"),
                           color: isActive ? "hsl(var(--gold-matte))" : (pmMuted || "hsl(var(--muted-foreground))"),
-                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
+                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none", minHeight: 36,
                         }}
                       >
                         {opt.icon} {opt.labelFr}
