@@ -13,6 +13,7 @@ import { fetchShabbatTimes } from "@/lib/hebcal";
 import { User } from "lucide-react";
 import StarOfDavid from "@/components/StarOfDavid";
 import { useSynaServices } from "@/hooks/useSynaServices";
+import { useDonationsEnabled } from "@/hooks/useDonationsEnabled";
 import { Droplets, ExternalLink } from "lucide-react";
 import GreetingHeader from "@/components/GreetingHeader";
 import QuickActions from "@/components/QuickActions";
@@ -208,6 +209,7 @@ const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, sign
 const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }) => {
   const currentPrayer = getCurrentPrayer();
   const { services } = useSynaServices();
+  const { disabled: donationsGloballyDisabled } = useDonationsEnabled();
 
   return (
     <>
