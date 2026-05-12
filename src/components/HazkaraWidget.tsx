@@ -418,6 +418,17 @@ const HazkaraWidget = () => {
                         {loading ? "…" : active ? "🔔" : "🔕"}
                       </button>
                     )}
+                    {next && (
+                      <button
+                        onClick={() => sharePoster(record.deceased_name, next.greg, next.hebrew, `rec-${record.id}`)}
+                        disabled={sharingKey === `rec-${record.id}`}
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all"
+                        style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}
+                        title="Partager l'affiche sur WhatsApp"
+                      >
+                        {sharingKey === `rec-${record.id}` ? "…" : "📤"}
+                      </button>
+                    )}
                     <button
                       onClick={() => deleteRecord(record.id)}
                       className="w-8 h-8 rounded-full flex items-center justify-center text-sm bg-muted text-muted-foreground hover:text-destructive transition-all"
