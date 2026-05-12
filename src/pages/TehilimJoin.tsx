@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -132,7 +133,7 @@ const PsalmReaderOverlay = ({ chapter, claim, onClose, onMarkComplete, onUnclaim
                   {verses.map((verse, i) => (
                     <span key={i}>
                       <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
-                      <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
+                      <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(verse) }} />{" "}
                     </span>
                   ))}
                 </div>
