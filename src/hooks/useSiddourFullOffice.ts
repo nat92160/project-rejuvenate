@@ -17,7 +17,7 @@ interface FullOfficeData {
   sections: FullSection[];
 }
 
-const CACHE_PREFIX = "siddour_full_v2_";
+const CACHE_PREFIX = "siddour_full_v3_";
 const TTL = 1000 * 60 * 60 * 24 * 7; // 7 jours
 
 export function useSiddourFullOffice(rite: SiddourRite, office: string) {
