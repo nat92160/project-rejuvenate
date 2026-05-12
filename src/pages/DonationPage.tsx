@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { useAuth } from "@/hooks/useAuth";
+import { useDonationsEnabled } from "@/hooks/useDonationsEnabled";
 
 const SUGGESTED_AMOUNTS = [1800, 3600, 5200, 10000]; // in cents
 
@@ -26,6 +27,7 @@ const DonationPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { disabled: donationsGloballyDisabled, loading: dgLoading } = useDonationsEnabled();
   const success = searchParams.get("success") === "true";
   const sessionId = searchParams.get("session_id");
   const canceled = searchParams.get("canceled") === "true";
