@@ -218,7 +218,7 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
       <QuickActions onNavigate={setActiveTab} currentPrayer={currentPrayer} />
 
       {/* Conditional services from subscribed synagogue */}
-      {(services?.mikveEnabled || services?.donationLink) && (
+      {(services?.mikveEnabled || (services?.donationLink && !donationsGloballyDisabled)) && (
         <div className="flex gap-3 mb-6">
           {services.mikveEnabled && (
             <button
@@ -230,7 +230,7 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
               <span className="text-xs font-bold text-foreground">Mikvé</span>
             </button>
           )}
-          {services.donationLink && (
+          {services.donationLink && !donationsGloballyDisabled && (
             <a
               href={services.donationLink}
               target="_blank"
