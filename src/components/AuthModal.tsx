@@ -28,6 +28,7 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [resetSending, setResetSending] = useState(false);
 
   // Signup extra fields
   const [firstName, setFirstName] = useState("");
@@ -48,8 +49,29 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
       setPresidentMessage("");
       setFirstName("");
       setLastName("");
+      setResetSending(false);
     }
   }, [open]);
+
+  const handleForgotPassword = async () => {
+    setError(null);
+    setSuccess(null);
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError("Entrez d'abord votre email pour recevoir le lien de réinitialisation");
+      return;
+    }
+    setResetSending(true);
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(trimmed, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetSending(false);
+    if (resetErr) {
+      setError(resetErr.message);
+    } else {
+      setSuccess("Email envoyé ! Vérifiez votre boîte de réception pour réinitialiser votre mot de passe.");
+    }
+  };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,6 +292,17 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
           >
             {loading ? "⏳" : mode === "login" ? "Se connecter" : "Créer mon compte"}
           </button>
+
+          {mode === "login" && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={resetSending}
+              className="text-xs text-primary font-semibold bg-transparent border-none cursor-pointer hover:underline mt-1 disabled:opacity-50"
+            >
+              {resetSending ? "Envoi en cours…" : "Mot de passe oublié ?"}
+            </button>
+          )}
         </form>
 
         <p className="text-center text-xs text-muted-foreground mt-4">
