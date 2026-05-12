@@ -4,7 +4,7 @@ import type { FullSection } from "@/hooks/useSiddourFullOffice";
 import SiddourSectionTranslation from "./SiddourSectionTranslation";
 import SiddourSectionCommentary from "./SiddourSectionCommentary";
 import SiddourSectionNotes from "./SiddourSectionNotes";
-import { detectPeriod, getNotesForSection } from "@/lib/siddourLiturgicalNotes";
+import { detectPeriod, getNotesForVerse } from "@/lib/siddourLiturgicalNotes";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { SiddourRite } from "@/hooks/useSiddourRite";
 
@@ -98,9 +98,6 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
               )}
             </header>
 
-            {/* Notes liturgiques contextuelles (Morid HaTal, Yaalé véYavo, etc.) */}
-            <SiddourSectionNotes notes={getNotesForSection(sec.hebrew, rite, period)} />
-
             {/* Texte hébreu */}
             <div
               dir="rtl"
@@ -120,32 +117,45 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                 </p>
               )}
               {sec.hebrew.map((verse, i) => {
+                const inlineNotes = getNotesForVerse(verse, rite, period);
+                const noteNode = inlineNotes.length > 0 ? (
+                  <SiddourSectionNotes key={`notes-${i}`} notes={inlineNotes} compact />
+                ) : null;
                 if (isInternalSectionTitle(verse)) {
                   const titleText = normalizeHebrewMatch(verse);
                   return (
-                    <h3 key={i} className="my-6 text-center font-bold"
-                      style={{
-                        fontFamily: "'Noto Serif Hebrew', serif",
-                        fontSize: `${Math.min(fontSize + 2, 32)}px`,
-                        color: "hsl(var(--gold-matte))",
-                        lineHeight: 1.4,
-                      }}>
-                      {titleText}
-                    </h3>
+                    <div key={i}>
+                      {noteNode}
+                      <h3 className="my-6 text-center font-bold"
+                        style={{
+                          fontFamily: "'Noto Serif Hebrew', serif",
+                          fontSize: `${Math.min(fontSize + 2, 32)}px`,
+                          color: "hsl(var(--gold-matte))",
+                          lineHeight: 1.4,
+                        }}>
+                        {titleText}
+                      </h3>
+                    </div>
                   );
                 }
                 if (isInstructionOnly(verse)) {
                   if (isShemaSecondaryLine(verse)) {
                     return (
-                      <div key={i} style={{ marginBottom: "0.75rem", lineHeight: 1.8 }}
-                        dangerouslySetInnerHTML={{ __html: verse }} />
+                      <div key={i}>
+                        {noteNode}
+                        <div style={{ marginBottom: "0.75rem", lineHeight: 1.8 }}
+                          dangerouslySetInnerHTML={{ __html: verse }} />
+                      </div>
                     );
                   }
-                  return null;
+                  return noteNode;
                 }
                 return (
-                  <p key={i} style={{ marginBottom: "1.1rem", lineHeight: 2.4 }}
-                    dangerouslySetInnerHTML={{ __html: verse }} />
+                  <div key={i}>
+                    {noteNode}
+                    <p style={{ marginBottom: "1.1rem", lineHeight: 2.4 }}
+                      dangerouslySetInnerHTML={{ __html: verse }} />
+                  </div>
                 );
               })}
             </div>
