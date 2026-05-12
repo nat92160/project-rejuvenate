@@ -65,7 +65,7 @@ const HazkaraWidget = () => {
   const ensurePushPermission = async () => {
     if (isNativePlatform()) {
       const granted = await requestNativePushPermission();
-      if (granted) await registerNativePush(user?.id);
+      if (granted) await registerNativePush();
       return granted;
     }
     if (!("Notification" in window)) return false;
