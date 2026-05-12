@@ -37,7 +37,13 @@ export interface LiturgicalPeriod {
  * Par défaut : diaspora (coutume de France).
  */
 export function getLiturgicalContext(date: Date = new Date()): LiturgicalPeriod {
-  const hd = new HDate(date);
+  // Bascule au jour hébraïque suivant après ~18h local (heuristique sans GPS),
+  // pour que la Amida bascule en mode Yom Tov / Roch Hodech / Hol HaMoëd
+  // dès la prière du soir, pas seulement à minuit civil.
+  const hd = (() => {
+    const base = new HDate(date);
+    return date.getHours() >= 18 ? base.next() : base;
+  })();
   const month = hd.getMonth(); // Nisan=1, Tishrei=7, etc.
   const day = hd.getDate();
   const dow = date.getDay(); // 0=dim, 6=sam
