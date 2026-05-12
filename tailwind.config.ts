@@ -15,7 +15,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Montserrat', 'system-ui', 'sans-serif'],
-        display: ['Cormorant Garamond', 'Lora', 'Georgia', 'serif'],
+        display: ['Montserrat', 'system-ui', 'sans-serif'],
         hebrew: ['Frank Ruhl Libre', 'serif'],
       },
       colors: {
