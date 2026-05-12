@@ -199,7 +199,7 @@ export interface LiturgicalNote {
   /** Variante hébraïque à dire aujourd'hui */
   todaySay?: string;
   /** Motifs déclencheurs pour afficher la note au passage précis dans la lecture */
-  anchors: string[];
+  anchors?: string[];
 }
 
 interface Rule {
@@ -558,6 +558,22 @@ export function getNotesForSection(
     if (!containsAny(corpus, rule.patterns)) continue;
     const note = rule.build(period, rite);
     if (note) notes.push(note);
+  }
+  return notes;
+}
+
+/** Renvoie les notes à afficher juste avant/après une ligne précise de lecture. */
+export function getNotesForVerse(
+  verse: string,
+  rite: Rite,
+  period: LiturgicalPeriod
+): LiturgicalNote[] {
+  const corpus = stripNikud(verse.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ");
+  const notes: LiturgicalNote[] = [];
+  for (const rule of RULES) {
+    if (!containsAny(corpus, rule.patterns)) continue;
+    const note = rule.build(period, rite);
+    if (note) notes.push({ ...note, anchors: note.anchors || rule.patterns });
   }
   return notes;
 }
