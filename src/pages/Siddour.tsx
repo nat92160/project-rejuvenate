@@ -140,6 +140,20 @@ const Siddour = () => {
           </button>
 
           <button
+            onClick={() => navigate("/", { replace: true })}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg active:scale-95 transition shrink-0"
+            style={{ minHeight: 36 }}
+            aria-label="Retour à l'accueil Chabbat Chalom"
+          >
+            <span
+              className="font-display font-bold text-[13px] sm:text-sm whitespace-nowrap tracking-wide"
+              style={{ color: "hsl(var(--primary))" }}
+            >
+              Chabbat Chalom
+            </span>
+          </button>
+
+          <button
               onClick={() => setDrawerOpen(true)}
               className="lg:hidden p-2.5 rounded-lg hover:bg-muted active:scale-95 transition shrink-0"
               style={{ minWidth: 44, minHeight: 44 }}
