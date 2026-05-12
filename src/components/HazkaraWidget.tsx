@@ -127,11 +127,12 @@ const HazkaraWidget = () => {
           let greg = yzHd.greg();
           const dow = greg.getDay(); // 0=Sun, 6=Sat
 
-          // Si la Hazkara tombe un Vendredi soir (Hebrew day = Chabbat),
-          // elle est devancée au Jeudi soir précédent.
-          if (dow === 6) {
+          // Si la Hazkara tombe un Vendredi soir (jour hébraïque qui s'achève
+          // à l'entrée de Chabbat) ou un Chabbat, elle est devancée au
+          // Jeudi soir précédent (sortie des étoiles).
+          if (dow === 5 || dow === 6) {
             const advanced = new Date(greg);
-            advanced.setDate(advanced.getDate() - 2); // Sat → Thursday
+            advanced.setDate(advanced.getDate() - (dow === 5 ? 1 : 2));
             greg = advanced;
             note = (note ? note + " · " : "") + "Tombe un vendredi soir / Chabbat — devancée au jeudi soir précédent (sortie des étoiles)";
           }
@@ -210,7 +211,8 @@ const HazkaraWidget = () => {
                 type="date"
                 value={gregDate}
                 onChange={(e) => setGregDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-sm bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
+                style={{ fontSize: "16px" }}
+                className="w-full px-3 py-2 rounded-lg bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30 appearance-none"
               />
             </div>
             <div>
@@ -248,11 +250,13 @@ const HazkaraWidget = () => {
                 <label className="text-[10px] font-bold text-muted-foreground mb-1 block">Jour</label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min="1"
                   max="30"
                   value={hebDay}
                   onChange={(e) => setHebDay(e.target.value)}
-                  className="w-full px-2 py-2 rounded-lg text-sm bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
+                  style={{ fontSize: "16px" }}
+                  className="w-full px-2 py-2 rounded-lg bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
                 />
               </div>
               <div className="col-span-2">
@@ -260,7 +264,8 @@ const HazkaraWidget = () => {
                 <select
                   value={hebMonth}
                   onChange={(e) => setHebMonth(e.target.value)}
-                  className="w-full px-2 py-2 rounded-lg text-sm bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
+                  style={{ fontSize: "16px" }}
+                  className="w-full px-2 py-2 rounded-lg bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
                 >
                   {HEBREW_MONTHS.map((m) => (
                     <option key={m.value} value={m.value}>{m.label}</option>
@@ -272,11 +277,13 @@ const HazkaraWidget = () => {
               <label className="text-[10px] font-bold text-muted-foreground mb-1 block">Année hébraïque</label>
               <input
                 type="number"
+                inputMode="numeric"
                 min="5000"
                 max="6000"
                 value={hebYear}
                 onChange={(e) => setHebYear(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-sm bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
+                style={{ fontSize: "16px" }}
+                className="w-full px-3 py-2 rounded-lg bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
               />
             </div>
           </>
