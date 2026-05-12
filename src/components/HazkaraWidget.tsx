@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { HDate, HebrewCalendar, flags } from "@hebcal/core";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { isNativePlatform, requestNativePushPermission, registerNativePush } from "@/lib/capacitorPush";
+import { sharePosterPng } from "@/components/poster/usePosterExport";
 
 const HEBREW_MONTHS = [
   { value: "Nisan", label: "Nissan (ניסן)" },
@@ -149,6 +150,9 @@ const HazkaraWidget = () => {
   const [savingDate, setSavingDate] = useState<string | null>(null);
   const [records, setRecords] = useState<HazkaraRecord[]>([]);
   const [savingRecord, setSavingRecord] = useState(false);
+  const [posterData, setPosterData] = useState<{ name: string; greg: Date; hebrew: string } | null>(null);
+  const [sharingKey, setSharingKey] = useState<string | null>(null);
+  const posterRef = useRef<HTMLDivElement>(null);
 
   const loadRecords = async () => {
     if (!user) { setRecords([]); return; }
@@ -308,6 +312,23 @@ const HazkaraWidget = () => {
     await supabase.from("hazkara_records").delete().eq("id", id);
     await loadRecords();
     toast.success("Défunt supprimé", { duration: 2000 });
+  };
+
+  const sharePoster = async (name: string, greg: Date, hebrew: string, key: string) => {
+    if (!name?.trim()) { toast.error("Nom du défunt requis"); return; }
+    setSharingKey(key);
+    setPosterData({ name: name.trim(), greg, hebrew });
+    await new Promise((r) => setTimeout(r, 150));
+    const yyyy = greg.getFullYear();
+    const dateFr = greg.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+    await sharePosterPng(
+      posterRef.current,
+      `hazkara-${name.trim().replace(/\s+/g, "-")}-${yyyy}.png`,
+      `Hazkara ${name.trim()} — ${dateFr}`,
+      `🕯️ En mémoire de ${name.trim()}\nHazkara le ${dateFr}\nQue son âme soit liée au faisceau des vivants 🕊️`,
+    );
+    setSharingKey(null);
+    setPosterData(null);
   };
 
   // Compute next yahrzeit per saved record
