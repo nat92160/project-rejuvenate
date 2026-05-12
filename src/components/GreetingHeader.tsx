@@ -51,7 +51,7 @@ const GreetingHeader = () => {
       {/* Greeting */}
       <div className="flex items-baseline gap-2 mb-1">
         <span className="text-lg">{greeting.emoji}</span>
-        <h2 className="text-xl font-extrabold font-display title-letterpress tracking-tight">
+        <h2 className="text-xl font-extrabold text-foreground font-display tracking-tight">
           {firstName ? `${greeting.text}, ${firstName}` : greeting.text}
         </h2>
       </div>
