@@ -119,7 +119,19 @@ const Siddour = () => {
       >
         <div className="flex items-center gap-1.5 px-2 py-2 sm:px-6">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+                // Fallback if navigate(-1) didn't actually change route (e.g. direct entry)
+                setTimeout(() => {
+                  if (window.location.pathname.startsWith("/siddour")) {
+                    navigate("/", { replace: true });
+                  }
+                }, 150);
+              } else {
+                navigate("/", { replace: true });
+              }
+            }}
             aria-label="Retour"
             className="p-2.5 rounded-lg hover:bg-muted active:scale-95 transition shrink-0"
             style={{ minWidth: 44, minHeight: 44 }}
