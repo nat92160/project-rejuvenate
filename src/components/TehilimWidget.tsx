@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,7 +84,7 @@ const PsalmReader = ({ chapter, onClose }: { chapter: number; onClose: () => voi
               {verses.map((verse, i) => (
                 <span key={i}>
                   <span style={{ fontSize: "15px", marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
-                  <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
+                  <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(verse) }} />{" "}
                 </span>
               ))}
             </div>
@@ -199,7 +200,7 @@ const ChainPsalmReader = ({ chapter, claim, onClose, onMarkComplete, nextChapter
                   {verses.map((verse, i) => (
                     <span key={i}>
                       <span style={{ fontSize: `${Math.max(fontSize - 3, 14)}px`, marginInlineEnd: "5px", fontWeight: 700, color: "#888", verticalAlign: "baseline" }}>{toHebrewLetter(i + 1)}</span>
-                      <span dangerouslySetInnerHTML={{ __html: verse }} />{" "}
+                      <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(verse) }} />{" "}
                     </span>
                   ))}
                 </div>

@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
@@ -280,7 +281,7 @@ const SiddourReader = ({
                             color: prayerMode ? "#e8e0d0" : "#111",
                           }}
                         >
-                          <span dangerouslySetInnerHTML={{ __html: verse }} />
+                          <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(verse) }} />
                         </p>
                       );
                     }
@@ -324,7 +325,7 @@ const SiddourReader = ({
                           key={i}
                           className="verse-secondary"
                           style={{ marginBottom: "0.75rem", lineHeight: 1.8 }}
-                          dangerouslySetInnerHTML={{ __html: verse }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(verse) }}
                         />
                       );
                     }
@@ -352,7 +353,7 @@ const SiddourReader = ({
                           }}
                         />
                       )}
-                      <span dangerouslySetInnerHTML={{ __html: verse }} />
+                      <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(verse) }} />
                     </p>
                   );
                 });
@@ -438,7 +439,7 @@ const SiddourReader = ({
                   }
 
                   return verse && verse.trim() ? (
-                    <p key={i} className="mb-3" dangerouslySetInnerHTML={{ __html: verse }} />
+                    <p key={i} className="mb-3" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(verse) }} />
                   ) : null;
                 })
               ) : (

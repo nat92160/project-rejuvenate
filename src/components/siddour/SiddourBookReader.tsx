@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import { isInstructionOnly } from "@/lib/utils";
 import type { FullSection } from "@/hooks/useSiddourFullOffice";
@@ -210,7 +211,7 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                       <div key={i}>
                         {noteNode}
                         <p style={{ marginBottom: "1.1rem", lineHeight: 2.4 }}
-                          dangerouslySetInnerHTML={{ __html: verse }} />
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(verse) }} />
                       </div>
                     );
                   }
@@ -219,7 +220,7 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                       <div key={i}>
                         {noteNode}
                         <div style={{ marginBottom: "0.75rem", lineHeight: 1.8 }}
-                          dangerouslySetInnerHTML={{ __html: verse }} />
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(verse) }} />
                       </div>
                     );
                   }
@@ -229,7 +230,7 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                   <div key={i}>
                     {noteNode}
                     <p style={{ marginBottom: "1.1rem", lineHeight: 2.4 }}
-                      dangerouslySetInnerHTML={{ __html: verse }} />
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(verse) }} />
                   </div>
                 );
               })}

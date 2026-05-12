@@ -379,6 +379,46 @@ Deno.serve(async (req) => {
     const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // ── AUTH: require service role OR an authenticated user with admin/president role ──
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    const isServiceRole = token && token === serviceRoleKey;
+
+    if (!isServiceRole) {
+      if (!token) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const sbUser = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: { user } } = await sbUser.auth.getUser();
+      if (!user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Must be admin OR president/adjoint of the targeted synagogue
+      const { data: adminRow } = await supabase
+        .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+      let allowed = !!adminRow;
+      if (!allowed && synagogue_id) {
+        const { data: sp } = await supabase
+          .from("synagogue_profiles")
+          .select("president_id, adjoint_id")
+          .eq("id", synagogue_id)
+          .maybeSingle();
+        allowed = !!sp && (sp.president_id === user.id || sp.adjoint_id === user.id);
+      }
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Get push subscriptions — filter by synagogue_id, user_ids, or get ALL (broadcast mode)
     let query = supabase
       .from("push_subscriptions")

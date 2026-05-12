@@ -32,6 +32,47 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // ── AUTH: require valid user JWT for all actions except `callback` ──
+    // For protected actions, also enforce that body.userId matches the caller (unless admin).
+    let callerId: string | null = null;
+    let callerIsAdmin = false;
+    if (action !== "callback") {
+      const authHeader = req.headers.get("Authorization") || "";
+      const token = authHeader.replace(/^Bearer\s+/i, "");
+      if (!token) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const sbUser = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: userData } = await sbUser.auth.getUser();
+      if (!userData?.user) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      callerId = userData.user.id;
+      const { data: adminRow } = await supabase
+        .from("user_roles").select("role").eq("user_id", callerId).eq("role", "admin").maybeSingle();
+      callerIsAdmin = !!adminRow;
+
+      const targetUserId = (body as Record<string, unknown>).userId as string | undefined;
+      if (targetUserId && targetUserId !== callerId && !callerIsAdmin) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // If userId omitted on a protected action, force it to the caller's id
+      if (!targetUserId && action !== "authorize") {
+        (body as Record<string, unknown>).userId = callerId;
+      }
+    }
+
     // ── ACTION: authorize ──
     // Returns the Zoom OAuth URL the frontend should redirect to
     if (action === "authorize") {
