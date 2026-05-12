@@ -189,23 +189,6 @@ const Siddour = () => {
         </div>
       </header>
 
-      {/* === Anciens boutons retirés (remplacés ci-dessus) === */}
-      {false && (
-        <div className="hidden">
-          <button
-            onClick={() => setRite("sefarade")}
-            className="px-2.5 py-1 rounded-md transition-all"
-              style={{
-                background: rite === "sefarade" ? "hsl(var(--background))" : "transparent",
-                color: rite === "sefarade" ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))",
-                boxShadow: rite === "sefarade" ? "0 1px 3px hsl(var(--foreground) / 0.08)" : "none",
-              }}
-            >
-              Séfarade
-            </button>
-        </div>
-      )}
-
       <div className="flex">
         {/* Sidebar desktop */}
         <aside className={`hidden lg:block w-72 shrink-0 border-r border-border/40 sticky top-[60px] self-start`}
