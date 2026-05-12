@@ -153,22 +153,36 @@ export function detectPeriod(now: Date = new Date(), inIsrael = false): FullPeri
   const isFastDay = events.some(e => e.getFlags() & flags.MINOR_FAST) ||
                     events.some(e => e.getFlags() & flags.MAJOR_FAST);
 
-  // Tahanoun sauté : Chabbat, Roch 'Hodech, Hanouka, Pourim, Yom Tov, 'Hol haMo'ed,
-  // mois de Nissan, 15 Av/Chevat, Lag Ba'omer, Tou Bichvat, Yom Yeroushalayim/Atsmaout, etc.
+  // Ta'hanoun sauté — liste exhaustive selon les coutumes Sefarade & Ashkénaze.
+  // Sources : Choul'han Aroukh O.H. 131, Kaf HaHaïm, Yalkout Yossef, Michna Broura.
   const dow = hd.getDay();
+  const hMonth = hd.getMonth(); // Nissan=1, Iyar=2, Sivan=3, Tichri=7, Cheshvan=8, Kislev=9, Tevet=10, Chevat=11, Adar=12, Adar II=13
+  const hDay = hd.getDate();
   const skipTahanun =
-    dow === 6 || // Chabbat
-    isRoshChodesh ||
-    isYomTov ||
-    isCholHamoed ||
-    isHanukkah ||
-    isPurim ||
-    hd.getMonth() === 1 || // Nissan entier
+    dow === 6 ||                                // Chabbat
+    isRoshChodesh ||                            // Roch 'Hodech
+    isYomTov ||                                 // Yom Tov
+    isCholHamoed ||                             // 'Hol haMo'ed
+    isHanukkah ||                               // 'Hanouka (8 jours)
+    isPurim ||                                  // Pourim (14 Adar)
+    has("shushan purim") ||                     // Choushan Pourim (15 Adar)
+    has("purim katan") ||                       // Pourim Katan (14 Adar I année embolismique)
+    has("shushan purim katan") ||               // Choushan Pourim Katan (15 Adar I)
+    hMonth === 1 ||                             // Nissan entier
+    (hMonth === 2 && hDay === 14) ||            // Pessa'h Cheni (14 Iyar)
+    (hMonth === 2 && hDay === 18) ||            // Lag Ba'omer (18 Iyar)
     has("lag baomer") ||
-    has("tu bishvat") ||
+    (hMonth === 3 && hDay >= 1 && hDay <= 12) ||// 1–12 Sivan (préparation + Issrou 'Hag Chavou'ot)
+    (hMonth === 5 && hDay === 9) ||             // 9 Av (on dit kinot, pas Ta'hanoun)
+    (hMonth === 5 && hDay === 15) ||            // Tou be-Av
     has("tu b'av") ||
-    has("yom ha'atzmaut") ||
-    has("yom yerushalayim");
+    (hMonth === 7 && hDay === 9) ||             // Erev Yom Kippour
+    (hMonth === 7 && hDay >= 11) ||             // 11 Tichri → fin du mois (jusqu'à Roch 'Hodech 'Hechvan)
+    (hMonth === 11 && hDay === 15) ||           // Tou Bichvat (15 Chevat)
+    has("tu bishvat") ||
+    has("yom ha'atzmaut") ||                    // Yom Ha'atsmaout
+    has("yom yerushalayim") ||                  // Yom Yeroushalayim
+    (hMonth === 6 && hDay === 29);              // Erev Roch Hachana (29 Eloul)
 
   const hallel: LiturgicalPeriod["hallel"] =
     has("pesach i") || has("pesach ii") || has("shavuot") || has("sukkot i") || has("sukkot ii") ||
