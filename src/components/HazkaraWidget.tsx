@@ -124,12 +124,16 @@ const HazkaraWidget = () => {
         try {
           const monthNum = HDate.monthFromName(monthName);
           const yzHd = new HDate(day, monthNum, y);
-          const greg = yzHd.greg();
+          let greg = yzHd.greg();
           const dow = greg.getDay(); // 0=Sun, 6=Sat
 
-          // If Hazkara falls on Shabbat → candle lit Thursday at tzeit
+          // Si la Hazkara tombe un Vendredi soir (Hebrew day = Chabbat),
+          // elle est devancée au Jeudi soir précédent.
           if (dow === 6) {
-            note = (note ? note + " · " : "") + "Hazkara un Chabbat — bougie allumée jeudi soir à la sortie des étoiles";
+            const advanced = new Date(greg);
+            advanced.setDate(advanced.getDate() - 2); // Sat → Thursday
+            greg = advanced;
+            note = (note ? note + " · " : "") + "Tombe un vendredi soir / Chabbat — devancée au jeudi soir précédent (sortie des étoiles)";
           }
 
           // Detect if falls during Yom Tov (chag)
