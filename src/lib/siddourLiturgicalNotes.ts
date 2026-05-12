@@ -119,7 +119,7 @@ function getEvents(hd: HDate, il: boolean) {
   return HebrewCalendar.getHolidaysOnDate(hd, il) || [];
 }
 
-export function detectPeriod(now: Date = new Date(), inIsrael = false): LiturgicalPeriod {
+export function detectPeriod(now: Date = new Date(), inIsrael = false): FullPeriod {
   const hd = new HDate(now);
   const events = getEvents(hd, inIsrael);
   const desc = events.map(e => e.getDesc().toLowerCase());
@@ -253,7 +253,7 @@ export interface LiturgicalNote {
 interface Rule {
   id: string;
   patterns: string[]; // motifs hébraïques à détecter dans la section (sans nikud)
-  build: (p: LiturgicalPeriod, rite: Rite) => LiturgicalNote | null;
+  build: (p: FullPeriod, rite: Rite) => LiturgicalNote | null;
   /** Si défini, ne déclenche que sur des sections Hazara (true) ou silencieuses (false) */
   requireHazara?: boolean;
   /** Si défini, restreint aux offices listés (préfixe accepté, ex: "shacharit", "shabbat") */
