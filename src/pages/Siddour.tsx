@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, BookOpen, Languages, Minus, Plus, Sparkles, X } from "lucide-react";
+import { ArrowLeft, BookOpen, Minus, Plus, X } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useSiddourRite } from "@/hooks/useSiddourRite";
 import { useSiddourFullOffice } from "@/hooks/useSiddourFullOffice";
@@ -20,7 +20,6 @@ const Siddour = () => {
   const [office, setOffice] = useState(initialOffice);
   const [activeSection, setActiveSection] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [autoTranslateIndices, setAutoTranslateIndices] = useState<Set<number>>(new Set());
 
   const [fontSize, setFontSize] = useState<number>(() => {
     try { return Number(localStorage.getItem(FONT_KEY)) || 22; } catch { return 22; }
@@ -34,11 +33,6 @@ const Siddour = () => {
 
   const { data, loading, error } = useSiddourFullOffice(rite, office);
   const sections = data?.sections || [];
-
-  // Reset des sections auto-traduites quand on change d'office/rite
-  useEffect(() => {
-    setAutoTranslateIndices(new Set());
-  }, [office, rite]);
 
   // Refs des sections pour scrollspy
   const sectionRefs = useRef<Map<number, HTMLElement>>(new Map());
@@ -88,11 +82,6 @@ const Siddour = () => {
     }
     setDrawerOpen(false);
   }, []);
-
-  const handleTranslateAll = useCallback(() => {
-    if (sections.length === 0) return;
-    setAutoTranslateIndices(new Set(sections.map((_, i) => i)));
-  }, [sections]);
 
   const officeMeta = useMemo(() => getOfficeMeta(office), [office]);
 
