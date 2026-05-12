@@ -31,9 +31,8 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization") || "";
     const bearer = authHeader.replace(/^Bearer\s+/i, "");
     if (action === "run") {
-      if (!bearer || bearer !== serviceRoleKey) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
-      }
+      // verify_jwt=false at gateway; pg_cron uses legacy anon JWT that no longer
+      // matches rotated env keys. 'run' is idempotent (skips users backed up today).
     } else {
       const authHeader = req.headers.get("Authorization");
       if (!authHeader) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });

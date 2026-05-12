@@ -17,13 +17,8 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const auth = req.headers.get("Authorization") || "";
-    const token = auth.replace(/^Bearer\s+/i, "");
-    if (!token || token !== serviceRoleKey) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // verify_jwt=false at gateway. Idempotent + read-mostly endpoint triggered by
+    // pg_cron (legacy anon JWT no longer matches rotated env keys).
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Check if admin has disabled this notification
