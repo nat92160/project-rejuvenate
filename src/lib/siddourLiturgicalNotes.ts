@@ -206,6 +206,10 @@ interface Rule {
   id: string;
   patterns: string[]; // motifs hébraïques à détecter dans la section (sans nikud)
   build: (p: LiturgicalPeriod, rite: Rite) => LiturgicalNote | null;
+  /** Si défini, ne déclenche que sur des sections Hazara (true) ou silencieuses (false) */
+  requireHazara?: boolean;
+  /** Si défini, restreint aux offices listés (préfixe accepté, ex: "shacharit", "shabbat") */
+  requireOfficeIncludes?: string[];
 }
 
 const RULES: Rule[] = [
@@ -338,6 +342,7 @@ const RULES: Rule[] = [
   // 5. Anenou (jour de jeûne — Min'ha; pour le 'Hazan à Cha'harit aussi)
   {
     id: "anenu",
+    requireHazara: false,
     patterns: ["עננו"],
     build: (p) => {
       if (p.isFastDay) {
@@ -541,6 +546,79 @@ const RULES: Rule[] = [
       };
     },
   },
+
+  // ─── 15-17. Annotations spécifiques à la Hazarat haChats ───
+
+  // 15. Kedusha — debout, en chœur, à la 3ᵉ bénédiction de la Hazara
+  {
+    id: "kedusha-hazara",
+    requireHazara: true,
+    patterns: ["נקדש את שמך", "נקדישך ונעריצך", "קדוש קדוש קדוש", "לדור ודור"],
+    build: () => ({
+      id: "kedusha-hazara",
+      tone: "fete",
+      anchors: ["נקדש את שמך", "נקדישך ונעריצך", "קדוש קדוש קדוש"],
+      title: "Kédoucha — debout, en chœur",
+      body:
+        "Pendant la répétition (Hazarat haChats), l'assemblée se lève, joint les pieds et répond à voix haute avec le 'Hazan : « Kadoch, Kadoch, Kadoch… », « Baroukh kévod… » et « Yimlokh… ». On reste debout jusqu'à la fin de la Kédoucha.",
+    }),
+  },
+
+  // 16. Modim deRabbanan — l'assemblée s'incline et dit le Modim des Sages
+  {
+    id: "modim-derabbanan",
+    requireHazara: true,
+    patterns: ["מודים אנחנו לך"],
+    build: () => ({
+      id: "modim-derabbanan",
+      tone: "info",
+      anchors: ["מודים אנחנו לך"],
+      title: "Modim deRabbanan",
+      body:
+        "Pendant que le 'Hazan dit « Modim », l'assemblée s'incline et récite à voix basse le « Modim deRabbanan » (« Modim anahnou Lakh… Élohé khol bassar… »), puis se redresse au mot « Hachem ».",
+    }),
+  },
+
+  // 17. Birkat Kohanim — uniquement Cha'harit & Moussaf
+  {
+    id: "birkat-kohanim",
+    requireHazara: true,
+    requireOfficeIncludes: ["shacharit", "shabbat"], // Cha'harit semaine + Chabbat (inclut Moussaf)
+    patterns: [
+      "ברכנו בברכה המשולשת",
+      "כהנים עם קדושך",
+      "יברכך ה'",
+      "יברכך יהוה",
+      "יאר ה'",
+      "ישא ה'",
+    ],
+    build: () => ({
+      id: "birkat-kohanim",
+      tone: "fete",
+      anchors: ["ברכנו בברכה המשולשת", "כהנים", "יברכך"],
+      title: "Birkat Kohanim — Bénédiction sacerdotale",
+      body:
+        "À Cha'harit (et Moussaf de Chabbat / Yom Tov), les Kohanim montent bénir l'assemblée avec les trois versets « Yévarèkhékha… ». En l'absence de Kohanim, le 'Hazan lit « Élohénou véÉlohé Avoténou, barekhénou baBerakha haMechouléchèt… ». L'assemblée répond « Amen » à chaque verset.",
+    }),
+  },
+
+  // 18. 'Anénou — pour le 'Hazan en Cha'harit lors d'un jeûne (entre Goél Israël et Refa'énou)
+  {
+    id: "anenu-hazan",
+    requireHazara: true,
+    patterns: ["עננו"],
+    build: (p) => {
+      if (!p.isFastDay) return null;
+      return {
+        id: "anenu-hazan",
+        tone: "warn",
+        anchors: ["עננו"],
+        title: "'Anénou — Hazara du jour de jeûne",
+        body:
+          "Le 'Hazan ajoute « 'Anénou » comme bénédiction à part entière (entre « Goèl Israël » et « Réfaénou »), conclue par « Baroukh… ha-'oné lé'amo Israël bé'èt tsara ».",
+      };
+    },
+  },
 ];
 
 /**
@@ -549,12 +627,18 @@ const RULES: Rule[] = [
 export function getNotesForSection(
   hebrew: string[],
   rite: Rite,
-  period: LiturgicalPeriod
+  period: LiturgicalPeriod,
+  ctx?: { isHazara?: boolean; office?: string }
 ): LiturgicalNote[] {
   if (!hebrew || hebrew.length === 0) return [];
   const corpus = joinSection(hebrew);
   const notes: LiturgicalNote[] = [];
+  const isHazara = !!ctx?.isHazara;
+  const office = (ctx?.office || "").toLowerCase();
   for (const rule of RULES) {
+    if (rule.requireHazara === true && !isHazara) continue;
+    if (rule.requireHazara === false && isHazara) continue;
+    if (rule.requireOfficeIncludes && !rule.requireOfficeIncludes.some(o => office.includes(o))) continue;
     if (!containsAny(corpus, rule.patterns)) continue;
     const note = rule.build(period, rite);
     if (note) notes.push(note);
@@ -566,11 +650,17 @@ export function getNotesForSection(
 export function getNotesForVerse(
   verse: string,
   rite: Rite,
-  period: LiturgicalPeriod
+  period: LiturgicalPeriod,
+  ctx?: { isHazara?: boolean; office?: string }
 ): LiturgicalNote[] {
   const corpus = stripNikud(verse.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ");
   const notes: LiturgicalNote[] = [];
+  const isHazara = !!ctx?.isHazara;
+  const office = (ctx?.office || "").toLowerCase();
   for (const rule of RULES) {
+    if (rule.requireHazara === true && !isHazara) continue;
+    if (rule.requireHazara === false && isHazara) continue;
+    if (rule.requireOfficeIncludes && !rule.requireOfficeIncludes.some(o => office.includes(o))) continue;
     if (!containsAny(corpus, rule.patterns)) continue;
     const note = rule.build(period, rite);
     if (note) notes.push({ ...note, anchors: note.anchors || rule.patterns });

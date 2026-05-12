@@ -130,7 +130,10 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                   if (!processed.isActive || processed.isSeasonalMarker) return null;
                   verse = processed.html;
                 }
-                const inlineNotes = getNotesForVerse(verse, rite, period);
+                const inlineNotes = getNotesForVerse(verse, rite, period, {
+                  isHazara: sec.isHazara,
+                  office,
+                });
                 const noteNode = inlineNotes.length > 0 ? (
                   <SiddourSectionNotes key={`notes-${i}`} notes={inlineNotes} compact />
                 ) : null;
