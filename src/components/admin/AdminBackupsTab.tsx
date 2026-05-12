@@ -26,6 +26,8 @@ export default function AdminBackupsTab() {
   const [running, setRunning] = useState(false);
   const [restoring, setRestoring] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -94,6 +96,48 @@ export default function AdminBackupsTab() {
     }
   };
 
+  const exportAll = async () => {
+    setExporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "export_all_backups" },
+      });
+      if (error) throw error;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `backups-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`✅ ${data?.count || 0} sauvegarde(s) exportée(s)`, { duration: 2000 });
+    } catch (err: any) {
+      toast.error(err.message || "Échec de l'export");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const importFile = async (file: File) => {
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const list = Array.isArray(parsed) ? parsed : parsed?.backups;
+      if (!Array.isArray(list)) throw new Error("Format invalide (attendu : { backups: [...] })");
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "import_backups", backups: list },
+      });
+      if (error) throw error;
+      toast.success(`✅ ${data?.imported || 0} sauvegarde(s) importée(s)`, { duration: 2000 });
+      await load();
+    } catch (err: any) {
+      toast.error(err.message || "Échec de l'import");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const filtered = backups.filter((b) => {
     if (!filter) return true;
     const q = filter.toLowerCase();
@@ -114,7 +158,7 @@ export default function AdminBackupsTab() {
           <div>
             <h2 className="font-display text-lg font-bold text-foreground">💾 Sauvegardes des comptes</h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Sauvegarde automatique quotidienne (3h UTC) + snapshot avant chaque suppression. Aucun compte ne sera perdu.
+              Sauvegarde automatique quotidienne (3h UTC) + snapshot avant chaque suppression. Maximum 3 sauvegardes par utilisateur (les plus anciennes sont supprimées automatiquement).
             </p>
           </div>
           <button
@@ -125,6 +169,30 @@ export default function AdminBackupsTab() {
           >
             {running ? "..." : "↻ Sauvegarder maintenant"}
           </button>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            onClick={exportAll}
+            disabled={exporting}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50 border border-border bg-background text-foreground"
+          >
+            {exporting ? "..." : "⬇ Tout exporter (JSON)"}
+          </button>
+          <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer border border-border bg-background text-foreground inline-flex items-center" style={{ opacity: importing ? 0.5 : 1 }}>
+            {importing ? "..." : "⬆ Importer un fichier"}
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              disabled={importing}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) importFile(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
         </div>
 
         <input

@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.prune_account_backups() FROM PUBLIC, anon, authenticated;

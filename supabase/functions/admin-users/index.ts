@@ -179,6 +179,40 @@ serve(async (req) => {
       });
     }
 
+    if (action === "export_all_backups") {
+      const { data, error } = await supabaseAdmin
+        .from("account_backups")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return new Response(JSON.stringify({
+        version: 1,
+        exported_at: new Date().toISOString(),
+        count: (data || []).length,
+        backups: data || [],
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "import_backups" && Array.isArray(body.backups)) {
+      let imported = 0;
+      for (const b of body.backups) {
+        if (!b?.user_id) continue;
+        const row = {
+          user_id: b.user_id,
+          email: b.email || null,
+          display_name: b.display_name || null,
+          reason: b.reason || "imported",
+          created_by: caller.id,
+          snapshot: b.snapshot || {},
+        };
+        const { error } = await supabaseAdmin.from("account_backups").insert(row);
+        if (!error) imported += 1;
+      }
+      return new Response(JSON.stringify({ success: true, imported }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "get_backup" && body.backup_id) {
       const { data, error } = await supabaseAdmin
         .from("account_backups").select("*").eq("id", body.backup_id).maybeSingle();
