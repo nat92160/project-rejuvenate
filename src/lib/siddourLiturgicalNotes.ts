@@ -669,6 +669,429 @@ const RULES: Rule[] = [
       };
     },
   },
+
+  // ─── 19-40. Audit complet office par office ───
+
+  // 19. Birkat haMazone — Retsé véHa'haliCenou (Chabbat)
+  {
+    id: "bm-retse",
+    requireOfficeIncludes: ["birkat"],
+    patterns: ["רצה והחליצנו", "רצה והחליצינו"],
+    build: (p) => {
+      if (p.hdate.getDay() === 6 || p.isMotsaeShabbat) {
+        return {
+          id: "bm-retse",
+          tone: "fete",
+          title: "Birkat haMazone — Retsé (Chabbat)",
+          body:
+            "À tous les repas de Chabbat (vendredi soir, Chabbat midi et 3ᵉ repas — Sé'ouda Chelichit), on insère « Retsé véHa'haliCenou » dans la 3ᵉ bénédiction. Si oublié et qu'on s'en aperçoit avant « haTov véhaMétiv » : on dit la brakha de réparation correspondante (« Baroukh… chénatan Chabbatot lim'noukha… »).",
+        };
+      }
+      return null;
+    },
+  },
+
+  // 20. Birkat haMazone — Migdol / Magdil
+  {
+    id: "bm-migdol",
+    requireOfficeIncludes: ["birkat"],
+    patterns: ["מגדול", "מגדיל ישועות"],
+    build: (p) => {
+      const isWeekday = p.hdate.getDay() !== 6 && !p.isYomTov && !p.isRoshChodesh && !p.isCholHamoed;
+      return {
+        id: "bm-migdol",
+        tone: "info",
+        title: "Migdol / Magdil",
+        body: isWeekday
+          ? "En semaine ordinaire : on dit « Magdil yéchou'ot Malko »."
+          : "Chabbat, Yom Tov, Roch 'Hodech, 'Hol haMo'ed et Pourim : on dit « Migdol yéchou'ot Malko ».",
+        todaySay: isWeekday ? "מַגְדִּיל יְשׁוּעוֹת מַלְכּוֹ" : "מִגְדּוֹל יְשׁוּעוֹת מַלְכּוֹ",
+      };
+    },
+  },
+
+  // 21. Birkat haMazone — Harahaman des invités / fêtes
+  {
+    id: "bm-harahaman",
+    requireOfficeIncludes: ["birkat"],
+    patterns: ["הרחמן הוא יברך"],
+    build: (p) => {
+      const occ: string[] = [];
+      if (p.hdate.getDay() === 6) occ.push("Chabbat (« Yom chékoulo Chabbat »)");
+      if (p.isRoshChodesh) occ.push("Roch 'Hodech (« yom mevorakh »)");
+      if (p.isYomTov) occ.push("Yom Tov (« yom tov »)");
+      if (p.isHanukkah) occ.push("'Hanouka (« haRahaman… ya'assé lanou nissim »)");
+      if (occ.length === 0) return null;
+      return {
+        id: "bm-harahaman",
+        tone: "fete",
+        title: "haRahaman du jour",
+        body: `On insère le « haRahaman » du jour : ${occ.join(", ")}. Pour les invités, on ajoute « haRahaman… yévarekh èt ba'al haBayit hazé… ».`,
+      };
+    },
+  },
+
+  // 22. Arvit Motsaé Chabbat — Atta Honantanou (Havdala dans la Amida)
+  {
+    id: "atta-honantanou",
+    requireOfficeIncludes: ["arvit", "shabbat"],
+    patterns: ["אתה חוננתנו", "ותודיענו ה'"],
+    build: (p) => {
+      if (p.isMotsaeShabbat || (p.hdate.getDay() === 6 && new Date().getHours() >= 19)) {
+        return {
+          id: "atta-honantanou",
+          tone: "fete",
+          title: "Motsaé Chabbat — Atta Honantanou",
+          body:
+            "À Arvit du samedi soir (et veille de Yom Tov tombant en semaine après Chabbat), on insère « Atta 'Honantanou » dans la 4ᵉ bénédiction (« Atta 'Honén »). Si oublié, on ne reprend pas mais on fait la Havdala sur la coupe.",
+        };
+      }
+      return null;
+    },
+  },
+
+  // 23. Arvit Motsaé Chabbat — Vihi Noam / Veatta Kadoch
+  {
+    id: "vihi-noam",
+    requireOfficeIncludes: ["arvit", "shabbat"],
+    patterns: ["ויהי נעם", "ואתה קדוש"],
+    build: (p) => {
+      if (!p.isMotsaeShabbat) return null;
+      // Omis si la semaine qui vient contient un Yom Tov empêchant le travail
+      return {
+        id: "vihi-noam",
+        tone: "info",
+        title: "Motsaé Chabbat — Vihi No'am",
+        body:
+          "Au Motsaé Chabbat, après l'Arvit, on lit « Vihi No'am » et « Vé'Atta Kadoch » (Tehilim 91). On l'omet si un Yom Tov tombe dans la semaine qui suit (car il y aura interruption du travail).",
+      };
+    },
+  },
+
+  // 24. Lekha Dodi (Kabbalat Chabbat) — omis Erev Yom Tov tombant Chabbat
+  {
+    id: "lekha-dodi",
+    requireOfficeIncludes: ["shabbat"],
+    patterns: ["לכה דודי", "בואי כלה"],
+    build: (p) => {
+      if (p.isYomTov || p.isCholHamoed || p.isErevYomTov) {
+        return {
+          id: "lekha-dodi",
+          tone: "info",
+          title: "Kabbalat Chabbat raccourci",
+          body:
+            "Quand Erev Chabbat coïncide avec Yom Tov ou 'Hol haMo'ed, on commence Kabbalat Chabbat à « Mizmor leDavid » (Tehilim 29) en omettant les six psaumes initiaux et le « Ana béKhoa'h ». « Lekha Dodi » est dit à partir du dernier verset.",
+        };
+      }
+      return null;
+    },
+  },
+
+  // 25. Magen Avot (Beraïta de la 7ᵉ brakha — Arvit Chabbat)
+  {
+    id: "magen-avot",
+    requireOfficeIncludes: ["shabbat", "arvit"],
+    patterns: ["מגן אבות", "ברוך אתה ה' מקדש השבת"],
+    build: (p) => {
+      if (p.isYomTov || p.isCholHamoed) {
+        return {
+          id: "magen-avot",
+          tone: "info",
+          title: "Magen Avot omis",
+          body:
+            "On omet « Magen Avot » à Arvit du vendredi soir quand Erev Chabbat est aussi Yom Tov ou 'Hol haMo'ed (car cette beraïta est récitée pour protéger les retardataires, qui ne sont pas en danger les jours de fête).",
+        };
+      }
+      return null;
+    },
+  },
+
+  // 26. Atta Behartanou (Amida des Yom Tov)
+  {
+    id: "atta-behartanou",
+    patterns: ["אתה בחרתנו", "ותתן לנו ה' אלהינו באהבה"],
+    build: (p) => {
+      if (p.isYomTov || p.isCholHamoed) {
+        const fete = p.isPesach ? "Pessa'h"
+                  : p.isShavuot ? "Chavou'ot"
+                  : p.isSukkot ? "Soukot / Chemini Atseret"
+                  : p.isRoshHashana ? "Roch HaChana"
+                  : p.isYomKippur ? "Yom Kippour"
+                  : "Yom Tov";
+        return {
+          id: "atta-behartanou",
+          tone: "fete",
+          title: `Amida de ${fete}`,
+          body:
+            "Aujourd'hui, la 4ᵉ bénédiction de la Amida est « Atta Behartanou » suivie de « VaTitén Lanou… èt yom » et du nom propre de la fête. À 'Hol haMo'ed, on dit la Amida des semaines avec Ya'alé véYavo (pas « Atta Behartanou »).",
+        };
+      }
+      return null;
+    },
+  },
+
+  // 27. Hochanot (Soukot)
+  {
+    id: "hoshanot",
+    patterns: ["הושענא", "הושענות"],
+    build: (p) => {
+      if (!p.isSukkot) return null;
+      return {
+        id: "hoshanot",
+        tone: "fete",
+        title: "Hocha'not — Soukot",
+        body:
+          "Pendant Soukot (sauf Chabbat et le jour de Hocha'na Rabba qui a son rituel propre), on prend les 4 espèces et on fait le tour de la Téva en récitant les Hocha'not du jour. Le 7ᵉ jour (Hocha'na Rabba), 7 tours et frappe des Aravot.",
+      };
+    },
+  },
+
+  // 28. Sélihot (Eloul + Asseret Yemei Techouva — séfarade dès le 1er Eloul)
+  {
+    id: "selihot",
+    patterns: ["סליחות", "אל מלך יושב"],
+    build: (p, rite) => {
+      const isSelihotPeriod = p.isElul || p.isAseretYemeiTeshuva;
+      if (!isSelihotPeriod) return null;
+      return {
+        id: "selihot",
+        tone: "fete",
+        title: rite === "sefarade" ? "Sélihot — du 1er Eloul" : "Sélihot — fin Eloul",
+        body: rite === "sefarade"
+          ? "Le rite séfarade dit les Sélihot tous les matins (avant Cha'harit) du 1er Eloul à Yom Kippour."
+          : "Le rite ashkénaze commence les Sélihot le dimanche soir (ou samedi soir) précédant Roch HaChana, jusqu'à Yom Kippour.",
+      };
+    },
+  },
+
+  // 29. Avinou Malkénou (Asseret Yemei Techouva + jeûnes)
+  {
+    id: "avinu-malkenu",
+    patterns: ["אבינו מלכנו"],
+    build: (p) => {
+      if (p.isAseretYemeiTeshuva) {
+        return {
+          id: "avinu-malkenu",
+          tone: "fete",
+          title: "Avinou Malkénou — 10 Jours de Techouva",
+          body:
+            "On dit « Avinou Malkénou » à Cha'harit et Min'ha pendant les 10 Jours de Techouva. À Yom Kippour, version étendue. Omis Chabbat (sauf à Né'ila si Yom Kippour tombe Chabbat).",
+        };
+      }
+      if (p.isFastDay) {
+        return {
+          id: "avinu-malkenu",
+          tone: "warn",
+          title: "Avinou Malkénou — Jour de jeûne",
+          body: "Les jours de jeûne public, on dit « Avinou Malkénou » à Cha'harit et Min'ha.",
+        };
+      }
+      return null;
+    },
+  },
+
+  // 30. LeDavid Hachem Ori (Tehilim 27) — Eloul → Hocha'na Rabba
+  {
+    id: "ledavid-ori",
+    patterns: ["לדוד ה' אורי", "תהלים כז"],
+    build: (p) => {
+      const inSeason = p.isElul ||
+        (p.hdate.getMonth() === 7 && p.hdate.getDate() <= 22); // jusqu'à Hocha'na Rabba (21 Tichri)
+      if (!inSeason) return null;
+      return {
+        id: "ledavid-ori",
+        tone: "info",
+        title: "LeDavid Hachem Ori",
+        body:
+          "Du 1er Eloul à Hocha'na Rabba (21 Tichri), on dit « LeDavid Hachem Ori » (Tehilim 27) après Cha'harit et Arvit (rite séfarade : Cha'harit + Min'ha).",
+      };
+    },
+  },
+
+  // 31. Kériat haTorah lundi/jeudi
+  {
+    id: "kriat-torah-weekday",
+    requireOfficeIncludes: ["shacharit"],
+    patterns: ["ויהי בנסע הארן", "בריך שמיה", "ספר תורה"],
+    build: (p) => {
+      if (p.hdate.getDay() !== 1 && p.hdate.getDay() !== 4) return null;
+      if (p.isYomTov || p.isHanukkah || p.isPurim) return null;
+      return {
+        id: "kriat-torah-weekday",
+        tone: "info",
+        title: "Lecture de la Torah — Lundi / Jeudi",
+        body:
+          "Lundi et jeudi matin, on sort le Sefer Torah après la Amida et on lit les 3 premières Aliyot de la Paracha de la semaine à venir.",
+      };
+    },
+  },
+
+  // 32. Allumage 'Hanouka — placement avant Arvit
+  {
+    id: "hanukkah-lighting",
+    patterns: ["להדליק נר", "הנרות הללו", "מעוז צור"],
+    build: (p) => {
+      if (!p.isHanukkah) return null;
+      return {
+        id: "hanukkah-lighting",
+        tone: "fete",
+        title: "'Hanouka — Allumage",
+        body:
+          "On allume les bougies de 'Hanouka après le coucher du soleil (vendredi : avant l'allumage de Chabbat). On récite « Léhadlik ner… », « ché'assa nissim… » (et « Chéhé'héyanou » le 1er soir), puis on chante « haNérot halalou » et « Maoz Tsour ».",
+      };
+    },
+  },
+
+  // 33. Megilat Esther (Pourim — Arvit + Cha'harit)
+  {
+    id: "purim-megilla",
+    patterns: ["מגילת אסתר", "על מקרא מגילה"],
+    build: (p) => {
+      if (!p.isPurim) return null;
+      return {
+        id: "purim-megilla",
+        tone: "fete",
+        title: "Pourim — Méguila",
+        body:
+          "Le soir et le matin de Pourim, on lit la Méguila d'Esther avec ses bénédictions (« al mikra Méguila », « ché'assa nissim », « Chéhé'héyanou » — uniquement le soir selon plusieurs avis séfarades). On frappe au nom d'Haman.",
+      };
+    },
+  },
+
+  // 34. Birkat haIlanot (Nissan)
+  {
+    id: "birkat-ilanot",
+    requireOfficeIncludes: ["nissan", "berakhot"],
+    patterns: ["ברכת האילנות", "שלא חיסר"],
+    build: (p) => {
+      if (p.hdate.getMonth() !== 1) return null;
+      return {
+        id: "birkat-ilanot",
+        tone: "fete",
+        title: "Birkat haIlanot — Mois de Nissan",
+        body:
+          "Une fois pendant le mois de Nissan, en voyant deux arbres fruitiers en fleurs, on récite « Baroukh… chélo 'hissar bé'olamo kloum… » (à dire de jour, de préférence en semaine, en présence d'au moins 3 personnes selon les Mékoubalim).",
+      };
+    },
+  },
+
+  // 35. Tikoun 'Hatsot — pas en Chabbat / Yom Tov
+  {
+    id: "tikoun-hatsot",
+    requireOfficeIncludes: ["tikoun_hatsot"],
+    patterns: ["תקון רחל", "תקון לאה"],
+    build: (p) => {
+      const skip = p.hdate.getDay() === 6 || p.isYomTov || p.isCholHamoed ||
+                   p.isRoshChodesh || p.isHanukkah || p.isPurim;
+      if (skip) {
+        return {
+          id: "tikoun-hatsot",
+          tone: "info",
+          title: "Tikoun 'Hatsot — omis aujourd'hui",
+          body: "Pas de Tikoun 'Hatsot Chabbat, Yom Tov, 'Hol haMo'ed, Roch 'Hodech, 'Hanouka et Pourim.",
+        };
+      }
+      return {
+        id: "tikoun-hatsot",
+        tone: "info",
+        title: "Tikoun 'Hatsot",
+        body:
+          "À minuit halakhique : Tikoun Ra'hel (omis pendant les Trois Semaines il est dit en plus de Tikoun Léa) puis Tikoun Léa. Pendant les 3 Semaines (17 Tamouz → 9 Av), Tikoun Ra'hel se dit aussi de jour.",
+      };
+    },
+  },
+
+  // 36. Birkat haLévana — créneau & conditions
+  {
+    id: "birkat-levana",
+    requireOfficeIncludes: ["birkat_halevana"],
+    patterns: ["ברוך אתה ה'", "מחדש חדשים"],
+    build: () => ({
+      id: "birkat-levana",
+      tone: "info",
+      title: "Birkat haLévana — quand la dire ?",
+      body:
+        "À dire à partir de la 3ᵉ nuit du mois (rite séfarade : dès la 2ᵉ nuit) jusqu'au 15 du mois inclus, lune visible, en plein air et en compagnie. Au mois de Tichri : on attend après Yom Kippour. Au mois de Av : on attend après le 9 Av.",
+    }),
+  },
+
+  // 37. Borkhi Nafshi (Tehilim 104) à Roch 'Hodech (déjà couvert) + Chir Chel Yom du jour
+  {
+    id: "shir-shel-yom",
+    requireOfficeIncludes: ["shacharit", "shabbat"],
+    patterns: ["שיר של יום", "היום יום ראשון בשבת", "היום יום שני", "היום יום שלישי", "היום יום רביעי", "היום יום חמישי", "היום יום ששי", "היום יום שבת"],
+    build: (p) => {
+      const days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת קדש"];
+      const tehilim = ["24", "48", "82", "94", "81", "93", "92"];
+      const dow = p.hdate.getDay();
+      return {
+        id: "shir-shel-yom",
+        tone: "info",
+        title: `Chir chel Yom — Yom ${days[dow]}`,
+        body: `Aujourd'hui (jour ${dow + 1} de la semaine), on lit Tehilim ${tehilim[dow]} comme « Chir chel Yom » des Léviim.`,
+      };
+    },
+  },
+
+  // 38. Veten Berakha / Veten Tal Umatar — variante Birkat haMazone (déjà couvert dans Amida)
+  // 39. Pirké Avot (Chabbat après-midi entre Pessa'h et Roch HaChana)
+  {
+    id: "pirke-avot",
+    requireOfficeIncludes: ["shabbat"],
+    patterns: ["פרקי אבות", "כל ישראל יש להם חלק"],
+    build: (p) => {
+      const inSeason = (p.hdate.getMonth() === 1 && p.hdate.getDate() >= 16) ||
+                       (p.hdate.getMonth() === 2) ||
+                       (p.hdate.getMonth() === 3) ||
+                       (p.hdate.getMonth() === 4) ||
+                       (p.hdate.getMonth() === 5) ||
+                       (p.hdate.getMonth() === 6);
+      if (p.hdate.getDay() !== 6 || !inSeason) return null;
+      return {
+        id: "pirke-avot",
+        tone: "info",
+        title: "Pirké Avot — Chabbat après-midi",
+        body:
+          "Entre Pessa'h et Roch HaChana, on étudie un chapitre des Pirké Avot chaque Chabbat après-midi (entre Min'ha et Arvit), précédé de « Kol Israël yech lahem hélèk… ».",
+      };
+    },
+  },
+
+  // 40. Avinu Cheba'Chamayim (Prière pour l'État d'Israël / Tsahal — Chabbat)
+  {
+    id: "tefilla-medina",
+    requireOfficeIncludes: ["shabbat"],
+    patterns: ["אבינו שבשמים", "מי שברך לחיילי"],
+    build: (p) => {
+      if (p.hdate.getDay() !== 6) return null;
+      return {
+        id: "tefilla-medina",
+        tone: "info",
+        title: "Prière pour l'État & Tsahal",
+        body:
+          "Beaucoup de communautés disent « Avinou Cheba'Chamayim » (prière pour l'État d'Israël) et « Mi Chébérakh leHayalé Tsahal » après la lecture de la Torah du Chabbat matin.",
+      };
+    },
+  },
+
+  // 41. Trois Semaines / Neuf Jours — restrictions
+  {
+    id: "three-weeks",
+    patterns: ["נחם", "ענינו"],
+    build: (p) => {
+      if (!p.isThreeWeeks) return null;
+      return {
+        id: "three-weeks",
+        tone: "warn",
+        title: "Trois Semaines (Bein haMétsarim)",
+        body:
+          "Du 17 Tamouz au 9 Av : période de deuil. À Min'ha du 9 Av, on insère « Na'hem » dans la Amida (« Boné Yérouchalayim ») et « 'Anénou » comme jour de jeûne.",
+      };
+    },
+  },
+
+  // 42. Mahir biRtso'on (Adon Olam / Yigdal en clôture)
+  // (Pas une note conditionnelle — laissé pour étude)
 ];
 
 /**
