@@ -38,6 +38,103 @@ function fmtFrShort(d: Date) {
   return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 }
 
+// ─── Helpers extraits pour réutilisation (records enregistrés) ───
+type Yahrzeit = { hYear: number; greg: Date; hebrew: string; note?: string };
+
+function computeYahrzeits(
+  deathHDate: HDate,
+  rite: "sefarade" | "ashkenaze",
+  count: number = 6
+): Yahrzeit[] {
+  const currentHYear = new HDate().getFullYear();
+  const startYear = Math.max(deathHDate.getFullYear() + 1, currentHYear);
+  const out: Yahrzeit[] = [];
+
+  for (let y = startYear; y < startYear + count; y++) {
+    const isLeap = HDate.isLeapYear(y);
+    const deathMonthName = deathHDate.getMonthName();
+    let monthName = deathMonthName;
+    let note: string | undefined;
+
+    if (deathMonthName === "Adar") {
+      if (isLeap) {
+        monthName = "Adar II";
+        note = "Année embolismique — Hazkara en Adar II";
+      }
+    } else if (deathMonthName === "Adar I") {
+      if (!isLeap) monthName = "Adar";
+    } else if (deathMonthName === "Adar II") {
+      if (!isLeap) monthName = "Adar";
+      else {
+        monthName = rite === "sefarade" ? "Adar II" : "Adar I";
+        note = rite === "sefarade"
+          ? "Coutume séfarade — Hazkara en Adar II"
+          : "Coutume ashkénaze — Hazkara en Adar I";
+      }
+    }
+
+    let day = deathHDate.getDate();
+    if (day === 30 && (monthName === "Cheshvan" || monthName === "Kislev")) {
+      const monthNum = HDate.monthFromName(monthName);
+      const daysInMonth = HDate.daysInMonth(monthNum, y);
+      if (daysInMonth < 30) {
+        day = 29;
+        note = (note ? note + " · " : "") + "Mois court — observé le 29";
+      }
+    }
+
+    try {
+      const monthNum = HDate.monthFromName(monthName);
+      const yzHd = new HDate(day, monthNum, y);
+      let greg = yzHd.greg();
+
+      const isChagDay = (d: Date) => {
+        const evs = HebrewCalendar.calendar({ start: d, end: d, il: false });
+        return evs.find((e) => e.getFlags() & flags.CHAG);
+      };
+      const isErevChag = (d: Date) => {
+        const next = new Date(d);
+        next.setDate(next.getDate() + 1);
+        return !!isChagDay(next);
+      };
+
+      const originalChag = isChagDay(greg);
+      let conflictReason: string | null = null;
+      const dow0 = greg.getDay();
+      if (originalChag) {
+        conflictReason = `Tombe pendant ${originalChag.render("fr") || originalChag.getDesc()} — devancée avant la fête`;
+      } else if (dow0 === 5 || dow0 === 6) {
+        conflictReason = "Tombe vendredi soir / Chabbat — devancée au jeudi soir";
+      }
+      if (conflictReason) {
+        const advanced = new Date(greg);
+        for (let i = 0; i < 14; i++) {
+          advanced.setDate(advanced.getDate() - 1);
+          const d = advanced.getDay();
+          if (d === 5 || d === 6) continue;
+          if (isChagDay(advanced)) continue;
+          if (isErevChag(advanced)) continue;
+          break;
+        }
+        greg = advanced;
+        note = (note ? note + " · " : "") + conflictReason;
+      }
+
+      out.push({ hYear: y, greg, hebrew: yzHd.renderGematriya(), note });
+    } catch { /* skip */ }
+  }
+  return out;
+}
+
+interface HazkaraRecord {
+  id: string;
+  deceased_name: string;
+  hebrew_day: number;
+  hebrew_month: string;
+  hebrew_year: number;
+  rite: "sefarade" | "ashkenaze";
+}
+
 const HazkaraWidget = () => {
   const { user } = useAuth();
   const [mode, setMode] = useState<"greg" | "heb">("greg");
