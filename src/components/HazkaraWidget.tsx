@@ -664,18 +664,29 @@ const HazkaraWidget = () => {
                   const active = !!reminders[key];
                   const loading = savingDate === key;
                   return (
-                    <button
-                      onClick={() => toggleReminder(y.greg, y.hebrew)}
-                      disabled={loading}
-                      className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-base transition-all"
-                      style={active
-                        ? { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }
-                        : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
-                      }
-                      title={active ? "Désactiver le rappel" : "Recevoir un rappel la veille"}
-                    >
-                      {loading ? "…" : active ? "🔔" : "🔕"}
-                    </button>
+                    <div className="flex-shrink-0 flex flex-col gap-1">
+                      <button
+                        onClick={() => toggleReminder(y.greg, y.hebrew)}
+                        disabled={loading}
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-base transition-all"
+                        style={active
+                          ? { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }
+                          : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                        }
+                        title={active ? "Désactiver le rappel" : "Recevoir un rappel la veille"}
+                      >
+                        {loading ? "…" : active ? "🔔" : "🔕"}
+                      </button>
+                      <button
+                        onClick={() => sharePoster(deceasedName || "—", y.greg, y.hebrew, `yz-${key}`)}
+                        disabled={sharingKey === `yz-${key}` || !deceasedName.trim()}
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-base transition-all disabled:opacity-40"
+                        style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}
+                        title={deceasedName.trim() ? "Partager l'affiche sur WhatsApp" : "Entrez d'abord le nom du défunt"}
+                      >
+                        {sharingKey === `yz-${key}` ? "…" : "📤"}
+                      </button>
+                    </div>
                   );
                 })()}
               </div>
