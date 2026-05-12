@@ -205,7 +205,13 @@ const Siddour = () => {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="h-[calc(100vh-50px)]">
+            <div
+              className="overflow-y-auto"
+              style={{
+                height: "calc(100dvh - 50px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))",
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
               {sidebar}
             </div>
           </SheetContent>
@@ -258,11 +264,11 @@ const Siddour = () => {
       {/* FAB mobile pour rouvrir le sommaire */}
       <button
           onClick={() => setDrawerOpen(true)}
-          className="lg:hidden fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition"
+          className="lg:hidden fixed right-5 z-30 w-14 h-14 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition"
           style={{
             background: "hsl(var(--primary))",
             color: "hsl(var(--primary-foreground))",
-            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))",
           }}
           aria-label="Sommaire du livre"
         >
