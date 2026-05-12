@@ -147,6 +147,19 @@ const HazkaraWidget = () => {
   const [deceasedName, setDeceasedName] = useState("");
   const [reminders, setReminders] = useState<Record<string, string>>({}); // observance_date -> id
   const [savingDate, setSavingDate] = useState<string | null>(null);
+  const [records, setRecords] = useState<HazkaraRecord[]>([]);
+  const [savingRecord, setSavingRecord] = useState(false);
+
+  const loadRecords = async () => {
+    if (!user) { setRecords([]); return; }
+    const { data } = await supabase
+      .from("hazkara_records")
+      .select("id, deceased_name, hebrew_day, hebrew_month, hebrew_year, rite")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    setRecords((data as any) || []);
+  };
+  useEffect(() => { loadRecords(); }, [user]);
 
   // Load existing reminders for this user
   useEffect(() => {
@@ -258,111 +271,62 @@ const HazkaraWidget = () => {
 
       const hebrewLabel = `${deathHDate.getDate()} ${MONTH_FR[deathHDate.getMonthName()] || deathHDate.getMonthName()} ${deathHDate.getFullYear()}`;
       const hebrewGematria = deathHDate.renderGematriya();
-
-      // Compute next 6 yahrzeits starting from current Hebrew year
-      const currentHYear = new HDate().getFullYear();
-      const startYear = Math.max(deathHDate.getFullYear() + 1, currentHYear);
-      const yahrzeits: { hYear: number; greg: Date; hebrew: string; note?: string }[] = [];
-
-      for (let y = startYear; y < startYear + 6; y++) {
-        const isLeap = HDate.isLeapYear(y);
-        const deathMonthName = deathHDate.getMonthName();
-        let monthName = deathMonthName;
-        let note: string | undefined;
-
-        // Adar logic
-        if (deathMonthName === "Adar") {
-          // Died in non-leap Adar → in leap year, observed in Adar II (both rites)
-          if (isLeap) {
-            monthName = "Adar II";
-            note = "Année embolismique — Hazkara en Adar II";
-          }
-        } else if (deathMonthName === "Adar I") {
-          if (!isLeap) monthName = "Adar";
-        } else if (deathMonthName === "Adar II") {
-          if (!isLeap) {
-            // Non-leap year — observed simply in Adar
-            monthName = "Adar";
-          } else {
-            // Leap year — controverse :
-            // Séfarade : Hazkara en Adar II (jeûne en Adar I si coutume)
-            // Ashkénaze : Hazkara en Adar I
-            monthName = rite === "sefarade" ? "Adar II" : "Adar I";
-            note = rite === "sefarade"
-              ? "Coutume séfarade — Hazkara en Adar II (jeûne éventuel en Adar I)"
-              : "Coutume ashkénaze — Hazkara en Adar I";
-          }
-        }
-
-        // Cheshvan / Kislev — handle 30 days for short years
-        let day = deathHDate.getDate();
-        if (day === 30 && (monthName === "Cheshvan" || monthName === "Kislev")) {
-          // Check if month has 30 days that year
-          const monthNum = HDate.monthFromName(monthName);
-          const daysInMonth = HDate.daysInMonth(monthNum, y);
-          if (daysInMonth < 30) {
-            day = 29;
-            note = (note ? note + " · " : "") + "Mois court — observé le 29";
-          }
-        }
-
-        try {
-          const monthNum = HDate.monthFromName(monthName);
-          const yzHd = new HDate(day, monthNum, y);
-          let greg = yzHd.greg();
-
-          // Helpers
-          const isChagDay = (d: Date) => {
-            const evs = HebrewCalendar.calendar({ start: d, end: d, il: false });
-            return evs.find((e) => e.getFlags() & flags.CHAG);
-          };
-          const isErevChag = (d: Date) => {
-            const next = new Date(d);
-            next.setDate(next.getDate() + 1);
-            return !!isChagDay(next);
-          };
-
-          // Détection du conflit : Vendredi, Chabbat, ou Yom Tov
-          let originalChag = isChagDay(greg);
-          let conflictReason: string | null = null;
-          const dow0 = greg.getDay();
-          if (originalChag) {
-            conflictReason = `Tombe pendant ${originalChag.render("fr") || originalChag.getDesc()} — devancée avant la fête (sortie des étoiles)`;
-          } else if (dow0 === 5 || dow0 === 6) {
-            conflictReason = "Tombe un vendredi soir / Chabbat — devancée au jeudi soir précédent (sortie des étoiles)";
-          }
-
-          // Reculer jour par jour tant que la veille tombe sur Vendredi,
-          // Chabbat, Yom Tov, ou veille de Yom Tov (la bougie ne peut être
-          // allumée la veille de fête car elle n'aurait pas le temps de brûler).
-          if (conflictReason) {
-            const advanced = new Date(greg);
-            for (let i = 0; i < 14; i++) {
-              advanced.setDate(advanced.getDate() - 1);
-              const d = advanced.getDay();
-              if (d === 5 || d === 6) continue; // vendredi / chabbat
-              if (isChagDay(advanced)) continue; // yom tov
-              if (isErevChag(advanced)) continue; // veille de yom tov
-              break;
-            }
-            greg = advanced;
-            note = (note ? note + " · " : "") + conflictReason;
-          }
-
-          yahrzeits.push({
-            hYear: y,
-            greg,
-            hebrew: yzHd.renderGematriya(),
-            note,
-          });
-        } catch { /* skip */ }
-      }
-
-      return { hebrewLabel, hebrewGematria, yahrzeits };
+      const yahrzeits = computeYahrzeits(deathHDate, rite, 6);
+      return { hebrewLabel, hebrewGematria, deathHDate, yahrzeits };
     } catch {
       return null;
     }
   }, [mode, gregDate, afterSunset, hebDay, hebMonth, hebYear, rite]);
+
+  const saveCurrentRecord = async () => {
+    if (!user) { toast.error("Connectez-vous pour enregistrer"); return; }
+    if (!result) { toast.error("Calculez d'abord la date"); return; }
+    if (!deceasedName.trim()) { toast.error("Entrez le nom du défunt"); return; }
+    setSavingRecord(true);
+    try {
+      const { error } = await supabase.from("hazkara_records").insert({
+        user_id: user.id,
+        deceased_name: deceasedName.trim(),
+        hebrew_day: result.deathHDate.getDate(),
+        hebrew_month: result.deathHDate.getMonthName(),
+        hebrew_year: result.deathHDate.getFullYear(),
+        rite,
+      });
+      if (error) throw error;
+      toast.success("Défunt enregistré", { duration: 2000 });
+      setDeceasedName("");
+      await loadRecords();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    } finally {
+      setSavingRecord(false);
+    }
+  };
+
+  const deleteRecord = async (id: string) => {
+    if (!confirm("Supprimer ce défunt et ses rappels ?")) return;
+    await supabase.from("hazkara_records").delete().eq("id", id);
+    await loadRecords();
+    toast.success("Défunt supprimé", { duration: 2000 });
+  };
+
+  // Compute next yahrzeit per saved record
+  const recordsWithNext = useMemo(() => {
+    return records.map((r) => {
+      try {
+        const isLeap = HDate.isLeapYear(r.hebrew_year);
+        let monthName = r.hebrew_month;
+        if (monthName === "Adar" && isLeap) monthName = "Adar II";
+        if ((monthName === "Adar I" || monthName === "Adar II") && !isLeap) monthName = "Adar";
+        const monthNum = HDate.monthFromName(monthName);
+        const deathHDate = new HDate(r.hebrew_day, monthNum, r.hebrew_year);
+        const next = computeYahrzeits(deathHDate, r.rite, 1)[0];
+        return { record: r, next };
+      } catch {
+        return { record: r, next: null as Yahrzeit | null };
+      }
+    });
+  }, [records]);
 
   return (
     <motion.div
