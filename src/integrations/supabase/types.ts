@@ -1372,7 +1372,32 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      synagogue_donation_slugs: {
+        Row: {
+          custom_donation_slug: string | null
+          is_onboarded: boolean | null
+          synagogue_id: string | null
+        }
+        Insert: {
+          custom_donation_slug?: string | null
+          is_onboarded?: boolean | null
+          synagogue_id?: string | null
+        }
+        Update: {
+          custom_donation_slug?: string | null
+          is_onboarded?: boolean | null
+          synagogue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "synagogue_stripe_accounts_synagogue_id_fkey"
+            columns: ["synagogue_id"]
+            isOneToOne: true
+            referencedRelation: "synagogue_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       assign_cerfa_number: { Args: { _donation_id: string }; Returns: string }
