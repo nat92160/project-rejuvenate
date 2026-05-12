@@ -120,7 +120,13 @@ function getEvents(hd: HDate, il: boolean) {
 }
 
 export function detectPeriod(now: Date = new Date(), inIsrael = false): FullPeriod {
-  const hd = new HDate(now);
+  // Halakhic day rollover : après le coucher du soleil approximatif (18h local),
+  // on est déjà au jour hébraïque suivant. Heuristique simple sans GPS pour
+  // s'assurer que les annotations bascules à temps (Yom Tov, Roch Hodech, etc.).
+  const hd = (() => {
+    const base = new HDate(now);
+    return now.getHours() >= 18 ? base.next() : base;
+  })();
   const events = getEvents(hd, inIsrael);
   const desc = events.map(e => e.getDesc().toLowerCase());
   const has = (k: string) => desc.some(d => d.includes(k));
