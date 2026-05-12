@@ -7,6 +7,8 @@ import { useSiddourFullOffice } from "@/hooks/useSiddourFullOffice";
 import { detectOfficeNow, getOfficeMeta } from "@/lib/siddourCatalog";
 import SiddourBookSidebar from "@/components/siddour/SiddourBookSidebar";
 import SiddourBookReader from "@/components/siddour/SiddourBookReader";
+import LiturgicalContextBar from "@/components/siddour/LiturgicalContextBar";
+import { getLiturgicalContext, type LiturgicalPeriod } from "@/lib/liturgicalContext";
 
 const FONT_KEY = "siddour_book_font_v1";
 
@@ -20,6 +22,7 @@ const Siddour = () => {
   const [office, setOffice] = useState(initialOffice);
   const [activeSection, setActiveSection] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [litContext, setLitContext] = useState<LiturgicalPeriod>(() => getLiturgicalContext());
 
   const [fontSize, setFontSize] = useState<number>(() => {
     try { return Number(localStorage.getItem(FONT_KEY)) || 22; } catch { return 22; }
@@ -203,6 +206,10 @@ const Siddour = () => {
         {/* Main content */}
         <main className="flex-1 min-w-0">
           <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
+            {/* Contexte liturgique du jour (visible mobile + desktop) */}
+            <div className="mb-5">
+              <LiturgicalContextBar context={litContext} onContextChange={setLitContext} />
+            </div>
             {loading && sections.length === 0 ? (
               <div className="py-24 text-center">
                 <div className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full mx-auto"
