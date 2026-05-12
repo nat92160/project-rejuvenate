@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, BookOpen, Languages, Minus, Plus, Sparkles, X } from "lucide-react";
+import { ArrowLeft, BookOpen, Minus, Plus, X } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useSiddourRite } from "@/hooks/useSiddourRite";
 import { useSiddourFullOffice } from "@/hooks/useSiddourFullOffice";
@@ -20,7 +20,6 @@ const Siddour = () => {
   const [office, setOffice] = useState(initialOffice);
   const [activeSection, setActiveSection] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [autoTranslateIndices, setAutoTranslateIndices] = useState<Set<number>>(new Set());
 
   const [fontSize, setFontSize] = useState<number>(() => {
     try { return Number(localStorage.getItem(FONT_KEY)) || 22; } catch { return 22; }
@@ -34,11 +33,6 @@ const Siddour = () => {
 
   const { data, loading, error } = useSiddourFullOffice(rite, office);
   const sections = data?.sections || [];
-
-  // Reset des sections auto-traduites quand on change d'office/rite
-  useEffect(() => {
-    setAutoTranslateIndices(new Set());
-  }, [office, rite]);
 
   // Refs des sections pour scrollspy
   const sectionRefs = useRef<Map<number, HTMLElement>>(new Map());
@@ -88,11 +82,6 @@ const Siddour = () => {
     }
     setDrawerOpen(false);
   }, []);
-
-  const handleTranslateAll = useCallback(() => {
-    if (sections.length === 0) return;
-    setAutoTranslateIndices(new Set(sections.map((_, i) => i)));
-  }, [sections]);
 
   const officeMeta = useMemo(() => getOfficeMeta(office), [office]);
 
@@ -214,39 +203,6 @@ const Siddour = () => {
         {/* Main content */}
         <main className="flex-1 min-w-0">
           <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
-            {/* Bandeau IA + actions */}
-            {!loading && !error && sections.length > 0 && (
-              <div
-                className="mb-8 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"
-                style={{
-                  background: "hsl(var(--gold) / 0.06)",
-                  border: "1px solid hsl(var(--gold) / 0.2)",
-                }}
-              >
-                <div className="flex items-start gap-2 flex-1 min-w-0">
-                  <Sparkles className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "hsl(var(--gold-matte))" }} />
-                  <div className="text-[11px] sm:text-xs leading-relaxed text-muted-foreground">
-                    <span className="font-semibold" style={{ color: "hsl(var(--gold-matte))" }}>
-                      Traduction d'étude assistée par IA.
-                    </span>{" "}
-                    Pour la pratique liturgique, réfère-toi à un siddour imprimé validé par ton rav.
-                  </div>
-                </div>
-                <button
-                  onClick={handleTranslateAll}
-                  disabled={autoTranslateIndices.size === sections.length}
-                  className="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-50"
-                  style={{
-                    background: "hsl(var(--primary))",
-                    color: "hsl(var(--primary-foreground))",
-                  }}
-                >
-                  <Languages className="w-3.5 h-3.5" />
-                  {autoTranslateIndices.size === sections.length ? "Tout traduit" : "Tout traduire"}
-                </button>
-              </div>
-            )}
-
             {loading && sections.length === 0 ? (
               <div className="py-24 text-center">
                 <div className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full mx-auto"
@@ -269,7 +225,6 @@ const Siddour = () => {
                 registerSectionRef={registerSectionRef}
                 rite={rite}
                 office={office}
-                autoTranslateIndices={autoTranslateIndices}
                 onJumpToSection={handleSelectSection}
               />
             )}

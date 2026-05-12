@@ -1,7 +1,6 @@
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import { isInstructionOnly } from "@/lib/utils";
 import type { FullSection } from "@/hooks/useSiddourFullOffice";
-import SiddourSectionTranslation from "./SiddourSectionTranslation";
 import SiddourSectionCommentary from "./SiddourSectionCommentary";
 import SiddourSectionNotes from "./SiddourSectionNotes";
 import { getLiturgicalContext, processAmidaVerses } from "@/lib/liturgicalContext";
@@ -16,8 +15,6 @@ interface Props {
   registerSectionRef: (index: number, el: HTMLElement | null) => void;
   rite: SiddourRite;
   office: string;
-  /** Indices des sections à traduire automatiquement (déclenché par "Tout traduire") */
-  autoTranslateIndices?: Set<number>;
   /** Naviguer vers la section index dans la liste */
   onJumpToSection?: (index: number) => void;
 }
@@ -68,7 +65,7 @@ function isHazaraPrayerLine(html: string, isFastDay: boolean): boolean {
 }
 
 const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
-  ({ sections, fontSize, registerSectionRef, rite, office, autoTranslateIndices, onJumpToSection }, ref) => {
+  ({ sections, fontSize, registerSectionRef, rite, office, onJumpToSection }, ref) => {
     // Tick toutes les minutes pour que la période hébraïque (et donc les
     // annotations Yom Tov, Roch Hodech, Tal/Guéchèm, etc.) bascule
     // automatiquement au coucher du soleil et au passage de date.
@@ -232,17 +229,6 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                 );
               })}
             </div>
-
-            {/* Traduction française à la demande */}
-            <SiddourSectionTranslation
-              rite={rite}
-              office={office}
-              sectionIndex={sIdx}
-              sectionTitle={sec.title}
-              hebrew={sec.hebrew}
-              fontSize={fontSize}
-              autoTranslate={autoTranslateIndices?.has(sIdx)}
-            />
 
             {/* Commentaire d'étude IA à la demande */}
             <SiddourSectionCommentary
