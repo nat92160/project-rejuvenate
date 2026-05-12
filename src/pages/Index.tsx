@@ -33,7 +33,7 @@ const TehilimCombinedWidget = lazy(() => import("@/components/TehilimCombinedWid
 const DateConverterWidget = lazy(() => import("@/components/DateConverterWidget"));
 const MizrahCompass = lazy(() => import("@/components/MizrahCompass"));
 const RoshHodeshWidget = lazy(() => import("@/components/RoshHodeshWidget"));
-const MariagesWidget = lazy(() => import("@/components/MariagesWidget"));
+const HalakhicDatesView = lazy(() => import("@/components/HalakhicDatesView"));
 const AlarmWidget = lazy(() => import("@/components/AlarmWidget"));
 const ShabbatSpeciauxWidget = lazy(() => import("@/components/ShabbatSpeciauxWidget"));
 const PresidentDashboard = lazy(() => import("@/components/PresidentDashboard"));
@@ -350,7 +350,7 @@ const IndexContent = () => {
       case "convertisseur": return <Lazy><DateConverterWidget /></Lazy>;
       case "mizrah": return <Lazy><MizrahCompass /></Lazy>;
       case "roshhodesh": return <Lazy><RoshHodeshWidget /></Lazy>;
-      case "mariages": return <Lazy><MariagesWidget /></Lazy>;
+      case "mariages": return <Lazy><HalakhicDatesView /></Lazy>;
       case "reveil": return <Lazy><AlarmWidget /></Lazy>;
       case "annonces": return <Lazy><AnnoncesWidget /></Lazy>;
       case "refoua": return <Lazy><RefouaChelemaWidget /></Lazy>;
