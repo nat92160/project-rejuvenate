@@ -342,6 +342,76 @@ const HazkaraWidget = () => {
         Calcul de la date hébraïque du décès et des prochaines azkarot. La hazkara est observée chaque année à la date hébraïque du décès.
       </p>
 
+      {/* Mes défunts enregistrés */}
+      {user && recordsWithNext.length > 0 && (
+        <div className="mt-4 p-4 rounded-xl border border-border" style={{ background: "hsl(var(--gold) / 0.04)" }}>
+          <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-2">
+            🕯️ Mes défunts enregistrés
+          </h4>
+          <div className="space-y-2">
+            {recordsWithNext.map(({ record, next }) => {
+              const veille = next ? new Date(next.greg) : null;
+              if (veille) veille.setDate(veille.getDate() - 1);
+              const key = next
+                ? `${next.greg.getFullYear()}-${String(next.greg.getMonth() + 1).padStart(2, "0")}-${String(next.greg.getDate()).padStart(2, "0")}`
+                : "";
+              const active = !!reminders[key];
+              const loading = savingDate === key;
+              return (
+                <div
+                  key={record.id}
+                  className="flex items-start gap-2 p-3 rounded-lg bg-card border border-border"
+                  style={{ borderLeft: "3px solid hsl(var(--gold))" }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-foreground truncate">{record.deceased_name}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {record.hebrew_day} {MONTH_FR[record.hebrew_month] || record.hebrew_month} {record.hebrew_year}
+                    </p>
+                    {next && veille && (
+                      <div className="mt-1.5 text-[11px] leading-relaxed">
+                        <p className="text-foreground capitalize">
+                          🕯️ {fmtFrShort(veille)} au soir
+                        </p>
+                        <p className="text-foreground capitalize">
+                          🪦 {fmtFrShort(next.greg)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    {next && (
+                      <button
+                        onClick={() => {
+                          setDeceasedName(record.deceased_name);
+                          setTimeout(() => toggleReminder(next.greg, next.hebrew), 0);
+                        }}
+                        disabled={loading}
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all"
+                        style={active
+                          ? { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }
+                          : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                        }
+                        title={active ? "Désactiver le rappel" : "Activer le rappel"}
+                      >
+                        {loading ? "…" : active ? "🔔" : "🔕"}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => deleteRecord(record.id)}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm bg-muted text-muted-foreground hover:text-destructive transition-all"
+                      title="Supprimer"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Mode toggle */}
       <div className="flex gap-1.5 mt-4">
         <button
@@ -510,8 +580,18 @@ const HazkaraWidget = () => {
                 className="w-full px-3 py-2 rounded-lg bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
               />
               <p className="text-[10px] text-muted-foreground mt-1.5 italic">
-                Cliquez sur 🔔 pour recevoir une notification la veille au soir.
+                Cliquez sur 🔔 pour un rappel ponctuel, ou enregistrez le défunt pour le retrouver chaque année.
               </p>
+              {user && (
+                <button
+                  onClick={saveCurrentRecord}
+                  disabled={savingRecord || !deceasedName.trim()}
+                  className="mt-2 w-full px-3 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                  style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}
+                >
+                  {savingRecord ? "Enregistrement…" : "💾 Enregistrer ce défunt"}
+                </button>
+              )}
             </div>
             {result.yahrzeits.map((y) => (
               <div
