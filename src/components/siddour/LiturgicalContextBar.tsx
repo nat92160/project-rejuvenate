@@ -104,21 +104,24 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
           type="date"
           value={selectedDate}
           onChange={(e) => handleDateChange(e.target.value)}
-          className="rounded-md px-2 py-1 text-[11px] font-semibold border"
+          className="rounded-md px-2 py-1.5 font-semibold border"
           style={{
             background: prayerMode ? "#1a1a1a" : "hsl(var(--background))",
             color: pmText || "hsl(var(--foreground))",
             borderColor: pmBorder || "hsl(var(--gold) / 0.25)",
-            minHeight: 28,
+            minHeight: 36,
+            fontSize: 16, // évite le zoom auto iOS
+            WebkitAppearance: "none",
           }}
         />
         {selectedDate !== todayStr && (
           <button
             onClick={resetToToday}
-            className="text-[10px] font-bold px-2 py-1 rounded-md border-none cursor-pointer"
+            className="text-[11px] font-bold px-3 py-2 rounded-md border-none cursor-pointer active:scale-95 transition"
             style={{
               background: "hsl(var(--gold) / 0.15)",
               color: "hsl(var(--gold-matte))",
+              minHeight: 36,
             }}
           >
             ↻ Aujourd'hui
