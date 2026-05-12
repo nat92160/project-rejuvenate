@@ -10,6 +10,7 @@ import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { useGpsProfileSync } from "@/hooks/useGpsProfileSync";
 import { supabase } from "@/integrations/supabase/client";
 import { registerNativePush, clearPushBadge, onNativePushActionPerformed, requestNativePushPermission } from "@/lib/capacitorPush";
+import { trackAppLaunch, requestAppReview } from "@/lib/appReview";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import MinyanJoin from "./pages/MinyanJoin.tsx";
@@ -90,6 +91,13 @@ async function saveNativePushToken(userId: string, deviceToken: string) {
 function AppInner() {
   useServiceWorkerUpdate();
   useGpsProfileSync();
+
+  // ─── App Store review prompt (iOS native) ───
+  useEffect(() => {
+    trackAppLaunch();
+    const t = setTimeout(() => { void requestAppReview(); }, 30_000);
+    return () => clearTimeout(t);
+  }, []);
 
   const { user, loading } = useAuth();
   const permissionRequestedRef = useRef(false);
