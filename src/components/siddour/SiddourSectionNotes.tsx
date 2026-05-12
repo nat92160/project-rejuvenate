@@ -3,6 +3,7 @@ import type { LiturgicalNote } from "@/lib/siddourLiturgicalNotes";
 
 interface Props {
   notes: LiturgicalNote[];
+  compact?: boolean;
 }
 
 const TONE_STYLE: Record<LiturgicalNote["tone"], { bg: string; border: string; text: string; icon: JSX.Element }> = {
@@ -26,17 +27,17 @@ const TONE_STYLE: Record<LiturgicalNote["tone"], { bg: string; border: string; t
   },
 };
 
-const SiddourSectionNotes = ({ notes }: Props) => {
+const SiddourSectionNotes = ({ notes, compact = false }: Props) => {
   if (!notes || notes.length === 0) return null;
 
   return (
-    <div className="mb-6 space-y-2.5">
+    <div dir="ltr" className={`${compact ? "my-3" : "mb-6"} space-y-2.5`}>
       {notes.map(n => {
         const s = TONE_STYLE[n.tone];
         return (
           <div
             key={n.id}
-            className="rounded-xl px-3.5 py-3 flex gap-2.5"
+            className={`${compact ? "rounded-lg px-3 py-2.5" : "rounded-xl px-3.5 py-3"} flex gap-2.5 text-left`}
             style={{ background: s.bg, border: `1px solid ${s.border}` }}
           >
             <span className="shrink-0 mt-0.5" style={{ color: s.text }}>{s.icon}</span>
