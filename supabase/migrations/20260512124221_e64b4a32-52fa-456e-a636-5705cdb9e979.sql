@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.bump_support_thread() FROM PUBLIC, anon, authenticated;
