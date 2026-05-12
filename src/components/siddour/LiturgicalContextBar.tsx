@@ -132,7 +132,8 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
       {/* Summary line */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between bg-transparent border-none cursor-pointer p-0"
+        className="w-full flex items-center justify-between bg-transparent border-none cursor-pointer py-1.5 active:opacity-70"
+        style={{ minHeight: 36 }}
       >
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: pmMuted || "hsl(var(--muted-foreground))" }}>
