@@ -194,7 +194,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                       <button
                         key={opt.key}
                         onClick={() => handleToggle(opt.key)}
-                        className="px-3 py-2 rounded-lg text-[11px] font-bold border-none cursor-pointer transition-all active:scale-95" style-min="36"
+                        className="px-3 py-2 rounded-lg text-[11px] font-bold border-none cursor-pointer transition-all active:scale-95"
                         style={{
                           background: isActive ? "hsl(var(--gold) / 0.18)" : (prayerMode ? "#222" : "hsl(var(--muted))"),
                           color: isActive ? "hsl(var(--gold-matte))" : (pmMuted || "hsl(var(--muted-foreground))"),
@@ -220,7 +220,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                       <button
                         key={opt.key}
                         onClick={() => handleToggle(opt.key)}
-                        className="px-3 py-2 rounded-lg text-[11px] font-bold border-none cursor-pointer transition-all active:scale-95" style-min="36"
+                        className="px-3 py-2 rounded-lg text-[11px] font-bold border-none cursor-pointer transition-all active:scale-95"
                         style={{
                           background: isActive ? "hsl(var(--gold) / 0.18)" : (prayerMode ? "#222" : "hsl(var(--muted))"),
                           color: isActive ? "hsl(var(--gold-matte))" : (pmMuted || "hsl(var(--muted-foreground))"),
@@ -246,7 +246,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                       <button
                         key={opt.key}
                         onClick={() => handleToggle(opt.key)}
-                        className="px-3 py-2 rounded-lg text-[11px] font-bold border-none cursor-pointer transition-all active:scale-95" style-min="36"
+                        className="px-3 py-2 rounded-lg text-[11px] font-bold border-none cursor-pointer transition-all active:scale-95"
                         style={{
                           background: isActive ? "hsl(var(--gold) / 0.18)" : (prayerMode ? "#222" : "hsl(var(--muted))"),
                           color: isActive ? "hsl(var(--gold-matte))" : (pmMuted || "hsl(var(--muted-foreground))"),
