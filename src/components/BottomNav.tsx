@@ -85,9 +85,22 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
     };
     loadMicro();
 
-    // Refresh every 60s
-    const id = setInterval(loadMicro, 60000);
-    return () => clearInterval(id);
+    // Refresh every 5 min, only when tab is visible (battery-friendly)
+    const id = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      loadMicro();
+    }, 5 * 60 * 1000);
+
+    // Re-fetch immediately when user returns to the app
+    const onVisibility = () => {
+      if (!document.hidden) loadMicro();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [city]);
 
   useEffect(() => {
