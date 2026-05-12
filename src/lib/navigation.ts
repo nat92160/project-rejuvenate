@@ -22,7 +22,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "mariages", icon: "💍", label: "Mariages", modes: ["fidele", "president"] },
   { id: "convertisseur", icon: "🔄", label: "Convertir", modes: ["fidele", "president"] },
   { id: "mizrah", icon: "🧭", label: "Mizra'h", modes: ["fidele", "president"] },
-  { id: "reveil", icon: "⏰", label: "Réveil", modes: ["fidele", "president"] },
+  { id: "reveil", icon: "🔔", label: "Réveil", modes: ["fidele", "president"] },
   { id: "annonces", icon: "📢", label: "Annonces", modes: ["fidele", "president"] },
   { id: "brakhot", icon: "🙌", label: "Brakhot", modes: ["fidele", "president"] },
   { id: "refoua", icon: "🙏", label: "Refoua", modes: ["fidele", "president"] },
