@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { HDate, months as HMonths } from "@hebcal/core";
+import { HDate } from "@hebcal/core";
 
 const HEBREW_MONTHS = [
   { value: "Nisan", label: "Nissan (ניסן)" },
@@ -48,11 +48,11 @@ const HazkaraWidget = () => {
         const [y, m, d] = gregDate.split("-").map(Number);
         if (!y || !m || !d) return null;
         const gd = new Date(y, m - 1, d);
-        deathHDate = new HDate(gd);
         if (afterSunset) {
-          // After sunset = next Hebrew day
-          deathHDate = new HDate(deathHDate.abs() + 1);
+          // After sunset = next Hebrew day (use next civil day for conversion)
+          gd.setDate(gd.getDate() + 1);
         }
+        deathHDate = new HDate(gd);
       } else {
         const day = parseInt(hebDay);
         const year = parseInt(hebYear);
