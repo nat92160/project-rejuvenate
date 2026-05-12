@@ -1,3 +1,5 @@
+import { getLiturgicalContext } from "@/lib/liturgicalContext";
+
 export interface OfficeMeta {
   key: string;
   label: string;
@@ -55,9 +57,15 @@ export function getOfficeMeta(key: string): OfficeMeta | undefined {
   return ALL_OFFICES.find(o => o.key === key);
 }
 
-export function detectOfficeNow(): string {
-  const h = new Date().getHours();
-  const day = new Date().getDay();
+export function detectOfficeNow(date: Date = new Date()): string {
+  const ctx = getLiturgicalContext(date);
+  if (ctx.hanoucca) return "hanukkah";
+  if (ctx.pourim) return "purim";
+  if (ctx.holHaMoed || ctx.yomTov) return "fetes";
+  if (ctx.roshHodesh && !ctx.shabbat) return "rosh_hodesh";
+
+  const h = date.getHours();
+  const day = date.getDay();
   if (day === 6 || (day === 5 && h >= 16)) return "shabbat";
   if (h < 12) return "shacharit";
   if (h < 17) return "minha";

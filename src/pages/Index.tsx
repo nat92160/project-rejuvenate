@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { Navigate } from "react-router-dom";
 import { CityProvider } from "@/hooks/useCity";
 import { RoleProvider, useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +18,7 @@ import { useDonationsEnabled } from "@/hooks/useDonationsEnabled";
 import { Droplets, ExternalLink } from "lucide-react";
 import GreetingHeader from "@/components/GreetingHeader";
 import QuickActions from "@/components/QuickActions";
+import { detectOfficeNow } from "@/lib/siddourCatalog";
 const SpiritualTimeline = lazy(() => import("@/components/SpiritualTimeline"));
 
 // Lazy-loaded modules
@@ -342,7 +344,7 @@ const IndexContent = () => {
             <p className="text-sm mt-2 text-muted-foreground">Bientôt disponible</p>
           </div>
         );
-      case "siddour": return <Lazy><SiddourWidget initialOffice={currentPrayer === "Cha'harit" ? "shacharit" : currentPrayer === "Min'ha" ? "minha" : "arvit"} /></Lazy>;
+      case "siddour": return <Navigate to={`/siddour?office=${detectOfficeNow()}`} replace />;
       case "tehilimlibre":
       case "tehilim": return <Lazy><TehilimCombinedWidget /></Lazy>;
       case "synagogue": return <Lazy><FideleSynagogueView /></Lazy>;
