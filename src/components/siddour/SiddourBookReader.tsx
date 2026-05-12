@@ -49,6 +49,24 @@ function isShemaSecondaryLine(html: string): boolean {
   return normalizeHebrewMatch(html).includes(SHEMA_SECONDARY);
 }
 
+function isHazaraPrayerLine(html: string, isFastDay: boolean): boolean {
+  const text = normalizeHebrewMatch(html);
+  const compact = text.replace(/\s+/g, "");
+
+  const hazaraPatterns = [
+    "קדושה", "נקדישך", "נקדש", "כתריתנו", "קדושקדושקדוש", "ברוךכבוד", "ימלך",
+    "מודיםדרבנן", "אלהיכלבשר", "ברוךאלההודאות",
+    "ברכתכהנים", "כהנים", "הכהן", "נשיאותכפים", "לברךאתישראל", "אשרקדשנובקדשתושלאהרן", "יברכך", "יאר", "ישא",
+    "ברכנובברכההמשלשת", "ברכנו בברכה המשולשת", "כןיהירצון", "רבוןהעולמים",
+  ];
+
+  if (hazaraPatterns.some((pattern) => compact.includes(pattern.replace(/\s+/g, "")))) {
+    return true;
+  }
+
+  return isFastDay && (compact.includes("עננו") || compact.includes("העונהלעמובעתצרה"));
+}
+
 const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
   ({ sections, fontSize, registerSectionRef, rite, office, autoTranslateIndices, onJumpToSection }, ref) => {
     const period = useMemo(() => detectPeriod(new Date(), false), []);
@@ -155,6 +173,15 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                   );
                 }
                 if (isInstructionOnly(verse)) {
+                  if (sec.isHazara && isHazaraPrayerLine(verse, period.isFastDay)) {
+                    return (
+                      <div key={i}>
+                        {noteNode}
+                        <p style={{ marginBottom: "1.1rem", lineHeight: 2.4 }}
+                          dangerouslySetInnerHTML={{ __html: verse }} />
+                      </div>
+                    );
+                  }
                   if (isShemaSecondaryLine(verse)) {
                     return (
                       <div key={i}>
