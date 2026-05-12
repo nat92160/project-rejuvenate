@@ -601,11 +601,11 @@ const RULES: Rule[] = [
   {
     id: "kedusha-hazara",
     requireHazara: true,
-    patterns: ["נקדש את שמך", "נקדישך ונעריצך", "קדוש קדוש קדוש", "לדור ודור"],
+    patterns: ["נקדש את שמך", "נקדישך ונעריצך", "כתר יתנו לך"],
     build: () => ({
       id: "kedusha-hazara",
       tone: "fete",
-      anchors: ["נקדש את שמך", "נקדישך ונעריצך", "קדוש קדוש קדוש"],
+      anchors: ["נקדש את שמך", "נקדישך ונעריצך", "כתר יתנו לך"],
       title: "Kédoucha — debout, en chœur",
       body:
         "Pendant la répétition (Hazarat haChats), l'assemblée se lève, joint les pieds et répond à voix haute avec le 'Hazan : « Kadoch, Kadoch, Kadoch… », « Baroukh kévod… » et « Yimlokh… ». On reste debout jusqu'à la fin de la Kédoucha.",
@@ -616,11 +616,12 @@ const RULES: Rule[] = [
   {
     id: "modim-derabbanan",
     requireHazara: true,
-    patterns: ["מודים אנחנו לך"],
+    // Cible la version deRabbanan (qui contient "Élohé khol bassar") plutôt que le Modim ordinaire
+    patterns: ["אלהי כל בשר", "ברכות והודאות לשמך הגדול", "ברוך אל ההודאות"],
     build: () => ({
       id: "modim-derabbanan",
       tone: "info",
-      anchors: ["מודים אנחנו לך"],
+      anchors: ["אלהי כל בשר", "ברוך אל ההודאות"],
       title: "Modim deRabbanan",
       body:
         "Pendant que le 'Hazan dit « Modim », l'assemblée s'incline et récite à voix basse le « Modim deRabbanan » (« Modim anahnou Lakh… Élohé khol bassar… »), puis se redresse au mot « Hachem ».",
