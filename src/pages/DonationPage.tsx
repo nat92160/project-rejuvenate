@@ -269,10 +269,29 @@ const DonationPage = () => {
     setSubmitting(false);
   };
 
-  if (loading) {
+  if (loading || dgLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (donationsGloballyDisabled && !success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="text-center max-w-sm">
+          <p className="text-4xl mb-4">🚫</p>
+          <h1 className="text-xl font-bold text-foreground">Dons temporairement indisponibles</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Les dons en ligne sont actuellement désactivés sur l'ensemble de la plateforme.
+            Merci de revenir plus tard.
+          </p>
+          <Button onClick={() => navigate("/")} variant="outline" className="mt-6 rounded-xl">
+            <Home className="w-4 h-4 mr-2" />
+            Retour à l'accueil
+          </Button>
+        </div>
       </div>
     );
   }
