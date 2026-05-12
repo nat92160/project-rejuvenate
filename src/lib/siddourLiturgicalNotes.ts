@@ -70,6 +70,34 @@ export interface LiturgicalPeriod {
   isOmer: boolean;
 }
 
+// Helpers contextuels supplémentaires
+export interface ExtendedContext {
+  /** Motsaé Chabbat (samedi soir, dimanche après le coucher) */
+  isMotsaeShabbat: boolean;
+  /** Veille de Yom Tov (Erev Pessa'h, Erev Soukot, Erev Chavou'ot, Erev Roch HaChana, Erev Yom Kippour) */
+  isErevYomTov: boolean;
+  /** Vendredi à partir de l'après-midi (Erev Chabbat) */
+  isErevShabbat: boolean;
+  /** Nous sommes en plein Pessa'h (Yom Tov ou 'Hol haMo'ed) */
+  isPesach: boolean;
+  /** Nous sommes Chavou'ot */
+  isShavuot: boolean;
+  /** Nous sommes Soukot (Yom Tov ou 'Hol haMo'ed) ou Chemini Atseret */
+  isSukkot: boolean;
+  /** Nous sommes Roch HaChana */
+  isRoshHashana: boolean;
+  /** Nous sommes Yom Kippour */
+  isYomKippur: boolean;
+  /** Mois de Eloul (avant Roch HaChana) */
+  isElul: boolean;
+  /** Tisha BeAv */
+  isTishaBeav: boolean;
+  /** 9 Av — période des Trois Semaines (17 Tamouz → 9 Av) */
+  isThreeWeeks: boolean;
+}
+
+export type FullPeriod = LiturgicalPeriod & ExtendedContext;
+
 function isBetweenHebrewDates(hd: HDate, fromMonth: number, fromDay: number, toMonth: number, toDay: number): boolean {
   // Compare via abs days (gère le passage d'année hébraïque)
   const year = hd.getFullYear();
@@ -185,7 +213,27 @@ export function detectPeriod(now: Date = new Date(), inIsrael = false): Liturgic
     isMondayOrThursday,
     hasMussaf,
     isOmer,
-  };
+    // Champs étendus
+    isMotsaeShabbat:
+      (dow === 0 && now.getHours() < 4) || // dimanche très tôt
+      (dow === 6 && now.getHours() >= 20),  // samedi après nuit
+    isErevShabbat: dow === 5 && now.getHours() >= 12,
+    isErevYomTov: false || // approximé via veille de fête majeure
+      (hd.getMonth() === 1 && hd.getDate() === 14) || // Erev Pessa'h
+      (hd.getMonth() === 3 && hd.getDate() === 5) ||  // Erev Chavou'ot
+      (hd.getMonth() === 7 && (hd.getDate() === 9 || hd.getDate() === 14)) || // Erev YK / Erev Soukot
+      (hd.getMonth() === 6 && hd.getDate() === 29),   // Erev Roch HaChana
+    isPesach: has("pesach"),
+    isShavuot: has("shavuot"),
+    isSukkot: has("sukkot") || has("shmini") || has("simchat torah"),
+    isRoshHashana: has("rosh hashana"),
+    isYomKippur: has("yom kippur"),
+    isElul: hd.getMonth() === 6,
+    isTishaBeav: has("tish'a"),
+    isThreeWeeks:
+      (hd.getMonth() === 4 && hd.getDate() >= 17) ||
+      (hd.getMonth() === 5 && hd.getDate() <= 9),
+  } as FullPeriod;
 }
 
 // ─── Règles de notes ───
