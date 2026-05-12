@@ -104,21 +104,24 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
           type="date"
           value={selectedDate}
           onChange={(e) => handleDateChange(e.target.value)}
-          className="rounded-md px-2 py-1 text-[11px] font-semibold border"
+          className="rounded-md px-2 py-1.5 font-semibold border"
           style={{
             background: prayerMode ? "#1a1a1a" : "hsl(var(--background))",
             color: pmText || "hsl(var(--foreground))",
             borderColor: pmBorder || "hsl(var(--gold) / 0.25)",
-            minHeight: 28,
+            minHeight: 36,
+            fontSize: 16, // évite le zoom auto iOS
+            WebkitAppearance: "none",
           }}
         />
         {selectedDate !== todayStr && (
           <button
             onClick={resetToToday}
-            className="text-[10px] font-bold px-2 py-1 rounded-md border-none cursor-pointer"
+            className="text-[11px] font-bold px-3 py-2 rounded-md border-none cursor-pointer active:scale-95 transition"
             style={{
               background: "hsl(var(--gold) / 0.15)",
               color: "hsl(var(--gold-matte))",
+              minHeight: 36,
             }}
           >
             ↻ Aujourd'hui
@@ -129,7 +132,8 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
       {/* Summary line */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between bg-transparent border-none cursor-pointer p-0"
+        className="w-full flex items-center justify-between bg-transparent border-none cursor-pointer py-1.5 active:opacity-70"
+        style={{ minHeight: 36 }}
       >
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: pmMuted || "hsl(var(--muted-foreground))" }}>
@@ -191,11 +195,11 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                       <button
                         key={opt.key}
                         onClick={() => handleToggle(opt.key)}
-                        className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer transition-all"
+                        className="px-3 py-2 rounded-lg text-[11px] font-bold border-none cursor-pointer transition-all active:scale-95"
                         style={{
                           background: isActive ? "hsl(var(--gold) / 0.18)" : (prayerMode ? "#222" : "hsl(var(--muted))"),
                           color: isActive ? "hsl(var(--gold-matte))" : (pmMuted || "hsl(var(--muted-foreground))"),
-                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
+                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none", minHeight: 36,
                         }}
                       >
                         {opt.icon} {opt.labelFr}
@@ -217,11 +221,11 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                       <button
                         key={opt.key}
                         onClick={() => handleToggle(opt.key)}
-                        className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer transition-all"
+                        className="px-3 py-2 rounded-lg text-[11px] font-bold border-none cursor-pointer transition-all active:scale-95"
                         style={{
                           background: isActive ? "hsl(var(--gold) / 0.18)" : (prayerMode ? "#222" : "hsl(var(--muted))"),
                           color: isActive ? "hsl(var(--gold-matte))" : (pmMuted || "hsl(var(--muted-foreground))"),
-                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
+                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none", minHeight: 36,
                         }}
                       >
                         {opt.icon} {opt.labelFr}
@@ -243,11 +247,11 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                       <button
                         key={opt.key}
                         onClick={() => handleToggle(opt.key)}
-                        className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer transition-all"
+                        className="px-3 py-2 rounded-lg text-[11px] font-bold border-none cursor-pointer transition-all active:scale-95"
                         style={{
                           background: isActive ? "hsl(var(--gold) / 0.18)" : (prayerMode ? "#222" : "hsl(var(--muted))"),
                           color: isActive ? "hsl(var(--gold-matte))" : (pmMuted || "hsl(var(--muted-foreground))"),
-                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
+                          boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none", minHeight: 36,
                         }}
                       >
                         {opt.icon} {opt.labelFr}

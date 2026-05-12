@@ -100,10 +100,12 @@ const Siddour = () => {
 
   return (
     <div
-      className="min-h-screen"
+      className="min-h-screen overflow-x-hidden"
       style={{
         background: "linear-gradient(180deg, hsl(38 70% 94%) 0%, hsl(38 65% 91%) 100%)",
         color: "hsl(25 30% 18%)",
+        WebkitTapHighlightColor: "transparent",
+        overscrollBehaviorY: "contain",
       }}
     >
       {/* Header sticky */}
@@ -115,18 +117,20 @@ const Siddour = () => {
           borderColor: "hsl(var(--gold) / 0.3)",
         }}
       >
-        <div className="flex items-center gap-2 px-3 py-2 sm:px-6">
+        <div className="flex items-center gap-1.5 px-2 py-2 sm:px-6">
           <button
             onClick={() => navigate(-1)}
             aria-label="Retour"
-            className="p-2 rounded-lg hover:bg-muted active:scale-95 transition"
+            className="p-2.5 rounded-lg hover:bg-muted active:scale-95 transition shrink-0"
+            style={{ minWidth: 44, minHeight: 44 }}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
 
           <button
               onClick={() => setDrawerOpen(true)}
-              className="lg:hidden p-2 rounded-lg hover:bg-muted active:scale-95 transition"
+              className="lg:hidden p-2.5 rounded-lg hover:bg-muted active:scale-95 transition shrink-0"
+              style={{ minWidth: 44, minHeight: 44 }}
               aria-label="Ouvrir le sommaire de l'office"
             >
               <BookOpen className="w-5 h-5" style={{ color: "hsl(var(--gold-matte))" }} />
@@ -145,36 +149,40 @@ const Siddour = () => {
           <div className="flex rounded-lg p-0.5 bg-muted text-[11px] font-semibold shrink-0">
             <button
               onClick={() => setRite("sefarade")}
-              className="px-2.5 py-1 rounded-md transition-all"
-              style={{
-                background: rite === "sefarade" ? "hsl(var(--background))" : "transparent",
-                color: rite === "sefarade" ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))",
-                boxShadow: rite === "sefarade" ? "0 1px 3px hsl(var(--foreground) / 0.08)" : "none",
-              }}
+              className="px-2.5 py-1.5 rounded-md transition-all"
+              style={{ minHeight: 32, ...(rite === "sefarade" ? {
+                background: "hsl(var(--background))",
+                color: "hsl(var(--gold-matte))",
+                boxShadow: "0 1px 3px hsl(var(--foreground) / 0.08)",
+              } : { color: "hsl(var(--muted-foreground))" }) }}
             >
-              Séfarade
+              Séf.
             </button>
             <button
               onClick={() => setRite("ashkenaz")}
-              className="px-2.5 py-1 rounded-md transition-all"
-              style={{
-                background: rite === "ashkenaz" ? "hsl(var(--background))" : "transparent",
-                color: rite === "ashkenaz" ? "hsl(var(--gold-matte))" : "hsl(var(--muted-foreground))",
-                boxShadow: rite === "ashkenaz" ? "0 1px 3px hsl(var(--foreground) / 0.08)" : "none",
-              }}
+              className="px-2.5 py-1.5 rounded-md transition-all"
+              style={{ minHeight: 32, ...(rite === "ashkenaz" ? {
+                background: "hsl(var(--background))",
+                color: "hsl(var(--gold-matte))",
+                boxShadow: "0 1px 3px hsl(var(--foreground) / 0.08)",
+              } : { color: "hsl(var(--muted-foreground))" }) }}
             >
-              Ashkénaze
+              Ashk.
             </button>
           </div>
 
-          {/* Taille de police */}
-          <div className="hidden sm:flex items-center gap-0.5 ml-1">
+          {/* Taille de police — visible aussi sur mobile pour réglage rapide */}
+          <div className="flex items-center gap-0.5 ml-0.5 shrink-0">
             <button onClick={() => setFontSize(s => Math.max(16, s - 2))}
-              className="p-1.5 rounded-md hover:bg-muted" aria-label="Réduire police">
+              className="p-2 rounded-md hover:bg-muted active:scale-95 transition"
+              style={{ minWidth: 36, minHeight: 36 }}
+              aria-label="Réduire police">
               <Minus className="w-3.5 h-3.5" />
             </button>
             <button onClick={() => setFontSize(s => Math.min(36, s + 2))}
-              className="p-1.5 rounded-md hover:bg-muted" aria-label="Augmenter police">
+              className="p-2 rounded-md hover:bg-muted active:scale-95 transition"
+              style={{ minWidth: 36, minHeight: 36 }}
+              aria-label="Augmenter police">
               <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -197,7 +205,13 @@ const Siddour = () => {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="h-[calc(100vh-50px)]">
+            <div
+              className="overflow-y-auto"
+              style={{
+                height: "calc(100dvh - 50px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))",
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
               {sidebar}
             </div>
           </SheetContent>
@@ -250,11 +264,11 @@ const Siddour = () => {
       {/* FAB mobile pour rouvrir le sommaire */}
       <button
           onClick={() => setDrawerOpen(true)}
-          className="lg:hidden fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition"
+          className="lg:hidden fixed right-5 z-30 w-14 h-14 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition"
           style={{
             background: "hsl(var(--primary))",
             color: "hsl(var(--primary-foreground))",
-            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))",
           }}
           aria-label="Sommaire du livre"
         >
