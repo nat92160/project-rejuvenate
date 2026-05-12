@@ -1,6 +1,7 @@
 import { useSiddourCommentary } from "@/hooks/useSiddourCommentary";
 import type { SiddourRite } from "@/hooks/useSiddourRite";
-import { Loader2, Quote, RefreshCw } from "lucide-react";
+import { Loader2, Quote, RefreshCw, X } from "lucide-react";
+import { useState } from "react";
 
 interface Props {
   rite: SiddourRite;
@@ -14,14 +15,15 @@ export default function SiddourSectionCommentary({
   rite, office, sectionIndex, sectionTitle, hebrew,
 }: Props) {
   const { paragraphs, loading, error, generate } = useSiddourCommentary(rite, office, sectionIndex);
+  const [hidden, setHidden] = useState(false);
 
   if (hebrew.length === 0) return null;
 
-  if (!paragraphs && !loading && !error) {
+  if (hidden || (!paragraphs && !loading && !error)) {
     return (
       <div className="mt-4 flex justify-center">
         <button
-          onClick={() => generate(hebrew, sectionTitle)}
+          onClick={() => { setHidden(false); if (!paragraphs) generate(hebrew, sectionTitle); }}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold border transition-all active:scale-95"
           style={{
             borderColor: "hsl(var(--primary) / 0.3)",
@@ -30,7 +32,7 @@ export default function SiddourSectionCommentary({
           }}
         >
           <Quote className="w-3.5 h-3.5" />
-          Lire un commentaire d'étude
+          {paragraphs ? "Réafficher le commentaire" : "Lire un commentaire d'étude"}
         </button>
       </div>
     );
@@ -72,14 +74,24 @@ export default function SiddourSectionCommentary({
            style={{ color: "hsl(var(--primary))" }}>
           <Quote className="w-3 h-3" /> Commentaire d'étude (IA)
         </p>
-        <button
-          onClick={() => generate(hebrew, sectionTitle)}
-          disabled={loading}
-          className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1 disabled:opacity-50"
-          aria-label="Régénérer le commentaire"
-        >
-          {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => generate(hebrew, sectionTitle)}
+            disabled={loading}
+            className="text-muted-foreground hover:text-foreground inline-flex items-center disabled:opacity-50 p-1"
+            aria-label="Régénérer le commentaire"
+          >
+            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+          </button>
+          <button
+            onClick={() => setHidden(true)}
+            className="text-muted-foreground hover:text-foreground inline-flex items-center p-1 rounded-md"
+            aria-label="Réduire et revenir à la prière"
+            title="Réduire et revenir à la prière"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
       <div style={{ fontFamily: "'Lora', 'Georgia', serif", fontSize: "15px", lineHeight: 1.7 }}>
         {paragraphs.map((p, i) => (
