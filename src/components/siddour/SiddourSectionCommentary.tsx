@@ -72,7 +72,7 @@ export default function SiddourSectionCommentary({
       <div className="flex items-center justify-between mb-3">
         <p className="text-[10px] font-semibold uppercase tracking-wider inline-flex items-center gap-1.5"
            style={{ color: "hsl(var(--primary))" }}>
-          <Quote className="w-3 h-3" /> Commentaire d'étude (IA)
+          <Quote className="w-3 h-3" /> Commentaire d'étude
         </p>
         <div className="flex items-center gap-2">
           <button
