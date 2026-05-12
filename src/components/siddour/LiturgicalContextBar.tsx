@@ -196,7 +196,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                           boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
                         }}
                       >
-                        {opt.icon} {opt.label}
+                        {opt.icon} {opt.labelFr}
                       </button>
                     );
                   })}
@@ -222,7 +222,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                           boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
                         }}
                       >
-                        {opt.icon} {opt.label}
+                        {opt.icon} {opt.labelFr}
                       </button>
                     );
                   })}
@@ -248,7 +248,7 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
                           boxShadow: isActive ? "0 0 0 1.5px hsl(var(--gold) / 0.3)" : "none",
                         }}
                       >
-                        {opt.icon} {opt.label}
+                        {opt.icon} {opt.labelFr}
                       </button>
                     );
                   })}
