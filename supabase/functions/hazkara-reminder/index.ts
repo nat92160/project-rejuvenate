@@ -47,10 +47,14 @@ Deno.serve(async (req) => {
 
     for (const [userId, list] of byUser) {
       const names = list.map((r: any) => r.deceased_name).join(", ");
+      const dateFr = tomorrow.toLocaleDateString("fr-FR", {
+        weekday: "long", day: "numeric", month: "long",
+        timeZone: "Europe/Paris",
+      });
       const title = "🕯️ Hazkara demain";
       const body = list.length === 1
-        ? `Pensez à allumer la bougie ce soir à la sortie des étoiles pour ${names}.`
-        : `Pensez à allumer les bougies ce soir pour : ${names}.`;
+        ? `Ce soir : allumez la bougie pour ${names} (sortie des étoiles). 🪦 Demain ${dateFr} : Hazkara et visite au cimetière.`
+        : `Ce soir : allumez les bougies pour ${names} (sortie des étoiles). 🪦 Demain ${dateFr} : Hazkara et visite au cimetière.`;
 
       try {
         const res = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
