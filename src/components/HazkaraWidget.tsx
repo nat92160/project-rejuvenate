@@ -810,6 +810,42 @@ const HazkaraWidget = () => {
             <div style={{ fontSize: "36px", color: "#F5E9C8", opacity: 0.85, direction: "rtl" }}>
               {posterData.hebrew}
             </div>
+            {(() => {
+              const veille = new Date(posterData.greg);
+              veille.setDate(veille.getDate() - 1);
+              return (
+                <div style={{
+                  marginTop: "36px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "14px",
+                  alignItems: "center",
+                }}>
+                  <div style={{
+                    fontSize: "28px",
+                    color: "#F5E9C8",
+                    background: "rgba(153,101,21,0.18)",
+                    border: "1px solid rgba(245,233,200,0.25)",
+                    borderRadius: "16px",
+                    padding: "14px 28px",
+                    textTransform: "capitalize",
+                  }}>
+                    🕯️ Bougie : {veille.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} au soir
+                  </div>
+                  <div style={{
+                    fontSize: "28px",
+                    color: "#F5E9C8",
+                    background: "rgba(153,101,21,0.18)",
+                    border: "1px solid rgba(245,233,200,0.25)",
+                    borderRadius: "16px",
+                    padding: "14px 28px",
+                    textTransform: "capitalize",
+                  }}>
+                    🪦 Hazkara & cimetière : {posterData.greg.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           <div style={{ width: "100%" }}>
