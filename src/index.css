@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Frank+Ruhl+Libre:wght@400;500;700&family=Noto+Serif+Hebrew:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Caveat:wght@400;500;600;700&family=Patrick+Hand&family=Kalam:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500;700&family=Noto+Serif+Hebrew:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Caveat:wght@400;500;600;700&family=Patrick+Hand&family=Kalam:wght@300;400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,6 +11,32 @@
   }
   .pt-safe-0 {
     padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Letterpress embossed titles — premium serif relief on light backgrounds */
+  .title-letterpress {
+    color: hsl(var(--navy));
+    text-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.85),
+      0 -1px 1px rgba(0, 31, 63, 0.18);
+    font-feature-settings: "kern" 1, "liga" 1, "dlig" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+  .title-letterpress-soft {
+    color: hsl(var(--foreground));
+    text-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7),
+      0 -1px 1px rgba(0, 31, 63, 0.10);
+    font-feature-settings: "kern" 1, "liga" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+  .title-letterpress-on-dark {
+    color: hsl(var(--cream));
+    text-shadow:
+      0 1px 0 rgba(153, 101, 21, 0.45),
+      0 -1px 1px rgba(0, 0, 0, 0.35);
+    font-feature-settings: "kern" 1, "liga" 1;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
