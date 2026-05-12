@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { HDate } from "@hebcal/core";
+import { HDate, HebrewCalendar, flags } from "@hebcal/core";
 
 const HEBREW_MONTHS = [
   { value: "Nisan", label: "Nissan (ניסן)" },
@@ -87,18 +87,25 @@ const HazkaraWidget = () => {
 
         // Adar logic
         if (deathMonthName === "Adar") {
-          // Died in non-leap Adar
+          // Died in non-leap Adar → in leap year, observed in Adar II (both rites)
           if (isLeap) {
-            monthName = rite === "sefarade" ? "Adar II" : "Adar II";
-            note = "Année embolismique — observé en Adar II";
+            monthName = "Adar II";
+            note = "Année embolismique — Hazkara en Adar II";
           }
         } else if (deathMonthName === "Adar I") {
-          if (!isLeap) {
-            monthName = "Adar";
-          }
+          if (!isLeap) monthName = "Adar";
         } else if (deathMonthName === "Adar II") {
           if (!isLeap) {
+            // Non-leap year — observed simply in Adar
             monthName = "Adar";
+          } else {
+            // Leap year — controverse :
+            // Séfarade : Hazkara en Adar II (jeûne en Adar I si coutume)
+            // Ashkénaze : Hazkara en Adar I
+            monthName = rite === "sefarade" ? "Adar II" : "Adar I";
+            note = rite === "sefarade"
+              ? "Coutume séfarade — Hazkara en Adar II (jeûne éventuel en Adar I)"
+              : "Coutume ashkénaze — Hazkara en Adar I";
           }
         }
 
@@ -117,9 +124,28 @@ const HazkaraWidget = () => {
         try {
           const monthNum = HDate.monthFromName(monthName);
           const yzHd = new HDate(day, monthNum, y);
+          const greg = yzHd.greg();
+          const dow = greg.getDay(); // 0=Sun, 6=Sat
+
+          // If Hazkara falls on Shabbat → candle lit Thursday at tzeit
+          if (dow === 6) {
+            note = (note ? note + " · " : "") + "Hazkara un Chabbat — bougie allumée jeudi soir à la sortie des étoiles";
+          }
+
+          // Detect if falls during Yom Tov (chag)
+          const evs = HebrewCalendar.calendar({
+            start: greg,
+            end: greg,
+            il: false,
+          });
+          const chag = evs.find((e) => e.getFlags() & flags.CHAG);
+          if (chag) {
+            note = (note ? note + " · " : "") + `Tombe pendant ${chag.render("fr") || chag.getDesc()} — à devancer avant la fête`;
+          }
+
           yahrzeits.push({
             hYear: y,
-            greg: yzHd.greg(),
+            greg,
             hebrew: yzHd.renderGematriya(),
             note,
           });
@@ -302,6 +328,38 @@ const HazkaraWidget = () => {
         <p className="text-[11px] text-muted-foreground leading-relaxed">
           La veille de la hazkara, allumez une bougie qui brûlera 24h. Consultez votre Rav pour les cas particuliers (1ère année, mois d'Adar en année embolismique, 30 Hechvan/Kislev).
         </p>
+      </div>
+
+      {/* Halakha guide */}
+      <div className="mt-4 p-4 rounded-xl border border-border bg-card space-y-3">
+        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">📜 Règles essentielles</h4>
+
+        <div className="text-[11px] text-muted-foreground leading-relaxed space-y-2">
+          <p>
+            <strong className="text-foreground">🕯️ Bougie :</strong> allumée la veille de la Hazkara <strong>à la sortie des étoiles</strong>, doit brûler 24h.
+          </p>
+          <p>
+            <strong className="text-foreground">📅 Chabbat :</strong> si la Hazkara tombe un <strong>vendredi soir / Chabbat</strong>, la bougie est allumée le <strong>jeudi soir</strong> précédent à la sortie des étoiles.
+          </p>
+          <p>
+            <strong className="text-foreground">🎉 Fêtes :</strong> si la Hazkara tombe pendant les fêtes, on <strong>devance</strong> la cérémonie avant les fêtes.
+          </p>
+          <p>
+            <strong className="text-foreground">✡️ Adar II (année embolismique) :</strong>
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-1">
+            <li>Niftar en Adar II → année non-embolismique : Hazkara en <strong>Adar</strong>.</li>
+            <li>
+              <strong>Séfaradim</strong> : Hazkara en <strong>Adar II</strong>, jeûne en Adar I (pour ceux qui jeûnent).
+            </li>
+            <li>
+              <strong>Ashkénazim</strong> : Hazkara en <strong>Adar I</strong>.
+            </li>
+          </ul>
+          <p>
+            <strong className="text-foreground">🪦 Visite au cimetière :</strong> il est possible de se rendre sur la tombe chaque <strong>veille de Roch Hodech</strong>.
+          </p>
+        </div>
       </div>
     </motion.div>
   );
