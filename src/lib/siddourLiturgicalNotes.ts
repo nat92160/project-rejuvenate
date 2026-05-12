@@ -198,6 +198,8 @@ export interface LiturgicalNote {
   body: string;
   /** Variante hébraïque à dire aujourd'hui */
   todaySay?: string;
+  /** Motifs déclencheurs pour afficher la note au passage précis dans la lecture */
+  anchors: string[];
 }
 
 interface Rule {
@@ -216,6 +218,7 @@ const RULES: Rule[] = [
         return {
           id: "geshem-tal",
           tone: "info",
+          anchors: ["משיב הרוח", "מוריד הגשם", "מוריד הטל"],
           title: "Saison des pluies",
           body:
             "De Chemini 'Atseret au 1er jour de Pessa'h, on dit la formule de la pluie dans la 2ᵉ bénédiction de la Amida.",
@@ -226,6 +229,7 @@ const RULES: Rule[] = [
         return {
           id: "geshem-tal",
           tone: "info",
+          anchors: ["משיב הרוח", "מוריד הגשם", "מוריד הטל"],
           title: "Saison de la rosée",
           body:
             "De Pessa'h à Chemini 'Atseret, le rite séfarade dit la formule de la rosée dans la 2ᵉ bénédiction de la Amida.",
@@ -235,6 +239,7 @@ const RULES: Rule[] = [
       return {
         id: "geshem-tal",
         tone: "info",
+        anchors: ["משיב הרוח", "מוריד הגשם", "מוריד הטל"],
         title: "Saison de la rosée",
         body:
           "De Pessa'h à Chemini 'Atseret, le rite ashkénaze omet cette formule (on ne dit ni « Morid haGuéchèm » ni « Morid haTal »).",
@@ -251,6 +256,7 @@ const RULES: Rule[] = [
         return {
           id: "tal-umatar",
           tone: "warn",
+          anchors: ["ותן טל ומטר", "ותן ברכה", "ברך עלינו"],
           title: "Demande de pluie",
           body:
             "Période de demande de pluie (en diaspora : à partir du 4-5 décembre, en Israël : à partir du 7 'Hechvan, jusqu'à Pessa'h).",
@@ -260,6 +266,7 @@ const RULES: Rule[] = [
       return {
         id: "tal-umatar",
         tone: "info",
+        anchors: ["ותן טל ומטר", "ותן ברכה", "ברך עלינו"],
         title: "Hors période de pluie",
         body:
           "En dehors de la saison de la pluie, on dit la formule courte dans la bénédiction des années.",
@@ -281,6 +288,7 @@ const RULES: Rule[] = [
         return {
           id: "yaale",
           tone: "fete",
+          anchors: ["יעלה ויבא", "יעלה ויבוא"],
           title: `Ya'alé véYavo — ${occ.join(" / ")}`,
           body: "Aujourd'hui, on insère « Ya'alé véYavo » dans la Amida (et dans le Birkat haMazone).",
         };
@@ -288,6 +296,7 @@ const RULES: Rule[] = [
       return {
         id: "yaale",
         tone: "info",
+        anchors: ["יעלה ויבא", "יעלה ויבוא"],
         title: "Ya'alé véYavo",
         body: "À insérer uniquement à Roch 'Hodech, Yom Tov et 'Hol haMo'ed. Aujourd'hui : on omet.",
       };
