@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { HDate, HebrewCalendar, flags } from "@hebcal/core";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { isNativePlatform, requestNativePushPermission, registerNativePush } from "@/lib/capacitorPush";
+import { sharePosterPng } from "@/components/poster/usePosterExport";
 
 const HEBREW_MONTHS = [
   { value: "Nisan", label: "Nissan (ניסן)" },
@@ -149,6 +150,9 @@ const HazkaraWidget = () => {
   const [savingDate, setSavingDate] = useState<string | null>(null);
   const [records, setRecords] = useState<HazkaraRecord[]>([]);
   const [savingRecord, setSavingRecord] = useState(false);
+  const [posterData, setPosterData] = useState<{ name: string; greg: Date; hebrew: string } | null>(null);
+  const [sharingKey, setSharingKey] = useState<string | null>(null);
+  const posterRef = useRef<HTMLDivElement>(null);
 
   const loadRecords = async () => {
     if (!user) { setRecords([]); return; }
@@ -310,6 +314,23 @@ const HazkaraWidget = () => {
     toast.success("Défunt supprimé", { duration: 2000 });
   };
 
+  const sharePoster = async (name: string, greg: Date, hebrew: string, key: string) => {
+    if (!name?.trim()) { toast.error("Nom du défunt requis"); return; }
+    setSharingKey(key);
+    setPosterData({ name: name.trim(), greg, hebrew });
+    await new Promise((r) => setTimeout(r, 150));
+    const yyyy = greg.getFullYear();
+    const dateFr = greg.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+    await sharePosterPng(
+      posterRef.current,
+      `hazkara-${name.trim().replace(/\s+/g, "-")}-${yyyy}.png`,
+      `Hazkara ${name.trim()} — ${dateFr}`,
+      `🕯️ En mémoire de ${name.trim()}\nHazkara le ${dateFr}\nQue son âme soit liée au faisceau des vivants 🕊️`,
+    );
+    setSharingKey(null);
+    setPosterData(null);
+  };
+
   // Compute next yahrzeit per saved record
   const recordsWithNext = useMemo(() => {
     return records.map((r) => {
@@ -395,6 +416,17 @@ const HazkaraWidget = () => {
                         title={active ? "Désactiver le rappel" : "Activer le rappel"}
                       >
                         {loading ? "…" : active ? "🔔" : "🔕"}
+                      </button>
+                    )}
+                    {next && (
+                      <button
+                        onClick={() => sharePoster(record.deceased_name, next.greg, next.hebrew, `rec-${record.id}`)}
+                        disabled={sharingKey === `rec-${record.id}`}
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all"
+                        style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}
+                        title="Partager l'affiche sur WhatsApp"
+                      >
+                        {sharingKey === `rec-${record.id}` ? "…" : "📤"}
                       </button>
                     )}
                     <button
@@ -632,18 +664,29 @@ const HazkaraWidget = () => {
                   const active = !!reminders[key];
                   const loading = savingDate === key;
                   return (
-                    <button
-                      onClick={() => toggleReminder(y.greg, y.hebrew)}
-                      disabled={loading}
-                      className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-base transition-all"
-                      style={active
-                        ? { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }
-                        : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
-                      }
-                      title={active ? "Désactiver le rappel" : "Recevoir un rappel la veille"}
-                    >
-                      {loading ? "…" : active ? "🔔" : "🔕"}
-                    </button>
+                    <div className="flex-shrink-0 flex flex-col gap-1">
+                      <button
+                        onClick={() => toggleReminder(y.greg, y.hebrew)}
+                        disabled={loading}
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-base transition-all"
+                        style={active
+                          ? { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }
+                          : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                        }
+                        title={active ? "Désactiver le rappel" : "Recevoir un rappel la veille"}
+                      >
+                        {loading ? "…" : active ? "🔔" : "🔕"}
+                      </button>
+                      <button
+                        onClick={() => sharePoster(deceasedName || "—", y.greg, y.hebrew, `yz-${key}`)}
+                        disabled={sharingKey === `yz-${key}` || !deceasedName.trim()}
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-base transition-all disabled:opacity-40"
+                        style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}
+                        title={deceasedName.trim() ? "Partager l'affiche sur WhatsApp" : "Entrez d'abord le nom du défunt"}
+                      >
+                        {sharingKey === `yz-${key}` ? "…" : "📤"}
+                      </button>
+                    </div>
                   );
                 })()}
               </div>
@@ -691,6 +734,106 @@ const HazkaraWidget = () => {
           </p>
         </div>
       </div>
+
+      {/* Hidden poster for sharing */}
+      {posterData && (
+        <div
+          ref={posterRef}
+          style={{
+            position: "fixed",
+            left: "-9999px",
+            top: 0,
+            zIndex: -1,
+            width: "1080px",
+            height: "1350px",
+            background: "linear-gradient(160deg, #001F3F 0%, #002a55 60%, #001528 100%)",
+            color: "#F5E9C8",
+            fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+            padding: "100px 80px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "space-between",
+            textAlign: "center",
+            boxSizing: "border-box",
+          }}
+        >
+          <div style={{ width: "100%" }}>
+            <div style={{ fontSize: "80px", marginBottom: "20px" }}>🕯️</div>
+            <div style={{
+              fontSize: "32px",
+              letterSpacing: "8px",
+              color: "#996515",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              marginBottom: "12px",
+            }}>Hazkara</div>
+            <div style={{ fontSize: "22px", color: "#F5E9C8", opacity: 0.8, letterSpacing: "3px" }}>
+              לעילוי נשמת
+            </div>
+          </div>
+
+          <div style={{ width: "100%" }}>
+            <div style={{
+              fontSize: "28px",
+              color: "#F5E9C8",
+              opacity: 0.7,
+              marginBottom: "24px",
+              letterSpacing: "2px",
+            }}>En mémoire de</div>
+            <div style={{
+              fontSize: "84px",
+              fontWeight: 700,
+              color: "#F5E9C8",
+              lineHeight: 1.15,
+              padding: "0 20px",
+              textShadow: "0 2px 8px rgba(0,0,0,0.4)",
+            }}>{posterData.name}</div>
+            <div style={{
+              width: "120px",
+              height: "2px",
+              background: "#996515",
+              margin: "40px auto",
+            }} />
+            <div style={{
+              fontSize: "44px",
+              color: "#996515",
+              fontWeight: 600,
+              marginBottom: "16px",
+              textTransform: "capitalize",
+            }}>
+              {posterData.greg.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            </div>
+            <div style={{ fontSize: "36px", color: "#F5E9C8", opacity: 0.85, direction: "rtl" }}>
+              {posterData.hebrew}
+            </div>
+          </div>
+
+          <div style={{ width: "100%" }}>
+            <div style={{
+              fontSize: "26px",
+              color: "#F5E9C8",
+              opacity: 0.85,
+              fontStyle: "italic",
+              lineHeight: 1.5,
+              marginBottom: "30px",
+            }}>
+              תְּהֵא נִשְׁמָתוֹ צְרוּרָה בִּצְרוֹר הַחַיִּים
+              <br />
+              <span style={{ fontSize: "22px", opacity: 0.75 }}>
+                Que son âme soit liée au faisceau des vivants
+              </span>
+            </div>
+            <div style={{
+              fontSize: "20px",
+              color: "#996515",
+              letterSpacing: "4px",
+              textTransform: "uppercase",
+              fontWeight: 600,
+            }}>Chabbat Chalom</div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };
