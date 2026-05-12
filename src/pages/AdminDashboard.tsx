@@ -524,7 +524,12 @@ const AdminDashboard = () => {
   const unverifiedCount = synas.filter(s => !s.verified).length;
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-8">
+    <div
+      className="min-h-screen bg-background px-4 pb-4 sm:px-8 sm:pb-8"
+      style={{
+        paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)",
+      }}
+    >
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => navigate("/")} className="h-10 w-10 rounded-xl bg-card border border-border flex items-center justify-center text-lg cursor-pointer hover:bg-muted transition-all">←</button>
