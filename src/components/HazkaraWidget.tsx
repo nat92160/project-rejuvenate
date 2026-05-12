@@ -125,27 +125,43 @@ const HazkaraWidget = () => {
           const monthNum = HDate.monthFromName(monthName);
           const yzHd = new HDate(day, monthNum, y);
           let greg = yzHd.greg();
-          const dow = greg.getDay(); // 0=Sun, 6=Sat
 
-          // Si la Hazkara tombe un Vendredi soir (jour hébraïque qui s'achève
-          // à l'entrée de Chabbat) ou un Chabbat, elle est devancée au
-          // Jeudi soir précédent (sortie des étoiles).
-          if (dow === 5 || dow === 6) {
-            const advanced = new Date(greg);
-            advanced.setDate(advanced.getDate() - (dow === 5 ? 1 : 2));
-            greg = advanced;
-            note = (note ? note + " · " : "") + "Tombe un vendredi soir / Chabbat — devancée au jeudi soir précédent (sortie des étoiles)";
+          // Helpers
+          const isChagDay = (d: Date) => {
+            const evs = HebrewCalendar.calendar({ start: d, end: d, il: false });
+            return evs.find((e) => e.getFlags() & flags.CHAG);
+          };
+          const isErevChag = (d: Date) => {
+            const next = new Date(d);
+            next.setDate(next.getDate() + 1);
+            return !!isChagDay(next);
+          };
+
+          // Détection du conflit : Vendredi, Chabbat, ou Yom Tov
+          let originalChag = isChagDay(greg);
+          let conflictReason: string | null = null;
+          const dow0 = greg.getDay();
+          if (originalChag) {
+            conflictReason = `Tombe pendant ${originalChag.render("fr") || originalChag.getDesc()} — devancée avant la fête (sortie des étoiles)`;
+          } else if (dow0 === 5 || dow0 === 6) {
+            conflictReason = "Tombe un vendredi soir / Chabbat — devancée au jeudi soir précédent (sortie des étoiles)";
           }
 
-          // Detect if falls during Yom Tov (chag)
-          const evs = HebrewCalendar.calendar({
-            start: greg,
-            end: greg,
-            il: false,
-          });
-          const chag = evs.find((e) => e.getFlags() & flags.CHAG);
-          if (chag) {
-            note = (note ? note + " · " : "") + `Tombe pendant ${chag.render("fr") || chag.getDesc()} — à devancer avant la fête`;
+          // Reculer jour par jour tant que la veille tombe sur Vendredi,
+          // Chabbat, Yom Tov, ou veille de Yom Tov (la bougie ne peut être
+          // allumée la veille de fête car elle n'aurait pas le temps de brûler).
+          if (conflictReason) {
+            const advanced = new Date(greg);
+            for (let i = 0; i < 14; i++) {
+              advanced.setDate(advanced.getDate() - 1);
+              const d = advanced.getDay();
+              if (d === 5 || d === 6) continue; // vendredi / chabbat
+              if (isChagDay(advanced)) continue; // yom tov
+              if (isErevChag(advanced)) continue; // veille de yom tov
+              break;
+            }
+            greg = advanced;
+            note = (note ? note + " · " : "") + conflictReason;
           }
 
           yahrzeits.push({
