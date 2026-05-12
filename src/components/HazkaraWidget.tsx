@@ -209,15 +209,33 @@ const HazkaraWidget = () => {
                 className="w-full px-3 py-2 rounded-lg text-sm bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
               />
             </div>
-            <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
-              <input
-                type="checkbox"
-                checked={afterSunset}
-                onChange={(e) => setAfterSunset(e.target.checked)}
-                className="cursor-pointer"
-              />
-              <span className="font-medium">Décès survenu <strong>après</strong> le coucher du soleil (= jour hébraïque suivant)</span>
-            </label>
+            <div>
+              <label className="text-xs font-bold text-foreground mb-1.5 block">Moment du décès</label>
+              <div className="flex gap-1.5">
+                {([
+                  { id: false, label: "☀️ Jour", sub: "avant le coucher du soleil" },
+                  { id: true, label: "🌙 Nuit", sub: "après le coucher du soleil" },
+                ] as const).map((opt) => (
+                  <button
+                    key={String(opt.id)}
+                    onClick={() => setAfterSunset(opt.id)}
+                    className="flex-1 px-3 py-2.5 rounded-lg text-xs font-bold border cursor-pointer transition-all text-left"
+                    style={afterSunset === opt.id
+                      ? { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", border: "none" }
+                      : { background: "hsl(var(--card))", color: "hsl(var(--foreground))", borderColor: "hsl(var(--border))" }
+                    }
+                  >
+                    <div className="text-sm">{opt.label}</div>
+                    <div className="text-[9px] font-normal opacity-80 mt-0.5">{opt.sub}</div>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1.5 italic">
+                {afterSunset
+                  ? "→ Jour hébraïque suivant retenu automatiquement"
+                  : "→ Jour hébraïque correspondant à la date civile"}
+              </p>
+            </div>
           </>
         ) : (
           <>
