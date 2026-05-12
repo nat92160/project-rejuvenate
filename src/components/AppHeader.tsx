@@ -8,7 +8,7 @@ const AppHeader = ({ onLogoClick }: { onLogoClick?: () => void }) => {
         className="inline-flex items-center justify-center gap-2.5 bg-transparent border-none cursor-pointer p-2 -m-2 min-h-[44px] active:scale-95 transition-transform"
       >
         <StarOfDavid size={32} />
-        <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">
+        <h1 className="font-display title-letterpress text-3xl font-bold tracking-wide">
           Chabbat <span className="text-primary">Chalom</span>
         </h1>
       </button>

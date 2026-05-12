@@ -205,9 +205,9 @@ select {
   }
 
   h1, h2, h3, h4 {
-    font-family: 'Montserrat', sans-serif;
-    letter-spacing: -0.02em;
-    font-weight: 700;
+    font-family: 'Cormorant Garamond', 'Lora', serif;
+    letter-spacing: 0.005em;
+    font-weight: 600;
   }
 
   .font-hebrew {
