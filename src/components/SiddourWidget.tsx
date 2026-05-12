@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, BookOpen } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Slider } from "@/components/ui/slider";
 import type { ViewMode } from "@/hooks/useTransliteration";
 import { useWakeLock } from "@/hooks/useWakeLock";
@@ -223,6 +224,34 @@ const SiddourWidget = ({ prayerMode = false, initialOffice }: SiddourWidgetProps
       className="space-y-4"
       style={prayerMode ? { background: pmBg, margin: "-1rem", padding: "1rem", minHeight: "100vh" } : undefined}
     >
+      {/* CTA Livre complet */}
+      <Link
+        to={`/siddour?office=${office}`}
+        className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 border transition-all active:scale-[0.98]"
+        style={{
+          background: "linear-gradient(135deg, hsl(var(--primary) / 0.06), hsl(var(--gold) / 0.05))",
+          borderColor: "hsl(var(--gold) / 0.3)",
+          textDecoration: "none",
+          color: "inherit",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center"
+               style={{ background: "hsl(var(--gold) / 0.15)" }}>
+            <BookOpen className="w-4 h-4" style={{ color: "hsl(var(--gold-matte))" }} />
+          </div>
+          <div>
+            <p className="text-[13px] font-bold" style={{ color: "hsl(var(--primary))" }}>
+              Ouvrir le livre complet
+            </p>
+            <p className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
+              Toutes les prières enchaînées · Séfarade ou Ashkénaze
+            </p>
+          </div>
+        </div>
+        <ChevronRight className="w-4 h-4 opacity-60" />
+      </Link>
+
       {/* ── Category Tabs (segmented control) ── */}
       <div
         className="flex rounded-xl p-0.5 gap-0.5"
