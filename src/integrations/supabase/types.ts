@@ -446,6 +446,39 @@ export type Database = {
           },
         ]
       }
+      hazkara_records: {
+        Row: {
+          created_at: string
+          deceased_name: string
+          hebrew_day: number
+          hebrew_month: string
+          hebrew_year: number
+          id: string
+          rite: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deceased_name: string
+          hebrew_day: number
+          hebrew_month: string
+          hebrew_year: number
+          id?: string
+          rite?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deceased_name?: string
+          hebrew_day?: number
+          hebrew_month?: string
+          hebrew_year?: number
+          id?: string
+          rite?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       hazkara_reminders: {
         Row: {
           created_at: string
