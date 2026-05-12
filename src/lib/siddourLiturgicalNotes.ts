@@ -677,7 +677,7 @@ const RULES: Rule[] = [
 export function getNotesForSection(
   hebrew: string[],
   rite: Rite,
-  period: LiturgicalPeriod,
+  period: LiturgicalPeriod | FullPeriod,
   ctx?: { isHazara?: boolean; office?: string }
 ): LiturgicalNote[] {
   if (!hebrew || hebrew.length === 0) return [];
@@ -690,7 +690,7 @@ export function getNotesForSection(
     if (rule.requireHazara === false && isHazara) continue;
     if (rule.requireOfficeIncludes && !rule.requireOfficeIncludes.some(o => office.includes(o))) continue;
     if (!containsAny(corpus, rule.patterns)) continue;
-    const note = rule.build(period, rite);
+    const note = rule.build(period as FullPeriod, rite);
     if (note) notes.push(note);
   }
   return notes;
@@ -700,7 +700,7 @@ export function getNotesForSection(
 export function getNotesForVerse(
   verse: string,
   rite: Rite,
-  period: LiturgicalPeriod,
+  period: LiturgicalPeriod | FullPeriod,
   ctx?: { isHazara?: boolean; office?: string }
 ): LiturgicalNote[] {
   const corpus = stripNikud(verse.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ");
@@ -712,7 +712,7 @@ export function getNotesForVerse(
     if (rule.requireHazara === false && isHazara) continue;
     if (rule.requireOfficeIncludes && !rule.requireOfficeIncludes.some(o => office.includes(o))) continue;
     if (!containsAny(corpus, rule.patterns)) continue;
-    const note = rule.build(period, rite);
+    const note = rule.build(period as FullPeriod, rite);
     if (note) notes.push({ ...note, anchors: note.anchors || rule.patterns });
   }
   return notes;
