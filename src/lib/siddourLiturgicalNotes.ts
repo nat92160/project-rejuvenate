@@ -585,8 +585,10 @@ const RULES: Rule[] = [
     requireHazara: true,
     requireOfficeIncludes: ["shacharit", "shabbat"], // Cha'harit semaine + Chabbat (inclut Moussaf)
     patterns: [
+      "ברכת כהנים",
       "ברכנו בברכה המשולשת",
       "כהנים עם קדושך",
+      "אשר קדשנו בקדשתו של אהרן",
       "יברכך ה'",
       "יברכך יהוה",
       "יאר ה'",
