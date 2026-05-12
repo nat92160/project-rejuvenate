@@ -128,11 +128,11 @@ interface PresidentDashboardProps {
 }
 
 const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboardProps) => {
-  const { user, dbRole } = useAuth();
+  const { user, isPresident } = useAuth();
   const [activeFeature, setActiveFeature] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreateSyna, setShowCreateSyna] = useState(false);
-  const canManage = !!user && dbRole === "president";
+  const canManage = !!user && isPresident;
 
   const selectFeature = (id: string) => {
     if (!user) {
@@ -140,7 +140,7 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
       onLoginClick?.();
       return;
     }
-    if (dbRole !== "president") {
+    if (!isPresident) {
       toast.error("Rôle Président requis.");
       return;
     }
