@@ -168,10 +168,11 @@ const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, sign
       {isAdmin && (
         <button
           onClick={() => window.location.assign("/admin")}
-          className="relative h-8 w-8 rounded-xl bg-card border border-border flex items-center justify-center text-sm cursor-pointer hover:bg-muted transition-all active:scale-95"
-          title="Admin"
+          className="relative inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all active:scale-95"
+          style={{ background: "hsl(var(--destructive) / 0.12)", color: "hsl(var(--destructive))", border: "1px solid hsl(var(--destructive) / 0.3)" }}
+          title="Espace administrateur"
         >
-          🔔
+          🛡️ Admin
           {pendingCount > 0 && (
             <span className="absolute -top-1 -right-1 h-4 min-w-[16px] flex items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground px-0.5">
               {pendingCount}
@@ -179,7 +180,7 @@ const HeaderBar = ({ onLogoClick, user, isAdmin, isPresident, pendingCount, sign
           )}
         </button>
       )}
-      {isPresident && (
+      {isPresident && !isAdmin && (
         <span
           className="text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
           style={{ background: "hsl(var(--gold) / 0.1)", color: "hsl(var(--gold-matte))" }}
