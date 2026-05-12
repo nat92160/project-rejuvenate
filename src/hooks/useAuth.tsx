@@ -19,8 +19,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const resolveRole = (roles: string[]): AppRole => {
-  if (roles.includes("president")) return "president";
   if (roles.includes("admin")) return "admin";
+  if (roles.includes("president")) return "president";
   if (roles.includes("fidele")) return "fidele";
   return "guest";
 };
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Profile fetch error:", profileError);
       }
 
-      if (!profileRows?.length) {
+      if (!profileError && !profileRows?.length) {
         const { error: insertProfileError } = await supabase.from("profiles").insert({
           user_id: authUser.id,
           display_name: fallbackDisplayName || null,
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (rolesError) {
         console.error("Role fetch error:", rolesError);
-        return { role: "guest", roles: ["guest"], isAdmin: false, isPresident: false };
+        throw rolesError;
       }
 
       if (!rolesData?.length) {
