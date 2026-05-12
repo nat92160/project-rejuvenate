@@ -1,6 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { HDate, HebrewCalendar, flags } from "@hebcal/core";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { isNativePlatform, requestNativePushPermission, registerNativePush } from "@/lib/capacitorPush";
 
 const HEBREW_MONTHS = [
   { value: "Nisan", label: "Nissan (ניסן)" },
@@ -31,6 +35,7 @@ function fmtFr(d: Date) {
 }
 
 const HazkaraWidget = () => {
+  const { user } = useAuth();
   const [mode, setMode] = useState<"greg" | "heb">("greg");
   const [gregDate, setGregDate] = useState("");
   const [afterSunset, setAfterSunset] = useState(false);
@@ -38,6 +43,85 @@ const HazkaraWidget = () => {
   const [hebMonth, setHebMonth] = useState("Tishrei");
   const [hebYear, setHebYear] = useState(new HDate().getFullYear().toString());
   const [rite, setRite] = useState<"sefarade" | "ashkenaze">("sefarade");
+  const [deceasedName, setDeceasedName] = useState("");
+  const [reminders, setReminders] = useState<Record<string, string>>({}); // observance_date -> id
+  const [savingDate, setSavingDate] = useState<string | null>(null);
+
+  // Load existing reminders for this user
+  useEffect(() => {
+    if (!user) { setReminders({}); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("hazkara_reminders")
+        .select("id, observance_date")
+        .eq("user_id", user.id)
+        .eq("sent", false);
+      const map: Record<string, string> = {};
+      for (const r of data || []) map[r.observance_date] = r.id;
+      setReminders(map);
+    })();
+  }, [user]);
+
+  const ensurePushPermission = async () => {
+    if (isNativePlatform()) {
+      const granted = await requestNativePushPermission();
+      if (granted) await registerNativePush(user?.id);
+      return granted;
+    }
+    if (!("Notification" in window)) return false;
+    if (Notification.permission === "granted") return true;
+    if (Notification.permission === "denied") return false;
+    const perm = await Notification.requestPermission();
+    return perm === "granted";
+  };
+
+  const toggleReminder = async (greg: Date, hebrew: string) => {
+    if (!user) {
+      toast.error("Connectez-vous pour activer le rappel");
+      return;
+    }
+    if (!deceasedName.trim()) {
+      toast.error("Entrez le nom du défunt");
+      return;
+    }
+    const yyyy = greg.getFullYear();
+    const mm = String(greg.getMonth() + 1).padStart(2, "0");
+    const dd = String(greg.getDate()).padStart(2, "0");
+    const observance = `${yyyy}-${mm}-${dd}`;
+    setSavingDate(observance);
+    try {
+      if (reminders[observance]) {
+        await supabase.from("hazkara_reminders").delete().eq("id", reminders[observance]);
+        const next = { ...reminders };
+        delete next[observance];
+        setReminders(next);
+        toast.success("Rappel supprimé", { duration: 2000 });
+      } else {
+        const ok = await ensurePushPermission();
+        if (!ok) {
+          toast.error("Notifications refusées par le navigateur");
+          return;
+        }
+        const { data, error } = await supabase
+          .from("hazkara_reminders")
+          .insert({
+            user_id: user.id,
+            deceased_name: deceasedName.trim(),
+            observance_date: observance,
+            hebrew_label: hebrew,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        setReminders({ ...reminders, [observance]: data.id });
+        toast.success("Rappel programmé la veille au soir", { duration: 2000 });
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    } finally {
+      setSavingDate(null);
+    }
+  };
 
   const result = useMemo(() => {
     try {
@@ -347,6 +431,23 @@ const HazkaraWidget = () => {
 
           <div className="space-y-2">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Prochaines azkarot</h4>
+            {/* Nom défunt pour rappel */}
+            <div className="p-3 rounded-xl border border-border bg-card">
+              <label className="text-[10px] font-bold text-muted-foreground mb-1 block">
+                Nom du défunt (pour les rappels)
+              </label>
+              <input
+                type="text"
+                value={deceasedName}
+                onChange={(e) => setDeceasedName(e.target.value)}
+                placeholder="Ex : Avraham ben Yitzchak"
+                style={{ fontSize: "16px" }}
+                className="w-full px-3 py-2 rounded-lg bg-card text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-ring/30"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1.5 italic">
+                Cliquez sur 🔔 pour recevoir une notification la veille au soir.
+              </p>
+            </div>
             {result.yahrzeits.map((y) => (
               <div
                 key={y.hYear}
@@ -361,6 +462,28 @@ const HazkaraWidget = () => {
                     <p className="text-[10px] text-muted-foreground italic mt-1">⚠️ {y.note}</p>
                   )}
                 </div>
+                {(() => {
+                  const yyyy = y.greg.getFullYear();
+                  const mm = String(y.greg.getMonth() + 1).padStart(2, "0");
+                  const dd = String(y.greg.getDate()).padStart(2, "0");
+                  const key = `${yyyy}-${mm}-${dd}`;
+                  const active = !!reminders[key];
+                  const loading = savingDate === key;
+                  return (
+                    <button
+                      onClick={() => toggleReminder(y.greg, y.hebrew)}
+                      disabled={loading}
+                      className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-base transition-all"
+                      style={active
+                        ? { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }
+                        : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+                      }
+                      title={active ? "Désactiver le rappel" : "Recevoir un rappel la veille"}
+                    >
+                      {loading ? "…" : active ? "🔔" : "🔕"}
+                    </button>
+                  );
+                })()}
               </div>
             ))}
           </div>
