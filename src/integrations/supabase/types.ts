@@ -446,6 +446,36 @@ export type Database = {
           },
         ]
       }
+      hazkara_reminders: {
+        Row: {
+          created_at: string
+          deceased_name: string
+          hebrew_label: string | null
+          id: string
+          observance_date: string
+          sent: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deceased_name: string
+          hebrew_label?: string | null
+          id?: string
+          observance_date: string
+          sent?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deceased_name?: string
+          hebrew_label?: string | null
+          id?: string
+          observance_date?: string
+          sent?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       minyan_registrations: {
         Row: {
           display_name: string
