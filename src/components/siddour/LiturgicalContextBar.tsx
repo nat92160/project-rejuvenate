@@ -24,6 +24,10 @@ const OVERRIDE_OPTIONS = [
 const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) => {
   const [expanded, setExpanded] = useState(false);
   const [manualOverrides, setManualOverrides] = useState<Partial<LiturgicalPeriod>>({});
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  });
 
   const autoContext = useMemo(() => getLiturgicalContext(), []);
 
@@ -31,6 +35,27 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
   const pmBorder = prayerMode ? "rgba(255,255,255,0.08)" : undefined;
   const pmText = prayerMode ? "#e8e0d0" : undefined;
   const pmMuted = prayerMode ? "#999" : undefined;
+
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, []);
+
+  const handleDateChange = (value: string) => {
+    setSelectedDate(value);
+    setManualOverrides({});
+    if (!value) return;
+    const [y, m, d] = value.split("-").map(Number);
+    if (!y || !m || !d) return;
+    const newCtx = getLiturgicalContext(new Date(y, m - 1, d, 12, 0, 0));
+    onContextChange?.(newCtx);
+  };
+
+  const resetToToday = () => {
+    setSelectedDate(todayStr);
+    setManualOverrides({});
+    onContextChange?.(getLiturgicalContext());
+  };
 
   const handleToggle = (key: keyof LiturgicalPeriod) => {
     const newOverrides = { ...manualOverrides };
@@ -67,6 +92,37 @@ const LiturgicalContextBar = ({ prayerMode, onContextChange, context }: Props) =
         borderColor: pmBorder || "hsl(var(--gold) / 0.15)",
       }}
     >
+      {/* Date selector — always visible at the top */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: pmMuted || "hsl(var(--muted-foreground))" }}>
+          🗓️ Date
+        </label>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => handleDateChange(e.target.value)}
+          className="rounded-md px-2 py-1 text-[11px] font-semibold border"
+          style={{
+            background: prayerMode ? "#1a1a1a" : "hsl(var(--background))",
+            color: pmText || "hsl(var(--foreground))",
+            borderColor: pmBorder || "hsl(var(--gold) / 0.25)",
+            minHeight: 28,
+          }}
+        />
+        {selectedDate !== todayStr && (
+          <button
+            onClick={resetToToday}
+            className="text-[10px] font-bold px-2 py-1 rounded-md border-none cursor-pointer"
+            style={{
+              background: "hsl(var(--gold) / 0.15)",
+              color: "hsl(var(--gold-matte))",
+            }}
+          >
+            ↻ Aujourd'hui
+          </button>
+        )}
+      </div>
+
       {/* Summary line */}
       <button
         onClick={() => setExpanded(!expanded)}
