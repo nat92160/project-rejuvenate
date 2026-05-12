@@ -450,20 +450,21 @@ const IndexContent = () => {
             if (!user) { setAuthOpen(true); return; }
             setContactOpen(true);
           }}
-          className="fixed z-40 flex items-center justify-center rounded-full border border-border cursor-pointer transition-all active:scale-95 hover:-translate-y-0.5"
+          className="fixed z-40 flex items-center justify-center rounded-full border border-border cursor-pointer transition-all active:scale-95 hover:opacity-100 hover:-translate-y-0.5"
           style={{
-            bottom: "calc(84px + env(safe-area-inset-bottom, 0px))",
-            right: "16px",
-            width: 48,
-            height: 48,
+            bottom: "calc(108px + env(safe-area-inset-bottom, 0px))",
+            left: "12px",
+            width: 38,
+            height: 38,
             background: "var(--gradient-gold)",
             color: "hsl(var(--primary-foreground))",
             boxShadow: "var(--shadow-elevated)",
+            opacity: 0.75,
           }}
           aria-label="Contacter l'équipe"
           title="Contacter l'équipe"
         >
-          <span className="text-lg">💬</span>
+          <span className="text-sm">💬</span>
         </button>
       )}
 
