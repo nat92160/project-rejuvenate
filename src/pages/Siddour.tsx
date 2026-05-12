@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, BookOpen, Languages, Minus, Plus, Sparkles, X } from "lucide-react";
+import { ArrowLeft, BookOpen, Home, Languages, Minus, Plus, Sparkles, X } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useSiddourRite } from "@/hooks/useSiddourRite";
 import { useSiddourFullOffice } from "@/hooks/useSiddourFullOffice";
 import { detectOfficeNow, getOfficeMeta } from "@/lib/siddourCatalog";
 import SiddourBookSidebar from "@/components/siddour/SiddourBookSidebar";
 import SiddourBookReader from "@/components/siddour/SiddourBookReader";
+import SiddourHome from "@/components/siddour/SiddourHome";
 
 const FONT_KEY = "siddour_book_font_v1";
 
@@ -15,8 +16,9 @@ const Siddour = () => {
   const [params, setParams] = useSearchParams();
   const { rite, setRite } = useSiddourRite();
 
-  const initialOffice = params.get("office") || detectOfficeNow();
+  const initialOffice = params.get("office") || "sommaire";
   const [office, setOffice] = useState(initialOffice);
+  const isHome = office === "sommaire";
   const [activeSection, setActiveSection] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [autoTranslateIndices, setAutoTranslateIndices] = useState<Set<number>>(new Set());
@@ -31,7 +33,7 @@ const Siddour = () => {
     setParams({ office, rite }, { replace: true });
   }, [office, rite, setParams]);
 
-  const { data, loading, error } = useSiddourFullOffice(rite, office);
+  const { data, loading, error } = useSiddourFullOffice(rite, isHome ? "shacharit" : office);
   const sections = data?.sections || [];
 
   // Reset des sections auto-traduites quand on change d'office/rite
@@ -131,20 +133,33 @@ const Siddour = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
 
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="lg:hidden p-2 rounded-lg hover:bg-muted active:scale-95 transition"
-            aria-label="Ouvrir le sommaire"
-          >
-            <BookOpen className="w-5 h-5" style={{ color: "hsl(var(--gold-matte))" }} />
-          </button>
+          {!isHome && (
+            <button
+              onClick={() => handleSelectOffice("sommaire")}
+              className="p-2 rounded-lg hover:bg-muted active:scale-95 transition"
+              aria-label="Sommaire"
+              title="Sommaire"
+            >
+              <Home className="w-5 h-5" style={{ color: "hsl(var(--gold-matte))" }} />
+            </button>
+          )}
+
+          {!isHome && (
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="lg:hidden p-2 rounded-lg hover:bg-muted active:scale-95 transition"
+              aria-label="Ouvrir le sommaire de l'office"
+            >
+              <BookOpen className="w-5 h-5" style={{ color: "hsl(var(--gold-matte))" }} />
+            </button>
+          )}
 
           <div className="flex-1 min-w-0">
             <h1 className="font-display font-bold text-sm sm:text-base truncate" style={{ color: "hsl(var(--primary))" }}>
-              {officeMeta?.icon} {officeMeta?.label || "Siddour"}
+              {isHome ? "📖 Sommaire" : `${officeMeta?.icon || ""} ${officeMeta?.label || "Siddour"}`}
             </h1>
             <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-              {sections[activeSection]?.title || "Livre des prières"}
+              {isHome ? "Livre de prières — Édot HaMizrah / Ashkenaz" : (sections[activeSection]?.title || "Livre des prières")}
             </p>
           </div>
 
@@ -190,7 +205,7 @@ const Siddour = () => {
 
       <div className="flex">
         {/* Sidebar desktop */}
-        <aside className="hidden lg:block w-72 shrink-0 border-r border-border/40 sticky top-[60px] self-start"
+        <aside className={`${isHome ? "hidden" : "hidden lg:block"} w-72 shrink-0 border-r border-border/40 sticky top-[60px] self-start`}
           style={{ height: "calc(100vh - 60px - env(safe-area-inset-top, 0px))" }}>
           {sidebar}
         </aside>
@@ -212,6 +227,9 @@ const Siddour = () => {
 
         {/* Main content */}
         <main className="flex-1 min-w-0">
+          {isHome ? (
+            <SiddourHome rite={rite} setRite={setRite} onSelectOffice={handleSelectOffice} />
+          ) : (
           <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
             {/* Bandeau IA + actions */}
             {!loading && !error && sections.length > 0 && (
@@ -273,22 +291,25 @@ const Siddour = () => {
               />
             )}
           </div>
+          )}
         </main>
       </div>
 
       {/* FAB mobile pour rouvrir le sommaire */}
-      <button
-        onClick={() => setDrawerOpen(true)}
-        className="lg:hidden fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition"
-        style={{
-          background: "hsl(var(--primary))",
-          color: "hsl(var(--primary-foreground))",
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        }}
-        aria-label="Sommaire du livre"
-      >
-        <BookOpen className="w-6 h-6" />
-      </button>
+      {!isHome && (
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="lg:hidden fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition"
+          style={{
+            background: "hsl(var(--primary))",
+            color: "hsl(var(--primary-foreground))",
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          }}
+          aria-label="Sommaire du livre"
+        >
+          <BookOpen className="w-6 h-6" />
+        </button>
+      )}
     </div>
   );
 };
