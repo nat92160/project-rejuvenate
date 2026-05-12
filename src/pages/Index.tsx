@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Navigate } from "react-router-dom";
 import { CityProvider } from "@/hooks/useCity";
-import { RoleProvider, useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 
 import BottomNav from "@/components/BottomNav";
@@ -262,13 +261,10 @@ const IndexContent = () => {
   const [authOpen, setAuthOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
 
-  const { role, setRole } = useRole();
-  const { user, dbRole, isAdmin, signOut, loading: authLoading, suspended } = useAuth();
+  const { user, isAdmin, isPresident, signOut, suspended } = useAuth();
   const pendingCount = usePendingRequests();
   const { triggerAutoGeo, city } = useCity();
   const [showHomeBtn, setShowHomeBtn] = useState(false);
-
-  const isPresident = dbRole === "president";
 
   useEffect(() => { triggerAutoGeo(); }, []);
 
@@ -482,9 +478,7 @@ const IndexContent = () => {
 
 const Index = () => (
   <CityProvider>
-    <RoleProvider>
-      <IndexContent />
-    </RoleProvider>
+    <IndexContent />
   </CityProvider>
 );
 
