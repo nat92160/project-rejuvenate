@@ -34,6 +34,10 @@ function fmtFr(d: Date) {
   return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
+function fmtFrShort(d: Date) {
+  return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+}
+
 const HazkaraWidget = () => {
   const { user } = useAuth();
   const [mode, setMode] = useState<"greg" | "heb">("greg");
@@ -458,6 +462,23 @@ const HazkaraWidget = () => {
                 <div className="flex-1">
                   <p className="text-sm font-bold text-foreground capitalize">{fmtFr(y.greg)}</p>
                   <p className="text-[11px] text-muted-foreground mt-0.5" dir="rtl">{y.hebrew}</p>
+                  {(() => {
+                    const veille = new Date(y.greg);
+                    veille.setDate(veille.getDate() - 1);
+                    return (
+                      <div className="mt-2 space-y-0.5 text-[11px] leading-relaxed">
+                        <p className="text-foreground">
+                          <span className="font-bold">🕯️ Bougie :</span>{" "}
+                          <span className="capitalize">{fmtFrShort(veille)} au soir</span>{" "}
+                          <span className="text-muted-foreground">(à la sortie des étoiles)</span>
+                        </p>
+                        <p className="text-foreground">
+                          <span className="font-bold">🪦 Hazkara & cimetière :</span>{" "}
+                          <span className="capitalize">{fmtFrShort(y.greg)}</span>
+                        </p>
+                      </div>
+                    );
+                  })()}
                   {y.note && (
                     <p className="text-[10px] text-muted-foreground italic mt-1">⚠️ {y.note}</p>
                   )}
