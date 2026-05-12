@@ -10,81 +10,114 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const auth = req.headers.get("Authorization") || "";
-    const token = auth.replace(/^Bearer\s+/i, "");
-    if (!token || token !== supabaseKey) {
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+
+    // Accept either service role bearer (manual/admin call) OR anon apikey (pg_cron)
+    const auth = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+    const apikey = req.headers.get("apikey") || "";
+    const authorized =
+      (auth && (auth === serviceKey || auth === anonKey)) ||
+      (apikey && (apikey === serviceKey || apikey === anonKey));
+    if (!authorized) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Compute "tomorrow" in Paris (Hazkara observance date) — we send the
-    // reminder the evening before so the user can light the candle at Tzeit.
+    const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Compute "tomorrow" in Paris (Hazkara observance day) — alert sent the eve.
     const now = new Date();
     const paris = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Paris" }));
     const tomorrow = new Date(paris);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const yyyy = tomorrow.getFullYear();
-    const mm = String(tomorrow.getMonth() + 1).padStart(2, "0");
-    const dd = String(tomorrow.getDate()).padStart(2, "0");
-    const target = `${yyyy}-${mm}-${dd}`;
+    const gy = tomorrow.getFullYear();
+    const gm = tomorrow.getMonth() + 1;
+    const gd = tomorrow.getDate();
 
-    const { data: reminders, error } = await supabase
-      .from("hazkara_reminders")
-      .select("id, user_id, deceased_name, observance_date")
-      .eq("observance_date", target)
-      .eq("sent", false);
+    // Convert tomorrow's gregorian date -> hebrew date via Hebcal
+    const convRes = await fetch(
+      `https://www.hebcal.com/converter?cfg=json&gy=${gy}&gm=${gm}&gd=${gd}&g2h=1&strict=1`,
+    );
+    if (!convRes.ok) {
+      const text = await convRes.text();
+      throw new Error(`Hebcal failed: ${convRes.status} ${text}`);
+    }
+    const conv = await convRes.json();
+    const tomorrowHebDay: number = conv.hd;
+    const tomorrowHebMonth: string = conv.hm; // e.g. "Cheshvan", "Adar1", "Adar2"
+
+    console.log(`[hazkara-reminder] tomorrow=${gy}-${gm}-${gd} → ${tomorrowHebDay} ${tomorrowHebMonth}`);
+
+    // Find all records matching tomorrow's hebrew day+month
+    // Adar handling: in non-leap year, Hebcal returns "Adar"; users may have saved
+    // "Adar", "Adar1" or "Adar2" — match any Adar variant when tomorrow is "Adar".
+    const monthCandidates: string[] = [tomorrowHebMonth];
+    if (tomorrowHebMonth === "Adar") monthCandidates.push("Adar1", "Adar2");
+    if (tomorrowHebMonth === "Adar2") monthCandidates.push("Adar");
+
+    const { data: records, error } = await supabase
+      .from("hazkara_records")
+      .select("id, user_id, deceased_name, hebrew_day, hebrew_month")
+      .eq("hebrew_day", tomorrowHebDay)
+      .in("hebrew_month", monthCandidates);
 
     if (error) throw error;
-    if (!reminders?.length) {
-      return json({ skipped: true, reason: "No reminders for tomorrow", target });
+    if (!records?.length) {
+      return json({ skipped: true, reason: "No hazkara tomorrow", tomorrowHebDay, tomorrowHebMonth });
     }
+
+    // Group by user (avoid duplicate names)
+    const byUser = new Map<string, string[]>();
+    for (const r of records) {
+      const arr = byUser.get(r.user_id) || [];
+      if (!arr.includes(r.deceased_name)) arr.push(r.deceased_name);
+      byUser.set(r.user_id, arr);
+    }
+
+    const dateFr = tomorrow.toLocaleDateString("fr-FR", {
+      weekday: "long", day: "numeric", month: "long",
+      timeZone: "Europe/Paris",
+    });
 
     let totalSent = 0;
-    const sentIds: string[] = [];
+    const errors: any[] = [];
 
-    // Group by user
-    const byUser = new Map<string, typeof reminders>();
-    for (const r of reminders) {
-      if (!byUser.has(r.user_id)) byUser.set(r.user_id, [] as any);
-      byUser.get(r.user_id)!.push(r);
-    }
-
-    for (const [userId, list] of byUser) {
-      const names = list.map((r: any) => r.deceased_name).join(", ");
-      const dateFr = tomorrow.toLocaleDateString("fr-FR", {
-        weekday: "long", day: "numeric", month: "long",
-        timeZone: "Europe/Paris",
-      });
+    for (const [userId, names] of byUser) {
+      const namesStr = names.join(", ");
       const title = "🕯️ Hazkara demain";
-      const body = list.length === 1
-        ? `Ce soir : allumez la bougie pour ${names} (sortie des étoiles). 🪦 Demain ${dateFr} : Hazkara et visite au cimetière.`
-        : `Ce soir : allumez les bougies pour ${names} (sortie des étoiles). 🪦 Demain ${dateFr} : Hazkara et visite au cimetière.`;
+      const body = names.length === 1
+        ? `Ce soir : allumez la bougie pour ${namesStr} (sortie des étoiles). 🪦 Demain ${dateFr} : Hazkara et visite au cimetière.`
+        : `Ce soir : allumez les bougies pour ${namesStr} (sortie des étoiles). 🪦 Demain ${dateFr} : Hazkara et visite au cimetière.`;
 
       try {
         const res = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${supabaseKey}`,
+            Authorization: `Bearer ${serviceKey}`,
           },
           body: JSON.stringify({ title, body, user_ids: [userId] }),
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         totalSent += data.sent || 0;
-        for (const r of list) sentIds.push(r.id);
+        if (!res.ok) errors.push({ userId, status: res.status, data });
       } catch (e) {
         console.error("Push error for user", userId, e);
+        errors.push({ userId, error: String(e) });
       }
     }
 
-    if (sentIds.length) {
-      await supabase.from("hazkara_reminders").update({ sent: true }).in("id", sentIds);
-    }
-
-    return json({ success: true, target, reminders: reminders.length, sent: totalSent });
+    return json({
+      success: true,
+      tomorrow: `${gy}-${String(gm).padStart(2, "0")}-${String(gd).padStart(2, "0")}`,
+      hebrew: `${tomorrowHebDay} ${tomorrowHebMonth}`,
+      matched: records.length,
+      users: byUser.size,
+      sent: totalSent,
+      errors,
+    });
   } catch (err) {
     console.error("hazkara-reminder error:", err);
     return new Response(JSON.stringify({ error: String(err) }), {
