@@ -151,10 +151,17 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                   if (!processed.isActive || processed.isSeasonalMarker) return null;
                   verse = processed.html;
                 }
-                const rawNotes = getNotesForVerse(verse, rite, period, {
-                  isHazara: sec.isHazara,
-                  office,
-                });
+                // Ne pas déclencher d'annotation sur une ligne de rubrique/instruction :
+                // l'annotation doit apparaître au moment exact où l'on commence à réciter,
+                // jamais sur le commentaire qui précède.
+                const isInstr = isInstructionOnly(verse);
+                const isTitle = isInternalSectionTitle(verse);
+                const rawNotes = (isInstr || isTitle)
+                  ? []
+                  : getNotesForVerse(verse, rite, period, {
+                      isHazara: sec.isHazara,
+                      office,
+                    });
                 const inlineNotes = rawNotes.filter((n) => {
                   if (emittedNoteIds.has(n.id)) return false;
                   emittedNoteIds.add(n.id);
