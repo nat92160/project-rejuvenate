@@ -1,8 +1,10 @@
-import { forwardRef } from "react";
+import { forwardRef, useMemo } from "react";
 import { isInstructionOnly } from "@/lib/utils";
 import type { FullSection } from "@/hooks/useSiddourFullOffice";
 import SiddourSectionTranslation from "./SiddourSectionTranslation";
 import SiddourSectionCommentary from "./SiddourSectionCommentary";
+import SiddourSectionNotes from "./SiddourSectionNotes";
+import { detectPeriod, getNotesForSection } from "@/lib/siddourLiturgicalNotes";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { SiddourRite } from "@/hooks/useSiddourRite";
 
@@ -48,6 +50,7 @@ function isShemaSecondaryLine(html: string): boolean {
 
 const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
   ({ sections, fontSize, registerSectionRef, rite, office, autoTranslateIndices, onJumpToSection }, ref) => {
+    const period = useMemo(() => detectPeriod(new Date(), false), []);
     return (
       <div ref={ref} className="space-y-12 pb-32">
         {sections.map((sec, sIdx) => (
@@ -94,6 +97,9 @@ const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
                 </div>
               )}
             </header>
+
+            {/* Notes liturgiques contextuelles (Morid HaTal, Yaalé véYavo, etc.) */}
+            <SiddourSectionNotes notes={getNotesForSection(sec.hebrew, rite, period)} />
 
             {/* Texte hébreu */}
             <div
