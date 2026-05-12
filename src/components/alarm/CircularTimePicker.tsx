@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 
 interface Props {
@@ -10,13 +10,24 @@ interface Props {
 const CircularTimePicker = ({ hours, minutes, onChange }: Props) => {
   const [editing, setEditing] = useState<"h" | "m">("h");
   const svgRef = useRef<SVGSVGElement>(null);
+  const hoursRef = useRef(hours);
+  const minutesRef = useRef(minutes);
+  useEffect(() => {
+    hoursRef.current = hours;
+  }, [hours]);
+  useEffect(() => {
+    minutesRef.current = minutes;
+  }, [minutes]);
 
   const size = 220;
   const cx = size / 2;
   const cy = size / 2;
   const radius = 85;
 
-  const values = editing === "h" ? Array.from({ length: 24 }, (_, i) => i) : [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+  const values =
+    editing === "h"
+      ? Array.from({ length: 24 }, (_, i) => i)
+      : Array.from({ length: 12 }, (_, i) => i * 5);
   const current = editing === "h" ? hours : minutes;
 
   const angleForValue = (v: number) => {
@@ -39,15 +50,13 @@ const CircularTimePicker = ({ hours, minutes, onChange }: Props) => {
 
       if (editing === "h") {
         const h = Math.round((angle / 360) * 24) % 24;
-        onChange(h, minutes);
+        onChange(h, minutesRef.current);
       } else {
         const m = Math.round((angle / 360) * 60) % 60;
-        // Snap to 5
-        const snapped = Math.round(m / 5) * 5;
-        onChange(hours, snapped % 60);
+        onChange(hoursRef.current, m);
       }
     },
-    [editing, hours, minutes, onChange, cx, cy],
+    [editing, onChange, cx, cy],
   );
 
   const onPointerDown = (e: React.PointerEvent) => {
