@@ -20,6 +20,12 @@ Deno.serve(async (req) => {
       (auth && (auth === serviceKey || auth === anonKey)) ||
       (apikey && (apikey === serviceKey || apikey === anonKey));
     if (!authorized) {
+      console.log("[hazkara-reminder] auth reject", {
+        authPrefix: auth.slice(0, 12),
+        apikeyPrefix: apikey.slice(0, 12),
+        anonPrefix: anonKey.slice(0, 12),
+        servicePrefix: serviceKey.slice(0, 12),
+      });
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
