@@ -92,8 +92,16 @@ const MariagesWidget = () => {
   const [viewMonth, setViewMonth] = useState(now.getMonth());
   const [checkDate, setCheckDate] = useState("");
   const [checkResult, setCheckResult] = useState<{ allowed: boolean; reason?: string } | null>(null);
+  const [rite, setRite] = useState<"sefarade" | "ashkenaze" | "tous">("tous");
 
-  const forbiddenPeriods = useMemo(() => computeForbiddenPeriods(selectedYear), [selectedYear]);
+  const forbiddenPeriods = useMemo(() => {
+    const all = computeForbiddenPeriods(selectedYear);
+    return all.filter((p) => {
+      if (p.name.includes("Séfarade")) return rite !== "ashkenaze";
+      if (p.name.includes("Ashkénaze")) return rite !== "sefarade";
+      return true;
+    });
+  }, [selectedYear, rite]);
 
   const isDateForbidden = (dateStr: string) =>
     forbiddenPeriods.some((p) => dateStr >= p.start && dateStr <= p.end);
@@ -131,7 +139,11 @@ const MariagesWidget = () => {
     if (!value) { setCheckResult(null); return; }
     const checkYear = parseInt(value.split("-")[0]);
     if (isNaN(checkYear)) { setCheckResult(null); return; }
-    const periods = computeForbiddenPeriods(checkYear);
+    const periods = computeForbiddenPeriods(checkYear).filter((p) => {
+      if (p.name.includes("Séfarade")) return rite !== "ashkenaze";
+      if (p.name.includes("Ashkénaze")) return rite !== "sefarade";
+      return true;
+    });
     const period = periods.find((p) => value >= p.start && value <= p.end);
     setCheckResult(period ? { allowed: false, reason: period.reason } : { allowed: true });
     const month = parseInt(value.split("-")[1]) - 1;
@@ -142,12 +154,20 @@ const MariagesWidget = () => {
   const handleDayClick = (dateStr: string) => {
     setCheckDate(dateStr);
     const year = parseInt(dateStr.split("-")[0]);
-    const periods = computeForbiddenPeriods(year);
+    const periods = computeForbiddenPeriods(year).filter((p) => {
+      if (p.name.includes("Séfarade")) return rite !== "ashkenaze";
+      if (p.name.includes("Ashkénaze")) return rite !== "sefarade";
+      return true;
+    });
     const p = periods.find((p) => dateStr >= p.start && dateStr <= p.end);
     setCheckResult(p ? { allowed: false, reason: p.reason } : { allowed: true });
   };
 
-  const todayForbidden = FORBIDDEN_PERIODS_STATIC.some((p) => {
+  const todayForbidden = FORBIDDEN_PERIODS_STATIC.filter((p) => {
+    if (p.rite === "Séfarade") return rite !== "ashkenaze";
+    if (p.rite === "Ashkénaze") return rite !== "sefarade";
+    return true;
+  }).some((p) => {
     const s = new Date(p.start + "T00:00:00");
     const e = new Date(p.end + "T23:59:59");
     return now >= s && now <= e;
@@ -174,6 +194,27 @@ const MariagesWidget = () => {
       <h3 className="font-display text-base font-bold flex items-center gap-2 text-foreground">
         💍 Calendrier des Mariages
       </h3>
+
+      {/* Rite selector */}
+      <div className="flex gap-1.5 mt-3">
+        {([
+          { id: "tous", label: "Tous (strict)" },
+          { id: "sefarade", label: "Séfarade" },
+          { id: "ashkenaze", label: "Ashkénaze" },
+        ] as const).map((r) => (
+          <button
+            key={r.id}
+            onClick={() => { setRite(r.id); setCheckResult(null); }}
+            className="flex-1 px-2 py-1.5 rounded-full text-[11px] font-bold border cursor-pointer transition-all"
+            style={rite === r.id
+              ? { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", border: "none" }
+              : { background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
+            }
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
 
       {/* Today status */}
       <div
