@@ -130,9 +130,116 @@ serve(async (req) => {
     }
 
     if (action === "delete" && user_id) {
+      // Snapshot account before deletion (best-effort)
+      try {
+        const { data: { users: allUsers } } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+        const u: any = (allUsers || []).find((x: any) => x.id === user_id);
+        const [profileRes, rolesRes, synaPresRes, synaAdjRes, subsRes] = await Promise.all([
+          supabaseAdmin.from("profiles").select("*").eq("user_id", user_id).maybeSingle(),
+          supabaseAdmin.from("user_roles").select("*").eq("user_id", user_id),
+          supabaseAdmin.from("synagogue_profiles").select("*").eq("president_id", user_id),
+          supabaseAdmin.from("synagogue_profiles").select("*").eq("adjoint_id", user_id),
+          supabaseAdmin.from("synagogue_subscriptions").select("*").eq("user_id", user_id),
+        ]);
+        await supabaseAdmin.from("account_backups").insert({
+          user_id,
+          email: u?.email || null,
+          display_name: profileRes.data?.display_name || u?.email || null,
+          reason: "pre_delete",
+          created_by: caller.id,
+          snapshot: {
+            auth: u ? { email: u.email, created_at: u.created_at, user_metadata: u.user_metadata } : null,
+            profile: profileRes.data || null,
+            roles: rolesRes.data || [],
+            synagogues_president: synaPresRes.data || [],
+            synagogues_adjoint: synaAdjRes.data || [],
+            subscriptions: subsRes.data || [],
+          },
+        });
+      } catch (backupErr) {
+        console.error("pre_delete backup failed:", backupErr);
+        return new Response(JSON.stringify({ error: "Backup failed, deletion aborted" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const { error: delError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
       if (delError) throw delError;
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "list_backups") {
+      const { data, error } = await supabaseAdmin
+        .from("account_backups")
+        .select("id, user_id, email, display_name, reason, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return new Response(JSON.stringify({ backups: data || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "get_backup" && body.backup_id) {
+      const { data, error } = await supabaseAdmin
+        .from("account_backups").select("*").eq("id", body.backup_id).maybeSingle();
+      if (error) throw error;
+      return new Response(JSON.stringify({ backup: data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "restore_backup" && body.backup_id) {
+      const { data: backup, error: bErr } = await supabaseAdmin
+        .from("account_backups").select("*").eq("id", body.backup_id).maybeSingle();
+      if (bErr) throw bErr;
+      if (!backup) return new Response(JSON.stringify({ error: "Backup not found" }), { status: 404, headers: corsHeaders });
+
+      const snap = backup.snapshot || {};
+      let targetUserId = backup.user_id;
+
+      // Recreate auth user if it no longer exists
+      const { data: existing } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
+      if (!existing?.user) {
+        const email = snap.auth?.email || backup.email;
+        if (!email) return new Response(JSON.stringify({ error: "No email to restore" }), { status: 400, headers: corsHeaders });
+        const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          email_confirm: true,
+          user_metadata: snap.auth?.user_metadata || {},
+        });
+        if (createErr) throw createErr;
+        targetUserId = created.user!.id;
+      }
+
+      // Restore profile
+      if (snap.profile) {
+        const { id: _omit, user_id: _u, ...profileData } = snap.profile;
+        await supabaseAdmin.from("profiles")
+          .upsert({ ...profileData, user_id: targetUserId }, { onConflict: "user_id" });
+      }
+      // Restore roles
+      for (const r of (snap.roles || [])) {
+        await supabaseAdmin.from("user_roles")
+          .upsert({ user_id: targetUserId, role: r.role }, { onConflict: "user_id,role" });
+      }
+      // Restore synagogue ownerships
+      for (const sp of (snap.synagogues_president || [])) {
+        await supabaseAdmin.from("synagogue_profiles")
+          .update({ president_id: targetUserId }).eq("id", sp.id);
+      }
+      for (const sp of (snap.synagogues_adjoint || [])) {
+        await supabaseAdmin.from("synagogue_profiles")
+          .update({ adjoint_id: targetUserId }).eq("id", sp.id);
+      }
+      // Restore subscriptions
+      for (const s of (snap.subscriptions || [])) {
+        await supabaseAdmin.from("synagogue_subscriptions")
+          .upsert({ user_id: targetUserId, synagogue_id: s.synagogue_id }, { onConflict: "user_id,synagogue_id" });
+      }
+
+      return new Response(JSON.stringify({ success: true, user_id: targetUserId }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify({ error: "Invalid action" }), { status: 400, headers: corsHeaders });
