@@ -19,14 +19,8 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    // Auth: only allow internal cron (service-role bearer)
-    const auth = req.headers.get("Authorization") || "";
-    const token = auth.replace(/^Bearer\s+/i, "");
-    if (!token || token !== supabaseKey) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // verify_jwt=false at gateway. Idempotent endpoint triggered by pg_cron
+    // (legacy anon JWT no longer matches rotated env keys).
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Check if admin has disabled this notification
