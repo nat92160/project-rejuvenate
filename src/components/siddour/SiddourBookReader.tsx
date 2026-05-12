@@ -1,4 +1,4 @@
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useEffect, useMemo, useState } from "react";
 import { isInstructionOnly } from "@/lib/utils";
 import type { FullSection } from "@/hooks/useSiddourFullOffice";
 import SiddourSectionTranslation from "./SiddourSectionTranslation";
@@ -69,8 +69,23 @@ function isHazaraPrayerLine(html: string, isFastDay: boolean): boolean {
 
 const SiddourBookReader = forwardRef<HTMLDivElement, Props>(
   ({ sections, fontSize, registerSectionRef, rite, office, autoTranslateIndices, onJumpToSection }, ref) => {
-    const period = useMemo(() => detectPeriod(new Date(), false), []);
-    const liturgicalContext = useMemo(() => getLiturgicalContext(), []);
+    // Tick toutes les minutes pour que la période hébraïque (et donc les
+    // annotations Yom Tov, Roch Hodech, Tal/Guéchèm, etc.) bascule
+    // automatiquement au coucher du soleil et au passage de date.
+    const [now, setNow] = useState(() => new Date());
+    useEffect(() => {
+      const id = window.setInterval(() => setNow(new Date()), 60_000);
+      const onVisible = () => {
+        if (document.visibilityState === "visible") setNow(new Date());
+      };
+      document.addEventListener("visibilitychange", onVisible);
+      return () => {
+        window.clearInterval(id);
+        document.removeEventListener("visibilitychange", onVisible);
+      };
+    }, []);
+    const period = useMemo(() => detectPeriod(now, false), [now]);
+    const liturgicalContext = useMemo(() => getLiturgicalContext(now), [now]);
     const processedSections = useMemo(
       () => sections.map((sec) => processAmidaVerses(sec.hebrew, liturgicalContext)),
       [sections, liturgicalContext]
