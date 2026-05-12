@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { SIDDOUR_CATEGORIES, getOfficeMeta } from "@/lib/siddourCatalog";
 import type { FullSection } from "@/hooks/useSiddourFullOffice";
@@ -15,12 +15,16 @@ const SiddourBookSidebar = ({
   currentOffice, onSelectOffice, sections, activeSectionIndex, onSelectSection,
 }: Props) => {
   const activeRef = useRef<HTMLButtonElement>(null);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    if (activeRef.current) {
+    if (!collapsed && activeRef.current) {
       activeRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
-  }, [activeSectionIndex]);
+  }, [activeSectionIndex, collapsed]);
+
+  // Quand on change d'office, on ré-ouvre l'arbre
+  useEffect(() => { setCollapsed(false); }, [currentOffice]);
 
   const currentMeta = getOfficeMeta(currentOffice);
 
@@ -40,7 +44,15 @@ const SiddourBookSidebar = ({
                 return (
                   <div key={off.key}>
                     <button
-                      onClick={() => onSelectOffice(off.key)}
+                      onClick={() => {
+                        if (isActive) {
+                          // Toggle l'affichage des sections sans recharger l'office
+                          setCollapsed(c => !c);
+                        } else {
+                          setCollapsed(false);
+                          onSelectOffice(off.key);
+                        }
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-lg transition-colors text-[13px]"
                       style={{
                         background: isActive ? "hsl(var(--gold) / 0.1)" : "transparent",
@@ -48,13 +60,15 @@ const SiddourBookSidebar = ({
                         fontWeight: isActive ? 700 : 500,
                       }}
                     >
-                      {isActive ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0 opacity-40" />}
+                      {isActive && !collapsed
+                        ? <ChevronDown className="w-3 h-3 shrink-0" />
+                        : <ChevronRight className="w-3 h-3 shrink-0 opacity-40" />}
                       <span className="text-sm">{off.icon}</span>
                       <span className="flex-1 truncate">{off.label}</span>
                     </button>
 
                     {/* Sections de l'office actif */}
-                    {isActive && sections.length > 0 && (
+                    {isActive && !collapsed && sections.length > 0 && (
                       <div className="ml-6 mt-1 mb-2 border-l border-border/40 pl-2 space-y-px">
                         {sections.map((sec, idx) => {
                           const isSecActive = idx === activeSectionIndex;
