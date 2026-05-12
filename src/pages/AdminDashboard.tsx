@@ -512,7 +512,7 @@ const AdminDashboard = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-background pt-safe">
         <p className="text-muted-foreground">Chargement...</p>
       </div>
     );
@@ -525,10 +525,7 @@ const AdminDashboard = () => {
 
   return (
     <div
-      className="min-h-screen bg-background px-4 pb-4 sm:px-8 sm:pb-8"
-      style={{
-        paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)",
-      }}
+      className="min-h-screen bg-background px-4 pb-4 sm:px-8 sm:pb-8 pt-safe"
     >
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
