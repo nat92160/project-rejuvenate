@@ -15,7 +15,8 @@ const Siddour = () => {
   const [params, setParams] = useSearchParams();
   const { rite, setRite } = useSiddourRite();
 
-  const initialOffice = params.get("office") || detectOfficeNow() || "shacharit";
+  const officeParam = params.get("office");
+  const initialOffice = (officeParam && officeParam !== "sommaire") ? officeParam : (detectOfficeNow() || "shacharit");
   const [office, setOffice] = useState(initialOffice);
   const [activeSection, setActiveSection] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
