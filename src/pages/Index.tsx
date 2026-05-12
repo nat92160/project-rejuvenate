@@ -47,7 +47,6 @@ const FideleSynagogueView = lazy(() => import("@/components/FideleSynagogueView"
 const SynagogueChooser = lazy(() => import("@/components/SynagogueChooser"));
 const SynaProfileManager = lazy(() => import("@/components/SynaProfileManager"));
 const PrayerTimesWidget = lazy(() => import("@/components/PrayerTimesWidget"));
-const SiddourWidget = lazy(() => import("@/components/SiddourWidget"));
 const EspacePersonnelWidget = lazy(() => import("@/components/EspacePersonnelWidget"));
 const AlerteCommunautaireWidget = lazy(() => import("@/components/AlerteCommunautaireWidget"));
 const BrakhotWidget = lazy(() => import("@/components/BrakhotWidget"));
@@ -267,7 +266,6 @@ const IndexContent = () => {
   const [showHomeBtn, setShowHomeBtn] = useState(false);
 
   const isPresident = dbRole === "president";
-  const currentPrayer = getCurrentPrayer();
 
   useEffect(() => { triggerAutoGeo(); }, []);
 
