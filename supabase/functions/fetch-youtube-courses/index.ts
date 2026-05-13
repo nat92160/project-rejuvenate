@@ -22,6 +22,16 @@ function parseDuration(iso: string): string {
   return `${min}:${String(s).padStart(2, "0")}`;
 }
 
+// Strip lone UTF-16 surrogates that break Postgres JSON insertion
+function sanitizeText(s: string): string {
+  if (!s) return s;
+  // Remove unpaired high/low surrogates
+  return s.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, "")
+          .replace(/(^|[^\uD800-\uDBFF])[\uDC00-\uDFFF]/g, "$1")
+          // Strip null bytes
+          .replace(/\u0000/g, "");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -124,8 +134,8 @@ Deno.serve(async (req) => {
             video_id: vid,
             channel_id: channelId,
             channel_name: channel.name,
-            title: item.snippet.title,
-            description: (item.snippet.description || "").slice(0, 500),
+            title: sanitizeText(item.snippet.title || ""),
+            description: sanitizeText((item.snippet.description || "").slice(0, 500)),
             thumbnail_url: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || "",
             published_at: item.snippet.publishedAt,
             duration: detail ? parseDuration(detail.contentDetails?.duration || "") : null,
