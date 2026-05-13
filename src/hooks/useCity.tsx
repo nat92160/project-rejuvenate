@@ -166,21 +166,22 @@ export function CityProvider({ children }: { children: ReactNode }) {
 
     const requestId = ++geolocationRequestId.current;
 
-    // Safety timeout: if GPS never responds, unlock the button without overwriting later results
-    const safetyTimer = setTimeout(() => {
-      if (geolocationRequestId.current !== requestId) return;
-      console.warn("[geolocate] safety timer fired");
-      setIsGeolocating(false);
-      setLocationError(
-        isNative || isIosWebViewOrBrowser()
-          ? "Votre iPhone cherche encore votre position. Vérifiez que le service de localisation est actif puis réessayez."
-          : "La localisation a pris trop de temps. Réessayez.",
-      );
-    }, isNative || isIosWebViewOrBrowser() ? 30000 : 15000);
+    // Safety timeout — only for native (Capacitor plugin can hang silently);
+    // on web we rely entirely on navigator.geolocation's own timeout option.
+    const safetyTimer = isNative
+      ? setTimeout(() => {
+          if (geolocationRequestId.current !== requestId) return;
+          console.warn("[geolocate] native safety timer fired");
+          setIsGeolocating(false);
+          setLocationError(
+            "La position n'a pas pu être récupérée. Vérifiez que le service de localisation est actif puis réessayez.",
+          );
+        }, 20000)
+      : null;
 
     const onSuccess = async (position: PositionLike) => {
         if (geolocationRequestId.current !== requestId) return;
-        clearTimeout(safetyTimer);
+        if (safetyTimer) clearTimeout(safetyTimer);
         console.log("[geolocate] success", position.coords);
         const { latitude, longitude, accuracy, altitude: gpsAltitude } = position.coords;
         const baseCity = getNearestBaseCity(latitude, longitude);
@@ -242,7 +243,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
           await onSuccess(pos);
         } catch (err: unknown) {
           if (geolocationRequestId.current !== requestId) return;
-          clearTimeout(safetyTimer);
+          if (safetyTimer) clearTimeout(safetyTimer);
           setLocationError(getNativeGeolocationErrorMessage(err));
           setIsGeolocating(false);
         }
@@ -252,7 +253,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
         (position) => { void onSuccess(position); },
         (error) => {
           console.error("[geolocate] web error", error);
-          clearTimeout(safetyTimer);
+          if (safetyTimer) clearTimeout(safetyTimer);
           setLocationError(getGeolocationErrorMessage(error));
           setIsGeolocating(false);
         },
