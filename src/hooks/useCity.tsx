@@ -116,6 +116,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
   const [gpsCity, setGpsCity] = useState<ActiveCityConfig | null>(() => loadStoredGpsCity());
   const [locationError, setLocationError] = useState<string | null>(null);
   const [autoGeoTriggered, setAutoGeoTriggered] = useState(false);
+  const geolocationRequestId = useRef(0);
   const [manualAltitude, setManualAltitudeState] = useState<number>(() => {
     try {
       const stored = localStorage.getItem(ALT_STORAGE_KEY);
@@ -152,13 +153,21 @@ export function CityProvider({ children }: { children: ReactNode }) {
     setIsGeolocating(true);
     setLocationError(null);
 
-    // Safety timeout: if GPS never responds, unlock the button after 12s
+    const requestId = ++geolocationRequestId.current;
+
+    // Safety timeout: if GPS never responds, unlock the button without overwriting later results
     const safetyTimer = setTimeout(() => {
+      if (geolocationRequestId.current !== requestId) return;
       setIsGeolocating(false);
-      setLocationError("La localisation a pris trop de temps. Réessayez.");
-    }, 15000);
+      setLocationError(
+        isNative || isIosWebViewOrBrowser()
+          ? "Votre iPhone cherche encore votre position. Vérifiez que le service de localisation est actif puis réessayez."
+          : "La localisation a pris trop de temps. Réessayez.",
+      );
+    }, isNative || isIosWebViewOrBrowser() ? 30000 : 15000);
 
     const onSuccess = async (position: GeolocationPosition | { coords: GeolocationCoordinates }) => {
+        if (geolocationRequestId.current !== requestId) return;
         clearTimeout(safetyTimer);
         const { latitude, longitude, accuracy, altitude: gpsAltitude } = position.coords;
         const baseCity = getNearestBaseCity(latitude, longitude);
