@@ -522,13 +522,18 @@ const SettingsTab = () => {
         <TestApnsButton />
       </div>
 
-      {/* Test Hazkara */}
+      {/* Test motif par motif */}
       <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
-        <h3 className="font-bold text-foreground mb-1">🕯️ Test notification Hazkara</h3>
+        <h3 className="font-bold text-foreground mb-1">🎯 Tester chaque motif de notification</h3>
         <p className="text-xs text-muted-foreground mb-4">
-          Envoie un push Hazkara de test à votre compte admin (même format que la veille d'une azkara réelle).
+          Envoie un push de test à votre compte admin avec le format exact de chaque motif/widget.
+          Idéal pour vérifier le rendu (titre, corps, emoji) sur l'iPhone et le web.
         </p>
-        <TestHazkaraButton />
+        <div className="space-y-2">
+          {NOTIF_TEST_TEMPLATES.map((t) => (
+            <TestNotifMotifButton key={t.id} template={t} />
+          ))}
+        </div>
       </div>
     </div>
   );
