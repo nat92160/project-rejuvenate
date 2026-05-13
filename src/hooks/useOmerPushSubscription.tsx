@@ -113,21 +113,19 @@ export function useOmerPushSubscription() {
         console.log("[OmerPush] Device token received:", deviceToken ? "yes" : "no");
         if (!deviceToken) return false;
 
+        const payload = {
+          endpoint: `apns://${deviceToken}`,
+          p256dh: "native-ios-placeholder",
+          auth: "native-ios-placeholder",
+          latitude: lat,
+          longitude: lng,
+          timezone: tz,
+        };
         const { error } = await (supabase
           .from("omer_push_subscriptions" as any) as any)
-          .upsert(
-            {
-              endpoint: `apns://${deviceToken}`,
-              p256dh: "native-ios-placeholder",
-              auth: "native-ios-placeholder",
-              latitude: lat,
-              longitude: lng,
-              timezone: tz,
-            },
-            { onConflict: "endpoint" }
-          );
+          .insert(payload);
 
-        if (error) { console.error("[OmerPush] DB upsert error:", error); return false; }
+        if (error && !isDuplicateSubscriptionError(error)) { console.error("[OmerPush] DB insert error:", error); return false; }
         localStorage.setItem("omer_native_push", "true");
         localStorage.setItem("omer_native_token", deviceToken);
         try { localStorage.setItem("calj_native_token", deviceToken); } catch { /* ignore */ }
