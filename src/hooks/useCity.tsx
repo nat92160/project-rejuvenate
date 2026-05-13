@@ -152,6 +152,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
 
   const geolocate = () => {
     const isNative = Capacitor.isNativePlatform();
+    console.log("[geolocate] start", { isNative, isIos: isIosWebViewOrBrowser(), isGeolocating });
     if (!isNative && !navigator.geolocation) {
       setLocationError("La géolocalisation n'est pas disponible sur cet appareil.");
       return;
@@ -168,6 +169,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
     // Safety timeout: if GPS never responds, unlock the button without overwriting later results
     const safetyTimer = setTimeout(() => {
       if (geolocationRequestId.current !== requestId) return;
+      console.warn("[geolocate] safety timer fired");
       setIsGeolocating(false);
       setLocationError(
         isNative || isIosWebViewOrBrowser()
@@ -179,6 +181,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
     const onSuccess = async (position: PositionLike) => {
         if (geolocationRequestId.current !== requestId) return;
         clearTimeout(safetyTimer);
+        console.log("[geolocate] success", position.coords);
         const { latitude, longitude, accuracy, altitude: gpsAltitude } = position.coords;
         const baseCity = getNearestBaseCity(latitude, longitude);
 
@@ -248,11 +251,12 @@ export function CityProvider({ children }: { children: ReactNode }) {
       navigator.geolocation.getCurrentPosition(
         (position) => { void onSuccess(position); },
         (error) => {
+          console.error("[geolocate] web error", error);
           clearTimeout(safetyTimer);
           setLocationError(getGeolocationErrorMessage(error));
           setIsGeolocating(false);
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
       );
     }
   };
