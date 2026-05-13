@@ -36,6 +36,11 @@ function getLocationData() {
   return { lat, lng, tz };
 }
 
+function isDuplicateSubscriptionError(error: unknown) {
+  const dbError = typeof error === "object" && error !== null ? (error as { code?: unknown; message?: unknown }) : null;
+  return dbError?.code === "23505" || /duplicate key|already exists/i.test(String(dbError?.message || ""));
+}
+
 /**
  * Push subscription for Omer reminders — works WITHOUT authentication.
  * Supports both Web Push (guests on browser) and Native Push (iOS/Android).
