@@ -279,7 +279,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
     setAutoGeoTriggered(true);
     try {
       const hasVisited = localStorage.getItem("calj_has_visited");
-      if (!hasVisited && navigator.geolocation && !Capacitor.isNativePlatform() && !isIosWebViewOrBrowser()) {
+      if (!hasVisited && navigator.geolocation && !Capacitor.isNativePlatform()) {
         localStorage.setItem("calj_has_visited", "1");
         geolocate();
       }
