@@ -99,8 +99,8 @@ export function useOmerPushSubscription() {
           .upsert(
             {
               endpoint: `apns://${deviceToken}`,
-              p256dh: "native",
-              auth: "native",
+              p256dh: "native-ios-placeholder",
+              auth: "native-ios-placeholder",
               latitude: lat,
               longitude: lng,
               timezone: tz,
