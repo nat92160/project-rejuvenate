@@ -90,7 +90,21 @@ export function useOmerPushSubscription() {
         const granted = await requestNativePushPermission();
         console.log("[OmerPush] Permission granted:", granted);
         if (!granted) return false;
-        const deviceToken = await registerNativePush();
+        // Reuse the global token cached at app launch to avoid a second
+        // PushNotifications.register() call which can hang on iOS when the
+        // app is already registered.
+        let deviceToken: string | null = null;
+        try { deviceToken = localStorage.getItem("calj_native_token"); } catch { /* ignore */ }
+        if (!deviceToken) {
+          try {
+            deviceToken = await Promise.race([
+              registerNativePush(),
+              new Promise<string>((_, rej) => setTimeout(() => rej(new Error("register timeout")), 8000)),
+            ]);
+          } catch (e) {
+            console.warn("[OmerPush] register fallback failed:", e);
+          }
+        }
         console.log("[OmerPush] Device token received:", deviceToken ? "yes" : "no");
         if (!deviceToken) return false;
 
@@ -111,6 +125,7 @@ export function useOmerPushSubscription() {
         if (error) { console.error("[OmerPush] DB upsert error:", error); return false; }
         localStorage.setItem("omer_native_push", "true");
         localStorage.setItem("omer_native_token", deviceToken);
+        try { localStorage.setItem("calj_native_token", deviceToken); } catch { /* ignore */ }
         setIsSubscribed(true);
         return true;
       } catch (err) {
