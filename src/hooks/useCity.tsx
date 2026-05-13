@@ -225,11 +225,12 @@ export function CityProvider({ children }: { children: ReactNode }) {
               return;
             }
           }
-          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000 });
+          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 });
           await onSuccess(pos as any);
         } catch (err: any) {
+          if (geolocationRequestId.current !== requestId) return;
           clearTimeout(safetyTimer);
-          setLocationError(err?.message || "Impossible de récupérer votre position exacte.");
+          setLocationError(getNativeGeolocationErrorMessage(err));
           setIsGeolocating(false);
         }
       })();
