@@ -257,7 +257,8 @@ export function CityProvider({ children }: { children: ReactNode }) {
           setLocationError(getGeolocationErrorMessage(error));
           setIsGeolocating(false);
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+        // Accept cached position up to 5 min old → instant on subsequent calls
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 300000 },
       );
     }
   };
