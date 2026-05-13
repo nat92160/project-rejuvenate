@@ -157,19 +157,16 @@ export function useOmerPushSubscription() {
 
       const { error } = await (supabase
         .from("omer_push_subscriptions" as any) as any)
-        .upsert(
-          {
-            endpoint: sub.endpoint,
-            p256dh: toBase64url(key),
-            auth: toBase64url(auth),
-            latitude: lat,
-            longitude: lng,
-            timezone: tz,
-          },
-          { onConflict: "endpoint" }
-        );
+        .insert({
+          endpoint: sub.endpoint,
+          p256dh: toBase64url(key),
+          auth: toBase64url(auth),
+          latitude: lat,
+          longitude: lng,
+          timezone: tz,
+        });
 
-      if (error) { console.error("Omer push sub error:", error); return false; }
+      if (error && !isDuplicateSubscriptionError(error)) { console.error("Omer push sub error:", error); return false; }
       setIsSubscribed(true);
       return true;
     } catch (err) {
