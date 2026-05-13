@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import { CityConfig, CITIES, DEFAULT_CITY } from "@/lib/cities";
+import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
 
 export interface ActiveCityConfig extends CityConfig {
   _gps?: boolean;
@@ -114,7 +116,8 @@ export function CityProvider({ children }: { children: ReactNode }) {
   };
 
   const geolocate = () => {
-    if (!navigator.geolocation) {
+    const isNative = Capacitor.isNativePlatform();
+    if (!isNative && !navigator.geolocation) {
       setLocationError("La géolocalisation n'est pas disponible sur cet appareil.");
       return;
     }
@@ -129,10 +132,9 @@ export function CityProvider({ children }: { children: ReactNode }) {
     const safetyTimer = setTimeout(() => {
       setIsGeolocating(false);
       setLocationError("La localisation a pris trop de temps. Réessayez.");
-    }, 12000);
+    }, 15000);
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
+    const onSuccess = async (position: GeolocationPosition | { coords: GeolocationCoordinates }) => {
         clearTimeout(safetyTimer);
         const { latitude, longitude, accuracy, altitude: gpsAltitude } = position.coords;
         const baseCity = getNearestBaseCity(latitude, longitude);
@@ -174,14 +176,41 @@ export function CityProvider({ children }: { children: ReactNode }) {
         }
 
         setIsGeolocating(false);
-      },
-      (error) => {
-        clearTimeout(safetyTimer);
-        setLocationError(getGeolocationErrorMessage(error));
-        setIsGeolocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 },
-    );
+    };
+
+    if (isNative) {
+      // Native: ensure permission, then use Capacitor Geolocation (works in WKWebView)
+      (async () => {
+        try {
+          const perm = await Geolocation.checkPermissions();
+          if (perm.location !== "granted") {
+            const req = await Geolocation.requestPermissions();
+            if (req.location !== "granted") {
+              clearTimeout(safetyTimer);
+              setLocationError("Autorisez la localisation dans les réglages de l'iPhone pour trouver les synagogues autour de vous.");
+              setIsGeolocating(false);
+              return;
+            }
+          }
+          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000 });
+          await onSuccess(pos as any);
+        } catch (err: any) {
+          clearTimeout(safetyTimer);
+          setLocationError(err?.message || "Impossible de récupérer votre position exacte.");
+          setIsGeolocating(false);
+        }
+      })();
+    } else {
+      navigator.geolocation.getCurrentPosition(
+        onSuccess as PositionCallback,
+        (error) => {
+          clearTimeout(safetyTimer);
+          setLocationError(getGeolocationErrorMessage(error));
+          setIsGeolocating(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 },
+      );
+    }
   };
 
   const baseCity = CITIES[cityKey] || CITIES[DEFAULT_CITY];
