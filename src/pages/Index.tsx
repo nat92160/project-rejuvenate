@@ -24,6 +24,7 @@ const SpiritualTimeline = lazy(() => import("@/components/SpiritualTimeline"));
 // Lazy-loaded modules
 const CountdownWidget = lazy(() => import("@/components/CountdownWidget"));
 const ShabbatWidget = lazy(() => import("@/components/ShabbatWidget"));
+const ParashaDetailsWidget = lazy(() => import("@/components/ParashaDetailsWidget"));
 const ZmanimWidget = lazy(() => import("@/components/ZmanimWidget"));
 const HolidaysWidget = lazy(() => import("@/components/HolidaysWidget"));
 const OmerCounterWidget = lazy(() => import("@/components/OmerCounterWidget"));
@@ -332,7 +333,7 @@ const IndexContent = () => {
           </>
         );
       case "zmanim": return <Lazy><ZmanimWidget /></Lazy>;
-      case "chabbat": return <Lazy><><CountdownWidget /><ShabbatWidget /></></Lazy>;
+      case "chabbat": return <Lazy><><CountdownWidget /><ShabbatWidget /><ParashaDetailsWidget /></></Lazy>;
       case "explorer":
         return (
           <div className="rounded-2xl bg-card p-8 mb-4 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
