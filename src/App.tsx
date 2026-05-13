@@ -140,6 +140,9 @@ function AppInner() {
         console.log("[App] ✅ Push authorized, registering for token…");
         const token = await registerNativePush();
         deviceTokenRef.current = token;
+        if (token) {
+          try { localStorage.setItem("calj_native_token", token); } catch { /* ignore */ }
+        }
         if (user && token) {
           const saved = await saveNativePushToken(user.id, token);
           if (saved) tokenSavedForUserRef.current = user.id;
