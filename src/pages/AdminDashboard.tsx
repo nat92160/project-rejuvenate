@@ -222,43 +222,6 @@ const TestApnsButton = () => {
   );
 };
 
-const TestHazkaraButton = () => {
-  const { user } = useAuth();
-  const [sending, setSending] = useState(false);
-  const handleTest = async () => {
-    if (!user) return;
-    setSending(true);
-    try {
-      const dateFr = new Date(Date.now() + 86400000).toLocaleDateString("fr-FR", {
-        weekday: "long", day: "numeric", month: "long",
-      });
-      const { data, error } = await supabase.functions.invoke("send-push", {
-        body: {
-          title: "🕯️ Hazkara demain (TEST)",
-          body: `Ce soir : allumez la bougie pour [Nom du défunt] (sortie des étoiles). 🪦 Demain ${dateFr} : Hazkara et visite au cimetière.`,
-          user_ids: [user.id],
-        },
-      });
-      if (error) throw error;
-      toast.success(`✅ Envoyé à ${(data as any)?.sent ?? 0} appareil(s)`);
-    } catch (err) {
-      console.error(err);
-      toast.error("Erreur lors de l'envoi du test Hazkara");
-    }
-    setSending(false);
-  };
-  return (
-    <button
-      onClick={handleTest}
-      disabled={sending}
-      className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50 transition-all active:scale-[0.98]"
-      style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
-    >
-      {sending ? "⏳ Envoi…" : "🕯️ Tester notification Hazkara"}
-    </button>
-  );
-};
-
 // Catalogue des motifs de notification testables individuellement
 const NOTIF_TEST_TEMPLATES: Array<{
   id: string;
