@@ -257,7 +257,8 @@ export function CityProvider({ children }: { children: ReactNode }) {
           setLocationError(getGeolocationErrorMessage(error));
           setIsGeolocating(false);
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+        // Accept cached position up to 5 min old → instant on subsequent calls
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 300000 },
       );
     }
   };
@@ -279,7 +280,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
     setAutoGeoTriggered(true);
     try {
       const hasVisited = localStorage.getItem("calj_has_visited");
-      if (!hasVisited && navigator.geolocation && !Capacitor.isNativePlatform() && !isIosWebViewOrBrowser()) {
+      if (!hasVisited && navigator.geolocation && !Capacitor.isNativePlatform()) {
         localStorage.setItem("calj_has_visited", "1");
         geolocate();
       }
