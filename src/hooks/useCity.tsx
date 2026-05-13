@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useRef, useState, ReactNode } from "react";
 import { CityConfig, CITIES, DEFAULT_CITY } from "@/lib/cities";
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
@@ -58,6 +58,11 @@ function getNearestBaseCity(latitude: number, longitude: number): CityConfig {
   return CITIES[nearestKey] || CITIES[DEFAULT_CITY];
 }
 
+function isIosWebViewOrBrowser() {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
 function getGeolocationErrorMessage(error: GeolocationPositionError) {
   switch (error.code) {
     case error.PERMISSION_DENIED:
@@ -69,6 +74,25 @@ function getGeolocationErrorMessage(error: GeolocationPositionError) {
     default:
       return "Impossible de récupérer votre position exacte.";
   }
+}
+
+function getNativeGeolocationErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String((error as any)?.message || "");
+  const code = String((error as any)?.code || "");
+
+  if (code.includes("0003") || /denied|refus|permission/i.test(message)) {
+    return "La localisation est refusée. Autorisez Chabbat Chalom dans Réglages > Confidentialité et sécurité > Service de localisation.";
+  }
+
+  if (code.includes("0010") || /timeout|time.?out|temps/i.test(message)) {
+    return "Votre iPhone n'a pas encore trouvé votre position. Activez le service de localisation puis réessayez près d'une fenêtre.";
+  }
+
+  if (/unavailable|indisponible|location/i.test(message)) {
+    return "Votre position GPS est indisponible pour le moment. Vérifiez que le service de localisation est activé.";
+  }
+
+  return "Impossible de récupérer votre position exacte. Vérifiez le service de localisation puis réessayez.";
 }
 
 function loadStoredGpsCity(): ActiveCityConfig | null {
