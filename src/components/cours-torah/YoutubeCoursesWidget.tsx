@@ -2,6 +2,21 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Play, ExternalLink, Clock, Eye, X } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+
+async function openYoutubeVideo(videoId: string) {
+  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { Browser } = await import("@capacitor/browser");
+      await Browser.open({ url: watchUrl, presentationStyle: "fullscreen" });
+      return;
+    } catch {
+      // fall through
+    }
+  }
+  window.open(watchUrl, "_blank", "noopener,noreferrer");
+}
 
 interface YTCourse {
   id: string;
@@ -218,7 +233,13 @@ const YoutubeCoursesWidget = () => {
               <div
                 className="rounded-2xl bg-card border border-border overflow-hidden cursor-pointer hover:border-primary/30 transition-all"
                 style={{ boxShadow: "var(--shadow-card)" }}
-                onClick={() => setSelectedVideo(course.video_id)}
+                onClick={() => {
+                  if (Capacitor.isNativePlatform()) {
+                    void openYoutubeVideo(course.video_id);
+                  } else {
+                    setSelectedVideo(course.video_id);
+                  }
+                }}
               >
                 <div className="flex gap-0">
                   {/* Thumbnail */}
@@ -275,7 +296,7 @@ const YoutubeCoursesWidget = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(`https://www.youtube.com/watch?v=${course.video_id}`, "_blank", "noopener,noreferrer");
+                          void openYoutubeVideo(course.video_id);
                         }}
                         className="ml-auto flex items-center gap-0.5 text-[10px] font-bold px-2 py-1 rounded-lg border-none cursor-pointer bg-destructive/5 text-foreground hover:bg-destructive/10 transition-colors"
                       >
