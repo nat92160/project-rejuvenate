@@ -31,7 +31,7 @@ function getLocationData() {
     }
   } catch { /* use defaults */ }
   if (tz === "Europe/Paris") {
-    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch {}
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { /* keep default */ }
   }
   return { lat, lng, tz };
 }
@@ -74,9 +74,9 @@ export function useOmerPushSubscription() {
     if (native || !swRegistration) { if (!native) setLoading(false); return; }
     swRegistration.pushManager.getSubscription().then(async (sub) => {
       if (sub) {
-        const { data } = await (supabase
-          .from("omer_push_subscriptions" as any)
-          .select("id") as any)
+        const { data } = await supabase
+          .from("omer_push_subscriptions")
+          .select("id")
           .eq("endpoint", sub.endpoint)
           .maybeSingle();
         setIsSubscribed(!!data);
@@ -121,8 +121,8 @@ export function useOmerPushSubscription() {
           longitude: lng,
           timezone: tz,
         };
-        const { error } = await (supabase
-          .from("omer_push_subscriptions" as any) as any)
+        const { error } = await supabase
+          .from("omer_push_subscriptions")
           .insert(payload);
 
         if (error && !isDuplicateSubscriptionError(error)) { console.error("[OmerPush] DB insert error:", error); return false; }
@@ -155,8 +155,8 @@ export function useOmerPushSubscription() {
       const auth = sub.getKey("auth");
       if (!key || !auth) return false;
 
-      const { error } = await (supabase
-        .from("omer_push_subscriptions" as any) as any)
+      const { error } = await supabase
+        .from("omer_push_subscriptions")
         .insert({
           endpoint: sub.endpoint,
           p256dh: toBase64url(key),
@@ -179,9 +179,9 @@ export function useOmerPushSubscription() {
     if (native) {
       const token = localStorage.getItem("omer_native_token");
       if (token) {
-        await (supabase
-          .from("omer_push_subscriptions" as any)
-          .delete() as any)
+        await supabase
+          .from("omer_push_subscriptions")
+          .delete()
           .eq("endpoint", `apns://${token}`);
       }
       localStorage.removeItem("omer_native_push");
@@ -193,9 +193,9 @@ export function useOmerPushSubscription() {
     if (!swRegistration) return;
     const sub = await swRegistration.pushManager.getSubscription();
     if (sub) {
-      await (supabase
-        .from("omer_push_subscriptions" as any)
-        .delete() as any)
+      await supabase
+        .from("omer_push_subscriptions")
+        .delete()
         .eq("endpoint", sub.endpoint);
     }
     setIsSubscribed(false);
