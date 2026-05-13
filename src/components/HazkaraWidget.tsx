@@ -193,12 +193,13 @@ const HazkaraWidget = () => {
     return perm === "granted";
   };
 
-  const toggleReminder = async (greg: Date, hebrew: string) => {
+  const toggleReminder = async (greg: Date, hebrew: string, nameOverride?: string) => {
     if (!user) {
       toast.error("Connectez-vous pour activer le rappel");
       return;
     }
-    if (!deceasedName.trim()) {
+    const name = (nameOverride ?? deceasedName).trim();
+    if (!name) {
       toast.error("Entrez le nom du défunt");
       return;
     }
@@ -224,7 +225,7 @@ const HazkaraWidget = () => {
           .from("hazkara_reminders")
           .insert({
             user_id: user.id,
-            deceased_name: deceasedName.trim(),
+            deceased_name: name,
             observance_date: observance,
             hebrew_label: hebrew,
           })
@@ -408,7 +409,7 @@ const HazkaraWidget = () => {
                       <button
                         onClick={() => {
                           setDeceasedName(record.deceased_name);
-                          setTimeout(() => toggleReminder(next.greg, next.hebrew), 0);
+                          toggleReminder(next.greg, next.hebrew, record.deceased_name);
                         }}
                         disabled={loading}
                         className="w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all"
