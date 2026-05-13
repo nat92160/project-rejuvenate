@@ -22,6 +22,15 @@ interface CityContextType {
   triggerAutoGeo: () => void;
 }
 
+type CoordinatesLike = {
+  latitude: number;
+  longitude: number;
+  accuracy?: number | null;
+  altitude?: number | null;
+};
+
+type PositionLike = { coords: CoordinatesLike };
+
 const CityContext = createContext<CityContextType | null>(null);
 const GPS_STORAGE_KEY = "calj_gps_city";
 const ALT_STORAGE_KEY = "calj_manual_altitude";
@@ -77,8 +86,9 @@ function getGeolocationErrorMessage(error: GeolocationPositionError) {
 }
 
 function getNativeGeolocationErrorMessage(error: unknown) {
-  const message = error instanceof Error ? error.message : String((error as any)?.message || "");
-  const code = String((error as any)?.code || "");
+  const nativeError = typeof error === "object" && error !== null ? (error as { message?: unknown; code?: unknown }) : null;
+  const message = error instanceof Error ? error.message : String(nativeError?.message || "");
+  const code = String(nativeError?.code || "");
 
   if (code.includes("0003") || /denied|refus|permission/i.test(message)) {
     return "La localisation est refusée. Autorisez Chabbat Chalom dans Réglages > Confidentialité et sécurité > Service de localisation.";
@@ -166,7 +176,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
       );
     }, isNative || isIosWebViewOrBrowser() ? 30000 : 15000);
 
-    const onSuccess = async (position: GeolocationPosition | { coords: GeolocationCoordinates }) => {
+    const onSuccess = async (position: PositionLike) => {
         if (geolocationRequestId.current !== requestId) return;
         clearTimeout(safetyTimer);
         const { latitude, longitude, accuracy, altitude: gpsAltitude } = position.coords;
@@ -226,8 +236,8 @@ export function CityProvider({ children }: { children: ReactNode }) {
             }
           }
           const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 });
-          await onSuccess(pos as any);
-        } catch (err: any) {
+          await onSuccess(pos);
+        } catch (err: unknown) {
           if (geolocationRequestId.current !== requestId) return;
           clearTimeout(safetyTimer);
           setLocationError(getNativeGeolocationErrorMessage(err));
@@ -236,7 +246,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
       })();
     } else {
       navigator.geolocation.getCurrentPosition(
-        onSuccess as PositionCallback,
+        (position) => { void onSuccess(position); },
         (error) => {
           clearTimeout(safetyTimer);
           setLocationError(getGeolocationErrorMessage(error));
