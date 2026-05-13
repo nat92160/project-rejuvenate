@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useRef, useState, ReactNode } from "react";
 import { CityConfig, CITIES, DEFAULT_CITY } from "@/lib/cities";
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
@@ -21,6 +21,15 @@ interface CityContextType {
   locationError: string | null;
   triggerAutoGeo: () => void;
 }
+
+type CoordinatesLike = {
+  latitude: number;
+  longitude: number;
+  accuracy?: number | null;
+  altitude?: number | null;
+};
+
+type PositionLike = { coords: CoordinatesLike };
 
 const CityContext = createContext<CityContextType | null>(null);
 const GPS_STORAGE_KEY = "calj_gps_city";
@@ -58,6 +67,11 @@ function getNearestBaseCity(latitude: number, longitude: number): CityConfig {
   return CITIES[nearestKey] || CITIES[DEFAULT_CITY];
 }
 
+function isIosWebViewOrBrowser() {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
 function getGeolocationErrorMessage(error: GeolocationPositionError) {
   switch (error.code) {
     case error.PERMISSION_DENIED:
@@ -69,6 +83,26 @@ function getGeolocationErrorMessage(error: GeolocationPositionError) {
     default:
       return "Impossible de récupérer votre position exacte.";
   }
+}
+
+function getNativeGeolocationErrorMessage(error: unknown) {
+  const nativeError = typeof error === "object" && error !== null ? (error as { message?: unknown; code?: unknown }) : null;
+  const message = error instanceof Error ? error.message : String(nativeError?.message || "");
+  const code = String(nativeError?.code || "");
+
+  if (code.includes("0003") || /denied|refus|permission/i.test(message)) {
+    return "La localisation est refusée. Autorisez Chabbat Chalom dans Réglages > Confidentialité et sécurité > Service de localisation.";
+  }
+
+  if (code.includes("0010") || /timeout|time.?out|temps/i.test(message)) {
+    return "Votre iPhone n'a pas encore trouvé votre position. Activez le service de localisation puis réessayez près d'une fenêtre.";
+  }
+
+  if (/unavailable|indisponible|location/i.test(message)) {
+    return "Votre position GPS est indisponible pour le moment. Vérifiez que le service de localisation est activé.";
+  }
+
+  return "Impossible de récupérer votre position exacte. Vérifiez le service de localisation puis réessayez.";
 }
 
 function loadStoredGpsCity(): ActiveCityConfig | null {
@@ -92,6 +126,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
   const [gpsCity, setGpsCity] = useState<ActiveCityConfig | null>(() => loadStoredGpsCity());
   const [locationError, setLocationError] = useState<string | null>(null);
   const [autoGeoTriggered, setAutoGeoTriggered] = useState(false);
+  const geolocationRequestId = useRef(0);
   const [manualAltitude, setManualAltitudeState] = useState<number>(() => {
     try {
       const stored = localStorage.getItem(ALT_STORAGE_KEY);
@@ -128,13 +163,21 @@ export function CityProvider({ children }: { children: ReactNode }) {
     setIsGeolocating(true);
     setLocationError(null);
 
-    // Safety timeout: if GPS never responds, unlock the button after 12s
-    const safetyTimer = setTimeout(() => {
-      setIsGeolocating(false);
-      setLocationError("La localisation a pris trop de temps. Réessayez.");
-    }, 15000);
+    const requestId = ++geolocationRequestId.current;
 
-    const onSuccess = async (position: GeolocationPosition | { coords: GeolocationCoordinates }) => {
+    // Safety timeout: if GPS never responds, unlock the button without overwriting later results
+    const safetyTimer = setTimeout(() => {
+      if (geolocationRequestId.current !== requestId) return;
+      setIsGeolocating(false);
+      setLocationError(
+        isNative || isIosWebViewOrBrowser()
+          ? "Votre iPhone cherche encore votre position. Vérifiez que le service de localisation est actif puis réessayez."
+          : "La localisation a pris trop de temps. Réessayez.",
+      );
+    }, isNative || isIosWebViewOrBrowser() ? 30000 : 15000);
+
+    const onSuccess = async (position: PositionLike) => {
+        if (geolocationRequestId.current !== requestId) return;
         clearTimeout(safetyTimer);
         const { latitude, longitude, accuracy, altitude: gpsAltitude } = position.coords;
         const baseCity = getNearestBaseCity(latitude, longitude);
@@ -192,17 +235,18 @@ export function CityProvider({ children }: { children: ReactNode }) {
               return;
             }
           }
-          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000 });
-          await onSuccess(pos as any);
-        } catch (err: any) {
+          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 });
+          await onSuccess(pos);
+        } catch (err: unknown) {
+          if (geolocationRequestId.current !== requestId) return;
           clearTimeout(safetyTimer);
-          setLocationError(err?.message || "Impossible de récupérer votre position exacte.");
+          setLocationError(getNativeGeolocationErrorMessage(err));
           setIsGeolocating(false);
         }
       })();
     } else {
       navigator.geolocation.getCurrentPosition(
-        onSuccess as PositionCallback,
+        (position) => { void onSuccess(position); },
         (error) => {
           clearTimeout(safetyTimer);
           setLocationError(getGeolocationErrorMessage(error));
@@ -230,7 +274,7 @@ export function CityProvider({ children }: { children: ReactNode }) {
     setAutoGeoTriggered(true);
     try {
       const hasVisited = localStorage.getItem("calj_has_visited");
-      if (!hasVisited && navigator.geolocation) {
+      if (!hasVisited && navigator.geolocation && !Capacitor.isNativePlatform() && !isIosWebViewOrBrowser()) {
         localStorage.setItem("calj_has_visited", "1");
         geolocate();
       }
