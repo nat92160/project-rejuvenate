@@ -259,6 +259,160 @@ const TestHazkaraButton = () => {
   );
 };
 
+// Catalogue des motifs de notification testables individuellement
+const NOTIF_TEST_TEMPLATES: Array<{
+  id: string;
+  icon: string;
+  label: string;
+  desc: string;
+  build: () => { title: string; body: string };
+}> = [
+  {
+    id: "chabbat",
+    icon: "🕯️",
+    label: "Rappel Chabbat",
+    desc: "Push 18 min avant l'allumage des bougies",
+    build: () => ({
+      title: "🕯️ Chabbat dans 18 minutes",
+      body: "Préparez l'allumage des bougies. Chabbat Chalom !",
+    }),
+  },
+  {
+    id: "omer",
+    icon: "🌾",
+    label: "Rappel Omer",
+    desc: "Push quotidien pendant la Sefirat HaOmer",
+    build: () => ({
+      title: "🌾 Compte du Omer",
+      body: "N'oubliez pas de compter le Omer ce soir après la sortie des étoiles.",
+    }),
+  },
+  {
+    id: "minyan",
+    icon: "🚨",
+    label: "Urgence Minyan",
+    desc: "Push quand un minyan est lancé près de vous",
+    build: () => ({
+      title: "🚨 Urgence Minyan",
+      body: "Un minyan vient d'être lancé dans votre synagogue. Rejoignez-les !",
+    }),
+  },
+  {
+    id: "tehilim",
+    icon: "📖",
+    label: "Chaîne Tehilim",
+    desc: "Push quand une chaîne de Tehilim est lancée",
+    build: () => ({
+      title: "📖 Nouvelle chaîne de Tehilim",
+      body: "Une chaîne de Tehilim vient d'être lancée. Choisissez votre psaume.",
+    }),
+  },
+  {
+    id: "hazkara",
+    icon: "🕯️",
+    label: "Hazkara (veille)",
+    desc: "Rappel la veille d'une azkara",
+    build: () => {
+      const dateFr = new Date(Date.now() + 86400000).toLocaleDateString("fr-FR", {
+        weekday: "long", day: "numeric", month: "long",
+      });
+      return {
+        title: "🕯️ Hazkara demain",
+        body: `Ce soir : allumez la bougie pour [Nom du défunt] (sortie des étoiles). 🪦 Demain ${dateFr} : Hazkara et visite au cimetière.`,
+      };
+    },
+  },
+  {
+    id: "annonce",
+    icon: "📣",
+    label: "Annonce synagogue",
+    desc: "Nouvelle annonce d'un président",
+    build: () => ({
+      title: "📣 Nouvelle annonce",
+      body: "Le président de votre synagogue a publié une nouvelle annonce.",
+    }),
+  },
+  {
+    id: "evenement",
+    icon: "📅",
+    label: "Événement",
+    desc: "Nouvel événement ajouté",
+    build: () => ({
+      title: "📅 Nouvel événement",
+      body: "Un nouvel événement vient d'être ajouté au calendrier de la synagogue.",
+    }),
+  },
+  {
+    id: "cours",
+    icon: "🎓",
+    label: "Cours de Torah",
+    desc: "Nouveau cours / rappel de cours Zoom",
+    build: () => ({
+      title: "🎓 Cours de Torah",
+      body: "Votre cours de Torah commence dans quelques minutes. Rejoignez le Zoom.",
+    }),
+  },
+  {
+    id: "donation",
+    icon: "💝",
+    label: "Don / Reçu CERFA",
+    desc: "Confirmation d'un don ou CERFA prêt",
+    build: () => ({
+      title: "💝 Reçu fiscal disponible",
+      body: "Votre reçu CERFA est prêt à être téléchargé depuis votre espace personnel.",
+    }),
+  },
+];
+
+const TestNotifMotifButton = ({
+  template,
+}: {
+  template: (typeof NOTIF_TEST_TEMPLATES)[number];
+}) => {
+  const { user } = useAuth();
+  const [sending, setSending] = useState(false);
+  const handle = async () => {
+    if (!user) return;
+    setSending(true);
+    try {
+      const { title, body } = template.build();
+      const { data, error } = await supabase.functions.invoke("send-push", {
+        body: {
+          title: `${title} (TEST)`,
+          body,
+          user_ids: [user.id],
+        },
+      });
+      if (error) throw error;
+      const sent = (data as any)?.sent ?? 0;
+      if (sent > 0) toast.success(`✅ ${template.label} → ${sent} appareil(s)`);
+      else toast.error(`⚠️ Aucun appareil abonné pour votre compte`);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Erreur test ${template.label}`);
+    }
+    setSending(false);
+  };
+  return (
+    <button
+      onClick={handle}
+      disabled={sending}
+      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border bg-card hover:bg-muted/50 cursor-pointer disabled:opacity-50 transition-all active:scale-[0.98] text-left"
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{template.icon}</span>
+          <span className="text-sm font-bold text-foreground">{template.label}</span>
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-0.5 ml-7">{template.desc}</p>
+      </div>
+      <span className="text-xs font-bold text-primary whitespace-nowrap">
+        {sending ? "⏳…" : "Tester →"}
+      </span>
+    </button>
+  );
+};
+
 const NOTIF_SETTINGS = [
   { key: "notif_chabbat", icon: "🕯️", label: "Rappel Chabbat", desc: "Push 18 min avant l'allumage des bougies chaque vendredi" },
   { key: "notif_omer", icon: "🌾", label: "Rappel Omer", desc: "Push quotidien pendant les 49 jours du Omer" },
