@@ -222,6 +222,43 @@ const TestApnsButton = () => {
   );
 };
 
+const TestHazkaraButton = () => {
+  const { user } = useAuth();
+  const [sending, setSending] = useState(false);
+  const handleTest = async () => {
+    if (!user) return;
+    setSending(true);
+    try {
+      const dateFr = new Date(Date.now() + 86400000).toLocaleDateString("fr-FR", {
+        weekday: "long", day: "numeric", month: "long",
+      });
+      const { data, error } = await supabase.functions.invoke("send-push", {
+        body: {
+          title: "🕯️ Hazkara demain (TEST)",
+          body: `Ce soir : allumez la bougie pour [Nom du défunt] (sortie des étoiles). 🪦 Demain ${dateFr} : Hazkara et visite au cimetière.`,
+          user_ids: [user.id],
+        },
+      });
+      if (error) throw error;
+      toast.success(`✅ Envoyé à ${(data as any)?.sent ?? 0} appareil(s)`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de l'envoi du test Hazkara");
+    }
+    setSending(false);
+  };
+  return (
+    <button
+      onClick={handleTest}
+      disabled={sending}
+      className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50 transition-all active:scale-[0.98]"
+      style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+    >
+      {sending ? "⏳ Envoi…" : "🕯️ Tester notification Hazkara"}
+    </button>
+  );
+};
+
 const NOTIF_SETTINGS = [
   { key: "notif_chabbat", icon: "🕯️", label: "Rappel Chabbat", desc: "Push 18 min avant l'allumage des bougies chaque vendredi" },
   { key: "notif_omer", icon: "🌾", label: "Rappel Omer", desc: "Push quotidien pendant les 49 jours du Omer" },
@@ -329,6 +366,15 @@ const SettingsTab = () => {
           Envoie une notification directement à votre iPhone via Apple. Affiche le code de réponse exact (200, 400, 403, 410…) et le motif Apple en cas d'échec.
         </p>
         <TestApnsButton />
+      </div>
+
+      {/* Test Hazkara */}
+      <div className="rounded-2xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+        <h3 className="font-bold text-foreground mb-1">🕯️ Test notification Hazkara</h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Envoie un push Hazkara de test à votre compte admin (même format que la veille d'une azkara réelle).
+        </p>
+        <TestHazkaraButton />
       </div>
     </div>
   );
