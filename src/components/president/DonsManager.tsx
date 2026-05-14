@@ -22,6 +22,8 @@ import DonsStats from "./DonsStats";
 import CerfaConfig from "./CerfaConfig";
 import DonationReminders from "./DonationReminders";
 import { shareCerfaPdf, downloadCerfaPdf } from "@/lib/cerfaPdf";
+import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
+import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 
 const isNativeApp = Capacitor.isNativePlatform();
 
@@ -38,6 +40,7 @@ interface Donation {
 
 const DonsManager = () => {
   const { user } = useAuth();
+  const { synagogueId, loading: synaLoading } = useManagedSynagogues();
   const [loading, setLoading] = useState(true);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [synagogueName, setSynagogueName] = useState("");
@@ -55,31 +58,22 @@ const DonsManager = () => {
   const [loadingDonations, setLoadingDonations] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || synaLoading) return;
 
     (async () => {
-      let { data: rows } = await (supabase
+      if (!synagogueId) {
+        setProfileId(null);
+        setLoading(false);
+        return;
+      }
+
+      const { data } = await (supabase
         .from("synagogue_profiles")
         .select(
           "id, name, address, association_legal_name, rna_number, siret_number, article_cgi, president_first_name, president_last_name, signature",
         ) as any)
-        .eq("president_id", user.id)
-        .order("created_at", { ascending: true })
-        .limit(1);
-
-      if (!rows || rows.length === 0) {
-        const res = await (supabase
-          .from("synagogue_profiles")
-          .select(
-            "id, name, address, association_legal_name, rna_number, siret_number, article_cgi, president_first_name, president_last_name, signature",
-          ) as any)
-          .eq("adjoint_id", user.id)
-          .order("created_at", { ascending: true })
-          .limit(1);
-        rows = res.data;
-      }
-
-      const data = rows && rows[0];
+        .eq("id", synagogueId)
+        .maybeSingle();
       if (data) {
         setProfileId(data.id);
         setSynagogueName(data.name || "");
@@ -97,7 +91,7 @@ const DonsManager = () => {
 
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, synagogueId, synaLoading]);
 
   const loadDonations = async (synaId: string) => {
     setLoadingDonations(true);
@@ -179,6 +173,7 @@ const DonsManager = () => {
         <Heart className="h-5 w-5 text-primary" />
         <h3 className="font-display text-base font-bold text-foreground">Module Dons</h3>
       </div>
+      <ManagedSynagogueSelector label="Synagogue à gérer" />
 
       <Tabs defaultValue="historique" className="w-full">
         <TabsList className="grid h-auto w-full grid-cols-5 p-1">

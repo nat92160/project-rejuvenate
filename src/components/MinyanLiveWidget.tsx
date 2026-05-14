@@ -8,6 +8,7 @@ import { useCity } from "@/hooks/useCity";
 import { fetchMinhaTime } from "@/lib/hebcal";
 import { toast } from "sonner";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
+import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
 
 interface MinyanSession { id: string; office_type: string; office_date: string; office_time: string; target_count: number; creator_id: string; }
 interface Registration { id: string; session_id: string; user_id: string; display_name: string; guest_count?: number; }
@@ -53,6 +54,7 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
   const handleCreate = async () => {
     if (!form.office_date || !form.office_time) { toast.error("Remplissez date et heure"); return; }
     if (!user) { toast.error("Connectez-vous"); return; }
+    if (!synagogueId) { toast.error("Sélectionnez ou créez une synagogue"); return; }
     setSubmitting(true);
     const { error } = await supabase.from("minyan_sessions").insert({ creator_id: user.id, synagogue_id: synagogueId, office_type: form.office_type, office_date: form.office_date, office_time: form.office_time, target_count: parseInt(form.target_count) || 10 } as any);
     if (error) toast.error("Erreur lors de la création du minyan.");
@@ -87,6 +89,7 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
       initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
       <h4 className="font-display text-sm font-bold text-foreground mb-3">➕ Nouvelle session</h4>
       <div className="space-y-4">
+        <ManagedSynagogueSelector compact />
         <select value={form.office_type} onChange={e => setForm({...form, office_type: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm">
           <option value="shacharit">🌅 Cha'harit</option><option value="minha">☀️ Min'ha</option><option value="arvit">🌙 Arvit</option>
         </select>
@@ -135,8 +138,11 @@ const MinyanLiveWidget = () => {
     const today = new Date().toISOString().split("T")[0];
     let query = supabase.from("minyan_sessions").select("*").gte("office_date", today).order("office_date").order("office_time");
 
-    // Filter by subscription for non-presidents
-    if (!isPresident && user && subIds.length > 0) {
+    if (isPresident && synagogueId) {
+      query = query.eq("synagogue_id", synagogueId);
+    } else if (isPresident && !synagogueId) {
+      setSessions([]); setLoading(false); return;
+    } else if (!isPresident && user && subIds.length > 0) {
       query = query.in("synagogue_id", subIds);
     } else if (!isPresident && user && subIds.length === 0 && !subLoading) {
       setSessions([]); setLoading(false); return;
@@ -154,7 +160,7 @@ const MinyanLiveWidget = () => {
     setLoading(false);
   };
 
-  useEffect(() => { if (!subLoading) fetchSessions(); }, [subLoading, subIds]);
+  useEffect(() => { if (!subLoading) fetchSessions(); }, [subLoading, subIds, synagogueId, isPresident]);
   useEffect(() => {
     const channel = supabase.channel("minyan-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "minyan_registrations" }, () => fetchSessions())

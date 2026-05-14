@@ -7,6 +7,7 @@ import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { toast } from "sonner";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import { sharePosterPng } from "@/components/poster/usePosterExport";
+import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
 
 interface Annonce {
   id: string;
@@ -19,7 +20,7 @@ interface Annonce {
 
 const AnnoncesWidget = () => {
   const { user, dbRole } = useAuth();
-  const { profile: synaProfile, synagogueId } = useSynaProfile();
+  const { profile: synaProfile, synagogueId, loading: synaLoading } = useSynaProfile();
   const { subIds, loading: subLoading } = useSubscribedSynaIds();
   const isPresident = dbRole === "president";
   const [annonces, setAnnonces] = useState<Annonce[]>([]);
@@ -34,7 +35,7 @@ const AnnoncesWidget = () => {
   const posterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (subLoading) return;
+    if (subLoading || (isPresident && synaLoading)) return;
     const fetchAnnonces = async () => {
       let query = supabase
         .from("annonces")
@@ -45,6 +46,8 @@ const AnnoncesWidget = () => {
       // Fidèles: filter by subscribed synagogues; Presidents see their own
       if (isPresident && synagogueId) {
         query = query.eq("synagogue_id", synagogueId);
+      } else if (isPresident && !synagogueId) {
+        setAnnonces([]); setLoading(false); return;
       } else if (user && subIds.length > 0) {
         query = query.in("synagogue_id", subIds);
       } else if (user && subIds.length === 0) {
@@ -58,14 +61,15 @@ const AnnoncesWidget = () => {
       setLoading(false);
     };
     fetchAnnonces();
-  }, [subLoading, subIds, user, isPresident, synagogueId]);
+  }, [subLoading, subIds, user, isPresident, synagogueId, synaLoading]);
 
   const handleAdd = async () => {
     if (!newTitle.trim()) { toast.error("Veuillez entrer un titre"); return; }
     if (!user || dbRole !== "president") { toast.error("Seul le président peut publier des annonces"); return; }
+    if (!synagogueId) { toast.error("Sélectionnez ou créez une synagogue"); return; }
     setSubmitting(true);
     const { data, error } = await supabase.from("annonces").insert({
-      creator_id: user.id, title: newTitle.trim(), content: newContent.trim(), priority: newPriority, synagogue_id: synagogueId || null,
+      creator_id: user.id, title: newTitle.trim(), content: newContent.trim(), priority: newPriority, synagogue_id: synagogueId,
     } as any).select().single();
     if (error) toast.error("Erreur lors de la publication.");
     else if (data) {
@@ -168,6 +172,7 @@ const AnnoncesWidget = () => {
           <motion.div className="rounded-2xl bg-card p-5 mb-4 border border-primary/20" style={{ boxShadow: "var(--shadow-card)" }}
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
             <div className="space-y-3">
+              <ManagedSynagogueSelector compact />
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Titre</label>
                 <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Titre de l'annonce" className={inputClass} />

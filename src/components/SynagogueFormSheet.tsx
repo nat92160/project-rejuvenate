@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Building2, MapPin, Phone, Mail, Save } from "lucide-react";
+import { notifySynagoguesChanged } from "@/hooks/useManagedSynagogues";
 import {
   Sheet,
   SheetContent,
@@ -229,6 +230,7 @@ const SynagogueFormSheet = ({
       toast.error(isEdit ? "Erreur lors de la modification" : "Erreur lors de la création");
     } else {
       toast.success(isEdit ? "✅ Fiche synagogue modifiée !" : "🏛️ Synagogue créée avec succès !");
+      notifySynagoguesChanged();
       resetForm();
       onOpenChange(false);
       onCreated?.();

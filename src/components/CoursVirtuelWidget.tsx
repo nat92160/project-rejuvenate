@@ -9,6 +9,7 @@ import CoursCard from "./cours-torah/CoursCard";
 import CoursForm from "./cours-torah/CoursForm";
 import YoutubeCoursesWidget from "./cours-torah/YoutubeCoursesWidget";
 import { normalizeCourseType } from "@/lib/courseType";
+import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
 
 interface CoursItem {
   id: string;
@@ -27,7 +28,7 @@ interface CoursItem {
 const CoursVirtuelWidget = () => {
   const { city } = useCity();
   const { user, dbRole } = useAuth();
-  const { profile: synaProfile, synagogueId } = useSynaProfile();
+  const { synagogueId } = useSynaProfile();
   const [cours, setCours] = useState<CoursItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -105,13 +106,18 @@ const CoursVirtuelWidget = () => {
       {/* Form */}
       <AnimatePresence>
         {showForm && user && (
-          <CoursForm
-            userId={user.id}
-            synagogueId={synagogueId}
-            initialCourseType={filter === "presentiel" ? "presentiel" : "zoom"}
-            onCreated={(data) => setCours((prev) => [data as unknown as CoursItem, ...prev])}
-            onClose={() => setShowForm(false)}
-          />
+          <div>
+            <div className="mb-3">
+              <ManagedSynagogueSelector compact />
+            </div>
+            <CoursForm
+              userId={user.id}
+              synagogueId={synagogueId}
+              initialCourseType={filter === "presentiel" ? "presentiel" : "zoom"}
+              onCreated={(data) => setCours((prev) => [data as unknown as CoursItem, ...prev])}
+              onClose={() => setShowForm(false)}
+            />
+          </div>
         )}
       </AnimatePresence>
 

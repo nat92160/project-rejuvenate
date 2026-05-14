@@ -3,8 +3,10 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Building2, MapPin, Phone, Mail, Save, ChevronDown } from "lucide-react";
+import { Building2, MapPin, Phone, Mail, Save } from "lucide-react";
 import { useRef } from "react";
+import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
+import { notifySynagoguesChanged, useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 
 interface SynaProfile {
   id?: string;
@@ -47,27 +49,11 @@ const SynaProfileManager = () => {
   const [uploading, setUploading] = useState(false);
   const [newSpeaker, setNewSpeaker] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
-  const [synaList, setSynaList] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { selectedId, setSelectedId, loading: synaLoading, refresh } = useManagedSynagogues();
 
-  // Load list of synagogues this user can manage (as president OR adjoint)
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data: rows } = await supabase
-        .from("synagogue_profiles")
-        .select("id, name")
-        .or(`president_id.eq.${user.id},adjoint_id.eq.${user.id}`)
-        .order("created_at", { ascending: true });
-      const list = (rows || []).map((r: any) => ({ id: r.id, name: r.name || "Sans nom" }));
-      setSynaList(list);
-      if (list.length > 0 && !selectedId) {
-        setSelectedId(list[0].id);
-      } else if (list.length === 0) {
-        setLoading(false);
-      }
-    })();
-  }, [user]);
+    if (!synaLoading && !selectedId) setLoading(false);
+  }, [synaLoading, selectedId]);
 
   // Load full profile of selected synagogue
   useEffect(() => {
@@ -176,8 +162,6 @@ const SynaProfileManager = () => {
         await supabase
           .from("synagogue_subscriptions")
           .insert({ user_id: user.id, synagogue_id: data.id } as any);
-        // Refresh selector list
-        setSynaList((prev) => [...prev, { id: data.id, name: data.name || "Sans nom" }]);
         setSelectedId(data.id);
       }
     }
@@ -187,6 +171,8 @@ const SynaProfileManager = () => {
       toast.error("Erreur lors de la sauvegarde");
       console.error(error);
     } else {
+      notifySynagoguesChanged();
+      void refresh();
       toast.success("Profil de la synagogue enregistré ✅");
     }
   };
@@ -217,26 +203,7 @@ const SynaProfileManager = () => {
         <p className="mt-1 text-xs text-muted-foreground">Identité visuelle et coordonnées de votre synagogue</p>
       </div>
 
-      {/* Synagogue selector */}
-      {synaList.length > 1 && (
-        <div className="rounded-2xl border border-primary/15 bg-card p-3" style={{ boxShadow: "var(--shadow-card)" }}>
-          <label className="mb-1.5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-primary/70">
-            <Building2 className="h-3.5 w-3.5" /> Synagogue à modifier
-          </label>
-          <div className="relative">
-            <select
-              value={selectedId || ""}
-              onChange={(e) => setSelectedId(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-border bg-background px-3 py-2.5 pr-9 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer"
-            >
-              {synaList.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          </div>
-        </div>
-      )}
+      <ManagedSynagogueSelector label="Synagogue à modifier" />
 
       {/* ───── COORDONNÉES ───── */}
       <div className="rounded-2xl border border-primary/10 bg-primary/[0.02] p-4">
