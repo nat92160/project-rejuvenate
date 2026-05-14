@@ -75,6 +75,10 @@ const RefouaChelemaWidget = () => {
       toast.error("Vous devez être connecté pour ajouter un nom");
       return;
     }
+    if (synaOptions.length > 0 && selectedSynaIds.length === 0) {
+      toast.error("Sélectionnez au moins une synagogue");
+      return;
+    }
     setSubmitting(true);
     const { data, error } = await (supabase.from("refoua_chelema").insert({
       hebrew_name: name.trim(),
@@ -113,10 +117,15 @@ const RefouaChelemaWidget = () => {
 
   const synaNameById = (id: string) => synaOptions.find(s => s.id === id)?.name || "Synagogue";
 
-  // Filter patients: "all" = global + any user's syna; specific id = matching that syna only
+  // Fidèle ne voit que les noms partagés dans ses synagogues (abonnées + gérées).
+  // Si l'utilisateur n'a aucune synagogue, on retombe sur la liste générale.
+  const userSynaIds = synaOptions.map((s) => s.id);
+  const hasSynas = userSynaIds.length > 0;
   const visiblePatients = patients.filter((p) => {
-    if (filterSynaId === "all") return true;
-    if (filterSynaId === "general") return !p.synagogue_ids || p.synagogue_ids.length === 0;
+    if (!hasSynas) return !p.synagogue_ids || p.synagogue_ids.length === 0;
+    if (filterSynaId === "all") {
+      return p.synagogue_ids?.some((id) => userSynaIds.includes(id));
+    }
     return p.synagogue_ids?.includes(filterSynaId);
   });
 
@@ -143,10 +152,10 @@ const RefouaChelemaWidget = () => {
         </p>
       </div>
 
-      {/* Filter chips by synagogue */}
-      {synaOptions.length > 0 && (
+      {/* Filter chips by synagogue (uniquement les synagogues du fidèle) */}
+      {synaOptions.length > 1 && (
         <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-          {[{ id: "all", name: "Toutes" }, { id: "general", name: "Liste générale" }, ...synaOptions].map((opt) => (
+          {[{ id: "all", name: "Toutes mes synagogues" }, ...synaOptions].map((opt) => (
             <button
               key={opt.id}
               onClick={() => setFilterSynaId(opt.id)}
@@ -194,7 +203,7 @@ const RefouaChelemaWidget = () => {
                   ))}
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-2">
-                  {selectedSynaIds.length === 0 ? "Aucune synagogue sélectionnée → publié dans la liste générale." : `Visible dans ${selectedSynaIds.length} synagogue${selectedSynaIds.length > 1 ? "s" : ""}.`}
+                  {selectedSynaIds.length === 0 ? "Sélectionnez au moins une synagogue pour partager ce nom." : `Visible dans ${selectedSynaIds.length} synagogue${selectedSynaIds.length > 1 ? "s" : ""}.`}
                 </p>
               </div>
             )}
