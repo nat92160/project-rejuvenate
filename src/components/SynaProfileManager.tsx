@@ -170,7 +170,16 @@ const SynaProfileManager = () => {
     } else {
       const { data, error: insertError } = await supabase.from("synagogue_profiles").insert(payload as any).select().single();
       error = insertError;
-      if (data) setProfile((p) => ({ ...p, id: data.id }));
+      if (data) {
+        setProfile((p) => ({ ...p, id: data.id }));
+        // Auto-subscribe president to their own synagogue so it appears in their wall
+        await supabase
+          .from("synagogue_subscriptions")
+          .insert({ user_id: user.id, synagogue_id: data.id } as any);
+        // Refresh selector list
+        setSynaList((prev) => [...prev, { id: data.id, name: data.name || "Sans nom" }]);
+        setSelectedId(data.id);
+      }
     }
 
     setSaving(false);
