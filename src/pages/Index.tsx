@@ -20,6 +20,7 @@ import GreetingHeader from "@/components/GreetingHeader";
 import QuickActions from "@/components/QuickActions";
 import { detectOfficeNow } from "@/lib/siddourCatalog";
 const SpiritualTimeline = lazy(() => import("@/components/SpiritualTimeline"));
+const PersonalDatesBanner = lazy(() => import("@/components/PersonalDatesBanner"));
 
 // Lazy-loaded modules
 const CountdownWidget = lazy(() => import("@/components/CountdownWidget"));
@@ -217,6 +218,7 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
   return (
     <>
       <GreetingHeader />
+      <Lazy><PersonalDatesBanner /></Lazy>
       <Lazy><CitySelector /></Lazy>
       <MySynagogueCard onNavigate={setActiveTab} />
       <ShabbatCountdownBanner />

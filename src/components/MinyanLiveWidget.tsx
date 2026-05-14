@@ -34,6 +34,23 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
   const { user } = useAuth();
   const { synagogueId } = useSynaProfile();
   const { city } = useCity();
+  const { subIds } = useSubscribedSynaIds();
+  const { synagogues: managedSynas } = useManagedSynagogues();
+  const isPresident = managedSynas.length > 0;
+  const [synaOptions, setSynaOptions] = useState<{ id: string; name: string }[]>([]);
+  const [chosenSynaId, setChosenSynaId] = useState<string | null>(null);
+
+  // Build synagogue options for fidèle (subscribed); president uses ManagedSynagogueSelector
+  useEffect(() => {
+    if (isPresident) return;
+    if (subIds.length === 0) { setSynaOptions([]); return; }
+    supabase.from("synagogue_profiles").select("id, name").in("id", subIds).then(({ data }) => {
+      const opts = (data || []).map((d: any) => ({ id: d.id, name: d.name || "Synagogue" }));
+      setSynaOptions(opts);
+      setChosenSynaId(prev => prev || opts[0]?.id || null);
+    });
+  }, [subIds, isPresident]);
+
   const [form, setForm] = useState({ office_type: "shacharit", office_date: "", office_time: "", target_count: "10" });
   const [submitting, setSubmitting] = useState(false);
   const [suggestedMinha, setSuggestedMinha] = useState<string | null>(null);
@@ -55,14 +72,15 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
   const handleCreate = async () => {
     if (!form.office_date || !form.office_time) { toast.error("Remplissez date et heure"); return; }
     if (!user) { toast.error("Connectez-vous"); return; }
-    if (!synagogueId) { toast.error("Sélectionnez ou créez une synagogue"); return; }
+    const targetSynaId = isPresident ? synagogueId : chosenSynaId;
+    if (!targetSynaId) { toast.error("Sélectionnez une synagogue"); return; }
     setSubmitting(true);
-    const { error } = await supabase.from("minyan_sessions").insert({ creator_id: user.id, synagogue_id: synagogueId, office_type: form.office_type, office_date: form.office_date, office_time: form.office_time, target_count: parseInt(form.target_count) || 10 } as any);
+    const { error } = await supabase.from("minyan_sessions").insert({ creator_id: user.id, synagogue_id: targetSynaId, office_type: form.office_type, office_date: form.office_date, office_time: form.office_time, target_count: parseInt(form.target_count) || 10 } as any);
     if (error) toast.error("Erreur lors de la création du minyan.");
     else {
       toast.success("✅ Session créée !");
       // Send push notification if enabled
-      if (synagogueId) {
+      if (targetSynaId) {
         try {
           const { data: setting } = await supabase.from("app_settings").select("value").eq("key", "notif_minyan").maybeSingle();
           const enabled = !setting || setting.value === true || setting.value === "true";
@@ -71,7 +89,7 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
             const dateStr = new Date(form.office_date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
             await supabase.functions.invoke("send-push", {
               body: {
-                synagogue_id: synagogueId,
+                synagogue_id: targetSynaId,
                 title: "🚨 Urgence Minyan",
                 body: `${label} le ${dateStr} à ${form.office_time?.slice(0, 5)} — inscrivez-vous !`,
                 sender_id: user.id,
@@ -90,7 +108,21 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
       initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
       <h4 className="font-display text-sm font-bold text-foreground mb-3">➕ Nouvelle session</h4>
       <div className="space-y-4">
-        <ManagedSynagogueSelector compact />
+        {isPresident ? (
+          <ManagedSynagogueSelector compact />
+        ) : synaOptions.length > 1 ? (
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">🏛️ Synagogue</label>
+            <select value={chosenSynaId || ""} onChange={(e) => setChosenSynaId(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm">
+              {synaOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          </div>
+        ) : synaOptions.length === 1 ? (
+          <div className="text-xs text-muted-foreground">🏛️ {synaOptions[0].name}</div>
+        ) : (
+          <div className="text-xs text-destructive">Abonnez-vous d'abord à une synagogue.</div>
+        )}
         <select value={form.office_type} onChange={e => setForm({...form, office_type: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm">
           <option value="shacharit">🌅 Cha'harit</option><option value="minha">☀️ Min'ha</option><option value="arvit">🌙 Arvit</option>
         </select>

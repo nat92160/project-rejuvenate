@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
+import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 import { toast } from "sonner";
 
 interface Patient {
@@ -10,16 +12,33 @@ interface Patient {
   mother_name: string;
   created_at: string;
   added_by: string | null;
+  synagogue_ids: string[] | null;
 }
+
+interface SynaOption { id: string; name: string; }
 
 const RefouaChelemaWidget = () => {
   const { user } = useAuth();
+  const { subIds } = useSubscribedSynaIds();
+  const { synagogues: managedSynas } = useManagedSynagogues();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [mother, setMother] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [synaOptions, setSynaOptions] = useState<SynaOption[]>([]);
+  const [selectedSynaIds, setSelectedSynaIds] = useState<string[]>([]);
+  const [filterSynaId, setFilterSynaId] = useState<string>("all");
+
+  // Load synagogue names for the user's subscribed + managed synagogues
+  useEffect(() => {
+    const ids = Array.from(new Set([...subIds, ...managedSynas.map(s => s.id)]));
+    if (ids.length === 0) { setSynaOptions([]); return; }
+    supabase.from("synagogue_profiles").select("id, name").in("id", ids).then(({ data }) => {
+      setSynaOptions((data || []).map((d: any) => ({ id: d.id, name: d.name || "Synagogue" })));
+    });
+  }, [subIds, managedSynas]);
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -27,7 +46,7 @@ const RefouaChelemaWidget = () => {
         .from("refoua_chelema")
         .select("*")
         .order("created_at", { ascending: false });
-      setPatients(data || []);
+      setPatients((data as unknown as Patient[]) || []);
       setLoading(false);
     };
     fetchPatients();
@@ -43,6 +62,10 @@ const RefouaChelemaWidget = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const toggleSyna = (id: string) => {
+    setSelectedSynaIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
   const handleAdd = async () => {
     if (!name.trim()) {
       toast.error("Veuillez entrer un prénom hébreu");
@@ -53,20 +76,22 @@ const RefouaChelemaWidget = () => {
       return;
     }
     setSubmitting(true);
-    const { data, error } = await supabase.from("refoua_chelema").insert({
+    const { data, error } = await (supabase.from("refoua_chelema").insert({
       hebrew_name: name.trim(),
       mother_name: mother.trim(),
       added_by: user.id,
-    }).select().single();
+      synagogue_ids: selectedSynaIds.length > 0 ? selectedSynaIds : null,
+    } as any)).select().single();
 
     if (error) {
       toast.error("Erreur lors de l'ajout. Vérifiez votre connexion.");
       console.error("Refoua add error:", error);
     } else if (data) {
-      setPatients((prev) => [data, ...prev]);
+      setPatients((prev) => [data as unknown as Patient, ...prev]);
       setShowForm(false);
       setName("");
       setMother("");
+      setSelectedSynaIds([]);
       toast.success("✅ Nom ajouté à la liste !");
     }
     setSubmitting(false);
@@ -85,6 +110,15 @@ const RefouaChelemaWidget = () => {
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
+  const synaNameById = (id: string) => synaOptions.find(s => s.id === id)?.name || "Synagogue";
+
+  // Filter patients: "all" = global + any user's syna; specific id = matching that syna only
+  const visiblePatients = patients.filter((p) => {
+    if (filterSynaId === "all") return true;
+    if (filterSynaId === "general") return !p.synagogue_ids || p.synagogue_ids.length === 0;
+    return p.synagogue_ids?.includes(filterSynaId);
+  });
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -109,6 +143,22 @@ const RefouaChelemaWidget = () => {
         </p>
       </div>
 
+      {/* Filter chips by synagogue */}
+      {synaOptions.length > 0 && (
+        <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+          {[{ id: "all", name: "Toutes" }, { id: "general", name: "Liste générale" }, ...synaOptions].map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setFilterSynaId(opt.id)}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap border cursor-pointer transition-all ${filterSynaId === opt.id ? "border-primary/40 text-foreground" : "border-border text-muted-foreground bg-card"}`}
+              style={filterSynaId === opt.id ? { background: "hsl(var(--gold) / 0.12)" } : {}}
+            >
+              {opt.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <AnimatePresence>
         {showForm && (
           <motion.div
@@ -132,6 +182,22 @@ const RefouaChelemaWidget = () => {
               dir="rtl"
               className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3 font-hebrew"
             />
+            {synaOptions.length > 0 && (
+              <div className="mb-3 p-3 rounded-xl bg-background border border-border">
+                <p className="text-[11px] font-bold text-muted-foreground mb-2">Partager dans :</p>
+                <div className="flex flex-wrap gap-2">
+                  {synaOptions.map((s) => (
+                    <label key={s.id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border cursor-pointer text-[11px] font-semibold text-foreground" style={selectedSynaIds.includes(s.id) ? { background: "hsl(var(--gold) / 0.12)", borderColor: "hsl(var(--gold) / 0.4)" } : {}}>
+                      <input type="checkbox" checked={selectedSynaIds.includes(s.id)} onChange={() => toggleSyna(s.id)} className="cursor-pointer" />
+                      {s.name}
+                    </label>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  {selectedSynaIds.length === 0 ? "Aucune synagogue sélectionnée → publié dans la liste générale." : `Visible dans ${selectedSynaIds.length} synagogue${selectedSynaIds.length > 1 ? "s" : ""}.`}
+                </p>
+              </div>
+            )}
             <button
               onClick={handleAdd}
               disabled={submitting || !name.trim()}
@@ -146,14 +212,14 @@ const RefouaChelemaWidget = () => {
 
       {loading ? (
         <div className="text-center py-8 text-sm text-muted-foreground">Chargement...</div>
-      ) : patients.length === 0 ? (
+      ) : visiblePatients.length === 0 ? (
         <div className="rounded-2xl bg-card p-8 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
           <p className="text-sm text-muted-foreground">Aucun nom pour le moment.</p>
           {!user && <p className="text-xs text-muted-foreground/60 mt-2">Connectez-vous pour ajouter un nom.</p>}
         </div>
       ) : (
         <div className="space-y-2">
-          {patients.map((p, i) => (
+          {visiblePatients.map((p, i) => (
             <motion.div
               key={p.id}
               className="rounded-xl bg-card p-4 border border-border flex items-center justify-between"
@@ -169,6 +235,15 @@ const RefouaChelemaWidget = () => {
                     {p.hebrew_name} {p.mother_name ? `בן/בת ${p.mother_name}` : ""}
                   </span>
                   <p className="text-[10px] text-muted-foreground mt-0.5">Ajouté le {formatDate(p.created_at)}</p>
+                  {p.synagogue_ids && p.synagogue_ids.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {p.synagogue_ids.map((sid) => (
+                        <span key={sid} className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
+                          🏛️ {synaNameById(sid)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               {user && p.added_by === user.id && (
