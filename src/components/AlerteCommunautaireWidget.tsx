@@ -69,7 +69,7 @@ const AlerteCommunautaireWidget = () => {
         <span className="text-[10px] text-muted-foreground">{message.length}/200</span>
         <button
           onClick={handleSend}
-          disabled={sending || !message.trim()}
+          disabled={sending || !message.trim() || !synagogueId}
           className="px-6 py-2.5 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
           style={{ background: "var(--gradient-gold)" }}
         >
