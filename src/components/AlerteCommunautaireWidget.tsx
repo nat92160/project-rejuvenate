@@ -2,21 +2,21 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useSynaProfile } from "@/hooks/useSynaProfile";
+import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 import { toast } from "sonner";
 import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
 
 const AlerteCommunautaireWidget = () => {
-  const { user, dbRole } = useAuth();
-  const { synagogueId } = useSynaProfile();
+  const { user } = useAuth();
+  const { synagogues, synagogueId, loading } = useManagedSynagogues();
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const isPresident = dbRole === "president";
+  const canManage = synagogues.length > 0;
 
   const handleSend = async () => {
-    if (!message.trim() || !user || !isPresident || !synagogueId) return;
+    if (!message.trim() || !user || !canManage || !synagogueId) return;
     setSending(true);
 
     try {
@@ -41,7 +41,17 @@ const AlerteCommunautaireWidget = () => {
     setSending(false);
   };
 
-  if (!isPresident) return null;
+  if (loading) return null;
+  if (!canManage) {
+    return (
+      <div className="rounded-2xl bg-card p-6 text-center border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
+        <span className="text-3xl">🏛️</span>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Créez d'abord votre profil synagogue dans <strong>Infos Synagogue</strong> pour pouvoir envoyer des alertes.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <motion.div className="rounded-2xl bg-card p-5 mb-4 border border-border" style={{ boxShadow: "var(--shadow-card)" }}

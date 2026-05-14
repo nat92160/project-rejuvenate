@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
+import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
 import { toast } from "sonner";
 import { shareText } from "@/lib/shareUtils";
 import { Progress } from "@/components/ui/progress";
@@ -354,6 +355,7 @@ const ChainCreateForm = ({ onCreated }: { onCreated: () => void }) => {
         <h4 className="font-display text-sm font-bold text-foreground">Créer une nouvelle chaîne</h4>
         <p className="text-[11px] text-muted-foreground">150 psaumes à répartir entre participants</p>
       </div>
+      <ManagedSynagogueSelector compact />
       <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Tehilim pour Shabbat" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
       <select value={dedicationType} onChange={(e) => setDedicationType(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm appearance-none">
         <option value="general">Général</option><option value="refouah">Refouah Chelema</option><option value="ilouye">Ilouye Nichmat</option><option value="hatslaha">Hatslaha</option><option value="zivougue">Zivougué</option>

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
+import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { toast } from "sonner";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
@@ -19,10 +20,11 @@ interface Annonce {
 }
 
 const AnnoncesWidget = () => {
-  const { user, dbRole } = useAuth();
+  const { user } = useAuth();
   const { profile: synaProfile, synagogueId, loading: synaLoading } = useSynaProfile();
   const { subIds, loading: subLoading } = useSubscribedSynaIds();
-  const isPresident = dbRole === "president";
+  const { synagogues } = useManagedSynagogues();
+  const isPresident = synagogues.length > 0;
   const [annonces, setAnnonces] = useState<Annonce[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -65,7 +67,7 @@ const AnnoncesWidget = () => {
 
   const handleAdd = async () => {
     if (!newTitle.trim()) { toast.error("Veuillez entrer un titre"); return; }
-    if (!user || dbRole !== "president") { toast.error("Seul le président peut publier des annonces"); return; }
+    if (!user || !isPresident) { toast.error("Seul le président peut publier des annonces"); return; }
     if (!synagogueId) { toast.error("Sélectionnez ou créez une synagogue"); return; }
     setSubmitting(true);
     const { data, error } = await supabase.from("annonces").insert({

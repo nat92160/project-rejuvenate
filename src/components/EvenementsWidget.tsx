@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
+import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { toast } from "sonner";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
@@ -29,7 +30,7 @@ const typeConfig: Record<string, { emoji: string; color: string; badgeColor: str
 };
 
 const EvenementsWidget = () => {
-  const { user, dbRole } = useAuth();
+  const { user } = useAuth();
   const { profile: synaProfile, synagogueId, loading: synaLoading } = useSynaProfile();
   const { subIds, loading: subLoading } = useSubscribedSynaIds();
   const [events, setEvents] = useState<Evenement[]>([]);
@@ -40,7 +41,8 @@ const EvenementsWidget = () => {
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [posterEvent, setPosterEvent] = useState<Evenement | null>(null);
   const posterRef = useRef<HTMLDivElement>(null);
-  const isPresident = dbRole === "president";
+  const { synagogues } = useManagedSynagogues();
+  const isPresident = synagogues.length > 0;
 
   useEffect(() => {
     if (subLoading || (isPresident && synaLoading)) return;

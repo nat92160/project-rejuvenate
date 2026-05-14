@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
+import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 import { useCity } from "@/hooks/useCity";
 import { fetchMinhaTime } from "@/lib/hebcal";
 import { toast } from "sonner";
@@ -122,10 +123,11 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
 };
 
 const MinyanLiveWidget = () => {
-  const { user, dbRole } = useAuth();
+  const { user } = useAuth();
   const { subIds, loading: subLoading } = useSubscribedSynaIds();
   const { synagogueId } = useSynaProfile();
-  const isPresident = dbRole === "president";
+  const { synagogues } = useManagedSynagogues();
+  const isPresident = synagogues.length > 0;
   const [sessions, setSessions] = useState<MinyanSession[]>([]);
   const [registrations, setRegistrations] = useState<Record<string, Registration[]>>({});
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
