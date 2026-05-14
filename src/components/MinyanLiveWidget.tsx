@@ -137,8 +137,11 @@ const MinyanLiveWidget = () => {
     const today = new Date().toISOString().split("T")[0];
     let query = supabase.from("minyan_sessions").select("*").gte("office_date", today).order("office_date").order("office_time");
 
-    // Filter by subscription for non-presidents
-    if (!isPresident && user && subIds.length > 0) {
+    if (isPresident && synagogueId) {
+      query = query.eq("synagogue_id", synagogueId);
+    } else if (isPresident && !synagogueId) {
+      setSessions([]); setLoading(false); return;
+    } else if (!isPresident && user && subIds.length > 0) {
       query = query.in("synagogue_id", subIds);
     } else if (!isPresident && user && subIds.length === 0 && !subLoading) {
       setSessions([]); setLoading(false); return;
