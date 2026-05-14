@@ -912,6 +912,7 @@ export type Database = {
           hebrew_name: string
           id: string
           mother_name: string
+          synagogue_ids: string[] | null
         }
         Insert: {
           added_by?: string | null
@@ -919,6 +920,7 @@ export type Database = {
           hebrew_name: string
           id?: string
           mother_name?: string
+          synagogue_ids?: string[] | null
         }
         Update: {
           added_by?: string | null
@@ -926,6 +928,7 @@ export type Database = {
           hebrew_name?: string
           id?: string
           mother_name?: string
+          synagogue_ids?: string[] | null
         }
         Relationships: []
       }
