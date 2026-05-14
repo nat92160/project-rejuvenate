@@ -87,7 +87,7 @@ const RefouaChelemaWidget = () => {
       toast.error("Erreur lors de l'ajout. Vérifiez votre connexion.");
       console.error("Refoua add error:", error);
     } else if (data) {
-      setPatients((prev) => [data, ...prev]);
+      setPatients((prev) => [data as unknown as Patient, ...prev]);
       setShowForm(false);
       setName("");
       setMother("");
