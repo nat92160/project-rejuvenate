@@ -8,6 +8,7 @@ import { useCity } from "@/hooks/useCity";
 import { fetchMinhaTime } from "@/lib/hebcal";
 import { toast } from "sonner";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
+import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
 
 interface MinyanSession { id: string; office_type: string; office_date: string; office_time: string; target_count: number; creator_id: string; }
 interface Registration { id: string; session_id: string; user_id: string; display_name: string; guest_count?: number; }
@@ -87,6 +88,7 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
       initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
       <h4 className="font-display text-sm font-bold text-foreground mb-3">➕ Nouvelle session</h4>
       <div className="space-y-4">
+        <ManagedSynagogueSelector compact />
         <select value={form.office_type} onChange={e => setForm({...form, office_type: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm">
           <option value="shacharit">🌅 Cha'harit</option><option value="minha">☀️ Min'ha</option><option value="arvit">🌙 Arvit</option>
         </select>
@@ -154,7 +156,7 @@ const MinyanLiveWidget = () => {
     setLoading(false);
   };
 
-  useEffect(() => { if (!subLoading) fetchSessions(); }, [subLoading, subIds]);
+  useEffect(() => { if (!subLoading) fetchSessions(); }, [subLoading, subIds, synagogueId, isPresident]);
   useEffect(() => {
     const channel = supabase.channel("minyan-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "minyan_registrations" }, () => fetchSessions())
