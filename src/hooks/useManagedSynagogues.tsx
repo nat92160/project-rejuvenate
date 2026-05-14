@@ -40,6 +40,7 @@ export const useManagedSynagogues = () => {
   const setSelectedId = useCallback((id: string | null) => {
     setSelectedIdState(id);
     if (userId && id) localStorage.setItem(managedSynagogueStorageKey(userId), id);
+    notifySynagoguesChanged();
   }, [userId]);
 
   const refresh = useCallback(async () => {
@@ -66,7 +67,7 @@ export const useManagedSynagogues = () => {
     setSynagogues(list);
     setSelectedIdState((current) => {
       const saved = localStorage.getItem(managedSynagogueStorageKey(userId));
-      const candidate = current || saved;
+      const candidate = saved || current;
       const next = candidate && list.some((s) => s.id === candidate) ? candidate : (list[0]?.id || null);
       if (next) localStorage.setItem(managedSynagogueStorageKey(userId), next);
       return next;
