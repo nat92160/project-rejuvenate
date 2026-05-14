@@ -205,6 +205,7 @@ export type Database = {
           description: string
           id: string
           rav: string
+          replay_updated_at: string | null
           replay_url: string | null
           specific_date: string | null
           synagogue_id: string | null
@@ -221,6 +222,7 @@ export type Database = {
           description?: string
           id?: string
           rav?: string
+          replay_updated_at?: string | null
           replay_url?: string | null
           specific_date?: string | null
           synagogue_id?: string | null
@@ -237,6 +239,7 @@ export type Database = {
           description?: string
           id?: string
           rav?: string
+          replay_updated_at?: string | null
           replay_url?: string | null
           specific_date?: string | null
           synagogue_id?: string | null
