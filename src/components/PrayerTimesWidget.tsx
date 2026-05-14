@@ -81,6 +81,7 @@ const PrayerTimesWidget = () => {
   const [synaId, setSynaId] = useState<string | null>(null);
   const [synaList, setSynaList] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
@@ -90,13 +91,19 @@ const PrayerTimesWidget = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: rows, error } = await supabase
-        .from("synagogue_profiles")
-        .select("id, name")
-        .or(`president_id.eq.${user.id},adjoint_id.eq.${user.id}`)
-        .order("created_at", { ascending: true });
-      console.log("[PrayerTimesWidget] syna load", { user: user.id, rows, error });
-      const list = (rows || []).map((r: any) => ({ id: r.id, name: r.name || "Sans nom" }));
+      // Two separate queries (more reliable than .or() with null columns on iOS Safari cache)
+      const [pres, adj] = await Promise.all([
+        supabase.from("synagogue_profiles").select("id, name, created_at").eq("president_id", user.id),
+        supabase.from("synagogue_profiles").select("id, name, created_at").eq("adjoint_id", user.id),
+      ]);
+      const merged = [...(pres.data || []), ...(adj.data || [])];
+      const seen = new Set<string>();
+      const dedup = merged.filter((r: any) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
+      dedup.sort((a: any, b: any) => (a.created_at || "").localeCompare(b.created_at || ""));
+      const error = pres.error || adj.error;
+      console.log("[PrayerTimesWidget] syna load v2", { user: user.id, rows: dedup, error });
+      if (error) setLoadError(error.message);
+      const list = dedup.map((r: any) => ({ id: r.id, name: r.name || "Sans nom" }));
       setSynaList(list);
       if (list.length > 0) {
         setSynaId(list[0].id);
@@ -170,6 +177,7 @@ const PrayerTimesWidget = () => {
         <p className="mt-3 text-sm text-muted-foreground">
           Créez d'abord votre profil dans "Infos Syna" pour gérer les horaires.
         </p>
+        {loadError && <p className="mt-2 text-[11px] text-destructive">Erreur: {loadError}</p>}
       </div>
     );
   }
@@ -185,10 +193,10 @@ const PrayerTimesWidget = () => {
         <p className="mt-1 text-xs text-muted-foreground">Définissez les horaires quotidiens de votre synagogue</p>
       </div>
 
-      {synaList.length > 1 && (
+      {synaList.length >= 1 && (
         <div className="rounded-2xl border border-primary/15 bg-card p-3" style={{ boxShadow: "var(--shadow-card)" }}>
           <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-primary/70">
-            🏛️ Synagogue à modifier
+            🏛️ Synagogue à modifier ({synaList.length})
           </label>
           <select
             value={synaId || ""}
