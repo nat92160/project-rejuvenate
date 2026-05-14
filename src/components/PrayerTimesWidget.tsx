@@ -90,11 +90,12 @@ const PrayerTimesWidget = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: rows } = await supabase
+      const { data: rows, error } = await supabase
         .from("synagogue_profiles")
         .select("id, name")
         .or(`president_id.eq.${user.id},adjoint_id.eq.${user.id}`)
         .order("created_at", { ascending: true });
+      console.log("[PrayerTimesWidget] syna load", { user: user.id, rows, error });
       const list = (rows || []).map((r: any) => ({ id: r.id, name: r.name || "Sans nom" }));
       setSynaList(list);
       if (list.length > 0) {
