@@ -24,6 +24,7 @@ interface CoursItem {
   address: string;
   specific_date: string | null;
   replay_url?: string | null;
+  replay_updated_at?: string | null;
 }
 
 const CoursVirtuelWidget = () => {
@@ -59,12 +60,13 @@ const CoursVirtuelWidget = () => {
   };
 
   const handleSaveReplay = async (id: string, url: string) => {
+    const nowIso = new Date().toISOString();
     const { error } = await supabase
       .from("cours_zoom")
-      .update({ replay_url: url || null } as any)
+      .update({ replay_url: url || null, replay_updated_at: url ? nowIso : null } as any)
       .eq("id", id);
     if (error) throw error;
-    setCours((prev) => prev.map((c) => (c.id === id ? { ...c, replay_url: url || null } : c)));
+    setCours((prev) => prev.map((c) => (c.id === id ? { ...c, replay_url: url || null, replay_updated_at: url ? nowIso : null } : c)));
   };
 
   const filtered =
