@@ -51,8 +51,11 @@ const PersonalDatesBanner = () => {
     if (!user) return;
     supabase.from("personal_dates").select("*").eq("user_id", user.id).then(({ data }) => {
       const list = ((data as PersonalDate[]) || [])
-        .map((d) => ({ d, ...computeUpcoming(d) }))
-        .filter((x): x is { d: PersonalDate; daysUntil: number; nextDate: Date } => !!x.daysUntil !== undefined && x.daysUntil !== null && x.daysUntil >= 0 && x.daysUntil <= 7)
+        .map((d) => {
+          const u = computeUpcoming(d);
+          return u ? { d, daysUntil: u.daysUntil, nextDate: u.nextDate } : null;
+        })
+        .filter((x): x is { d: PersonalDate; daysUntil: number; nextDate: Date } => x !== null && x.daysUntil >= 0 && x.daysUntil <= 7)
         .sort((a, b) => a.daysUntil - b.daysUntil);
       setUpcoming(list);
     });
