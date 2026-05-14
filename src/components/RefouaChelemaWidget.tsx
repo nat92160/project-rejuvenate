@@ -47,6 +47,7 @@ const RefouaChelemaWidget = () => {
         .select("*")
         .order("created_at", { ascending: false });
       setPatients(data || []);
+      // data shape will include synagogue_ids once types regenerate
       setLoading(false);
     };
     fetchPatients();
