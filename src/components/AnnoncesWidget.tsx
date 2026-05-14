@@ -66,9 +66,10 @@ const AnnoncesWidget = () => {
   const handleAdd = async () => {
     if (!newTitle.trim()) { toast.error("Veuillez entrer un titre"); return; }
     if (!user || dbRole !== "president") { toast.error("Seul le président peut publier des annonces"); return; }
+    if (!synagogueId) { toast.error("Sélectionnez ou créez une synagogue"); return; }
     setSubmitting(true);
     const { data, error } = await supabase.from("annonces").insert({
-      creator_id: user.id, title: newTitle.trim(), content: newContent.trim(), priority: newPriority, synagogue_id: synagogueId || null,
+      creator_id: user.id, title: newTitle.trim(), content: newContent.trim(), priority: newPriority, synagogue_id: synagogueId,
     } as any).select().single();
     if (error) toast.error("Erreur lors de la publication.");
     else if (data) {
