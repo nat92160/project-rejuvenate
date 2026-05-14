@@ -39,15 +39,12 @@ export default defineConfig(({ mode }) => ({
               networkTimeoutSeconds: 5,
             },
           },
-          // Supabase REST API — network-first
+          // Supabase REST API — NEVER cache.
+          // iOS Capacitor/PWA was returning stale lists after INSERT
+          // (newly created synagogues invisible until cache expired).
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/.*/i,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "supabase-rest-cache",
-              expiration: { maxEntries: 100, maxAgeSeconds: 300 },
-              networkTimeoutSeconds: 5,
-            },
+            handler: "NetworkOnly",
           },
           // Hebcal Shabbat — SWR with 7-day cache
           {
