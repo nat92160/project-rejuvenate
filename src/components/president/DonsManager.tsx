@@ -40,7 +40,7 @@ interface Donation {
 
 const DonsManager = () => {
   const { user } = useAuth();
-  const { selectedSynagogue, synagogueId, loading: synaLoading } = useManagedSynagogues();
+  const { synagogueId, loading: synaLoading } = useManagedSynagogues();
   const [loading, setLoading] = useState(true);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [synagogueName, setSynagogueName] = useState("");
