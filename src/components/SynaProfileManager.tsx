@@ -3,8 +3,10 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Building2, MapPin, Phone, Mail, Save, ChevronDown } from "lucide-react";
+import { Building2, MapPin, Phone, Mail, Save } from "lucide-react";
 import { useRef } from "react";
+import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
+import { notifySynagoguesChanged, useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 
 interface SynaProfile {
   id?: string;
@@ -47,27 +49,11 @@ const SynaProfileManager = () => {
   const [uploading, setUploading] = useState(false);
   const [newSpeaker, setNewSpeaker] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
-  const [synaList, setSynaList] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { synagogues, selectedId, loading: synaLoading, refresh } = useManagedSynagogues();
 
-  // Load list of synagogues this user can manage (as president OR adjoint)
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data: rows } = await supabase
-        .from("synagogue_profiles")
-        .select("id, name")
-        .or(`president_id.eq.${user.id},adjoint_id.eq.${user.id}`)
-        .order("created_at", { ascending: true });
-      const list = (rows || []).map((r: any) => ({ id: r.id, name: r.name || "Sans nom" }));
-      setSynaList(list);
-      if (list.length > 0 && !selectedId) {
-        setSelectedId(list[0].id);
-      } else if (list.length === 0) {
-        setLoading(false);
-      }
-    })();
-  }, [user]);
+    if (!synaLoading && !selectedId) setLoading(false);
+  }, [synaLoading, selectedId]);
 
   // Load full profile of selected synagogue
   useEffect(() => {
