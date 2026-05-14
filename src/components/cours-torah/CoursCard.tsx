@@ -110,7 +110,7 @@ const CoursCard = ({
   };
 
   const handleAction = () => {
-    if (isPast && replay_url) {
+    if (showReplayButton && replay_url) {
       const href = replay_url.startsWith("http") ? replay_url : `https://${replay_url}`;
       window.open(href, "_blank", "noopener,noreferrer");
     } else if (isZoom) {
