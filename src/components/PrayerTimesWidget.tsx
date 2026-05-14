@@ -79,44 +79,53 @@ const PrayerTimesWidget = () => {
   const { user } = useAuth();
   const [times, setTimes] = useState<PrayerTimes>(EMPTY);
   const [synaId, setSynaId] = useState<string | null>(null);
+  const [synaList, setSynaList] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
   const { profile } = useSynaProfile();
 
+  // Load all synagogues this user manages
   useEffect(() => {
     if (!user) return;
-
     (async () => {
-      const { data } = await supabase
+      const { data: rows } = await supabase
         .from("synagogue_profiles")
-        .select("id, shacharit_time, minha_time, arvit_time")
+        .select("id, name")
         .or(`president_id.eq.${user.id},adjoint_id.eq.${user.id}`)
-        .maybeSingle();
-
-      if (data) {
-        setSynaId(data.id);
-
-        const { data: extra } = await supabase
-          .from("synagogue_profiles")
-          .select("shacharit_time_2, minha_time_2, arvit_time_2" as any)
-          .eq("id", data.id)
-          .maybeSingle();
-
-        setTimes({
-          shacharit_time: data.shacharit_time || "",
-          shacharit_time_2: (extra as any)?.shacharit_time_2 || "",
-          minha_time: data.minha_time || "",
-          minha_time_2: (extra as any)?.minha_time_2 || "",
-          arvit_time: data.arvit_time || "",
-          arvit_time_2: (extra as any)?.arvit_time_2 || "",
-        });
+        .order("created_at", { ascending: true });
+      const list = (rows || []).map((r: any) => ({ id: r.id, name: r.name || "Sans nom" }));
+      setSynaList(list);
+      if (list.length > 0) {
+        setSynaId(list[0].id);
+      } else {
+        setLoading(false);
       }
-
-      setLoading(false);
     })();
   }, [user]);
+
+  // Load times for selected synagogue
+  useEffect(() => {
+    if (!synaId) return;
+    setLoading(true);
+    (async () => {
+      const { data } = await (supabase
+        .from("synagogue_profiles")
+        .select("shacharit_time, shacharit_time_2, minha_time, minha_time_2, arvit_time, arvit_time_2") as any)
+        .eq("id", synaId)
+        .maybeSingle();
+      setTimes({
+        shacharit_time: data?.shacharit_time || "",
+        shacharit_time_2: data?.shacharit_time_2 || "",
+        minha_time: data?.minha_time || "",
+        minha_time_2: data?.minha_time_2 || "",
+        arvit_time: data?.arvit_time || "",
+        arvit_time_2: data?.arvit_time_2 || "",
+      });
+      setLoading(false);
+    })();
+  }, [synaId]);
 
   const update = (key: keyof PrayerTimes, value: string) => {
     setTimes((prev) => ({ ...prev, [key]: value }));
@@ -174,6 +183,23 @@ const PrayerTimesWidget = () => {
         <h3 className="mt-2 font-display text-lg font-bold text-foreground">Horaires des Offices</h3>
         <p className="mt-1 text-xs text-muted-foreground">Définissez les horaires quotidiens de votre synagogue</p>
       </div>
+
+      {synaList.length > 1 && (
+        <div className="rounded-2xl border border-primary/15 bg-card p-3" style={{ boxShadow: "var(--shadow-card)" }}>
+          <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-primary/70">
+            🏛️ Synagogue à modifier
+          </label>
+          <select
+            value={synaId || ""}
+            onChange={(e) => setSynaId(e.target.value)}
+            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            {synaList.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="space-y-3">
         {offices.map((office) => (
