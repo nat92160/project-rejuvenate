@@ -22,7 +22,7 @@ export interface ManagedSynagogue {
 
 const SELECT_FIELDS = "id, name, logo_url, signature, primary_color, secondary_color, font_family, address, phone, email, president_id, adjoint_id, created_at";
 
-const storageKey = (userId: string) => `calj_selected_synagogue_id_${userId}`;
+export const managedSynagogueStorageKey = (userId: string) => `calj_selected_synagogue_id_${userId}`;
 
 export const notifySynagoguesChanged = () => {
   if (typeof window !== "undefined") {
@@ -39,7 +39,7 @@ export const useManagedSynagogues = () => {
 
   const setSelectedId = useCallback((id: string | null) => {
     setSelectedIdState(id);
-    if (userId && id) localStorage.setItem(storageKey(userId), id);
+    if (userId && id) localStorage.setItem(managedSynagogueStorageKey(userId), id);
   }, [userId]);
 
   const refresh = useCallback(async () => {
@@ -65,10 +65,10 @@ export const useManagedSynagogues = () => {
 
     setSynagogues(list);
     setSelectedIdState((current) => {
-      const saved = localStorage.getItem(storageKey(userId));
+      const saved = localStorage.getItem(managedSynagogueStorageKey(userId));
       const candidate = current || saved;
       const next = candidate && list.some((s) => s.id === candidate) ? candidate : (list[0]?.id || null);
-      if (next) localStorage.setItem(storageKey(userId), next);
+      if (next) localStorage.setItem(managedSynagogueStorageKey(userId), next);
       return next;
     });
     setLoading(false);
