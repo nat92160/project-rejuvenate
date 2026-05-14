@@ -7,6 +7,7 @@ import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { toast } from "sonner";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import { sharePosterPng } from "@/components/poster/usePosterExport";
+import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
 
 interface Evenement {
   id: string;
@@ -29,7 +30,7 @@ const typeConfig: Record<string, { emoji: string; color: string; badgeColor: str
 
 const EvenementsWidget = () => {
   const { user, dbRole } = useAuth();
-  const { profile: synaProfile, synagogueId } = useSynaProfile();
+  const { profile: synaProfile, synagogueId, loading: synaLoading } = useSynaProfile();
   const { subIds, loading: subLoading } = useSubscribedSynaIds();
   const [events, setEvents] = useState<Evenement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +43,7 @@ const EvenementsWidget = () => {
   const isPresident = dbRole === "president";
 
   useEffect(() => {
-    if (subLoading) return;
+    if (subLoading || (isPresident && synaLoading)) return;
     const fetchEvents = async () => {
       let query = supabase
         .from("evenements")
@@ -52,6 +53,8 @@ const EvenementsWidget = () => {
 
       if (isPresident && synagogueId) {
         query = query.eq("synagogue_id", synagogueId);
+      } else if (isPresident && !synagogueId) {
+        setEvents([]); setLoading(false); return;
       } else if (user && subIds.length > 0) {
         query = query.in("synagogue_id", subIds);
       } else if (user && subIds.length === 0) {
@@ -63,7 +66,7 @@ const EvenementsWidget = () => {
       setLoading(false);
     };
     fetchEvents();
-  }, [subLoading, subIds, user, isPresident, synagogueId]);
+  }, [subLoading, subIds, user, isPresident, synagogueId, synaLoading]);
 
   const handleAdd = async () => {
     if (!form.title.trim() || !form.event_date) {
@@ -71,6 +74,7 @@ const EvenementsWidget = () => {
       return;
     }
     if (!user) { toast.error("Vous devez être connecté"); return; }
+    if (isPresident && !synagogueId) { toast.error("Sélectionnez ou créez une synagogue"); return; }
     setSubmitting(true);
     const { data, error } = await supabase.from("evenements").insert({
       creator_id: user.id,
@@ -177,6 +181,7 @@ const EvenementsWidget = () => {
           <motion.div className="rounded-2xl bg-card p-5 mb-4 border border-primary/20" style={{ boxShadow: "var(--shadow-card)" }}
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
             <div className="space-y-3">
+              <ManagedSynagogueSelector compact />
               <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="✏️ Titre de l'événement"
                 className="w-full px-4 py-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" style={{ minHeight: "48px" }} />
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="📝 Description (optionnel)" rows={2}
