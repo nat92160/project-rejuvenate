@@ -21,6 +21,7 @@ interface CoursCardProps {
   onDelete: (id: string) => void;
   specific_date?: string | null;
   replay_url?: string | null;
+  replay_updated_at?: string | null;
   onSaveReplay?: (id: string, url: string) => Promise<void> | void;
 }
 
@@ -29,10 +30,14 @@ const dayColors: Record<string, string> = {
   Jeudi: "#f97316", Vendredi: "#ef4444", Dimanche: "#eab308",
 };
 
+const dayIndex: Record<string, number> = {
+  Dimanche: 0, Lundi: 1, Mardi: 2, Mercredi: 3, Jeudi: 4, Vendredi: 5, Samedi: 6,
+};
+
 const CoursCard = ({
   id, title, rav, day_of_week, course_time, zoom_link, description,
   course_type, address, cityName, isOwner, index, onDelete, specific_date,
-  replay_url, onSaveReplay,
+  replay_url, replay_updated_at, onSaveReplay,
 }: CoursCardProps) => {
   const isZoom = normalizeCourseType(course_type, zoom_link, address) === "zoom";
   const dotColor = dayColors[day_of_week] || "#94a3b8";
@@ -41,14 +46,36 @@ const CoursCard = ({
     ? new Date(specific_date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
     : day_of_week;
 
-  // A course is "past" only if it has a specific (one-off) date that is before today.
-  // Recurring courses (day_of_week only) repeat weekly, so they're never considered past.
-  const isPast = (() => {
-    if (!specific_date) return false;
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const d = new Date(specific_date + "T00:00:00");
-    return d.getTime() < today.getTime();
+  // For one-off courses: past once the date has passed.
+  // For recurring courses: compute the most recent past occurrence of (day_of_week + course_time).
+  // The course is considered "past" (replay window) between that occurrence and the next one.
+  const { isPast, lastOccurrenceDate } = (() => {
+    const now = new Date();
+    if (specific_date) {
+      const d = new Date(specific_date + "T" + (course_time || "00:00:00"));
+      return { isPast: d.getTime() < now.getTime(), lastOccurrenceDate: d };
+    }
+    const targetDay = dayIndex[day_of_week];
+    if (targetDay === undefined) return { isPast: false, lastOccurrenceDate: null as Date | null };
+    const [hh = "0", mm = "0"] = (course_time || "00:00").split(":");
+    const d = new Date(now);
+    d.setHours(parseInt(hh, 10), parseInt(mm, 10), 0, 0);
+    let diff = (now.getDay() - targetDay + 7) % 7;
+    if (diff === 0 && d.getTime() > now.getTime()) diff = 7;
+    d.setDate(d.getDate() - diff);
+    return { isPast: true, lastOccurrenceDate: d };
   })();
+
+  // Replay is "fresh" (still valid for current week) only if updated after the last occurrence.
+  const replayFresh = (() => {
+    if (!replay_url) return false;
+    if (specific_date) return true; // one-off replays don't expire
+    if (!replay_updated_at || !lastOccurrenceDate) return false;
+    return new Date(replay_updated_at).getTime() >= lastOccurrenceDate.getTime();
+  })();
+
+  const showReplayButton = isPast && replayFresh;
+  const showReplayInput = isOwner && !!onSaveReplay && (specific_date ? isPast : true);
 
   const [replayInput, setReplayInput] = useState(replay_url || "");
   const [savingReplay, setSavingReplay] = useState(false);
@@ -140,37 +167,38 @@ const CoursCard = ({
           </p>
         )}
 
-        {isPast && !replay_url ? (
+        {isPast && !showReplayButton ? (
           <div
             className="mt-4 w-full py-3 rounded-xl font-bold text-sm text-center text-muted-foreground border border-border bg-muted/40"
           >
-            ⏳ Cours terminé{isOwner ? " — ajoutez le replay ci-dessous" : ""}
+            {specific_date ? "⏳ Cours terminé" : "⏳ Cours de cette semaine terminé"}
+            {isOwner ? " — ajoutez le replay ci-dessous" : ""}
           </div>
         ) : (
           <button
             onClick={handleAction}
             className="mt-4 w-full py-3 rounded-xl font-bold text-sm border-none cursor-pointer text-white transition-transform hover:scale-[1.02] active:scale-[0.98]"
             style={{
-              background: isPast && replay_url
+              background: showReplayButton
                 ? "linear-gradient(135deg, #DC2626, #991B1B)"
                 : isZoom
                   ? "linear-gradient(135deg, #2D8CFF, #1a6fdd)"
                   : "linear-gradient(135deg, #22c55e, #16a34a)",
-              boxShadow: isPast && replay_url
+              boxShadow: showReplayButton
                 ? "0 4px 12px rgba(220,38,38,0.3)"
                 : isZoom
                   ? "0 4px 12px rgba(45,140,255,0.3)"
                   : "0 4px 12px rgba(34,197,94,0.3)",
             }}
           >
-            {isPast && replay_url ? "▶️  VOIR LE REPLAY" : isZoom ? "🎥  REJOINDRE LE COURS" : "📍  ITINÉRAIRE"}
+            {showReplayButton ? "▶️  VOIR LE REPLAY" : isZoom ? "🎥  REJOINDRE LE COURS" : "📍  ITINÉRAIRE"}
           </button>
         )}
 
-        {isPast && isOwner && onSaveReplay && (
+        {showReplayInput && (
           <div className="mt-3 rounded-xl border border-border bg-background p-3">
             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">
-              ▶️ Lien du replay (YouTube, etc.)
+              ▶️ Lien du replay {!specific_date && "(remplacez chaque semaine)"}
             </label>
             <div className="flex gap-2">
               <input
