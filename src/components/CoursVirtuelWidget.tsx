@@ -23,6 +23,7 @@ interface CoursItem {
   course_type: string;
   address: string;
   specific_date: string | null;
+  replay_url?: string | null;
 }
 
 const CoursVirtuelWidget = () => {
@@ -55,6 +56,15 @@ const CoursVirtuelWidget = () => {
       setCours((prev) => prev.filter((c) => c.id !== id));
       toast.success("Cours supprimé");
     }
+  };
+
+  const handleSaveReplay = async (id: string, url: string) => {
+    const { error } = await supabase
+      .from("cours_zoom")
+      .update({ replay_url: url || null } as any)
+      .eq("id", id);
+    if (error) throw error;
+    setCours((prev) => prev.map((c) => (c.id === id ? { ...c, replay_url: url || null } : c)));
   };
 
   const filtered =
@@ -139,6 +149,7 @@ const CoursVirtuelWidget = () => {
               index={i}
               
               onDelete={handleDelete}
+              onSaveReplay={handleSaveReplay}
             />
           ))}
         </div>

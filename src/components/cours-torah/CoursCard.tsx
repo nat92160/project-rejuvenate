@@ -20,6 +20,8 @@ interface CoursCardProps {
   index: number;
   onDelete: (id: string) => void;
   specific_date?: string | null;
+  replay_url?: string | null;
+  onSaveReplay?: (id: string, url: string) => Promise<void> | void;
 }
 
 const dayColors: Record<string, string> = {
@@ -30,6 +32,7 @@ const dayColors: Record<string, string> = {
 const CoursCard = ({
   id, title, rav, day_of_week, course_time, zoom_link, description,
   course_type, address, cityName, isOwner, index, onDelete, specific_date,
+  replay_url, onSaveReplay,
 }: CoursCardProps) => {
   const isZoom = normalizeCourseType(course_type, zoom_link, address) === "zoom";
   const dotColor = dayColors[day_of_week] || "#94a3b8";
@@ -38,19 +41,52 @@ const CoursCard = ({
     ? new Date(specific_date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
     : day_of_week;
 
+  // A course is "past" only if it has a specific (one-off) date that is before today.
+  // Recurring courses (day_of_week only) repeat weekly, so they're never considered past.
+  const isPast = (() => {
+    if (!specific_date) return false;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const d = new Date(specific_date + "T00:00:00");
+    return d.getTime() < today.getTime();
+  })();
+
+  const [replayInput, setReplayInput] = useState(replay_url || "");
+  const [savingReplay, setSavingReplay] = useState(false);
+
+  const handleSaveReplay = async () => {
+    if (!onSaveReplay) return;
+    const url = replayInput.trim();
+    if (url && !/^https?:\/\//i.test(url)) {
+      toast.error("Lien invalide (doit commencer par https://)");
+      return;
+    }
+    setSavingReplay(true);
+    try {
+      await onSaveReplay(id, url);
+      toast.success(url ? "✅ Replay enregistré" : "Replay supprimé");
+    } catch {
+      toast.error("Erreur lors de l'enregistrement");
+    }
+    setSavingReplay(false);
+  };
+
   const handleShare = async () => {
     let text = `📚 ${title}\n`;
     if (rav) text += `👨‍🏫 ${rav}\n`;
     text += `📅 ${displayDate} à ${course_time?.slice(0, 5)}\n`;
-    if (isZoom && zoom_link) text += `\n🎥 Rejoindre : ${zoom_link}\n`;
-    if (!isZoom && address) text += `\n📍 ${address}\n`;
+    if (isPast && replay_url) text += `\n▶️ Replay : ${replay_url}\n`;
+    else if (isZoom && zoom_link) text += `\n🎥 Rejoindre : ${zoom_link}\n`;
+    else if (!isZoom && address) text += `\n📍 ${address}\n`;
     if (description) text += `\n${description}\n`;
     text += `\n✡️ Chabbat Chalom • ${cityName}`;
     await shareText(text, `📚 ${title}`);
   };
 
   const handleAction = () => {
-    if (isZoom) {
+    if (isPast && replay_url) {
+      const href = replay_url.startsWith("http") ? replay_url : `https://${replay_url}`;
+      window.open(href, "_blank", "noopener,noreferrer");
+    } else if (isZoom) {
       const href = zoom_link?.startsWith("http") ? zoom_link : `https://${zoom_link}`;
       window.open(href, "_blank", "noopener,noreferrer");
     } else if (address) {
@@ -66,16 +102,21 @@ const CoursCard = ({
       transition={{ delay: index * 0.05 }}
     >
       {/* Visible card */}
-      <div className="rounded-2xl bg-card p-5 border border-border" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div
+        className="rounded-2xl bg-card p-5 border border-border"
+        style={{ boxShadow: "var(--shadow-card)", opacity: isPast && !replay_url ? 0.85 : 1 }}
+      >
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <span
             className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full tracking-wider"
             style={{
-              background: isZoom ? "rgba(45,140,255,0.1)" : "rgba(34,197,94,0.1)",
-              color: isZoom ? "#2D8CFF" : "#16a34a",
+              background: isPast
+                ? "rgba(120,120,120,0.12)"
+                : isZoom ? "rgba(45,140,255,0.1)" : "rgba(34,197,94,0.1)",
+              color: isPast ? "#6b7280" : isZoom ? "#2D8CFF" : "#16a34a",
             }}
           >
-            {isZoom ? "ZOOM" : "PRÉSENTIEL"}
+            {isPast ? "PASSÉ" : isZoom ? "ZOOM" : "PRÉSENTIEL"}
           </span>
           <span
             className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
@@ -99,20 +140,57 @@ const CoursCard = ({
           </p>
         )}
 
-        <button
-          onClick={handleAction}
-          className="mt-4 w-full py-3 rounded-xl font-bold text-sm border-none cursor-pointer text-white transition-transform hover:scale-[1.02] active:scale-[0.98]"
-          style={{
-            background: isZoom
-              ? "linear-gradient(135deg, #2D8CFF, #1a6fdd)"
-              : "linear-gradient(135deg, #22c55e, #16a34a)",
-            boxShadow: isZoom
-              ? "0 4px 12px rgba(45,140,255,0.3)"
-              : "0 4px 12px rgba(34,197,94,0.3)",
-          }}
-        >
-          {isZoom ? "🎥  REJOINDRE LE COURS" : "📍  ITINÉRAIRE"}
-        </button>
+        {isPast && !replay_url ? (
+          <div
+            className="mt-4 w-full py-3 rounded-xl font-bold text-sm text-center text-muted-foreground border border-border bg-muted/40"
+          >
+            ⏳ Cours terminé{isOwner ? " — ajoutez le replay ci-dessous" : ""}
+          </div>
+        ) : (
+          <button
+            onClick={handleAction}
+            className="mt-4 w-full py-3 rounded-xl font-bold text-sm border-none cursor-pointer text-white transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              background: isPast && replay_url
+                ? "linear-gradient(135deg, #DC2626, #991B1B)"
+                : isZoom
+                  ? "linear-gradient(135deg, #2D8CFF, #1a6fdd)"
+                  : "linear-gradient(135deg, #22c55e, #16a34a)",
+              boxShadow: isPast && replay_url
+                ? "0 4px 12px rgba(220,38,38,0.3)"
+                : isZoom
+                  ? "0 4px 12px rgba(45,140,255,0.3)"
+                  : "0 4px 12px rgba(34,197,94,0.3)",
+            }}
+          >
+            {isPast && replay_url ? "▶️  VOIR LE REPLAY" : isZoom ? "🎥  REJOINDRE LE COURS" : "📍  ITINÉRAIRE"}
+          </button>
+        )}
+
+        {isPast && isOwner && onSaveReplay && (
+          <div className="mt-3 rounded-xl border border-border bg-background p-3">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">
+              ▶️ Lien du replay (YouTube, etc.)
+            </label>
+            <div className="flex gap-2">
+              <input
+                value={replayInput}
+                onChange={(e) => setReplayInput(e.target.value)}
+                placeholder="https://youtube.com/..."
+                className="flex-1 px-3 py-2 rounded-lg bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                style={{ fontSize: "16px" }}
+              />
+              <button
+                onClick={handleSaveReplay}
+                disabled={savingReplay || replayInput === (replay_url || "")}
+                className="px-3 py-2 rounded-lg text-xs font-bold border-none cursor-pointer text-primary-foreground disabled:opacity-50"
+                style={{ background: "var(--gradient-gold)" }}
+              >
+                {savingReplay ? "…" : "Enregistrer"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2 mt-2 px-1">
