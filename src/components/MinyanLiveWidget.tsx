@@ -54,6 +54,7 @@ const CreateMinyanInline = ({ onCreated }: { onCreated: () => void }) => {
   const handleCreate = async () => {
     if (!form.office_date || !form.office_time) { toast.error("Remplissez date et heure"); return; }
     if (!user) { toast.error("Connectez-vous"); return; }
+    if (!synagogueId) { toast.error("Sélectionnez ou créez une synagogue"); return; }
     setSubmitting(true);
     const { error } = await supabase.from("minyan_sessions").insert({ creator_id: user.id, synagogue_id: synagogueId, office_type: form.office_type, office_date: form.office_date, office_time: form.office_time, target_count: parseInt(form.target_count) || 10 } as any);
     if (error) toast.error("Erreur lors de la création du minyan.");
