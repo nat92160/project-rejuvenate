@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { NICHMAT_PRAYER } from "@/lib/nichmat-prayer";
+import RefouaCampaignPlanner from "./RefouaCampaignPlanner";
 
 interface Action {
   id: string;
@@ -24,7 +25,7 @@ const todayISO = () => new Date().toISOString().slice(0, 10);
 
 const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
   const { user } = useAuth();
-  const [tab, setTab] = useState<"tehilim" | "nichmat" | "prayed">("tehilim");
+  const [tab, setTab] = useState<"programme" | "tehilim" | "nichmat" | "prayed">("programme");
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNichmat, setShowNichmat] = useState(false);
@@ -277,8 +278,9 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1.5">
+      <div className="flex gap-1.5 overflow-x-auto">
         {([
+          { id: "programme", label: "🗓️ Programme" },
           { id: "tehilim", label: "📖 Chaîne Tehilim" },
           { id: "nichmat", label: "✨ Nichmat" },
           { id: "prayed", label: "🙏 J'ai prié" },
@@ -286,7 +288,7 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 px-2 py-2 rounded-lg text-[10px] font-bold border cursor-pointer transition-all ${
+            className={`flex-1 min-w-[78px] px-2 py-2 rounded-lg text-[10px] font-bold border cursor-pointer transition-all whitespace-nowrap ${
               tab === t.id ? "border-primary/40 text-foreground" : "border-border text-muted-foreground bg-card"
             }`}
             style={tab === t.id ? { background: "hsl(var(--gold) / 0.12)" } : {}}
@@ -298,6 +300,8 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
 
       {loading ? (
         <div className="text-center py-4 text-xs text-muted-foreground">Chargement...</div>
+      ) : tab === "programme" ? (
+        <RefouaCampaignPlanner refouaId={refouaId} hebrewName={hebrewName} />
       ) : tab === "tehilim" ? (
         <div>
           <p className="text-[10px] text-muted-foreground mb-2 italic">
