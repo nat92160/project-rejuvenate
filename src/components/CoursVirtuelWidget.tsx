@@ -29,13 +29,13 @@ interface CoursItem {
 
 const CoursVirtuelWidget = () => {
   const { city } = useCity();
-  const { user, dbRole } = useAuth();
+  const { user, isPresident, isAdmin } = useAuth();
   const { synagogueId } = useSynaProfile();
   const [cours, setCours] = useState<CoursItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<"all" | "zoom" | "presentiel">("all");
-  const isPresident = dbRole === "president";
+  const canManage = isPresident || isAdmin;
 
   useEffect(() => {
     const fetchCours = async () => {
@@ -86,13 +86,13 @@ const CoursVirtuelWidget = () => {
             <h3 className="font-display text-base font-bold text-foreground">Cours de Torah</h3>
             <p className="text-xs text-muted-foreground mt-1">Zoom et Présentiel</p>
           </div>
-          {isPresident && (
+          {canManage && (
             <button
               onClick={() => setShowForm(!showForm)}
               className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
               style={{ background: "var(--gradient-gold)" }}
             >
-              + Nouveau cours
+              {showForm ? "✕ Annuler" : "+ Nouveau cours"}
             </button>
           )}
         </div>
@@ -147,7 +147,7 @@ const CoursVirtuelWidget = () => {
               key={c.id}
               {...c}
               cityName={city.name}
-              isOwner={isPresident && user?.id === c.creator_id}
+              isOwner={canManage && user?.id === c.creator_id}
               index={i}
               
               onDelete={handleDelete}
