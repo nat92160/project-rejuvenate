@@ -15,7 +15,8 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "siddour", icon: "📖", label: "Siddour", modes: ["fidele", "president"] },
   { id: "tehilimlibre", icon: "📜", label: "Tehilim", modes: ["fidele", "president"] },
   { id: "perso", icon: "👤", label: "Mon Espace", modes: ["fidele", "president"] },
-  
+  { id: "refoua", icon: "🙏", label: "Refoua", modes: ["fidele", "president"] },
+
   { id: "fetes", icon: "📅", label: "Fêtes", modes: ["fidele", "president"] },
   { id: "roshhodesh", icon: "🌙", label: "Roch Hodech", modes: ["fidele", "president"] },
   { id: "shabbatspec", icon: "✨", label: "Chabbatot", modes: ["fidele", "president"] },
@@ -25,7 +26,6 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "reveil", icon: "🔔", label: "Réveil", modes: ["fidele", "president"] },
   { id: "annonces", icon: "📢", label: "Annonces", modes: ["fidele", "president"] },
   { id: "brakhot", icon: "🙌", label: "Brakhot", modes: ["fidele", "president"] },
-  { id: "refoua", icon: "🙏", label: "Refoua", modes: ["fidele", "president"] },
   { id: "minyan", icon: "🚨", label: "Urgence Minyan", modes: ["fidele", "president"] },
   { id: "evenements", icon: "📅", label: "Événements", modes: ["fidele", "president"] },
   { id: "coursvirtuel", icon: "🎥", label: "Cours", modes: ["fidele", "president"] },
