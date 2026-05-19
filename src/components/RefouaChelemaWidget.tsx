@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 import { toast } from "sonner";
+import RefouaPatientDetail from "./RefouaPatientDetail";
 
 interface Patient {
   id: string;
@@ -30,6 +31,7 @@ const RefouaChelemaWidget = () => {
   const [synaOptions, setSynaOptions] = useState<SynaOption[]>([]);
   const [selectedSynaIds, setSelectedSynaIds] = useState<string[]>([]);
   const [filterSynaId, setFilterSynaId] = useState<string>("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Load synagogue names for the user's subscribed + managed synagogues
   useEffect(() => {
@@ -231,13 +233,14 @@ const RefouaChelemaWidget = () => {
           {visiblePatients.map((p, i) => (
             <motion.div
               key={p.id}
-              className="rounded-xl bg-card p-4 border border-border flex items-center justify-between"
+              className="rounded-xl bg-card p-4 border border-border"
               style={{ boxShadow: "var(--shadow-soft)" }}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                 <span className="text-xl">🕯️</span>
                 <div>
                   <span className="font-hebrew text-base font-bold text-foreground" dir="rtl">
@@ -254,15 +257,32 @@ const RefouaChelemaWidget = () => {
                     </div>
                   )}
                 </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold border cursor-pointer"
+                    style={{ background: expandedId === p.id ? "hsl(var(--gold) / 0.12)" : "transparent", borderColor: "hsl(var(--border))", color: "hsl(var(--foreground))" }}
+                  >
+                    {expandedId === p.id ? "✕ Fermer" : "📖 Prier"}
+                  </button>
+                  {user && p.added_by === user.id && (
+                    <button
+                      onClick={() => handleDelete(p.id)}
+                      className="text-[10px] text-destructive bg-transparent border-none cursor-pointer hover:underline"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
               </div>
-              {user && p.added_by === user.id && (
-                <button
-                  onClick={() => handleDelete(p.id)}
-                  className="text-[10px] text-destructive bg-transparent border-none cursor-pointer hover:underline"
-                >
-                  🗑️
-                </button>
-              )}
+              <AnimatePresence>
+                {expandedId === p.id && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                    <RefouaPatientDetail refouaId={p.id} hebrewName={p.hebrew_name} motherName={p.mother_name} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           ))}
         </div>
