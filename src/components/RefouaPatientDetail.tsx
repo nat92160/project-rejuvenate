@@ -134,6 +134,19 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
 
   return (
     <div className="mt-3 pt-3 border-t border-border space-y-3">
+      {/* Titre Refoua Chelema avec nom du malade */}
+      <div
+        className="rounded-xl p-4 text-center border border-primary/15"
+        style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.10), hsl(var(--gold) / 0.03))" }}
+      >
+        <p className="text-[10px] uppercase tracking-[3px] font-bold text-muted-foreground mb-1">
+          🙏 Refoua Chelema pour
+        </p>
+        <p className="font-hebrew text-xl font-bold text-foreground" dir="rtl">
+          {hebrewName} {motherName ? `בן/בת ${motherName}` : ""}
+        </p>
+      </div>
+
       {/* Stats du jour */}
       <div className="grid grid-cols-3 gap-2 text-center">
         <div className="rounded-xl bg-background border border-border p-2">
