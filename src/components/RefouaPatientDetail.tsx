@@ -256,8 +256,15 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
         <p className="text-[10px] uppercase tracking-[3px] font-bold text-muted-foreground mb-1">
           🙏 Refoua Chelema pour
         </p>
-        <p className="font-hebrew text-xl font-bold text-foreground" dir="rtl">
-          {hebrewName} {motherName ? `בן/בת ${motherName}` : ""}
+        <p className="font-hebrew text-xl font-bold text-foreground" dir="ltr" style={{ unicodeBidi: "plaintext" }}>
+          <bdi>{hebrewName}</bdi>
+          {motherName ? (
+            <>
+              {" "}
+              <span dir="rtl" className="font-hebrew">בן/בת</span>{" "}
+              <bdi>{motherName}</bdi>
+            </>
+          ) : null}
         </p>
       </div>
 
@@ -278,22 +285,23 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1.5 overflow-x-auto">
+      <div className="grid grid-cols-4 gap-1.5">
         {([
-          { id: "programme", label: "🗓️ Programme" },
-          { id: "tehilim", label: "📖 Chaîne Tehilim" },
-          { id: "nichmat", label: "✨ Nichmat" },
-          { id: "prayed", label: "🙏 J'ai prié" },
+          { id: "programme", label: "🗓️", sub: "Programme" },
+          { id: "tehilim", label: "📖", sub: "Tehilim" },
+          { id: "nichmat", label: "✨", sub: "Nichmat" },
+          { id: "prayed", label: "🙏", sub: "J'ai prié" },
         ] as const).map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 min-w-[78px] px-2 py-2 rounded-lg text-[10px] font-bold border cursor-pointer transition-all whitespace-nowrap ${
+            className={`px-1 py-2 rounded-lg font-bold border cursor-pointer transition-all flex flex-col items-center justify-center gap-0.5 ${
               tab === t.id ? "border-primary/40 text-foreground" : "border-border text-muted-foreground bg-card"
             }`}
             style={tab === t.id ? { background: "hsl(var(--gold) / 0.12)" } : {}}
           >
-            {t.label}
+            <span className="text-base leading-none">{t.label}</span>
+            <span className="text-[9px] leading-tight">{t.sub}</span>
           </button>
         ))}
       </div>
