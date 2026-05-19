@@ -11,6 +11,7 @@ interface Patient {
   id: string;
   hebrew_name: string;
   mother_name: string;
+  gender: "ben" | "bat";
   created_at: string;
   added_by: string | null;
   synagogue_ids: string[] | null;
@@ -27,6 +28,7 @@ const RefouaChelemaWidget = () => {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [mother, setMother] = useState("");
+  const [gender, setGender] = useState<"ben" | "bat">("ben");
   const [submitting, setSubmitting] = useState(false);
   const [synaOptions, setSynaOptions] = useState<SynaOption[]>([]);
   const [selectedSynaIds, setSelectedSynaIds] = useState<string[]>([]);
@@ -85,6 +87,7 @@ const RefouaChelemaWidget = () => {
     const { data, error } = await (supabase.from("refoua_chelema").insert({
       hebrew_name: name.trim(),
       mother_name: mother.trim(),
+      gender,
       added_by: user.id,
       synagogue_ids: selectedSynaIds.length > 0 ? selectedSynaIds : null,
     } as any)).select().single();
@@ -97,6 +100,7 @@ const RefouaChelemaWidget = () => {
       setShowForm(false);
       setName("");
       setMother("");
+      setGender("ben");
       setSelectedSynaIds([]);
       toast.success("✅ Nom ajouté à la liste !");
     }
