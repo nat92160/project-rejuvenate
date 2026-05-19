@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { shareText } from "@/lib/shareUtils";
 
 interface Campaign {
   id: string;
@@ -163,6 +164,18 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
     return d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
   };
 
+  const shareCampaign = async () => {
+    const url = `${window.location.origin}/refoua/${refouaId}`;
+    const prayerLabel = PRAYER_TYPES.find((p) => p.value === campaign?.prayer_type)?.label || "";
+    const total = (campaign?.days_count || 0) * (campaign?.slots_per_day || 0);
+    const text =
+      `🙏 Programme de Refoua Chelema pour ${hebrewName}\n` +
+      (prayerLabel ? `${prayerLabel}\n` : "") +
+      `📅 ${campaign?.days_count} jours • 👥 ${campaign?.slots_per_day}/jour (${slots.length}/${total} réservés)\n\n` +
+      `Réservez votre créneau ici :\n${url}`;
+    await shareText(text, `Refoua Chelema – ${hebrewName}`);
+  };
+
   const slotsByDay = new Map<number, Slot[]>();
   slots.forEach((s) => {
     const arr = slotsByDay.get(s.day_number) || [];
@@ -303,14 +316,24 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
             <p className="text-[9px] uppercase tracking-[2px] font-bold text-muted-foreground">Programme actif</p>
             <p className="font-display text-sm font-bold text-foreground">{prayerLabel}</p>
           </div>
-          {isCreator && (
+          <div className="flex items-center gap-1.5">
             <button
-              onClick={deleteCampaign}
-              className="text-[10px] text-destructive bg-transparent border border-destructive/30 rounded-lg px-2 py-1 cursor-pointer"
+              onClick={shareCampaign}
+              className="text-[10px] font-bold text-primary-foreground border-none rounded-lg px-2.5 py-1 cursor-pointer"
+              style={{ background: "var(--gradient-gold)" }}
+              title="Partager le lien du programme"
             >
-              🗑️ Supprimer
+              📤 Partager
             </button>
-          )}
+            {isCreator && (
+              <button
+                onClick={deleteCampaign}
+                className="text-[10px] text-destructive bg-transparent border border-destructive/30 rounded-lg px-2 py-1 cursor-pointer"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-3 text-[11px] text-foreground">
           <span>📅 {campaign.days_count} jours</span>
