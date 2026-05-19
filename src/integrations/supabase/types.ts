@@ -982,6 +982,83 @@ export type Database = {
           },
         ]
       }
+      refoua_campaign_slots: {
+        Row: {
+          campaign_id: string
+          claimed_at: string
+          day_number: number
+          display_name: string
+          id: string
+          note: string
+          slot_index: number
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          claimed_at?: string
+          day_number: number
+          display_name?: string
+          id?: string
+          note?: string
+          slot_index: number
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          claimed_at?: string
+          day_number?: number
+          display_name?: string
+          id?: string
+          note?: string
+          slot_index?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refoua_campaign_slots_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "refoua_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      refoua_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string
+          days_count: number
+          id: string
+          prayer_type: string
+          refoua_id: string
+          slots_per_day: number
+          start_date: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          days_count?: number
+          id?: string
+          prayer_type?: string
+          refoua_id: string
+          slots_per_day?: number
+          start_date?: string
+          title?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          days_count?: number
+          id?: string
+          prayer_type?: string
+          refoua_id?: string
+          slots_per_day?: number
+          start_date?: string
+          title?: string
+        }
+        Relationships: []
+      }
       refoua_chelema: {
         Row: {
           added_by: string | null
