@@ -124,9 +124,11 @@ const RefouaChelemaWidget = () => {
   const userSynaIds = synaOptions.map((s) => s.id);
   const hasSynas = userSynaIds.length > 0;
   const visiblePatients = patients.filter((p) => {
-    if (!hasSynas) return !p.synagogue_ids || p.synagogue_ids.length === 0;
+    const isGeneral = !p.synagogue_ids || p.synagogue_ids.length === 0;
+    if (!hasSynas) return isGeneral;
     if (filterSynaId === "all") {
-      return p.synagogue_ids?.some((id) => userSynaIds.includes(id));
+      // Show general (non-attached) names AND those shared in any of the user's synagogues
+      return isGeneral || p.synagogue_ids?.some((id) => userSynaIds.includes(id));
     }
     return p.synagogue_ids?.includes(filterSynaId);
   });

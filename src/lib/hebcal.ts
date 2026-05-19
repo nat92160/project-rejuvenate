@@ -214,9 +214,16 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
       .filter((window): window is NonNullable<typeof window> => Boolean(window))
       .sort((a, b) => a.candle.time.getTime() - b.candle.time.getTime());
 
+    const currentWindow = shabbatWindows.find(
+      ({ candle, havdalah }) => now >= candle.time && now < havdalah.time
+    );
+    const upcomingWindows = shabbatWindows.filter(({ candle }) => now < candle.time);
+    // Prefer the next Shabbat that actually has a parasha (skip Yom Tov-only Shabbats)
+    const upcomingWithParasha = upcomingWindows.find((w) => w.parasha);
     const selectedWindow =
-      shabbatWindows.find(({ candle, havdalah }) => now >= candle.time && now < havdalah.time) ||
-      shabbatWindows.find(({ candle }) => now < candle.time) ||
+      currentWindow ||
+      upcomingWithParasha ||
+      upcomingWindows[0] ||
       shabbatWindows[shabbatWindows.length - 1];
 
     if (!selectedWindow) return null;
