@@ -185,8 +185,11 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
         if (!havdalah) return null;
 
         const parashaEvent = parashaEvents.find((candidate) => {
-          const gregTime = candidate.greg.getTime();
-          return gregTime >= candle.greg.getTime() && gregTime <= havdalah.greg.getTime();
+          const dayMs = 86400000;
+          const candleDay = Math.floor(candle.greg.getTime() / dayMs);
+          const havdalahDay = Math.floor(havdalah.greg.getTime() / dayMs);
+          const evDay = Math.floor(candidate.greg.getTime() / dayMs);
+          return evDay >= candleDay - 1 && evDay <= havdalahDay + 1;
         });
 
         return {

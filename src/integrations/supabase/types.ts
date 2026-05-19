@@ -941,6 +941,47 @@ export type Database = {
           },
         ]
       }
+      refoua_actions: {
+        Row: {
+          action_date: string
+          action_type: string
+          created_at: string
+          display_name: string
+          id: string
+          psalm_number: number | null
+          refoua_id: string
+          user_id: string
+        }
+        Insert: {
+          action_date?: string
+          action_type: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          psalm_number?: number | null
+          refoua_id: string
+          user_id: string
+        }
+        Update: {
+          action_date?: string
+          action_type?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          psalm_number?: number | null
+          refoua_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refoua_actions_refoua_id_fkey"
+            columns: ["refoua_id"]
+            isOneToOne: false
+            referencedRelation: "refoua_chelema"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       refoua_chelema: {
         Row: {
           added_by: string | null
