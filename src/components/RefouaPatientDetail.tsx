@@ -19,11 +19,12 @@ interface Props {
   refouaId: string;
   hebrewName: string;
   motherName: string;
+  gender?: "ben" | "bat";
 }
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
+const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" }: Props) => {
   const { user } = useAuth();
   const [tab, setTab] = useState<"programme" | "tehilim" | "nichmat" | "prayed">("programme");
   const [actions, setActions] = useState<Action[]>([]);
@@ -138,7 +139,8 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
       const { default: jsPDF } = await import("jspdf");
       const html2canvas = (await import("html2canvas")).default;
 
-      const nameLine = motherName ? `${hebrewName} ben/bat ${motherName}` : hebrewName;
+      const benBat = gender === "bat" ? "bat" : "ben";
+      const nameLine = motherName ? `${hebrewName} ${benBat} ${motherName}` : hebrewName;
       const hebrewParagraphs = NICHMAT_PRAYER.hebrew.split(/\n+/).filter(Boolean);
       const phoneticParagraphs = NICHMAT_PRAYER.phonetic.split(/\n+/).filter(Boolean);
 
@@ -267,7 +269,7 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
           {motherName ? (
             <>
               {" "}
-              <span dir="rtl" className="font-hebrew">בן/בת</span>{" "}
+          <span dir="rtl" className="font-hebrew">{gender === "bat" ? "בת" : "בן"}</span>{" "}
               <bdi>{motherName}</bdi>
             </>
           ) : null}

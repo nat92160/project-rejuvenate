@@ -11,6 +11,7 @@ interface Patient {
   id: string;
   hebrew_name: string;
   mother_name: string;
+  gender: "ben" | "bat";
   created_at: string;
   added_by: string | null;
   synagogue_ids: string[] | null;
@@ -27,6 +28,7 @@ const RefouaChelemaWidget = () => {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [mother, setMother] = useState("");
+  const [gender, setGender] = useState<"ben" | "bat">("ben");
   const [submitting, setSubmitting] = useState(false);
   const [synaOptions, setSynaOptions] = useState<SynaOption[]>([]);
   const [selectedSynaIds, setSelectedSynaIds] = useState<string[]>([]);
@@ -85,6 +87,7 @@ const RefouaChelemaWidget = () => {
     const { data, error } = await (supabase.from("refoua_chelema").insert({
       hebrew_name: name.trim(),
       mother_name: mother.trim(),
+      gender,
       added_by: user.id,
       synagogue_ids: selectedSynaIds.length > 0 ? selectedSynaIds : null,
     } as any)).select().single();
@@ -97,6 +100,7 @@ const RefouaChelemaWidget = () => {
       setShowForm(false);
       setName("");
       setMother("");
+      setGender("ben");
       setSelectedSynaIds([]);
       toast.success("✅ Nom ajouté à la liste !");
     }
@@ -224,6 +228,24 @@ const RefouaChelemaWidget = () => {
               dir="rtl"
               className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3 font-hebrew"
             />
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {([
+                { id: "ben", label: "👨 Ben (fils de)", he: "בן" },
+                { id: "bat", label: "👩 Bat (fille de)", he: "בת" },
+              ] as const).map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => setGender(g.id)}
+                  className={`py-3 rounded-xl text-sm font-bold border cursor-pointer transition-all ${
+                    gender === g.id ? "border-primary/40 text-foreground" : "border-border text-muted-foreground bg-card"
+                  }`}
+                  style={gender === g.id ? { background: "hsl(var(--gold) / 0.12)" } : {}}
+                >
+                  {g.label} <span className="font-hebrew">{g.he}</span>
+                </button>
+              ))}
+            </div>
             <input
               value={mother}
               onChange={(e) => setMother(e.target.value)}
@@ -282,7 +304,7 @@ const RefouaChelemaWidget = () => {
                 <span className="text-xl">🕯️</span>
                 <div>
                   <span className="font-hebrew text-base font-bold text-foreground" dir="rtl">
-                    {p.hebrew_name} {p.mother_name ? `בן/בת ${p.mother_name}` : ""}
+                    {p.hebrew_name} {p.mother_name ? `${p.gender === "bat" ? "בת" : "בן"} ${p.mother_name}` : ""}
                   </span>
                   <p className="text-[10px] text-muted-foreground mt-0.5">Ajouté le {formatDate(p.created_at)}</p>
                   {p.synagogue_ids && p.synagogue_ids.length > 0 && (
@@ -325,7 +347,7 @@ const RefouaChelemaWidget = () => {
               <AnimatePresence>
                 {expandedId === p.id && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                    <RefouaPatientDetail refouaId={p.id} hebrewName={p.hebrew_name} motherName={p.mother_name} />
+                    <RefouaPatientDetail refouaId={p.id} hebrewName={p.hebrew_name} motherName={p.mother_name} gender={p.gender} />
                   </motion.div>
                 )}
               </AnimatePresence>
