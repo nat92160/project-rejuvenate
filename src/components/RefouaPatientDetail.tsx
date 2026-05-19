@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { NICHMAT_PRAYER } from "@/lib/nichmat-prayer";
+import jsPDF from "jspdf";
 
 interface Action {
   id: string;
@@ -132,6 +133,118 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
     else toast.success("✨ Nichmat enregistré");
   };
 
+  const sharePDF = async () => {
+    try {
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 12;
+      const colW = (pageW - margin * 3) / 2;
+
+      // En-tête
+      pdf.setFillColor(153, 101, 21);
+      pdf.rect(0, 0, pageW, 22, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("times", "bold");
+      pdf.setFontSize(16);
+      pdf.text("Refoua Chelema", pageW / 2, 10, { align: "center" });
+      pdf.setFontSize(11);
+      pdf.setFont("times", "italic");
+      const nameLine = motherName ? `${hebrewName} ben/bat ${motherName}` : hebrewName;
+      pdf.text(`Pour : ${nameLine}`, pageW / 2, 17, { align: "center" });
+
+      // Séparateur central
+      pdf.setDrawColor(200, 168, 76);
+      pdf.setLineWidth(0.3);
+      pdf.line(pageW / 2, 28, pageW / 2, pageH - 12);
+
+      pdf.setTextColor(40, 40, 40);
+
+      // Colonne gauche : Hébreu (rendu via canvas pour support RTL & glyphes)
+      const hebrewCanvas = document.createElement("canvas");
+      const scale = 3;
+      hebrewCanvas.width = colW * scale * 3.78;
+      hebrewCanvas.height = (pageH - 40) * scale * 3.78;
+      const ctx = hebrewCanvas.getContext("2d")!;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, hebrewCanvas.width, hebrewCanvas.height);
+      ctx.fillStyle = "#1a1a1a";
+      ctx.direction = "rtl";
+      ctx.textAlign = "right";
+      ctx.font = `bold ${22 * scale}px "Times New Roman", serif`;
+      ctx.fillText("נשמת כל חי", hebrewCanvas.width - 20 * scale, 30 * scale);
+
+      ctx.font = `${18 * scale}px "Times New Roman", serif`;
+      const words = NICHMAT_PRAYER.hebrew.split(" ");
+      let line = "";
+      let y = 70 * scale;
+      const maxW = hebrewCanvas.width - 40 * scale;
+      const lineH = 30 * scale;
+      for (const word of words) {
+        const testLine = line ? `${line} ${word}` : word;
+        if (ctx.measureText(testLine).width > maxW) {
+          ctx.fillText(line, hebrewCanvas.width - 20 * scale, y);
+          line = word;
+          y += lineH;
+          if (y > hebrewCanvas.height - lineH) break;
+        } else {
+          line = testLine;
+        }
+      }
+      if (line && y <= hebrewCanvas.height - lineH) ctx.fillText(line, hebrewCanvas.width - 20 * scale, y);
+
+      const hebrewImg = hebrewCanvas.toDataURL("image/png");
+      pdf.addImage(hebrewImg, "PNG", margin, 30, colW, pageH - 42);
+
+      // En-tête colonne hébreu
+      pdf.setFont("times", "bold");
+      pdf.setFontSize(10);
+      pdf.setTextColor(153, 101, 21);
+      pdf.text("HEBREU", margin + colW / 2, 28, { align: "center" });
+
+      // Colonne droite : Phonétique
+      pdf.setFont("times", "bold");
+      pdf.setFontSize(10);
+      pdf.setTextColor(153, 101, 21);
+      pdf.text("PHONETIQUE", margin * 2 + colW + colW / 2, 28, { align: "center" });
+
+      pdf.setFont("times", "bold");
+      pdf.setFontSize(14);
+      pdf.setTextColor(40, 40, 40);
+      pdf.text("Nichmat Kol Hai", margin * 2 + colW + colW / 2, 38, { align: "center" });
+
+      pdf.setFont("times", "normal");
+      pdf.setFontSize(11);
+      const phoneticLines = pdf.splitTextToSize(NICHMAT_PRAYER.phonetic, colW);
+      pdf.text(phoneticLines, margin * 2 + colW, 48);
+
+      // Pied de page
+      pdf.setFont("times", "italic");
+      pdf.setFontSize(8);
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(
+        "Que le Tout-Puissant accorde une guerison complete a tous les malades d'Israel",
+        pageW / 2,
+        pageH - 6,
+        { align: "center" },
+      );
+
+      const fileName = `refoua-${hebrewName.replace(/\s+/g, "-")}.pdf`;
+      const blob = pdf.output("blob");
+      const file = new File([blob], fileName, { type: "application/pdf" });
+
+      if (navigator.share && (navigator.canShare?.({ files: [file] }) ?? false)) {
+        await navigator.share({ files: [file], title: "Refoua Chelema", text: `Nichmat Kol Hai pour ${nameLine}` });
+      } else {
+        pdf.save(fileName);
+      }
+      toast.success("📄 PDF prêt à partager");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur lors de la génération du PDF");
+    }
+  };
+
   return (
     <div className="mt-3 pt-3 border-t border-border space-y-3">
       {/* Titre Refoua Chelema avec nom du malade */}
@@ -241,6 +354,13 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
             className="w-full text-[11px] text-primary font-bold bg-transparent border border-border rounded-lg py-2 cursor-pointer"
           >
             {showNichmat ? "Masquer le texte" : "Afficher le texte"}
+          </button>
+          <button
+            onClick={sharePDF}
+            className="w-full py-2.5 rounded-lg text-[11px] font-bold text-primary-foreground border-none cursor-pointer"
+            style={{ background: "var(--gradient-gold)" }}
+          >
+            📄 Partager en PDF (Hébreu / Phonétique)
           </button>
           <AnimatePresence>
             {showNichmat && (
