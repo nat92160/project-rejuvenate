@@ -79,10 +79,6 @@ const RefouaChelemaWidget = () => {
       toast.error("Vous devez être connecté pour ajouter un nom");
       return;
     }
-    if (synaOptions.length > 0 && selectedSynaIds.length === 0) {
-      toast.error("Sélectionnez au moins une synagogue");
-      return;
-    }
     setSubmitting(true);
     const { data, error } = await (supabase.from("refoua_chelema").insert({
       hebrew_name: name.trim(),
