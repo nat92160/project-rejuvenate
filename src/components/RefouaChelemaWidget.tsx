@@ -253,7 +253,7 @@ const RefouaChelemaWidget = () => {
             />
             {synaOptions.length > 0 && (
               <div className="mb-3 p-3 rounded-xl bg-background border border-border">
-                <p className="text-[11px] font-bold text-muted-foreground mb-2">Partager dans :</p>
+                <p className="text-[11px] font-bold text-muted-foreground mb-2">Partager dans <span className="font-normal italic">(optionnel)</span> :</p>
                 <div className="flex flex-wrap gap-2">
                   {synaOptions.map((s) => (
                     <label key={s.id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border cursor-pointer text-[11px] font-semibold text-foreground" style={selectedSynaIds.includes(s.id) ? { background: "hsl(var(--gold) / 0.12)", borderColor: "hsl(var(--gold) / 0.4)" } : {}}>
@@ -263,7 +263,7 @@ const RefouaChelemaWidget = () => {
                   ))}
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-2">
-                  {selectedSynaIds.length === 0 ? "Sélectionnez au moins une synagogue pour partager ce nom." : `Visible dans ${selectedSynaIds.length} synagogue${selectedSynaIds.length > 1 ? "s" : ""}.`}
+                  {selectedSynaIds.length === 0 ? "Aucune synagogue sélectionnée — le nom sera visible dans la liste générale." : `Visible dans ${selectedSynaIds.length} synagogue${selectedSynaIds.length > 1 ? "s" : ""}.`}
                 </p>
               </div>
             )}
