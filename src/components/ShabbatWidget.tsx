@@ -31,7 +31,7 @@ const ShabbatWidget = () => {
     topEmoji: "🕯️",
     badge: "HORAIRES DE CHABBAT",
     badgeColor: "#D4AF37",
-    title: data.parasha || "Chabbat Chalom",
+    title: data.parasha || data.shabbatName || "Chabbat Chalom",
     description: `🕯️ Allumage : ${data.candleLighting || "--:--"} — ${data.candleLightingDate || ""}\n✨ Havdala : ${data.havdalah || "--:--"} — ${data.havdalahDate || ""}`,
     details: [
       { icon: "🕯️", text: `Allumage : ${data.candleLighting} • ${data.candleLightingDate}` },
@@ -98,14 +98,14 @@ const ShabbatWidget = () => {
           </div>
 
           {/* Parasha */}
-          {data.parasha && (
+          {(data.parasha || data.shabbatName) && (
             <div className="mt-3 p-3 rounded-xl text-center border border-primary/10"
               style={{ background: "hsl(var(--gold) / 0.04)" }}>
               <div className="text-[9px] uppercase tracking-[1.5px] mb-0.5 text-muted-foreground font-semibold">
-                Paracha de la semaine
+                {data.parasha ? "Paracha de la semaine" : "Chabbat de la semaine"}
               </div>
               <div className="font-display text-base font-bold text-foreground leading-tight">
-                {data.parasha}
+                {data.parasha || data.shabbatName}
               </div>
               {data.parashaHebrew && (
                 <div className="font-hebrew text-sm mt-0.5 text-primary/70" style={{ direction: "rtl" }}>
@@ -131,7 +131,7 @@ const ShabbatWidget = () => {
 
       {/* Hidden poster */}
       {posterContent && (
-        <div style={{ position: "fixed", left: 0, top: 0, zIndex: -1, opacity: 0, pointerEvents: "none" }}>
+        <div style={{ position: "fixed", left: "-9999px", top: 0, zIndex: -1, pointerEvents: "none" }}>
           <CardPosterTemplate ref={posterRef} profile={{ name: city.name, logo_url: null, website: "chabbat-chalom.com" }} content={posterContent} />
         </div>
       )}
