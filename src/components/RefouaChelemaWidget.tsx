@@ -119,6 +119,42 @@ const RefouaChelemaWidget = () => {
 
   const synaNameById = (id: string) => synaOptions.find(s => s.id === id)?.name || "Synagogue";
 
+  // Quick-launch a default prayer chain in 1 click (Tehilim complet · 7 jours · 10 personnes)
+  const quickLaunchChain = async (patientId: string, patientName: string) => {
+    if (!user) {
+      toast.error("Connectez-vous pour lancer une chaîne");
+      return;
+    }
+    // If a campaign already exists for this patient, just open the detail
+    const { data: existing } = await supabase
+      .from("refoua_campaigns")
+      .select("id")
+      .eq("refoua_id", patientId)
+      .limit(1);
+    if (existing && existing.length > 0) {
+      toast.success("Chaîne déjà active — ouverture du tableau");
+      setExpandedId(patientId);
+      return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from("refoua_campaigns").insert({
+      refoua_id: patientId,
+      created_by: user.id,
+      prayer_type: "tehilim_full",
+      days_count: 7,
+      slots_per_day: 10,
+      start_date: today,
+      title: `Refoua ${patientName}`,
+    } as any);
+    if (error) {
+      toast.error("Erreur lors du lancement");
+      console.error(error);
+    } else {
+      toast.success("🗓️ Chaîne lancée — invitez vos proches à réserver un créneau");
+      setExpandedId(patientId);
+    }
+  };
+
   // Fidèle ne voit que les noms partagés dans ses synagogues (abonnées + gérées).
   // Si l'utilisateur n'a aucune synagogue, on retombe sur la liste générale.
   const userSynaIds = synaOptions.map((s) => s.id);
@@ -261,6 +297,14 @@ const RefouaChelemaWidget = () => {
                 </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => quickLaunchChain(p.id, p.hebrew_name)}
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer text-primary-foreground"
+                    style={{ background: "var(--gradient-gold)" }}
+                    title="Lancer une chaîne de prière (7 jours × 10 personnes)"
+                  >
+                    🗓️ Lancer chaîne
+                  </button>
                   <button
                     onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
                     className="px-3 py-1.5 rounded-lg text-[10px] font-bold border cursor-pointer"
