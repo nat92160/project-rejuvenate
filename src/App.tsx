@@ -15,6 +15,7 @@ import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import MinyanJoin from "./pages/MinyanJoin.tsx";
 import TehilimJoin from "./pages/TehilimJoin.tsx";
+import RefouaJoin from "./pages/RefouaJoin.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import Install from "./pages/Install.tsx";
 
@@ -198,6 +199,7 @@ function AppInner() {
           <Route path="/index" element={<Index />} />
           <Route path="/minyan/:id" element={<MinyanJoin />} />
           <Route path="/tehilim/:id" element={<TehilimJoin />} />
+          <Route path="/refoua/:id" element={<RefouaJoin />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/install" element={<Install />} />
           <Route path="/omer" element={<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}><OmerLanding /></Suspense>} />
