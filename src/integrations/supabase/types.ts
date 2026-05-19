@@ -515,6 +515,42 @@ export type Database = {
         }
         Relationships: []
       }
+      mikve_reservations: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          notes: string
+          phone: string
+          slot_date: string
+          slot_time: string
+          synagogue_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          notes?: string
+          phone?: string
+          slot_date: string
+          slot_time: string
+          synagogue_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          notes?: string
+          phone?: string
+          slot_date?: string
+          slot_time?: string
+          synagogue_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       minyan_registrations: {
         Row: {
           display_name: string
@@ -1171,7 +1207,13 @@ export type Database = {
           longitude: number | null
           mikve_enabled: boolean
           mikve_maps_link: string | null
+          mikve_open_days: number[]
+          mikve_open_end: string
+          mikve_open_start: string
           mikve_phone: string | null
+          mikve_reservation_enabled: boolean
+          mikve_slot_capacity: number
+          mikve_slot_duration_min: number
           mikve_summer_hours: string | null
           mikve_winter_hours: string | null
           minha_time: string | null
@@ -1216,7 +1258,13 @@ export type Database = {
           longitude?: number | null
           mikve_enabled?: boolean
           mikve_maps_link?: string | null
+          mikve_open_days?: number[]
+          mikve_open_end?: string
+          mikve_open_start?: string
           mikve_phone?: string | null
+          mikve_reservation_enabled?: boolean
+          mikve_slot_capacity?: number
+          mikve_slot_duration_min?: number
           mikve_summer_hours?: string | null
           mikve_winter_hours?: string | null
           minha_time?: string | null
@@ -1261,7 +1309,13 @@ export type Database = {
           longitude?: number | null
           mikve_enabled?: boolean
           mikve_maps_link?: string | null
+          mikve_open_days?: number[]
+          mikve_open_end?: string
+          mikve_open_start?: string
           mikve_phone?: string | null
+          mikve_reservation_enabled?: boolean
+          mikve_slot_capacity?: number
+          mikve_slot_duration_min?: number
           mikve_summer_hours?: string | null
           mikve_winter_hours?: string | null
           minha_time?: string | null
@@ -1577,6 +1631,14 @@ export type Database = {
     }
     Functions: {
       assign_cerfa_number: { Args: { _donation_id: string }; Returns: string }
+      get_mikve_availability: {
+        Args: { _from: string; _synagogue_id: string; _to: string }
+        Returns: {
+          booked_count: number
+          slot_date: string
+          slot_time: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
