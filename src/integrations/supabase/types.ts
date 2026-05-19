@@ -1063,6 +1063,7 @@ export type Database = {
         Row: {
           added_by: string | null
           created_at: string
+          gender: string
           hebrew_name: string
           id: string
           mother_name: string
@@ -1071,6 +1072,7 @@ export type Database = {
         Insert: {
           added_by?: string | null
           created_at?: string
+          gender?: string
           hebrew_name: string
           id?: string
           mother_name?: string
@@ -1079,6 +1081,7 @@ export type Database = {
         Update: {
           added_by?: string | null
           created_at?: string
+          gender?: string
           hebrew_name?: string
           id?: string
           mother_name?: string

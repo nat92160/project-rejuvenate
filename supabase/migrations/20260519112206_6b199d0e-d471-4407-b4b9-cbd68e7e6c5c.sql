@@ -1,0 +1,1 @@
+ALTER TABLE public.refoua_chelema ADD COLUMN IF NOT EXISTS gender TEXT NOT NULL DEFAULT 'ben' CHECK (gender IN ('ben','bat'));
