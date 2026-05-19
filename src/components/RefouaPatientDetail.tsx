@@ -134,6 +134,7 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
 
   const sharePDF = async () => {
     try {
+      const { default: jsPDF } = await import("jspdf");
       const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
