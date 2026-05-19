@@ -1,0 +1,1 @@
+DELETE FROM public.refoua_chelema WHERE hebrew_name = 'יוסף' AND mother_name = 'שרה';
