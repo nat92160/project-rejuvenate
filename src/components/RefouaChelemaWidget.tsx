@@ -224,8 +224,8 @@ const RefouaChelemaWidget = () => {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Prénom hébreu du malade"
-              dir="rtl"
+              placeholder="Prénom du malade (hébreu ou latin)"
+              dir="auto"
               className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3 font-hebrew"
             />
             <div className="grid grid-cols-2 gap-2 mb-3">
@@ -249,8 +249,8 @@ const RefouaChelemaWidget = () => {
             <input
               value={mother}
               onChange={(e) => setMother(e.target.value)}
-              placeholder="Prénom hébreu de la mère"
-              dir="rtl"
+              placeholder="Prénom de la mère (hébreu ou latin)"
+              dir="auto"
               className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3 font-hebrew"
             />
             {synaOptions.length > 0 && (
