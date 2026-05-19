@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { Droplets, Phone, MapPin, Snowflake, Sun } from "lucide-react";
+import MikveBookingWidget from "@/components/MikveBookingWidget";
 
 const MikveInfoView = () => {
   const { subIds, loading: subLoading } = useSubscribedSynaIds();
   const [data, setData] = useState<any>(null);
+  const [synaId, setSynaId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -13,10 +15,11 @@ const MikveInfoView = () => {
     (async () => {
       const { data: d } = await (supabase
         .from("synagogue_profiles")
-        .select("name, mikve_winter_hours, mikve_summer_hours, mikve_phone, mikve_maps_link") as any)
+        .select("id, name, mikve_winter_hours, mikve_summer_hours, mikve_phone, mikve_maps_link, mikve_reservation_enabled") as any)
         .eq("id", subIds[0])
         .maybeSingle();
       setData(d);
+      setSynaId(d?.id || null);
       setLoading(false);
     })();
   }, [subIds, subLoading]);
@@ -79,6 +82,10 @@ const MikveInfoView = () => {
           </a>
         )}
       </div>
+
+      {synaId && data.mikve_reservation_enabled && (
+        <MikveBookingWidget synagogueId={synaId} />
+      )}
     </div>
   );
 };
