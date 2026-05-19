@@ -19,11 +19,12 @@ interface Props {
   refouaId: string;
   hebrewName: string;
   motherName: string;
+  gender?: "ben" | "bat";
 }
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
+const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" }: Props) => {
   const { user } = useAuth();
   const [tab, setTab] = useState<"programme" | "tehilim" | "nichmat" | "prayed">("programme");
   const [actions, setActions] = useState<Action[]>([]);
@@ -267,7 +268,7 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
           {motherName ? (
             <>
               {" "}
-              <span dir="rtl" className="font-hebrew">בן/בת</span>{" "}
+          <span dir="rtl" className="font-hebrew">{gender === "bat" ? "בת" : "בן"}</span>{" "}
               <bdi>{motherName}</bdi>
             </>
           ) : null}
