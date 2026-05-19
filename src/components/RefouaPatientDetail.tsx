@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { NICHMAT_PRAYER } from "@/lib/nichmat-prayer";
-import jsPDF from "jspdf";
 
 interface Action {
   id: string;
