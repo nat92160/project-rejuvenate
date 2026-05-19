@@ -139,7 +139,8 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
       const { default: jsPDF } = await import("jspdf");
       const html2canvas = (await import("html2canvas")).default;
 
-      const nameLine = motherName ? `${hebrewName} ben/bat ${motherName}` : hebrewName;
+      const benBat = gender === "bat" ? "bat" : "ben";
+      const nameLine = motherName ? `${hebrewName} ${benBat} ${motherName}` : hebrewName;
       const hebrewParagraphs = NICHMAT_PRAYER.hebrew.split(/\n+/).filter(Boolean);
       const phoneticParagraphs = NICHMAT_PRAYER.phonetic.split(/\n+/).filter(Boolean);
 
