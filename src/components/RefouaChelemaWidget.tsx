@@ -347,7 +347,7 @@ const RefouaChelemaWidget = () => {
               <AnimatePresence>
                 {expandedId === p.id && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                    <RefouaPatientDetail refouaId={p.id} hebrewName={p.hebrew_name} motherName={p.mother_name} />
+                    <RefouaPatientDetail refouaId={p.id} hebrewName={p.hebrew_name} motherName={p.mother_name} gender={p.gender} />
                   </motion.div>
                 )}
               </AnimatePresence>
