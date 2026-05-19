@@ -20,6 +20,7 @@ export interface ShabbatTimes {
   havdalahDateTime: Date | null;
   parasha: string;
   parashaHebrew: string;
+  shabbatName: string;
 }
 
 export interface ZmanItem {
@@ -147,6 +148,7 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
     const candleEvents: Array<{ greg: Date; time: Date }> = [];
     const havdalahEvents: Array<{ greg: Date; time: Date }> = [];
     const parashaEvents: Array<{ greg: Date; desc: string; hebrew: string }> = [];
+    const shabbatHolidayEvents: Array<{ greg: Date; desc: string }> = [];
 
     for (const ev of events) {
       const desc = ev.getDesc();
@@ -172,6 +174,17 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
           desc,
           hebrew: ev.render('he') || '',
         });
+      }
+
+      // Capture Yom Tov / holiday names that fall on Friday or Shabbat
+      // (used as fallback when no parasha is assigned that week)
+      if (
+        (dayOfWeek === 5 || dayOfWeek === 6) &&
+        desc !== 'Candle lighting' &&
+        !desc.startsWith('Havdalah') &&
+        !(flagsValue & flags.PARSHA_HASHAVUA)
+      ) {
+        shabbatHolidayEvents.push({ greg, desc });
       }
     }
 
@@ -208,6 +221,17 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
 
     if (!selectedWindow) return null;
 
+    const shabbatHoliday = shabbatHolidayEvents.find((candidate) => {
+      const dayMs = 86400000;
+      const candleDay = Math.floor(selectedWindow.candle.greg.getTime() / dayMs);
+      const havdalahDay = Math.floor(selectedWindow.havdalah.greg.getTime() / dayMs);
+      const evDay = Math.floor(candidate.greg.getTime() / dayMs);
+      return evDay >= candleDay && evDay <= havdalahDay;
+    });
+
+    const parashaFr = selectedWindow.parasha ? translateHoliday(selectedWindow.parasha.desc).fr : '';
+    const holidayFr = shabbatHoliday ? translateHoliday(shabbatHoliday.desc).fr : '';
+
     return {
       candleLighting: fmtZmanTime(selectedWindow.candle.time, city.tz),
       candleLightingDate: selectedWindow.candle.greg.toLocaleDateString('fr-FR', {
@@ -225,8 +249,9 @@ export async function fetchShabbatTimes(city: CityConfig): Promise<ShabbatTimes 
         timeZone: city.tz,
       }),
       havdalahDateTime: selectedWindow.havdalah.time,
-      parasha: selectedWindow.parasha ? translateHoliday(selectedWindow.parasha.desc).fr : '',
+      parasha: parashaFr,
       parashaHebrew: selectedWindow.parasha?.hebrew || '',
+      shabbatName: parashaFr || holidayFr || 'Chabbat Chalom',
     };
   } catch {
     return null;
