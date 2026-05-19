@@ -132,6 +132,28 @@ const MikveBookingWidget = ({ synagogueId }: Props) => {
     setSubmitting(false);
     if (error) { toast.error("Erreur lors de la réservation"); return; }
     toast.success("✓ Créneau réservé");
+    // Notify president + adjoint (fire-and-forget)
+    try {
+      const { data: sp } = await (supabase
+        .from("synagogue_profiles")
+        .select("president_id, adjoint_id, name") as any)
+        .eq("id", synagogueId)
+        .maybeSingle();
+      const targets = [sp?.president_id, sp?.adjoint_id].filter(Boolean) as string[];
+      if (targets.length > 0) {
+        const dateLabel = new Date(bookingSlot.date + "T00:00:00").toLocaleDateString("fr-FR", {
+          weekday: "long", day: "numeric", month: "long",
+        });
+        void supabase.functions.invoke("send-push", {
+          body: {
+            user_ids: targets,
+            title: "🛁 Nouvelle réservation Mikvé",
+            body: `${bookingName.trim()} — ${dateLabel} à ${toHM(bookingSlot.time)}${sp?.name ? ` (${sp.name})` : ""}`,
+            sender_id: user.id,
+          },
+        });
+      }
+    } catch { /* silent */ }
     setBookingSlot(null);
     setBookingName("");
     setBookingPhone("");

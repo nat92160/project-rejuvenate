@@ -91,6 +91,7 @@ const CountdownWidget = () => {
   const isClose = timeLeft.days === 0 && timeLeft.hours < 3;
 
   const label = mode === "candles" ? "⏳ Temps avant Chabbat" : "✨ Temps avant Havdala";
+  const parashaName = shabbatData?.parasha?.replace(/^Paracha\s+/i, "") || "";
   const timeDisplay =
     mode === "candles"
       ? shabbatData?.candleLighting
@@ -125,6 +126,22 @@ const CountdownWidget = () => {
       >
         {label}
       </div>
+      {parashaName && (
+        <div
+          className="font-display font-bold text-lg mb-1"
+          style={{ color: "hsl(var(--gold-matte))" }}
+        >
+          📖 Chabbat Paracha {parashaName}
+          {shabbatData?.parashaHebrew && (
+            <span
+              dir="rtl"
+              className="block text-sm font-normal mt-0.5 text-muted-foreground"
+            >
+              {shabbatData.parashaHebrew}
+            </span>
+          )}
+        </div>
+      )}
       {timeDisplay && (
         <div className={`text-xs mb-2 ${isUrgent ? "text-destructive font-bold" : "text-primary/70"}`}>
           {timeDisplay}
