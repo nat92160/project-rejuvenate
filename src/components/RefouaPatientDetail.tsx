@@ -355,6 +355,13 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
           >
             {showNichmat ? "Masquer le texte" : "Afficher le texte"}
           </button>
+          <button
+            onClick={sharePDF}
+            className="w-full py-2.5 rounded-lg text-[11px] font-bold text-primary-foreground border-none cursor-pointer"
+            style={{ background: "var(--gradient-gold)" }}
+          >
+            📄 Partager en PDF (Hébreu / Phonétique)
+          </button>
           <AnimatePresence>
             {showNichmat && (
               <motion.div
