@@ -136,101 +136,107 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
   const sharePDF = async () => {
     try {
       const { default: jsPDF } = await import("jspdf");
-      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const html2canvas = (await import("html2canvas")).default;
+
+      const nameLine = motherName ? `${hebrewName} ben/bat ${motherName}` : hebrewName;
+      const hebrewParagraphs = NICHMAT_PRAYER.hebrew.split(/\n+/).filter(Boolean);
+      const phoneticParagraphs = NICHMAT_PRAYER.phonetic.split(/\n+/).filter(Boolean);
+
+      // Hidden styled DOM rendered off-screen for html2canvas to capture
+      const container = document.createElement("div");
+      Object.assign(container.style, {
+        position: "fixed",
+        left: "-9999px",
+        top: "0",
+        zIndex: "-1",
+        width: "794px", // A4 width @ 96dpi
+        background: "#ffffff",
+        padding: "0",
+        fontFamily: '"Times New Roman", Georgia, serif',
+      } as CSSStyleDeclaration);
+
+      container.innerHTML = `
+        <div style="padding:40px 48px 32px 48px;background:linear-gradient(135deg,#996515,#7a4f10);color:#fff;text-align:center;">
+          <p style="margin:0;font-size:11px;letter-spacing:6px;font-weight:700;opacity:.85;">🙏 REFOUA CHELEMA</p>
+          <h1 style="margin:8px 0 4px 0;font-size:28px;font-weight:700;letter-spacing:.5px;">Nichmat Kol Haï</h1>
+          <p style="margin:6px 0 0 0;font-size:14px;font-style:italic;opacity:.95;">Prière pour la guérison de <strong>${nameLine}</strong></p>
+        </div>
+        <div style="padding:32px 48px 24px 48px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+            <span style="flex:1;height:1px;background:#c9a84c;"></span>
+            <span style="font-size:10px;letter-spacing:4px;font-weight:700;color:#996515;">HÉBREU</span>
+            <span style="flex:1;height:1px;background:#c9a84c;"></span>
+          </div>
+          <div dir="rtl" style="font-family:'Times New Roman','David',serif;font-size:19px;line-height:2.05;color:#1a1a1a;text-align:justify;">
+            ${hebrewParagraphs.map((p) => `<p style="margin:0 0 12px 0;">${p}</p>`).join("")}
+          </div>
+        </div>
+        <div style="padding:8px 48px 40px 48px;">
+          <div style="display:flex;align-items:center;gap:12px;margin:18px 0 14px 0;">
+            <span style="flex:1;height:1px;background:#c9a84c;"></span>
+            <span style="font-size:10px;letter-spacing:4px;font-weight:700;color:#996515;">PHONÉTIQUE</span>
+            <span style="flex:1;height:1px;background:#c9a84c;"></span>
+          </div>
+          <div style="font-size:14px;line-height:1.75;color:#2d2d2d;text-align:justify;font-style:italic;">
+            ${phoneticParagraphs.map((p) => `<p style="margin:0 0 10px 0;">${p}</p>`).join("")}
+          </div>
+          <p style="margin:28px 0 0 0;text-align:center;font-size:11px;color:#888;font-style:italic;border-top:1px solid #e8e4dd;padding-top:14px;">
+            Que le Tout-Puissant accorde une guérison complète à ${nameLine} parmi tous les malades d'Israël
+          </p>
+        </div>
+      `;
+      document.body.appendChild(container);
+
+      // Wait one tick so fonts/layout settle
+      await new Promise((r) => setTimeout(r, 50));
+
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+      });
+      document.body.removeChild(container);
+
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-      const margin = 12;
-      const colW = (pageW - margin * 3) / 2;
+      const imgW = pageW;
+      const imgH = (canvas.height * imgW) / canvas.width;
 
-      // En-tête
-      pdf.setFillColor(153, 101, 21);
-      pdf.rect(0, 0, pageW, 22, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont("times", "bold");
-      pdf.setFontSize(16);
-      pdf.text("Refoua Chelema", pageW / 2, 10, { align: "center" });
-      pdf.setFontSize(11);
-      pdf.setFont("times", "italic");
-      const nameLine = motherName ? `${hebrewName} ben/bat ${motherName}` : hebrewName;
-      pdf.text(`Pour : ${nameLine}`, pageW / 2, 17, { align: "center" });
-
-      // Séparateur central
-      pdf.setDrawColor(200, 168, 76);
-      pdf.setLineWidth(0.3);
-      pdf.line(pageW / 2, 28, pageW / 2, pageH - 12);
-
-      pdf.setTextColor(40, 40, 40);
-
-      // Colonne gauche : Hébreu (rendu via canvas pour support RTL & glyphes)
-      const hebrewCanvas = document.createElement("canvas");
-      const scale = 3;
-      hebrewCanvas.width = colW * scale * 3.78;
-      hebrewCanvas.height = (pageH - 40) * scale * 3.78;
-      const ctx = hebrewCanvas.getContext("2d")!;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, hebrewCanvas.width, hebrewCanvas.height);
-      ctx.fillStyle = "#1a1a1a";
-      ctx.direction = "rtl";
-      ctx.textAlign = "right";
-      ctx.font = `bold ${22 * scale}px "Times New Roman", serif`;
-      ctx.fillText("נשמת כל חי", hebrewCanvas.width - 20 * scale, 30 * scale);
-
-      ctx.font = `${18 * scale}px "Times New Roman", serif`;
-      const words = NICHMAT_PRAYER.hebrew.split(" ");
-      let line = "";
-      let y = 70 * scale;
-      const maxW = hebrewCanvas.width - 40 * scale;
-      const lineH = 30 * scale;
-      for (const word of words) {
-        const testLine = line ? `${line} ${word}` : word;
-        if (ctx.measureText(testLine).width > maxW) {
-          ctx.fillText(line, hebrewCanvas.width - 20 * scale, y);
-          line = word;
-          y += lineH;
-          if (y > hebrewCanvas.height - lineH) break;
-        } else {
-          line = testLine;
+      if (imgH <= pageH) {
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, imgW, imgH);
+      } else {
+        // Paginate: slice the canvas vertically into A4-height chunks
+        const pxPerMm = canvas.width / pageW;
+        const sliceHeightPx = Math.floor(pageH * pxPerMm);
+        let renderedPx = 0;
+        let pageIndex = 0;
+        while (renderedPx < canvas.height) {
+          const remainingPx = canvas.height - renderedPx;
+          const thisSlicePx = Math.min(sliceHeightPx, remainingPx);
+          const pageCanvas = document.createElement("canvas");
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = thisSlicePx;
+          const pctx = pageCanvas.getContext("2d")!;
+          pctx.fillStyle = "#ffffff";
+          pctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          pctx.drawImage(canvas, 0, -renderedPx);
+          if (pageIndex > 0) pdf.addPage();
+          pdf.addImage(
+            pageCanvas.toDataURL("image/jpeg", 0.95),
+            "JPEG",
+            0,
+            0,
+            imgW,
+            (thisSlicePx * imgW) / canvas.width,
+          );
+          renderedPx += thisSlicePx;
+          pageIndex++;
         }
       }
-      if (line && y <= hebrewCanvas.height - lineH) ctx.fillText(line, hebrewCanvas.width - 20 * scale, y);
 
-      const hebrewImg = hebrewCanvas.toDataURL("image/png");
-      pdf.addImage(hebrewImg, "PNG", margin, 30, colW, pageH - 42);
-
-      // En-tête colonne hébreu
-      pdf.setFont("times", "bold");
-      pdf.setFontSize(10);
-      pdf.setTextColor(153, 101, 21);
-      pdf.text("HEBREU", margin + colW / 2, 28, { align: "center" });
-
-      // Colonne droite : Phonétique
-      pdf.setFont("times", "bold");
-      pdf.setFontSize(10);
-      pdf.setTextColor(153, 101, 21);
-      pdf.text("PHONETIQUE", margin * 2 + colW + colW / 2, 28, { align: "center" });
-
-      pdf.setFont("times", "bold");
-      pdf.setFontSize(14);
-      pdf.setTextColor(40, 40, 40);
-      pdf.text("Nichmat Kol Hai", margin * 2 + colW + colW / 2, 38, { align: "center" });
-
-      pdf.setFont("times", "normal");
-      pdf.setFontSize(11);
-      const phoneticLines = pdf.splitTextToSize(NICHMAT_PRAYER.phonetic, colW);
-      pdf.text(phoneticLines, margin * 2 + colW, 48);
-
-      // Pied de page
-      pdf.setFont("times", "italic");
-      pdf.setFontSize(8);
-      pdf.setTextColor(120, 120, 120);
-      pdf.text(
-        "Que le Tout-Puissant accorde une guerison complete a tous les malades d'Israel",
-        pageW / 2,
-        pageH - 6,
-        { align: "center" },
-      );
-
-      const fileName = `refoua-${hebrewName.replace(/\s+/g, "-")}.pdf`;
+      const fileName = `Nichmat-${hebrewName.replace(/\s+/g, "-")}.pdf`;
       const blob = pdf.output("blob");
       const file = new File([blob], fileName, { type: "application/pdf" });
 
@@ -256,8 +262,15 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
         <p className="text-[10px] uppercase tracking-[3px] font-bold text-muted-foreground mb-1">
           🙏 Refoua Chelema pour
         </p>
-        <p className="font-hebrew text-xl font-bold text-foreground" dir="rtl">
-          {hebrewName} {motherName ? `בן/בת ${motherName}` : ""}
+        <p className="font-hebrew text-xl font-bold text-foreground" dir="ltr" style={{ unicodeBidi: "plaintext" }}>
+          <bdi>{hebrewName}</bdi>
+          {motherName ? (
+            <>
+              {" "}
+              <span dir="rtl" className="font-hebrew">בן/בת</span>{" "}
+              <bdi>{motherName}</bdi>
+            </>
+          ) : null}
         </p>
       </div>
 
@@ -278,22 +291,23 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName }: Props) => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1.5 overflow-x-auto">
+      <div className="grid grid-cols-4 gap-1.5">
         {([
-          { id: "programme", label: "🗓️ Programme" },
-          { id: "tehilim", label: "📖 Chaîne Tehilim" },
-          { id: "nichmat", label: "✨ Nichmat" },
-          { id: "prayed", label: "🙏 J'ai prié" },
+          { id: "programme", label: "🗓️", sub: "Programme" },
+          { id: "tehilim", label: "📖", sub: "Tehilim" },
+          { id: "nichmat", label: "✨", sub: "Nichmat" },
+          { id: "prayed", label: "🙏", sub: "J'ai prié" },
         ] as const).map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 min-w-[78px] px-2 py-2 rounded-lg text-[10px] font-bold border cursor-pointer transition-all whitespace-nowrap ${
+            className={`px-1 py-2 rounded-lg font-bold border cursor-pointer transition-all flex flex-col items-center justify-center gap-0.5 ${
               tab === t.id ? "border-primary/40 text-foreground" : "border-border text-muted-foreground bg-card"
             }`}
             style={tab === t.id ? { background: "hsl(var(--gold) / 0.12)" } : {}}
           >
-            {t.label}
+            <span className="text-base leading-none">{t.label}</span>
+            <span className="text-[9px] leading-tight">{t.sub}</span>
           </button>
         ))}
       </div>
