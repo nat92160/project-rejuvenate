@@ -19,11 +19,14 @@ const GreetingHeader = () => {
   const [hilloulot, setHilloulot] = useState<HilloulaEntry[]>([]);
   const greeting = getGreeting();
 
-  const firstName =
+  const rawFirstName =
     user?.user_metadata?.first_name ||
     user?.user_metadata?.full_name?.split(" ")[0] ||
     user?.email?.split("@")[0] ||
     null;
+  const firstName = rawFirstName
+    ? rawFirstName.charAt(0).toUpperCase() + rawFirstName.slice(1).toLowerCase()
+    : null;
 
   useEffect(() => {
     fetchHebrewDate().then((d) => {
