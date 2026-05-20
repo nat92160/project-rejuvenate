@@ -19,6 +19,7 @@ import { Droplets, ExternalLink } from "lucide-react";
 import GreetingHeader from "@/components/GreetingHeader";
 import QuickActions from "@/components/QuickActions";
 import { detectOfficeNow } from "@/lib/siddourCatalog";
+import TabIntro from "@/components/TabIntro";
 const SpiritualTimeline = lazy(() => import("@/components/SpiritualTimeline"));
 const PersonalDatesBanner = lazy(() => import("@/components/PersonalDatesBanner"));
 
@@ -417,6 +418,7 @@ const IndexContent = () => {
             </div>
           )}
 
+          {!isPresidentDashboard && activeTab !== "dashboard" && <TabIntro tab={activeTab} />}
           {renderTabContent()}
 
           <div className="text-center py-6 mt-12">
