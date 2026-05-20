@@ -210,6 +210,7 @@ const MikveBookingWidget = ({ synagogueId }: Props) => {
             const full = booked >= capacity;
             const mine = isMine(dateKey, t);
             const myRes = myReservations.find((r) => r.slot_date === dateKey && toHM(r.slot_time) === toHM(t));
+            const othersBooked = booked > 0 && !mine;
             return (
               <button
                 key={t}
@@ -222,15 +223,23 @@ const MikveBookingWidget = ({ synagogueId }: Props) => {
                 className={`relative rounded-xl py-3 px-2 text-sm font-bold border transition-all ${
                   mine
                     ? "border-transparent text-white"
-                    : full
-                      ? "bg-muted/40 text-muted-foreground border-border opacity-60 cursor-not-allowed"
-                      : "bg-card text-foreground border-border hover:border-primary/40 active:scale-95"
+                    : othersBooked && full
+                      ? "border-transparent text-white cursor-not-allowed"
+                      : othersBooked
+                        ? "border-transparent text-white"
+                        : "bg-card text-foreground border-border hover:border-primary/40 active:scale-95"
                 }`}
-                style={mine ? { background: "linear-gradient(135deg, #22c55e, #15803d)" } : {}}
+                style={
+                  mine
+                    ? { background: "linear-gradient(135deg, #22c55e, #15803d)" }
+                    : othersBooked
+                      ? { background: "linear-gradient(135deg, #ef4444, #b91c1c)" }
+                      : {}
+                }
               >
                 <div className="text-base">{toHM(t)}</div>
                 <div className="text-[10px] mt-0.5 font-medium opacity-80">
-                  {mine ? "✓ Vous" : full ? "Complet" : capacity > 1 ? `${booked}/${capacity}` : "Libre"}
+                  {mine ? "✓ Vous" : othersBooked ? "Réservé" : "Libre"}
                 </div>
                 {mine && (
                   <X className="absolute top-1 right-1 w-3 h-3 opacity-80" />
