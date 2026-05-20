@@ -313,6 +313,11 @@ const SynagogueFormSheet = ({
       resetForm();
       onOpenChange(false);
       onCreated?.();
+      // If the user just became president (was a fidele), reload so the
+      // auth context picks up the new role and unlocks the president UI.
+      if (!isEdit && !adminMode && !isPresident) {
+        setTimeout(() => window.location.reload(), 600);
+      }
     }
   };
 
