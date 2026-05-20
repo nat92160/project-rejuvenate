@@ -269,7 +269,7 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
           {motherName ? (
             <>
               {" "}
-          <span className="italic text-muted-foreground">{gender === "bat" ? "bat" : "ben"}</span>{" "}
+          <span className="italic font-bold" style={{ color: "hsl(var(--gold))" }}>{gender === "bat" ? "bat" : "ben"}</span>{" "}
               <bdi>{motherName}</bdi>
             </>
           ) : null}
