@@ -1760,6 +1760,16 @@ export type Database = {
           slot_time: string
         }[]
       }
+      get_synagogue_subscribers: {
+        Args: { _synagogue_id: string }
+        Returns: {
+          display_name: string
+          first_name: string
+          last_name: string
+          subscribed_at: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
