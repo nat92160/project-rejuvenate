@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
+import MikveBookingWidget from "@/components/MikveBookingWidget";
 
 /**
  * SynagogueWall — Tableau de la synagogue, esthétique minimaliste & chic.
@@ -21,6 +22,7 @@ interface SynaSummary {
   primary_color: string | null;
   secondary_color: string | null;
   mikve_enabled?: boolean | null;
+  mikve_reservation_enabled?: boolean | null;
   mikve_winter_hours?: string | null;
   mikve_summer_hours?: string | null;
   mikve_phone?: string | null;
@@ -204,7 +206,7 @@ const SynagogueWall = () => {
     const { data: profiles } = await (supabase
       .from("synagogue_profiles")
       .select(
-        "id, name, shacharit_time, shacharit_time_2, minha_time, minha_time_2, arvit_time, arvit_time_2, primary_color, secondary_color, mikve_enabled, mikve_winter_hours, mikve_summer_hours, mikve_phone, mikve_maps_link"
+        "id, name, shacharit_time, shacharit_time_2, minha_time, minha_time_2, arvit_time, arvit_time_2, primary_color, secondary_color, mikve_enabled, mikve_reservation_enabled, mikve_winter_hours, mikve_summer_hours, mikve_phone, mikve_maps_link"
       ) as any)
       .in("id", ids)
       .order("name");
@@ -466,7 +468,7 @@ const SynagogueWall = () => {
           )}
 
           {/* — Mikvé — */}
-          {activeSyna?.mikve_enabled && (
+          {(activeSyna?.mikve_enabled || activeSyna?.mikve_reservation_enabled) && (
             <section>
               <SectionTitle label="Mikvé" />
               <Card>
@@ -563,6 +565,11 @@ const SynagogueWall = () => {
                   </div>
                 )}
               </Card>
+              {activeSyna.mikve_reservation_enabled && activeId && (
+                <div className="mt-4">
+                  <MikveBookingWidget synagogueId={activeId} />
+                </div>
+              )}
             </section>
           )}
 
