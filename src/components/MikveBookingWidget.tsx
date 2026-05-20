@@ -121,6 +121,12 @@ const MikveBookingWidget = ({ synagogueId }: Props) => {
     if (!bookingSlot || !user) return;
     if (!bookingName.trim()) { toast.error("Votre prénom est requis"); return; }
     setSubmitting(true);
+    // Une seule réservation active par utilisateur : on annule les précédentes
+    await supabase
+      .from("mikve_reservations")
+      .delete()
+      .eq("synagogue_id", synagogueId)
+      .eq("user_id", user.id);
     const { error } = await (supabase.from("mikve_reservations").insert({
       synagogue_id: synagogueId,
       slot_date: bookingSlot.date,
