@@ -113,7 +113,7 @@ const FideleOnboarding = ({ onDone }: Props) => {
                   Tout est prêt !
                 </h1>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
-                  Explorez l'accueil pour vos zmanim du jour, ouvrez « Ma Syna » pour rejoindre votre communauté, et touchez ⋯ Plus pour toutes les autres fonctions.
+                  Explorez l'accueil pour vos zmanim du jour, ouvrez « Ma Syna » pour rejoindre votre communauté, et touchez ☰ Menu pour toutes les autres fonctions.
                 </p>
               </motion.div>
             )}
