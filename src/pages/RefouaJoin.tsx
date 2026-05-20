@@ -86,7 +86,12 @@ const RefouaJoinContent = () => {
       </div>
 
       <div className="px-4 py-5 max-w-2xl mx-auto">
-        <RefouaCampaignPlanner refouaId={patient.id} hebrewName={patient.hebrew_name} />
+        <RefouaCampaignPlanner
+          refouaId={patient.id}
+          hebrewName={patient.hebrew_name}
+          motherName={patient.mother_name}
+          gender={patient.gender}
+        />
 
         <div className="mt-6 text-center">
           <button
