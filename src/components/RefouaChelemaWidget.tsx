@@ -34,7 +34,6 @@ const RefouaChelemaWidget = () => {
   const [selectedSynaIds, setSelectedSynaIds] = useState<string[]>([]);
   const [filterSynaId, setFilterSynaId] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [manageMode, setManageMode] = useState(false);
 
   const managedSynaIds = useMemo(() => managedSynas.map((s) => s.id), [managedSynas]);
   const canManageAsPresident = isPresident || isAdmin;
@@ -356,7 +355,7 @@ const RefouaChelemaWidget = () => {
                       🗑️
                     </button>
                   )}
-                  {manageMode && isManagedPatient(p) && p.added_by !== user?.id && (
+                  {isManagedPatient(p) && p.added_by !== user?.id && (
                     <button
                       onClick={() => handleDelete(p.id)}
                       className="text-[10px] text-destructive bg-transparent border border-destructive/30 rounded-lg px-2 py-1 cursor-pointer"
