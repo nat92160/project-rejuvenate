@@ -8,6 +8,7 @@ import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 import { useCity } from "@/hooks/useCity";
 import { fetchMinhaTime } from "@/lib/hebcal";
 import { toast } from "sonner";
+import { shareText, buildShareUrl } from "@/lib/shareUtils";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
 
