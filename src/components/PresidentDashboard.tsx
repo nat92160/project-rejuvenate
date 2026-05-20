@@ -178,9 +178,11 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
         <span className="text-5xl">🏛️</span>
         <h2 className="font-display text-lg font-bold text-foreground mt-4">Espace Président</h2>
         <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
-          {!user ? "Connectez-vous pour gérer votre communauté." : "Rôle Président requis pour accéder à cet espace."}
+          {!user
+            ? "Connectez-vous pour gérer votre communauté."
+            : "Affiliez-vous à une synagogue pour débloquer les outils du président (annonces, horaires, affiche, dons…)."}
         </p>
-        {!user && (
+        {!user ? (
           <button
             onClick={onLoginClick}
             className="mt-6 px-7 py-3 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95"
@@ -188,6 +190,20 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
           >
             🔑 Se connecter
           </button>
+        ) : (
+          <>
+            <button
+              onClick={() => setShowCreateSyna(true)}
+              className="mt-6 inline-flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95"
+              style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+            >
+              <Plus className="w-4 h-4" /> S'affilier à une synagogue
+            </button>
+            <p className="mt-3 text-[11px] text-muted-foreground max-w-xs mx-auto">
+              Importez la fiche depuis Google Maps, complétez les infos, puis un admin validera votre rattachement.
+            </p>
+            <SynagogueFormSheet open={showCreateSyna} onOpenChange={setShowCreateSyna} />
+          </>
         )}
       </motion.div>
     );
