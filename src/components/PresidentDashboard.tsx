@@ -57,7 +57,7 @@ const servicesItems = [
 
 const adminItems = [
   { id: "syna-profile", icon: Building2, label: "Infos Synagogue" },
-  { id: "adjoint", icon: Award, label: "Adjoint" },
+  { id: "adjoint", icon: Award, label: "Gouvernance" },
   { id: "chat", icon: MessageSquare, label: "Chat Fidèles" },
   { id: "stats", icon: BarChart3, label: "Statistiques" },
 ];

@@ -11,13 +11,15 @@ interface Subscriber {
 }
 
 const AdjointManager = () => {
-  const { user } = useAuth();
+  const { user, refresh } = useAuth() as any;
   const { synagogueId } = useSynaProfile();
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [currentAdjointId, setCurrentAdjointId] = useState<string | null>(null);
   const [adjointName, setAdjointName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [confirmTransferId, setConfirmTransferId] = useState<string | null>(null);
+  const [confirmStepDown, setConfirmStepDown] = useState(false);
 
   useEffect(() => {
     if (!synagogueId || !user) return;
@@ -141,11 +143,44 @@ const AdjointManager = () => {
     return <div className="text-center py-8"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" /></div>;
   }
 
+  const transferPresidency = async (newId: string, name: string) => {
+    if (!synagogueId) return;
+    setSaving(true);
+    const { error } = await supabase.rpc("transfer_synagogue_presidency" as any, {
+      _synagogue_id: synagogueId,
+      _new_president_id: newId,
+    });
+    setSaving(false);
+    setConfirmTransferId(null);
+    if (error) {
+      toast.error("Transfert impossible : " + error.message);
+      return;
+    }
+    toast.success(`👑 ${name} est désormais président de la synagogue.`);
+    setTimeout(() => window.location.reload(), 1200);
+  };
+
+  const stepDown = async () => {
+    if (!synagogueId) return;
+    setSaving(true);
+    const { error } = await supabase.rpc("step_down_from_synagogue" as any, {
+      _synagogue_id: synagogueId,
+    });
+    setSaving(false);
+    setConfirmStepDown(false);
+    if (error) {
+      toast.error("Retrait impossible : " + error.message);
+      return;
+    }
+    toast.success("Vous vous êtes retiré de la présidence.");
+    setTimeout(() => window.location.reload(), 1200);
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="rounded-2xl p-5 mb-4 border border-primary/15" style={{ background: "linear-gradient(135deg, hsl(var(--gold) / 0.06), hsl(var(--gold) / 0.02))" }}>
-        <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">🏅 Adjoint</h3>
-        <p className="text-xs text-muted-foreground mt-1">Nommez un membre de confiance avec les mêmes droits que vous</p>
+        <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">👑 Gouvernance</h3>
+        <p className="text-xs text-muted-foreground mt-1">Nommez un adjoint, transférez la présidence ou retirez-vous.</p>
       </div>
 
       {/* Current adjoint */}
@@ -177,33 +212,105 @@ const AdjointManager = () => {
         </div>
       )}
 
-      {/* Subscriber list to choose from */}
-      {!currentAdjointId && (
-        <>
-          <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Fidèles abonnés</h4>
-          {subscribers.length === 0 ? (
-            <div className="rounded-xl bg-card p-4 border border-border text-center">
-              <p className="text-xs text-muted-foreground">Aucun fidèle abonné à votre synagogue pour le moment.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {subscribers.map(s => (
-                <div key={s.user_id} className="flex items-center justify-between p-3 rounded-xl border border-border bg-card">
-                  <span className="text-sm font-medium text-foreground">{s.display_name}</span>
+      {/* Subscriber list — actions per fidèle */}
+      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 mt-6">Fidèles abonnés</h4>
+      {subscribers.length === 0 ? (
+        <div className="rounded-xl bg-card p-4 border border-border text-center">
+          <p className="text-xs text-muted-foreground">Aucun fidèle abonné à votre synagogue pour le moment.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {subscribers.map(s => (
+            <div key={s.user_id} className="p-3 rounded-xl border border-border bg-card">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-sm font-medium text-foreground truncate">{s.display_name}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {!currentAdjointId && (
                   <button
                     onClick={() => assignAdjoint(s.user_id, s.display_name)}
                     disabled={saving}
                     className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-primary-foreground border-none cursor-pointer disabled:opacity-50"
-                    style={{ background: "var(--gradient-gold)" }}
+                    style={{ background: "var(--gradient-gold)", minHeight: 36 }}
                   >
-                    🏅 Nommer
+                    🏅 Adjoint
                   </button>
+                )}
+                <button
+                  onClick={() => setConfirmTransferId(s.user_id)}
+                  disabled={saving}
+                  className="px-3 py-1.5 rounded-lg text-[10px] font-bold border cursor-pointer disabled:opacity-50"
+                  style={{ borderColor: "hsl(var(--gold) / 0.4)", color: "hsl(var(--gold-matte))", background: "hsl(var(--gold) / 0.08)", minHeight: 36 }}
+                >
+                  👑 Transférer la présidence
+                </button>
+              </div>
+              {confirmTransferId === s.user_id && (
+                <div className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                  <p className="text-[11px] text-foreground leading-relaxed">
+                    Confirmer le transfert : <b>{s.display_name}</b> deviendra le nouveau président de cette synagogue et vous repasserez fidèle.
+                  </p>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => transferPresidency(s.user_id, s.display_name)}
+                      disabled={saving}
+                      className="flex-1 px-3 py-2 rounded-lg text-xs font-bold text-primary-foreground border-none cursor-pointer disabled:opacity-50"
+                      style={{ background: "var(--gradient-gold)", minHeight: 40 }}
+                    >
+                      Oui, transférer
+                    </button>
+                    <button
+                      onClick={() => setConfirmTransferId(null)}
+                      disabled={saving}
+                      className="px-3 py-2 rounded-lg text-xs font-bold bg-muted text-foreground border-none cursor-pointer"
+                      style={{ minHeight: 40 }}
+                    >
+                      Annuler
+                    </button>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </>
+          ))}
+        </div>
       )}
+
+      {/* Step down */}
+      <div className="mt-8 rounded-2xl border border-destructive/25 bg-destructive/5 p-5">
+        <h4 className="text-sm font-bold text-destructive flex items-center gap-2">🚪 Se retirer</h4>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+          Quittez votre fonction. La synagogue restera accessible aux fidèles mais sans président jusqu'à ce qu'un nouveau soit nommé par un administrateur.
+        </p>
+        {!confirmStepDown ? (
+          <button
+            onClick={() => setConfirmStepDown(true)}
+            disabled={saving}
+            className="mt-3 w-full px-4 py-3 rounded-xl text-sm font-bold bg-destructive text-destructive-foreground border-none cursor-pointer disabled:opacity-50"
+            style={{ minHeight: 48 }}
+          >
+            Me retirer de la présidence
+          </button>
+        ) : (
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={stepDown}
+              disabled={saving}
+              className="flex-1 px-4 py-3 rounded-xl text-sm font-bold bg-destructive text-destructive-foreground border-none cursor-pointer disabled:opacity-50"
+              style={{ minHeight: 48 }}
+            >
+              Oui, me retirer
+            </button>
+            <button
+              onClick={() => setConfirmStepDown(false)}
+              disabled={saving}
+              className="px-4 py-3 rounded-xl text-sm font-bold bg-muted text-foreground border-none cursor-pointer"
+              style={{ minHeight: 48 }}
+            >
+              Annuler
+            </button>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 };
