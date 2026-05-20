@@ -148,6 +148,22 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
                 </button>
               </div>
 
+              {/* Personnaliser la barre menu */}
+              <button
+                onClick={() => setCustomizerOpen(true)}
+                className="mb-4 w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left cursor-pointer transition-all"
+                style={{
+                  background: "hsl(var(--gold) / 0.06)",
+                  borderColor: "hsl(var(--gold) / 0.25)",
+                }}
+              >
+                <span className="text-xl">✏️</span>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-foreground">Personnaliser la barre menu</div>
+                  <div className="text-[11px] text-muted-foreground">Choisis tes 3 widgets favoris</div>
+                </div>
+              </button>
+
               {/* Recherche instantanée */}
               <div className="mb-4 relative">
                 <input
@@ -192,22 +208,6 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
               </div>
 
               {/* Admin link */}
-              {/* Personnaliser la barre du bas */}
-              <button
-                onClick={() => setCustomizerOpen(true)}
-                className="mt-5 w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left cursor-pointer transition-all"
-                style={{
-                  background: "hsl(var(--gold) / 0.06)",
-                  borderColor: "hsl(var(--gold) / 0.25)",
-                }}
-              >
-                <span className="text-xl">✏️</span>
-                <div className="flex-1">
-                  <div className="text-sm font-bold text-foreground">Personnaliser la barre du bas</div>
-                  <div className="text-[11px] text-muted-foreground">Choisis tes 3 widgets favoris</div>
-                </div>
-              </button>
-
               {user && isAdmin && (
                 <button
                   onClick={() => { onClose(); navigate("/admin"); }}
