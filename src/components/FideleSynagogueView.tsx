@@ -353,6 +353,45 @@ const FideleSynagogueView = ({ onSwitchToPresident }: FideleSynagogueViewProps =
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      {/* HERO — Mode Président (uniquement pour présidents/admin) */}
+      {isPresident && onSwitchToPresident && (
+        <motion.button
+          onClick={onSwitchToPresident}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full mb-4 rounded-2xl border-none cursor-pointer text-left relative overflow-hidden"
+          style={{
+            background: "var(--gradient-gold)",
+            boxShadow: "var(--shadow-gold)",
+            padding: "18px 20px",
+            color: "hsl(var(--primary-foreground))",
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <div
+              className="flex items-center justify-center rounded-2xl shrink-0"
+              style={{
+                width: 56,
+                height: 56,
+                background: "hsl(0 0% 100% / 0.18)",
+                fontSize: 28,
+              }}
+            >
+              👑
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-[3px] font-bold opacity-90">Pilotage</p>
+              <p className="font-display text-base font-bold leading-tight">Mode Président</p>
+              <p className="text-[11px] opacity-90 mt-0.5 truncate">
+                Annonces · Horaires · Affiche · Fidèles
+              </p>
+            </div>
+            <span className="text-xl opacity-90 shrink-0">→</span>
+          </div>
+        </motion.button>
+      )}
+
       {/* Header – Ma Communauté */}
       <div
         className="mb-5 rounded-2xl border border-primary/15 p-6 text-center space-y-4"
@@ -367,15 +406,6 @@ const FideleSynagogueView = ({ onSwitchToPresident }: FideleSynagogueViewProps =
         </p>
         {isPresident && (
           <div className="flex flex-wrap justify-center gap-2">
-            {onSwitchToPresident && (
-              <button
-                onClick={onSwitchToPresident}
-                className="inline-flex items-center gap-2 rounded-xl border-none px-4 py-2.5 text-xs font-bold text-primary-foreground cursor-pointer transition-all active:scale-95"
-                style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
-              >
-                👑 Mode président
-              </button>
-            )}
             {mySynas.map((s) => (
               <button
                 key={s.id}
