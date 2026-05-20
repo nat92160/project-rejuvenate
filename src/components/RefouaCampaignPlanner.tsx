@@ -416,7 +416,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
                     >
                       {taken ? (
                         <span className="block truncate">
-                          {mine ? "✓ Vous" : taken.display_name || "Anonyme"}
+                          {mine ? `✓ ${taken.display_name || "Vous"}` : taken.display_name || "Anonyme"}
                         </span>
                       ) : (
                         <span className="block text-muted-foreground">+ libre</span>
