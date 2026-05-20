@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
-import MikveBookingWidget from "@/components/MikveBookingWidget";
+
 
 /**
  * SynagogueWall — Tableau de la synagogue, esthétique minimaliste & chic.
@@ -565,10 +565,10 @@ const SynagogueWall = () => {
                   </div>
                 )}
               </Card>
-              {activeSyna.mikve_reservation_enabled && activeId && (
-                <div className="mt-4">
-                  <MikveBookingWidget synagogueId={activeId} />
-                </div>
+              {activeSyna.mikve_reservation_enabled && (
+                <p className="mt-3 px-1 text-xs" style={{ fontFamily: "'Montserrat', sans-serif", color: PALETTE.inkMuted, letterSpacing: "0.04em" }}>
+                  Réservation disponible dans l'onglet <strong style={{ color: PALETTE.ink }}>Mikvé</strong>.
+                </p>
               )}
             </section>
           )}
