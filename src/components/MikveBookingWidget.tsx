@@ -280,6 +280,11 @@ const MikveBookingWidget = ({ synagogueId }: Props) => {
                   <X className="w-5 h-5" />
                 </button>
               </div>
+              {myReservations.length > 0 && (
+                <p className="text-xs mb-3 px-3 py-2 rounded-lg" style={{ background: "hsl(var(--gold) / 0.12)", color: "hsl(var(--foreground))" }}>
+                  ⚠️ Votre réservation précédente sera annulée et remplacée par ce nouveau créneau.
+                </p>
+              )}
               <p className="text-sm text-muted-foreground mb-4">
                 {new Date(bookingSlot.date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} à <span className="font-bold text-foreground">{toHM(bookingSlot.time)}</span>
               </p>
