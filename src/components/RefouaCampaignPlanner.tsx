@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { shareText } from "@/lib/shareUtils";
+import { shareText, buildShareUrl } from "@/lib/shareUtils";
 
 interface Campaign {
   id: string;
@@ -245,15 +245,16 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
   };
 
   const shareCampaign = async () => {
-    const url = `${window.location.origin}/refoua/${refouaId}`;
+    const url = buildShareUrl(`/refoua/${refouaId}`);
     const prayerLabel = PRAYER_TYPES.find((p) => p.value === campaign?.prayer_type)?.label || "";
     const total = (campaign?.days_count || 0) * (campaign?.slots_per_day || 0);
     const text =
-      `🙏 Programme de Refoua Chelema pour ${fullName}\n` +
+      `🙏 Refoua Chelema — Chabbat Chalom\n\n` +
+      `Programme de prières pour ${fullName}\n` +
       (prayerLabel ? `${prayerLabel}\n` : "") +
       `📅 ${campaign?.days_count} jours • 👥 ${campaign?.slots_per_day}/jour (${slots.length}/${total} réservés)\n\n` +
-      `Réservez votre créneau ici :\n${url}`;
-    await shareText(text, `Refoua Chelema – ${fullName}`);
+      `Réservez votre créneau :`;
+    await shareText(text, `🙏 Refoua Chelema pour ${fullName} — Chabbat Chalom`, url);
   };
 
   const slotsByDay = new Map<number, Slot[]>();
