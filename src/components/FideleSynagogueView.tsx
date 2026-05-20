@@ -791,6 +791,13 @@ const FideleSynagogueView = () => {
         </div>
       )}
 
+      {/* Mikvé */}
+      {tab === "mikve" && (
+        <div className="space-y-3">
+          <MikveInfoView />
+        </div>
+      )}
+
       {/* Events */}
       {tab === "events" && (
 
