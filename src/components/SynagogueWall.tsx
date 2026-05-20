@@ -620,6 +620,55 @@ const SynagogueWall = () => {
             )}
           </section>
 
+          {/* — Fidèles abonnés (président / adjoint / admin) — */}
+          {canManageActive && (
+            <section>
+              <SectionTitle label={`Fidèles abonnés · ${subscribers.length}`} />
+              <Card>
+                <button
+                  onClick={() => setShowSubscribers((v) => !v)}
+                  className="w-full flex items-center justify-between"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    fontFamily: "'Lora', serif",
+                    fontSize: 15,
+                    color: PALETTE.ink,
+                  }}
+                >
+                  <span>
+                    {subscribers.length === 0
+                      ? "Aucun fidèle abonné pour le moment."
+                      : `${subscribers.length} fidèle${subscribers.length > 1 ? "s" : ""} suit${subscribers.length > 1 ? "vent" : ""} cette synagogue`}
+                  </span>
+                  {subscribers.length > 0 && (
+                    <span style={{ fontSize: 11, color: PALETTE.gold, letterSpacing: "0.16em", textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif", fontWeight: 600 }}>
+                      {showSubscribers ? "Masquer" : "Voir les noms"}
+                    </span>
+                  )}
+                </button>
+                {showSubscribers && subscribers.length > 0 && (
+                  <ul className="mt-4 space-y-2" style={{ borderTop: `1px solid ${PALETTE.hairline}`, paddingTop: 12 }}>
+                    {subscribers.map((s) => {
+                      const fullName = [s.first_name, s.last_name].filter(Boolean).join(" ").trim();
+                      const label = fullName || s.display_name || "Fidèle";
+                      return (
+                        <li key={s.user_id} className="flex items-baseline justify-between gap-3">
+                          <span style={{ fontFamily: "'Lora', serif", fontSize: 15, color: PALETTE.ink }}>{label}</span>
+                          <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 10, color: PALETTE.inkMuted, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                            {new Date(s.subscribed_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </Card>
+            </section>
+          )}
+
           {/* — Cours — */}
           <section>
             <SectionTitle label="Cours" />
