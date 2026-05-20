@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,7 +20,7 @@ interface Patient {
 interface SynaOption { id: string; name: string; }
 
 const RefouaChelemaWidget = () => {
-  const { user } = useAuth();
+  const { user, isPresident, isAdmin } = useAuth();
   const { subIds } = useSubscribedSynaIds();
   const { synagogues: managedSynas } = useManagedSynagogues();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -34,6 +34,13 @@ const RefouaChelemaWidget = () => {
   const [selectedSynaIds, setSelectedSynaIds] = useState<string[]>([]);
   const [filterSynaId, setFilterSynaId] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [manageMode, setManageMode] = useState(false);
+
+  const managedSynaIds = useMemo(() => managedSynas.map((s) => s.id), [managedSynas]);
+  const canManageAsPresident = isPresident || isAdmin;
+  const isManagedPatient = (p: Patient) =>
+    canManageAsPresident &&
+    (isAdmin || (p.synagogue_ids?.some((id) => managedSynaIds.includes(id)) ?? false));
 
   // Load synagogue names for the user's subscribed + managed synagogues
   useEffect(() => {
@@ -177,19 +184,40 @@ const RefouaChelemaWidget = () => {
           <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
             🙏 Refoua Chelema
           </h3>
-          {user && (
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
-              style={{ background: "var(--gradient-gold)" }}
-            >
-              + Ajouter
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {canManageAsPresident && (
+              <button
+                onClick={() => setManageMode((v) => !v)}
+                className="px-3 py-2 rounded-xl text-[11px] font-bold border cursor-pointer"
+                style={{
+                  background: manageMode ? "hsl(var(--gold) / 0.18)" : "transparent",
+                  borderColor: "hsl(var(--gold) / 0.5)",
+                  color: "hsl(var(--foreground))",
+                }}
+                title="Outils du président"
+              >
+                {manageMode ? "✓ Gestion" : "👑 Gérer"}
+              </button>
+            )}
+            {user && (
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="px-4 py-2 rounded-xl text-xs font-bold border-none cursor-pointer text-primary-foreground"
+                style={{ background: "var(--gradient-gold)" }}
+              >
+                + Ajouter
+              </button>
+            )}
+          </div>
         </div>
         <p className="text-xs text-muted-foreground">
           Liste des malades à mentionner pendant la prière
         </p>
+        {manageMode && canManageAsPresident && (
+          <div className="mt-3 rounded-xl bg-background/60 border border-primary/20 p-3 text-[11px] text-muted-foreground leading-relaxed">
+            Mode président actif — vous pouvez supprimer tout nom partagé dans vos synagogues, et lancer / gérer leurs programmes de prière.
+          </div>
+        )}
       </div>
 
       {/* Filter chips by synagogue (uniquement les synagogues du fidèle) */}
@@ -343,6 +371,15 @@ const RefouaChelemaWidget = () => {
                     <button
                       onClick={() => handleDelete(p.id)}
                       className="text-[10px] text-destructive bg-transparent border-none cursor-pointer hover:underline"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                  {manageMode && isManagedPatient(p) && p.added_by !== user?.id && (
+                    <button
+                      onClick={() => handleDelete(p.id)}
+                      className="text-[10px] text-destructive bg-transparent border border-destructive/30 rounded-lg px-2 py-1 cursor-pointer"
+                      title="Supprimer (président)"
                     >
                       🗑️
                     </button>
