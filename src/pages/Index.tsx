@@ -56,6 +56,7 @@ const InfoCarousel = lazy(() => import("@/components/InfoCarousel"));
 const MikveInfoView = lazy(() => import("@/components/MikveInfoView"));
 const CitySelector = lazy(() => import("@/components/CitySelector"));
 const FideleOnboarding = lazy(() => import("@/components/FideleOnboarding"));
+import FirstTimeHint from "@/components/FirstTimeHint";
 
 import { useOmerVisibility } from "@/hooks/useOmerVisibility";
 
@@ -218,6 +219,12 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
 
   return (
     <>
+      <FirstTimeHint
+        storageKey="calj_hint_home_v1"
+        title="Votre accueil en un coup d'œil 👋"
+        message="Ici vous trouvez vos zmanim du jour et le prochain Chabbat. Touchez 🏛️ Ma Syna pour votre communauté, et ⋯ Plus pour Refoua, Tehilim, Siddour, Fêtes et toutes les autres fonctions."
+        delay={1500}
+      />
       <GreetingHeader />
       <Lazy><PersonalDatesBanner /></Lazy>
       <Lazy><CitySelector /></Lazy>
