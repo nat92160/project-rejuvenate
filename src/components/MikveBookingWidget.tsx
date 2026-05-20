@@ -92,6 +92,7 @@ const MikveBookingWidget = ({ synagogueId }: Props) => {
       user
         ? (supabase.from("mikve_reservations").select("id, slot_date, slot_time") as any)
             .eq("synagogue_id", synagogueId)
+            .eq("user_id", user.id)
             .gte("slot_date", from)
             .lte("slot_date", to)
         : Promise.resolve({ data: [] }),
@@ -120,6 +121,7 @@ const MikveBookingWidget = ({ synagogueId }: Props) => {
   const handleBook = async () => {
     if (!bookingSlot || !user) return;
     if (!bookingName.trim()) { toast.error("Votre prénom est requis"); return; }
+    if (!bookingPhone.trim()) { toast.error("Votre téléphone est requis"); return; }
     setSubmitting(true);
     // Une seule réservation active par utilisateur : on annule les précédentes
     await supabase
@@ -300,8 +302,9 @@ const MikveBookingWidget = ({ synagogueId }: Props) => {
                 <input
                   value={bookingPhone}
                   onChange={(e) => setBookingPhone(e.target.value)}
-                  placeholder="Téléphone (optionnel)"
+                  placeholder="Téléphone (obligatoire)"
                   inputMode="tel"
+                  required
                   className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-[48px]"
                   style={{ fontSize: "16px" }}
                 />
