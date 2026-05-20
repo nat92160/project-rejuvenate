@@ -327,7 +327,9 @@ const FideleSynagogueView = () => {
   const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 
   const subscribedSynas = directory.filter(d => d.isSubscribed);
-  const hasMikveSubscribed = subscribedSynas.some(s => s.mikve_enabled || s.mikve_reservation_enabled);
+  const hasMikveSubscribed =
+    subscribedSynas.some(s => s.mikve_enabled || s.mikve_reservation_enabled) ||
+    mySynas.some((s: any) => s.mikve_enabled || s.mikve_reservation_enabled);
   const todayStr = new Date().toISOString().slice(0, 10);
   const visibleCours = cours.filter((c: any) => !c.specific_date || c.specific_date >= todayStr);
 
