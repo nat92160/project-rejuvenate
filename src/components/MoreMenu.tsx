@@ -281,6 +281,7 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
       </AnimatePresence>
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      <BottomNavCustomizer open={customizerOpen} onClose={() => setCustomizerOpen(false)} />
     </>
   );
 };
