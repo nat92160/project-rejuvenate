@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { shareText } from "@/lib/shareUtils";
+import { shareText, PUBLIC_BASE_URL } from "@/lib/shareUtils";
 import { isNativePlatform, requestNativePushPermission, registerNativePush } from "@/lib/capacitorPush";
 import { MyDonations } from "@/components/MyDonations";
 
@@ -404,9 +404,8 @@ const EspacePersonnelWidget = () => {
     const dateStr = d.civil_date
       ? new Date(d.civil_date + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
       : "";
-    const text = `${typeLabel} — ${d.hebrew_name}${hebStr ? `\n📜 ${hebStr}` : ""}${dateStr ? `\n📅 ${dateStr}` : ""}${d.notes ? `\n${d.notes}` : ""}\n\nPartagé via Chabbat Chalom`;
-
-    await shareText(text, `${typeLabel} — ${d.hebrew_name}`);
+    const text = `${typeLabel} — ${d.hebrew_name}${hebStr ? `\n📜 ${hebStr}` : ""}${dateStr ? `\n📅 ${dateStr}` : ""}${d.notes ? `\n${d.notes}` : ""}\n\n✡️ Partagé via Chabbat Chalom`;
+    await shareText(text, `${typeLabel} — ${d.hebrew_name} • Chabbat Chalom`, PUBLIC_BASE_URL);
   };
 
   if (!user) {
