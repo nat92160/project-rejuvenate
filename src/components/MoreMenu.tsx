@@ -123,6 +123,8 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
                 maxHeight: "85vh",
                 padding: "20px 20px calc(20px + env(safe-area-inset-bottom, 0px))",
                 boxShadow: "var(--shadow-elevated)",
+                WebkitOverflowScrolling: "touch",
+                overscrollBehavior: "contain",
               }}
               initial={{ y: "100%", opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -137,7 +139,8 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
                 <h2 className="font-display text-lg font-bold text-foreground">Menu</h2>
                 <button
                   onClick={onClose}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border-none bg-muted text-lg text-muted-foreground cursor-pointer"
+                  className="flex items-center justify-center rounded-full border-none bg-muted text-lg text-muted-foreground cursor-pointer"
+                  style={{ width: 44, height: 44, WebkitTapHighlightColor: "transparent" }}
                 >
                   ✕
                 </button>

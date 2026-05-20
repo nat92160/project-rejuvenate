@@ -43,12 +43,14 @@ const FirstTimeHint = ({ storageKey, title, message, delay = 600 }: Props) => {
             onClick={dismiss}
           />
           <motion.div
-            className="fixed left-4 right-4 top-1/2 -translate-y-1/2 z-[360] rounded-2xl p-5 border border-primary/15"
+            className="fixed left-4 right-4 z-[360] rounded-2xl p-5 border border-primary/15"
             style={{
               background: "hsl(var(--card))",
               boxShadow: "var(--shadow-elevated)",
               maxWidth: 420,
               margin: "0 auto",
+              top: "50%",
+              transform: "translateY(-50%)",
             }}
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -70,13 +72,13 @@ const FirstTimeHint = ({ storageKey, title, message, delay = 600 }: Props) => {
               </div>
               <div className="flex-1">
                 <h4 className="font-display text-sm font-bold text-foreground mb-1">{title}</h4>
-                <p className="text-xs text-muted-foreground leading-relaxed">{message}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{message}</p>
               </div>
             </div>
             <button
               onClick={dismiss}
-              className="w-full py-2.5 rounded-xl text-xs font-bold text-primary-foreground border-none cursor-pointer"
-              style={{ background: "var(--gradient-gold)" }}
+              className="w-full rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer"
+              style={{ background: "var(--gradient-gold)", minHeight: 48, WebkitTapHighlightColor: "transparent" }}
             >
               J'ai compris ✓
             </button>
