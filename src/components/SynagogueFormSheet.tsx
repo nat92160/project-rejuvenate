@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Building2, MapPin, Phone, Mail, Save } from "lucide-react";
+import { Building2, MapPin, Phone, Mail, Save, Search } from "lucide-react";
 import { notifySynagoguesChanged } from "@/hooks/useManagedSynagogues";
 import {
   Sheet,
@@ -48,6 +48,11 @@ const SynagogueFormSheet = ({
 }: SynagogueFormSheetProps) => {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [mapsQuery, setMapsQuery] = useState("");
+  const [mapsResults, setMapsResults] = useState<Array<{ id: string; name: string; address: string; lat: number | null; lng: number | null }>>([]);
+  const [mapsSearching, setMapsSearching] = useState(false);
+  const [mapsPicked, setMapsPicked] = useState<{ lat: number | null; lng: number | null; place_id: string } | null>(null);
+  const mapsTimer = useRef<number | null>(null);
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -107,6 +112,55 @@ const SynagogueFormSheet = ({
       presidentEmail: "",
     });
 
+  // Maps Places search (debounced)
+  useEffect(() => {
+    if (isEdit) return;
+    if (mapsTimer.current) window.clearTimeout(mapsTimer.current);
+    const q = mapsQuery.trim();
+    if (q.length < 3) { setMapsResults([]); return; }
+    mapsTimer.current = window.setTimeout(async () => {
+      setMapsSearching(true);
+      try {
+        const { data } = await supabase.functions.invoke("places-search", { body: { query: q } });
+        setMapsResults(data?.results || []);
+      } catch { setMapsResults([]); }
+      setMapsSearching(false);
+    }, 350);
+  }, [mapsQuery, isEdit]);
+
+  const pickPlace = async (r: { id: string; name: string; address: string; lat: number | null; lng: number | null }) => {
+    // Fetch full details (phone, address components)
+    let phone = "";
+    let zip = "";
+    let city = "";
+    let street = r.address;
+    try {
+      const { data } = await supabase.functions.invoke("places-search", { body: { place_id: r.id } });
+      const p = data?.place || {};
+      phone = p.internationalPhoneNumber || p.nationalPhoneNumber || "";
+      const comps: any[] = p.addressComponents || [];
+      const get = (t: string) => comps.find((c) => (c.types || []).includes(t))?.longText || "";
+      const num = get("street_number");
+      const route = get("route");
+      street = [num, route].filter(Boolean).join(" ") || r.address;
+      zip = get("postal_code");
+      city = get("locality") || get("administrative_area_level_2");
+    } catch { /* ignore */ }
+
+    setForm((f) => ({
+      ...f,
+      name: f.name || r.name,
+      address: street || r.address,
+      city: city || f.city,
+      zip: zip || f.zip,
+      phone: f.phone || phone,
+    }));
+    setMapsPicked({ lat: r.lat, lng: r.lng, place_id: r.id });
+    setMapsResults([]);
+    setMapsQuery(r.name);
+    toast.success("📍 Fiche importée — complétez les infos puis enregistrez");
+  };
+
   const handleSubmit = async () => {
     if (!form.name.trim()) {
       toast.error("Le nom est obligatoire");
@@ -152,7 +206,10 @@ const SynagogueFormSheet = ({
       ? form.address.trim()
       : [form.address, form.zip, form.city].filter(Boolean).join(", ");
 
-    if (fullAddress) {
+    if (mapsPicked?.lat != null && mapsPicked?.lng != null) {
+      latitude = mapsPicked.lat;
+      longitude = mapsPicked.lng;
+    } else if (fullAddress) {
       try {
         const { data: geo } = await supabase.functions.invoke(
           "geocode-address",
@@ -248,6 +305,44 @@ const SynagogueFormSheet = ({
         </SheetHeader>
 
         <div className="space-y-4 pb-6">
+          {/* Maps import (creation only) */}
+          {!isEdit && (
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3">
+              <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-foreground">
+                <Search className="h-3.5 w-3.5 text-primary" /> Importer depuis Google Maps
+              </label>
+              <input
+                className={inputCls}
+                value={mapsQuery}
+                onChange={(e) => { setMapsQuery(e.target.value); setMapsPicked(null); }}
+                placeholder="Ex : Beth Abraham Charenton…"
+                style={{ fontSize: 16 }}
+              />
+              {mapsSearching && <p className="mt-1 text-[10px] text-muted-foreground">⏳ Recherche…</p>}
+              {mapsResults.length > 0 && (
+                <div className="mt-2 space-y-1 max-h-56 overflow-y-auto">
+                  {mapsResults.map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={() => pickPlace(r)}
+                      className="w-full text-left rounded-lg border border-border bg-card px-3 py-2 cursor-pointer hover:bg-muted transition-all"
+                      style={{ minHeight: 48 }}
+                    >
+                      <p className="text-xs font-bold text-foreground truncate">{r.name}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">📍 {r.address}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {mapsPicked && (
+                <p className="mt-1.5 text-[10px] text-primary font-semibold">✅ Fiche importée — vérifiez et complétez ci-dessous</p>
+              )}
+              {!adminMode && (
+                <p className="mt-1 text-[10px] text-muted-foreground">La fiche sera créée en attente de vérification par un admin.</p>
+              )}
+            </div>
+          )}
+
           {/* Admin: president email (only for creation) */}
           {adminMode && !isEdit && (
             <div>
