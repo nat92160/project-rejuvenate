@@ -850,6 +850,27 @@ const AdminDashboard = () => {
                           style={{ background: "hsl(var(--muted))", color: "hsl(var(--foreground))" }}>
                           ✏️ Modifier
                         </button>
+                        {!u.roles.includes("president") && !u.roles.includes("admin") && (
+                          <button onClick={() => handleSetRole(u.id, "president")} disabled={userProcessing === u.id}
+                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95 text-primary-foreground"
+                            style={{ background: "var(--gradient-gold)" }}>
+                            👑 Président
+                          </button>
+                        )}
+                        {!u.roles.includes("admin") && (
+                          <button onClick={() => { if (confirm(`Promouvoir ${u.email} au rang d'Administrateur ? Pouvoir total sur l'application.`)) handleSetRole(u.id, "admin"); }} disabled={userProcessing === u.id}
+                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                            style={{ background: "hsl(var(--destructive) / 0.1)", color: "hsl(var(--destructive))" }}>
+                            🛡️ Admin
+                          </button>
+                        )}
+                        {(u.roles.includes("president") || u.roles.includes("admin")) && (
+                          <button onClick={() => { if (confirm(`Rétrograder ${u.email} en simple fidèle ?`)) handleSetRole(u.id, "fidele"); }} disabled={userProcessing === u.id}
+                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                            style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>
+                            ↩️ Fidèle
+                          </button>
+                        )}
                         {!u.roles.includes("admin") && (
                           <>
                             <button onClick={() => handleSuspend(u.id, !u.suspended)} disabled={userProcessing === u.id}
