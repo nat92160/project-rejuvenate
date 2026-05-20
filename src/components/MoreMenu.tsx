@@ -7,6 +7,7 @@ import { type BottomNavMode } from "@/lib/navigation";
 import { clearAllCaches } from "@/lib/cacheUtils";
 import { toast } from "sonner";
 import AuthModal from "@/components/AuthModal";
+import BottomNavCustomizer from "@/components/BottomNavCustomizer";
 
 interface MoreMenuProps {
   isOpen: boolean;
@@ -79,6 +80,7 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
   const { user, isAdmin, signOut } = useAuth();
   const pendingCount = usePendingRequests();
   const [authOpen, setAuthOpen] = useState(false);
+  const [customizerOpen, setCustomizerOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
 
@@ -190,6 +192,22 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
               </div>
 
               {/* Admin link */}
+              {/* Personnaliser la barre du bas */}
+              <button
+                onClick={() => setCustomizerOpen(true)}
+                className="mt-5 w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left cursor-pointer transition-all"
+                style={{
+                  background: "hsl(var(--gold) / 0.06)",
+                  borderColor: "hsl(var(--gold) / 0.25)",
+                }}
+              >
+                <span className="text-xl">✏️</span>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-foreground">Personnaliser la barre du bas</div>
+                  <div className="text-[11px] text-muted-foreground">Choisis tes 3 widgets favoris</div>
+                </div>
+              </button>
+
               {user && isAdmin && (
                 <button
                   onClick={() => { onClose(); navigate("/admin"); }}
@@ -263,6 +281,7 @@ const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
       </AnimatePresence>
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      <BottomNavCustomizer open={customizerOpen} onClose={() => setCustomizerOpen(false)} />
     </>
   );
 };
