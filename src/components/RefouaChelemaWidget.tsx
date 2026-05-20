@@ -185,20 +185,6 @@ const RefouaChelemaWidget = () => {
             🙏 Refoua Chelema
           </h3>
           <div className="flex items-center gap-2">
-            {canManageAsPresident && (
-              <button
-                onClick={() => setManageMode((v) => !v)}
-                className="px-3 py-2 rounded-xl text-[11px] font-bold border cursor-pointer"
-                style={{
-                  background: manageMode ? "hsl(var(--gold) / 0.18)" : "transparent",
-                  borderColor: "hsl(var(--gold) / 0.5)",
-                  color: "hsl(var(--foreground))",
-                }}
-                title="Outils du président"
-              >
-                {manageMode ? "✓ Gestion" : "👑 Gérer"}
-              </button>
-            )}
             {user && (
               <button
                 onClick={() => setShowForm(!showForm)}
@@ -213,11 +199,6 @@ const RefouaChelemaWidget = () => {
         <p className="text-xs text-muted-foreground">
           Liste des malades à mentionner pendant la prière
         </p>
-        {manageMode && canManageAsPresident && (
-          <div className="mt-3 rounded-xl bg-background/60 border border-primary/20 p-3 text-[11px] text-muted-foreground leading-relaxed">
-            Mode président actif — vous pouvez supprimer tout nom partagé dans vos synagogues, et lancer / gérer leurs programmes de prière.
-          </div>
-        )}
       </div>
 
       {/* Filter chips by synagogue (uniquement les synagogues du fidèle) */}
