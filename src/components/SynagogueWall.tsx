@@ -468,7 +468,7 @@ const SynagogueWall = () => {
           )}
 
           {/* — Mikvé — */}
-          {activeSyna?.mikve_enabled && (
+          {(activeSyna?.mikve_enabled || activeSyna?.mikve_reservation_enabled) && (
             <section>
               <SectionTitle label="Mikvé" />
               <Card>
