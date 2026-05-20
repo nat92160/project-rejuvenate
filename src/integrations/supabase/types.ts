@@ -1781,6 +1781,10 @@ export type Database = {
         Args: { _fiscal_year: number; _synagogue_id: string }
         Returns: string
       }
+      step_down_from_synagogue: {
+        Args: { _synagogue_id: string }
+        Returns: undefined
+      }
       subscribe_to_place: {
         Args: {
           _google_place_id?: string
@@ -1791,6 +1795,10 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      transfer_synagogue_presidency: {
+        Args: { _new_president_id: string; _synagogue_id: string }
+        Returns: undefined
       }
     }
     Enums: {
