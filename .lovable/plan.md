@@ -1,75 +1,100 @@
+# Refonte ergonomique de l'app
 
-## Objectif
+Objectif : qu'un nouveau fidèle ou président prenne l'app en main en moins de 30 secondes, sans aide.
 
-Donner du caractère premium à la typographie de l'app sans casser l'équilibre visuel ni surcharger les écrans iPhone.
+---
 
-- Titres principaux ("Chabbat Chalom", greetings, en-têtes de page) → **Cormorant Garamond** + effet **letterpress embossé**.
-- Sous-titres de widgets (CardTitle des Annonces, Tehilim, Cours, etc.) → même police, effet letterpress plus discret.
-- Corps de texte, boutons, navigation BottomNav → **inchangés** (Montserrat).
+## Phase 1 — Mode Président bien mis en valeur
 
-## Aperçu de l'effet letterpress (sur fond crème clair)
+**Où :** uniquement dans l'onglet **Ma Synagogue**, tout en haut, AVANT tout le reste.
+
+**À la place du petit bouton actuel :** une grande carte hero or pleine largeur, impossible à manquer :
 
 ```text
-  CHABBAT CHALOM
-  ▔▔▔▔▔▔▔▔▔▔▔▔▔▔
-  Texte bleu nuit profond + highlight blanc 1 px en haut
-  + ombre noire 1 px très diffuse en bas
-  → impression d'être gravé dans le papier.
+┌──────────────────────────────────────────┐
+│ 👑   MODE PRÉSIDENT                  →  │
+│      Piloter ma synagogue                │
+│      Annonces · Horaires · Affiche · …  │
+└──────────────────────────────────────────┘
 ```
 
-Concrètement, deux text-shadows opposées :
-- `0 1px 0 rgba(255,255,255,0.85)` (highlight haut)
-- `0 -1px 1px rgba(0,31,63,0.18)` (creux bas, teinté navy)
+- Fond dégradé or, ombre dorée, hauteur ~96px
+- Pulsation douce les 5 premières secondes la 1ère fois
+- Disparaît si l'utilisateur n'est pas président/admin
 
-## Étapes
+Le bouton « Modifier ma fiche / Ajouter une fiche » descend juste en dessous.
 
-### 1. Charger la police
-- Ajouter **Cormorant Garamond** (400, 500, 600, 700) à l'import Google Fonts existant dans `src/index.css` (1 seul lien groupé, `display=swap` déjà présent).
+---
 
-### 2. Système typographique
-- Dans `tailwind.config.ts` : mapper `font-display` sur `['Cormorant Garamond', 'Lora', 'serif']` (le corps `font-sans` reste Montserrat). Tous les composants qui utilisent déjà `font-display` (AppHeader, GreetingHeader…) bénéficient automatiquement du nouveau rendu.
-- Dans `src/index.css` : remplacer la règle globale `h1, h2, h3, h4 { font-family: Montserrat }` par Cormorant + tracking légèrement positif (`letter-spacing: 0.005em`, plus aéré pour un serif).
+## Phase 2 — Onboarding fidèle (1ère ouverture, skippable)
 
-### 3. Classes utilitaires letterpress
-Ajouter dans `@layer utilities` de `src/index.css` :
+3 écrans plein écran, fond gold-soft :
 
-- `.title-letterpress` — version forte (titres XL : Chabbat Chalom, greetings)
-  - `color: hsl(var(--navy))`
-  - `text-shadow: 0 1px 0 rgba(255,255,255,.85), 0 -1px 1px rgba(0,31,63,.18)`
-  - `font-weight: 600`
-  - `font-feature-settings: "ss01", "kern", "liga"`
+1. **Bienvenue** — logo, message court, bouton « 📍 Activer ma position »
+2. **Choisir ma synagogue** — liste GPS des synagogues proches, possibilité « Sauter »
+3. **Tout est prêt** — résumé + bouton « Découvrir l'app » qui ramène à l'Accueil
 
-- `.title-letterpress-soft` — version douce (CardTitle des widgets)
-  - même principe mais ombres divisées par 2
-  - `color: hsl(var(--foreground))`
+État stocké dans `localStorage.calj_onboarded_fidele=true`.
 
-- Variante automatique pour fond sombre/navy : `.title-letterpress-on-dark` (highlight or au lieu de blanc) — pour les bandeaux Night Blue.
+---
 
-### 4. Application ciblée
+## Phase 3 — Onboarding président (1ère bascule en Mode président)
 
-| Endroit | Classe | Police |
-|---|---|---|
-| `AppHeader` "Chabbat Chalom" h1 | `font-display title-letterpress` | Cormorant 700 |
-| `GreetingHeader` h2 | `font-display title-letterpress` | Cormorant 600 |
-| `HeroSection` titres | `font-display title-letterpress` | Cormorant 700 |
-| `CardTitle` shadcn (`src/components/ui/card.tsx`) | injecter `font-display title-letterpress-soft` par défaut | Cormorant 600 |
-| Titres de page (Siddour, Omer, Zmanim hero) | `font-display title-letterpress` | Cormorant 700 |
-| **Boutons / BottomNav / inputs / corps** | inchangés | Montserrat |
+Tour guidé de 4 bulles dans le tableau de bord président :
+Affiche → Annonces → Horaires → Fidèles.
+Bouton « Passer » dispo à tout moment.
+État : `localStorage.calj_onboarded_president=true`.
 
-### 5. Garde-fous
+---
 
-- **Light mode uniquement** (mémoire respectée) → ombres calibrées sur cream/white, pas de variante dark.
-- **Lisibilité iPhone** : tester à 16-18 px (taille minimale `CardTitle`). Si le serif paraît trop fin, monter à font-weight 600.
-- **Accessibilité** : contraste navy `#001F3F` sur cream conservé (ratio AAA).
-- **Pas de letterpress sur petits caractères < 14 px** (BottomNav, micro-info) → effet illisible, on garde Montserrat propre.
-- **Pas d'ombres sur l'hébreu** (Frank Ruhl Libre) → la liturgie reste pure.
+## Phase 4 — Tooltips contextuels premiers pas
 
-### 6. Mémoire
-Sauvegarder une mémoire `mem://style/typography-letterpress-system` décrivant la règle (Cormorant Garamond pour `.font-display`, classes letterpress, exclusions) pour que les futurs widgets l'appliquent automatiquement.
+3 bulles douces affichées une seule fois sur l'Accueil fidèle, pointant vers :
+Zmanim · Refoua · Espace Perso.
+Disparaissent au tap. Stockées dans `localStorage`.
+
+---
+
+## Phase 5 — Bottom Nav à 4 onglets
+
+Au lieu des 4 onglets actuels personnalisables, on fixe une nav universelle et lisible :
+
+```text
+🏠 Accueil   🏛️ Ma Syna   🕯️ Chabbat   ⋯ Plus
+```
+
+- Mêmes 4 onglets pour fidèle et président
+- Bouton flottant 🏠 conservé
+- En mode vendredi/Chabbat, l'onglet Chabbat passe en avant (déjà géré)
+
+---
+
+## Phase 6 — Menu « Plus » organisé pro
+
+L'onglet « Plus » ouvre un sheet plein écran avec :
+
+1. **Barre de recherche** en haut (filtre instantané sur tous les libellés)
+2. **Sections pliables**, toutes ouvertes par défaut :
+   - 🙏 **Prière** — Siddour · Tehilim · Refoua · Brakhot
+   - 📅 **Calendrier** — Fêtes · Roch Hodech · Chabbatot · Mariages & Hazkara · Convertir
+   - 🛠️ **Outils** — Mizra'h · Réveil
+   - 🤝 **Communauté** — Annonces · Évènements · Cours · Urgence Minyan
+   - 👤 **Mon espace**
+3. Les anciens onglets « Affiche / Horaires / Infos Syna / Alerte » restent réservés au Mode Président (dans son dashboard, pas dans Plus).
+
+---
 
 ## Détails techniques
 
-- 1 seule modif d'import Google Fonts (pas de 2e requête réseau).
-- Aucun composant React à recréer : la modif passe par Tailwind config + `ui/card.tsx` (1 ligne) + 3 fichiers de pages/headers.
-- 0 impact perf : Cormorant 4 graisses ≈ 30 ko (woff2) chargé en parallèle, `font-display: swap` déjà actif.
-- 0 régression mobile : les touch targets et tailles d'inputs ne changent pas.
+- Pas de nouvelle table Supabase : tout l'état d'onboarding est en `localStorage`.
+- Pas de refonte visuelle des widgets eux-mêmes — uniquement IA & navigation.
+- Le composant `BottomNav` passe à des onglets fixes (suppression de `getBottomNavStorageKey`).
+- Nouveau composant `MorePanel.tsx` (sheet) pour le menu Plus.
+- Nouveau composant `FideleOnboarding.tsx` + `PresidentOnboarding.tsx`.
+- Tooltips : composant léger `FirstTimeHint.tsx` basé sur un portal + flèche.
+
+## Hors scope
+
+- Pas de redesign global des couleurs (Forced Light Mode + bleu/or conservés).
+- Pas de refonte des écrans internes (Zmanim, Siddour, etc.).
+- Pas de tour vidéo ni de tutoriel multi-étapes complexe.
