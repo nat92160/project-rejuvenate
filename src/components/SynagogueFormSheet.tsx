@@ -274,10 +274,32 @@ const SynagogueFormSheet = ({
       }
     } else {
       // Create new
-      payload.president_id = presidentId;
-      ({ error } = await supabase
-        .from("synagogue_profiles")
-        .insert(payload as any));
+      // If the caller has no president role yet (and isn't acting as admin),
+      // route through the RPC that grants the role and creates the profile
+      // as unverified, pending admin validation.
+      if (!adminMode && !isPresident) {
+        const { error: rpcError } = await supabase.rpc(
+          "request_synagogue_presidency",
+          {
+            _name: payload.name,
+            _address: payload.address,
+            _phone: payload.phone,
+            _email: payload.email,
+            _latitude: latitude,
+            _longitude: longitude,
+            _shacharit_time: payload.shacharit_time,
+            _minha_time: payload.minha_time,
+            _arvit_time: payload.arvit_time,
+            _signature: payload.signature,
+          } as any
+        );
+        error = rpcError;
+      } else {
+        payload.president_id = presidentId;
+        ({ error } = await supabase
+          .from("synagogue_profiles")
+          .insert(payload as any));
+      }
     }
 
     setSaving(false);
