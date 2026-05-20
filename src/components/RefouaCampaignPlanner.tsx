@@ -331,17 +331,17 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
               <input
                 type="number"
                 min={1}
-                max={50}
+                max={500}
                 value={slotsPerDay}
               onChange={(e) => {
                 const v = e.target.value;
                 if (v === "") { setSlotsPerDay("" as any); return; }
                 const n = parseInt(v);
-                if (!isNaN(n)) setSlotsPerDay(Math.max(1, Math.min(50, n)));
+                if (!isNaN(n)) setSlotsPerDay(Math.max(1, Math.min(500, n)));
               }}
               onBlur={(e) => {
                 const n = parseInt(e.target.value);
-                setSlotsPerDay(isNaN(n) ? 1 : Math.max(1, Math.min(50, n)));
+                setSlotsPerDay(isNaN(n) ? 1 : Math.max(1, Math.min(500, n)));
               }}
                 className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground"
                 style={{ fontSize: "16px" }}

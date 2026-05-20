@@ -334,7 +334,7 @@ const RefouaChelemaWidget = () => {
                     {p.mother_name ? (
                       <>
                         {" "}
-                        <span dir="rtl" className="font-hebrew">{p.gender === "bat" ? "בת" : "בן"}</span>{" "}
+                        <span className="italic text-muted-foreground">{p.gender === "bat" ? "bat" : "ben"}</span>{" "}
                         <bdi>{p.mother_name}</bdi>
                       </>
                     ) : null}

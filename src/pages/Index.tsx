@@ -315,22 +315,6 @@ const IndexContent = () => {
       case "dashboard":
         return (
           <>
-            {/* Bouton basculer vers interface président */}
-            {isPresident && (
-              <button
-                onClick={() => setActiveTab("president-dashboard")}
-                className="w-full mb-5 flex items-center justify-center gap-2.5 py-3.5 rounded-2xl border-none cursor-pointer transition-all active:scale-[0.98] hover:-translate-y-0.5"
-                style={{
-                  background: "var(--gradient-gold)",
-                  boxShadow: "var(--shadow-gold)",
-                  color: "hsl(var(--primary-foreground))",
-                }}
-              >
-                <span className="text-base">🏛️</span>
-                <span className="text-sm font-bold">Gérer ma synagogue</span>
-                <span className="text-xs opacity-70">→</span>
-              </button>
-            )}
             <DashboardHome setActiveTab={setActiveTab} />
           </>
         );
@@ -347,7 +331,7 @@ const IndexContent = () => {
       case "siddour": return <Navigate to={`/siddour?office=${detectOfficeNow()}`} replace />;
       case "tehilimlibre":
       case "tehilim": return <Lazy><TehilimCombinedWidget /></Lazy>;
-      case "synagogue": return <Lazy><FideleSynagogueView /></Lazy>;
+      case "synagogue": return <Lazy><FideleSynagogueView onSwitchToPresident={() => setActiveTab("president-dashboard")} /></Lazy>;
       case "chooser": return <Lazy><SynagogueChooser onSelect={() => setActiveTab("dashboard")} /></Lazy>;
       case "fetes": return <Lazy><FestivalCalendar /></Lazy>;
       case "convertisseur": return <Lazy><DateConverterWidget /></Lazy>;
