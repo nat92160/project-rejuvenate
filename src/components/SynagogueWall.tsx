@@ -565,6 +565,11 @@ const SynagogueWall = () => {
                   </div>
                 )}
               </Card>
+              {activeSyna.mikve_reservation_enabled && activeId && (
+                <div className="mt-4">
+                  <MikveBookingWidget synagogueId={activeId} />
+                </div>
+              )}
             </section>
           )}
 
