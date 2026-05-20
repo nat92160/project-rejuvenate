@@ -59,7 +59,7 @@ const RefouaJoinContent = () => {
     );
   }
 
-  const benBat = patient.gender === "bat" ? "בת" : "בן";
+  const benBat = patient.gender === "bat" ? "bat" : "ben";
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -75,7 +75,7 @@ const RefouaJoinContent = () => {
           {patient.mother_name ? (
             <>
               {" "}
-              <span dir="rtl" className="font-hebrew">{benBat}</span>{" "}
+              <span className="italic text-muted-foreground">{benBat}</span>{" "}
               <bdi>{patient.mother_name}</bdi>
             </>
           ) : null}

@@ -68,7 +68,11 @@ const getDistanceInMeters = (originLat: number, originLng: number, targetLat: nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const FideleSynagogueView = () => {
+interface FideleSynagogueViewProps {
+  onSwitchToPresident?: () => void;
+}
+
+const FideleSynagogueView = ({ onSwitchToPresident }: FideleSynagogueViewProps = {}) => {
   const { user, dbRole } = useAuth();
   const { city, geolocate, isGeolocating, locationError } = useCity();
   const [tab, setTab] = useState<"wall" | "annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat" | "horaires" | "tehilim" | "minyan" | "mikve">("wall");
@@ -363,6 +367,15 @@ const FideleSynagogueView = () => {
         </p>
         {isPresident && (
           <div className="flex flex-wrap justify-center gap-2">
+            {onSwitchToPresident && (
+              <button
+                onClick={onSwitchToPresident}
+                className="inline-flex items-center gap-2 rounded-xl border-none px-4 py-2.5 text-xs font-bold text-primary-foreground cursor-pointer transition-all active:scale-95"
+                style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+              >
+                👑 Mode président
+              </button>
+            )}
             {mySynas.map((s) => (
               <button
                 key={s.id}
