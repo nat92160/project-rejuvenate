@@ -317,7 +317,12 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
       {loading ? (
         <div className="text-center py-4 text-xs text-muted-foreground">Chargement...</div>
       ) : tab === "programme" ? (
-        <RefouaCampaignPlanner refouaId={refouaId} hebrewName={hebrewName} />
+        <RefouaCampaignPlanner
+          refouaId={refouaId}
+          hebrewName={hebrewName}
+          motherName={motherName}
+          gender={gender}
+        />
       ) : tab === "tehilim" ? (
         <div>
           <p className="text-[10px] text-muted-foreground mb-2 italic">

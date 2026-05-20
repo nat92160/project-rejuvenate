@@ -28,6 +28,8 @@ interface Slot {
 interface Props {
   refouaId: string;
   hebrewName: string;
+  motherName?: string;
+  gender?: "ben" | "bat";
 }
 
 const PRAYER_TYPES = [
@@ -37,8 +39,15 @@ const PRAYER_TYPES = [
   { value: "priere_libre", label: "🙏 Prière libre" },
 ];
 
-const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
+const formatFrenchName = (
+  name: string,
+  gender: "ben" | "bat" = "ben",
+  motherName?: string,
+) => (motherName ? `${name} ${gender === "bat" ? "bat" : "ben"} ${motherName}` : name);
+
+const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben" }: Props) => {
   const { user } = useAuth();
+  const fullName = formatFrenchName(hebrewName, gender, motherName);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,7 +121,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
       days_count: daysCount,
       slots_per_day: slotsPerDay,
       start_date: startDate,
-      title: `Refoua ${hebrewName}`,
+      title: `Refoua ${fullName}`,
     } as any);
     setCreating(false);
     if (error) {
@@ -143,8 +152,44 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
       user_id: user.id,
       display_name,
     } as any);
-    if (error) toast.error("Créneau déjà pris");
-    else toast.success(`✅ Créneau réservé pour ${display_name}`);
+    if (error) {
+      toast.error("Créneau déjà pris");
+      return;
+    }
+    // Lien avec le décompte du jour (refoua_actions)
+    const dayDate = (() => {
+      const d = new Date(campaign.start_date);
+      d.setDate(d.getDate() + (dayNumber - 1));
+      return d.toISOString().slice(0, 10);
+    })();
+    if (campaign.prayer_type === "tehilim_full") {
+      const perSlot = Math.ceil(150 / campaign.slots_per_day);
+      const start = (slotIndex - 1) * perSlot + 1;
+      const end = Math.min(slotIndex * perSlot, 150);
+      const rows = [];
+      for (let n = start; n <= end; n++) {
+        rows.push({
+          refoua_id: campaign.refoua_id,
+          user_id: user.id,
+          display_name,
+          action_type: "tehilim",
+          psalm_number: n,
+          action_date: dayDate,
+        });
+      }
+      // Best-effort: insère ce qui peut l'être, ignore les conflits
+      await supabase.from("refoua_actions").insert(rows as any);
+      toast.success(`✅ ${display_name} — psaumes ${start} à ${end} comptabilisés`);
+    } else {
+      await supabase.from("refoua_actions").insert({
+        refoua_id: campaign.refoua_id,
+        user_id: user.id,
+        display_name,
+        action_type: "prayed",
+        action_date: dayDate,
+      } as any);
+      toast.success(`✅ Créneau réservé pour ${display_name}`);
+    }
   };
 
   const releaseSlot = async (slot: Slot) => {
@@ -153,6 +198,35 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
     const isCreator = campaign?.created_by === user.id;
     if (!isOwner && !isCreator) return;
     await supabase.from("refoua_campaign_slots").delete().eq("id", slot.id);
+    // Nettoyer les actions liées à ce créneau
+    if (campaign) {
+      const dayDate = (() => {
+        const d = new Date(campaign.start_date);
+        d.setDate(d.getDate() + (slot.day_number - 1));
+        return d.toISOString().slice(0, 10);
+      })();
+      if (campaign.prayer_type === "tehilim_full") {
+        const perSlot = Math.ceil(150 / campaign.slots_per_day);
+        const start = (slot.slot_index - 1) * perSlot + 1;
+        const end = Math.min(slot.slot_index * perSlot, 150);
+        await supabase
+          .from("refoua_actions")
+          .delete()
+          .eq("refoua_id", campaign.refoua_id)
+          .eq("user_id", slot.user_id)
+          .eq("action_date", dayDate)
+          .gte("psalm_number", start)
+          .lte("psalm_number", end);
+      } else {
+        await supabase
+          .from("refoua_actions")
+          .delete()
+          .eq("refoua_id", campaign.refoua_id)
+          .eq("user_id", slot.user_id)
+          .eq("action_date", dayDate)
+          .eq("action_type", "prayed");
+      }
+    }
   };
 
   const deleteCampaign = async () => {
@@ -175,11 +249,11 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
     const prayerLabel = PRAYER_TYPES.find((p) => p.value === campaign?.prayer_type)?.label || "";
     const total = (campaign?.days_count || 0) * (campaign?.slots_per_day || 0);
     const text =
-      `🙏 Programme de Refoua Chelema pour ${hebrewName}\n` +
+      `🙏 Programme de Refoua Chelema pour ${fullName}\n` +
       (prayerLabel ? `${prayerLabel}\n` : "") +
       `📅 ${campaign?.days_count} jours • 👥 ${campaign?.slots_per_day}/jour (${slots.length}/${total} réservés)\n\n` +
       `Réservez votre créneau ici :\n${url}`;
-    await shareText(text, `Refoua Chelema – ${hebrewName}`);
+    await shareText(text, `Refoua Chelema – ${fullName}`);
   };
 
   const slotsByDay = new Map<number, Slot[]>();
@@ -433,7 +507,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
       {filledCount === totalSlots && (
         <div className="text-center py-3 rounded-xl bg-primary/10 border border-primary/20">
           <p className="text-sm font-bold text-primary">🎉 Programme complet !</p>
-          <p className="text-[11px] text-muted-foreground mt-1">Que la guérison soit accordée à {hebrewName}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Que la guérison soit accordée à {fullName}</p>
         </div>
       )}
     </div>
