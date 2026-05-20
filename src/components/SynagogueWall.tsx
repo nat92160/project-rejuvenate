@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
+import { useRole } from "@/hooks/useRole";
 
 /**
  * SynagogueWall — Tableau de la synagogue, esthétique minimaliste & chic.
@@ -54,6 +56,14 @@ interface EventRow {
   event_time: string;
   location: string;
   event_type: string;
+}
+
+interface SubscriberRow {
+  user_id: string;
+  display_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  subscribed_at: string;
 }
 
 const PALETTE = {
