@@ -24,6 +24,12 @@ const DAYS_FR = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 const MONTHS_FR = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
 
 const toHM = (t: string) => t.slice(0, 5);
+const toLocalISO = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
 
 const generateSlots = (startHM: string, endHM: string, duration: number) => {
   const [sh, sm] = startHM.split(":").map(Number);
@@ -85,8 +91,8 @@ const MikveBookingWidget = ({ synagogueId }: Props) => {
 
   const refreshData = async () => {
     if (!config || upcomingDates.length === 0) return;
-    const from = upcomingDates[0].toISOString().slice(0, 10);
-    const to = upcomingDates[upcomingDates.length - 1].toISOString().slice(0, 10);
+    const from = toLocalISO(upcomingDates[0]);
+    const to = toLocalISO(upcomingDates[upcomingDates.length - 1]);
     const [{ data: avail }, { data: mine }] = await Promise.all([
       (supabase.rpc as any)("get_mikve_availability", { _synagogue_id: synagogueId, _from: from, _to: to }),
       user
@@ -111,7 +117,7 @@ const MikveBookingWidget = ({ synagogueId }: Props) => {
   if (!config?.mikve_reservation_enabled) return null;
 
   const selectedDate = upcomingDates[selectedDateIdx];
-  const dateKey = selectedDate ? selectedDate.toISOString().slice(0, 10) : "";
+  const dateKey = selectedDate ? toLocalISO(selectedDate) : "";
   const slots = generateSlots(config.mikve_open_start, config.mikve_open_end, config.mikve_slot_duration_min);
   const capacity = Math.max(1, config.mikve_slot_capacity);
 
