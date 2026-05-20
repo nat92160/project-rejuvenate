@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { shareText } from "@/lib/shareUtils";
+import { shareText, PUBLIC_BASE_URL } from "@/lib/shareUtils";
 import { normalizeCourseType } from "@/lib/courseType";
 
 interface CoursCardProps {
@@ -98,7 +98,7 @@ const CoursCard = ({
   };
 
   const handleShare = async () => {
-    let text = `📚 ${title}\n`;
+    let text = `📚 Cours de Torah — Chabbat Chalom\n\n${title}\n`;
     if (rav) text += `👨‍🏫 ${rav}\n`;
     text += `📅 ${displayDate} à ${course_time?.slice(0, 5)}\n`;
     if (showReplayButton && replay_url) text += `\n▶️ Replay : ${replay_url}\n`;
@@ -106,7 +106,7 @@ const CoursCard = ({
     else if (!isZoom && address) text += `\n📍 ${address}\n`;
     if (description) text += `\n${description}\n`;
     text += `\n✡️ Chabbat Chalom • ${cityName}`;
-    await shareText(text, `📚 ${title}`);
+    await shareText(text, `📚 ${title} — Chabbat Chalom`, PUBLIC_BASE_URL);
   };
 
   const handleAction = () => {
