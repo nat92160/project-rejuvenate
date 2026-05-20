@@ -75,7 +75,7 @@ const RefouaJoinContent = () => {
           {patient.mother_name ? (
             <>
               {" "}
-              <span className="italic text-muted-foreground">{benBat}</span>{" "}
+              <span className="italic font-bold" style={{ color: "hsl(var(--gold))" }}>{benBat}</span>{" "}
               <bdi>{patient.mother_name}</bdi>
             </>
           ) : null}

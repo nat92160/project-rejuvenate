@@ -73,7 +73,7 @@ interface FideleSynagogueViewProps {
 }
 
 const FideleSynagogueView = ({ onSwitchToPresident }: FideleSynagogueViewProps = {}) => {
-  const { user, dbRole } = useAuth();
+  const { user, dbRole, isPresident: authIsPresident, isAdmin } = useAuth();
   const { city, geolocate, isGeolocating, locationError } = useCity();
   const [tab, setTab] = useState<"wall" | "annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat" | "horaires" | "tehilim" | "minyan" | "mikve">("wall");
   const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
@@ -81,7 +81,7 @@ const FideleSynagogueView = ({ onSwitchToPresident }: FideleSynagogueViewProps =
   const [showCreateSyna, setShowCreateSyna] = useState(false);
   const [editSynaData, setEditSynaData] = useState<any | null>(null);
   const [mySynas, setMySynas] = useState<any[]>([]);
-  const isPresident = dbRole === "president";
+  const isPresident = authIsPresident || isAdmin || dbRole === "president";
 
   // Directory state
   const [directory, setDirectory] = useState<SynaDirectoryItem[]>([]);

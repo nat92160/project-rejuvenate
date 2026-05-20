@@ -314,7 +314,7 @@ const RefouaChelemaWidget = () => {
                     {p.mother_name ? (
                       <>
                         {" "}
-                        <span className="italic text-muted-foreground">{p.gender === "bat" ? "bat" : "ben"}</span>{" "}
+                        <span className="italic font-bold" style={{ color: "hsl(var(--gold))" }}>{p.gender === "bat" ? "bat" : "ben"}</span>{" "}
                         <bdi>{p.mother_name}</bdi>
                       </>
                     ) : null}
