@@ -161,12 +161,27 @@ const SectionTitle = ({ label }: { label: string }) => (
 
 const SynagogueWall = () => {
   const { user } = useAuth();
+  const { synagogues: managedSynas } = useManagedSynagogues();
   const [synas, setSynas] = useState<SynaSummary[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [annonces, setAnnonces] = useState<AnnonceRow[]>([]);
   const [cours, setCours] = useState<CoursRow[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [subscribers, setSubscribers] = useState<SubscriberRow[]>([]);
+  const [showSubscribers, setShowSubscribers] = useState(false);
+
+  const canManageActive = !!activeId && managedSynas.some((s) => s.id === activeId);
+
+  useEffect(() => {
+    if (!activeId || !canManageActive) { setSubscribers([]); return; }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await (supabase.rpc as any)("get_synagogue_subscribers", { _synagogue_id: activeId });
+      if (!cancelled && !error) setSubscribers((data || []) as SubscriberRow[]);
+    })();
+    return () => { cancelled = true; };
+  }, [activeId, canManageActive]);
 
   const fetchSynas = useCallback(async () => {
     if (!user) {
