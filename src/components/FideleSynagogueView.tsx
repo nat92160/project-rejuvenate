@@ -793,6 +793,7 @@ const FideleSynagogueView = () => {
 
       {/* Events */}
       {tab === "events" && (
+
         <div className="space-y-3">
           {contentLoading ? (
             <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
