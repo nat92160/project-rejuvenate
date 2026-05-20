@@ -281,16 +281,38 @@ const AuthModal = ({ open, onClose }: AuthModalProps) => {
             <p className="text-xs text-destructive bg-destructive/10 p-2.5 rounded-lg">{error}</p>
           )}
           {success && (
-            <p className="text-xs text-primary bg-primary/10 p-2.5 rounded-lg">{success}</p>
+            <div
+              className="rounded-xl border-2 border-primary/40 bg-primary/10 p-4 text-center animate-in fade-in slide-in-from-top-2"
+              style={{ boxShadow: "var(--shadow-gold)" }}
+              role="status"
+              aria-live="polite"
+            >
+              <div className="text-3xl mb-2">📧</div>
+              <p className="text-sm font-bold text-primary leading-snug">
+                {success}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-2">
+                Pensez à vérifier vos spams si vous ne le voyez pas.
+              </p>
+            </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50"
-            style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+            className={`w-full rounded-xl font-extrabold text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 ${
+              mode === "signup"
+                ? "py-5 text-base tracking-wide uppercase"
+                : "py-3.5 text-sm"
+            }`}
+            style={{
+              background: "var(--gradient-gold)",
+              boxShadow: mode === "signup"
+                ? "0 12px 28px -8px hsl(var(--gold) / 0.55), var(--shadow-gold)"
+                : "var(--shadow-gold)",
+            }}
           >
-            {loading ? "⏳" : mode === "login" ? "Se connecter" : "Créer mon compte"}
+            {loading ? "⏳" : mode === "login" ? "Se connecter" : "✨ Créer mon compte"}
           </button>
 
           {mode === "login" && (
