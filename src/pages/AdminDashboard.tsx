@@ -522,6 +522,8 @@ const AdminDashboard = () => {
   const [synaProcessing, setSynaProcessing] = useState<string | null>(null);
   const [showCreateSyna, setShowCreateSyna] = useState(false);
   const [editingSyna, setEditingSyna] = useState<SynaItem | null>(null);
+  const [promoteTarget, setPromoteTarget] = useState<ManagedUser | null>(null);
+  const [promoteSynaId, setPromoteSynaId] = useState<string>("");
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -640,6 +642,36 @@ const AdminDashboard = () => {
     const { error } = await supabase.functions.invoke("admin-users", { body: { action: "set_role", user_id: userId, role } });
     if (error) toast.error("Erreur de changement de rôle");
     else { toast.success(`Rôle mis à jour : ${role}`); await fetchUsers(); }
+    setUserProcessing(null);
+  };
+
+  const openPromoteDialog = async (u: ManagedUser) => {
+    setPromoteTarget(u);
+    setPromoteSynaId("");
+    if (synas.length === 0) await fetchSynas();
+  };
+
+  const confirmPromote = async () => {
+    if (!promoteTarget) return;
+    const userId = promoteTarget.id;
+    setUserProcessing(userId);
+    // 1) grant president role
+    const { error: roleError } = await supabase.functions.invoke("admin-users", { body: { action: "set_role", user_id: userId, role: "president" } });
+    if (roleError) { toast.error("Erreur de promotion"); setUserProcessing(null); return; }
+    // 2) optionally assign to a verified synagogue via RPC
+    if (promoteSynaId) {
+      const { error: rpcError } = await supabase.rpc("transfer_synagogue_presidency", {
+        _synagogue_id: promoteSynaId,
+        _new_president_id: userId,
+      } as any);
+      if (rpcError) { toast.error("Promotion OK, mais erreur d'affectation : " + rpcError.message); }
+      else { toast.success("👑 Président nommé et synagogue affectée"); }
+      await fetchSynas();
+    } else {
+      toast.success("👑 Rôle Président attribué");
+    }
+    await fetchUsers();
+    setPromoteTarget(null);
     setUserProcessing(null);
   };
 
@@ -851,7 +883,7 @@ const AdminDashboard = () => {
                           ✏️ Modifier
                         </button>
                         {!u.roles.includes("president") && !u.roles.includes("admin") && (
-                          <button onClick={() => handleSetRole(u.id, "president")} disabled={userProcessing === u.id}
+                          <button onClick={() => openPromoteDialog(u)} disabled={userProcessing === u.id}
                             className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer disabled:opacity-50 transition-all active:scale-95 text-primary-foreground"
                             style={{ background: "var(--gradient-gold)" }}>
                             👑 Président
