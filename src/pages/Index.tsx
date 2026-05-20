@@ -55,6 +55,8 @@ const BrakhotWidget = lazy(() => import("@/components/BrakhotWidget"));
 const InfoCarousel = lazy(() => import("@/components/InfoCarousel"));
 const MikveInfoView = lazy(() => import("@/components/MikveInfoView"));
 const CitySelector = lazy(() => import("@/components/CitySelector"));
+const FideleOnboarding = lazy(() => import("@/components/FideleOnboarding"));
+import FirstTimeHint from "@/components/FirstTimeHint";
 
 import { useOmerVisibility } from "@/hooks/useOmerVisibility";
 
@@ -217,6 +219,12 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
 
   return (
     <>
+      <FirstTimeHint
+        storageKey="calj_hint_home_v1"
+        title="Votre accueil en un coup d'œil 👋"
+        message="Ici vous trouvez vos zmanim du jour et le prochain Chabbat. Touchez 🏛️ Ma Syna pour votre communauté, et ⋯ Plus pour Refoua, Tehilim, Siddour, Fêtes et toutes les autres fonctions."
+        delay={1500}
+      />
       <GreetingHeader />
       <Lazy><PersonalDatesBanner /></Lazy>
       <Lazy><CitySelector /></Lazy>
@@ -263,6 +271,13 @@ const IndexContent = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [authOpen, setAuthOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("calj_onboarded_fidele") !== "1";
+    } catch {
+      return false;
+    }
+  });
 
   const { user, isAdmin, isPresident, signOut, suspended } = useAuth();
   const pendingCount = usePendingRequests();
@@ -302,6 +317,14 @@ const IndexContent = () => {
     setActiveTab("dashboard");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+
+  if (showOnboarding) {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-background" />}>
+        <FideleOnboarding onDone={() => setShowOnboarding(false)} />
+      </Suspense>
+    );
+  }
 
   // President sees fidele dashboard by default, can switch to president mode
   const isPresidentDashboard = activeTab === "president-dashboard";

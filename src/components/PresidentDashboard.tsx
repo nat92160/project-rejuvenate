@@ -10,6 +10,7 @@ import {
   Menu, X, GraduationCap, Gem, Home, Clock, Plus
 } from "lucide-react";
 import SynagogueFormSheet from "./SynagogueFormSheet";
+import FirstTimeHint from "./FirstTimeHint";
 
 // Lazy components
 const AfficheChabbatWidget = lazy(() => import("./AfficheChabbatWidget"));
@@ -230,6 +231,13 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <FirstTimeHint
+        storageKey="calj_onboarded_president"
+        title="Bienvenue dans votre Mode Président 👑"
+        message="Depuis ce tableau de bord, gérez l'Affiche de Chabbat, vos Annonces, vos Horaires de prière, vos Fidèles et bien plus. Touchez le menu ☰ en haut à gauche pour naviguer entre les sections."
+        delay={400}
+      />
+
       {/* Mobile header */}
       <div className="flex items-center gap-3 mb-4">
         <button
