@@ -1,0 +1,1 @@
+UPDATE public.synagogue_profiles SET mikve_enabled = false WHERE id = 'f3d08156-b7ef-4763-b90d-d5122465bad8';
