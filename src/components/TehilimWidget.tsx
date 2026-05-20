@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSynaProfile } from "@/hooks/useSynaProfile";
 import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
 import { toast } from "sonner";
-import { shareText } from "@/lib/shareUtils";
+import { shareText, buildShareUrl } from "@/lib/shareUtils";
 import { Progress } from "@/components/ui/progress";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 import HazakCelebration from "@/components/HazakCelebration";
@@ -531,10 +531,10 @@ const ChainDetail = ({ chain, onBack }: { chain: Chain; onBack: () => void }) =>
     if (error) toast.error("Erreur"); else { toast.success("Chaîne supprimée"); onBack(); }
   };
 
-  const shareUrl = `${window.location.origin}/tehilim/${chain.id}`;
+  const shareUrl = buildShareUrl(`/tehilim/${chain.id}`);
   const shareChain = async () => {
-    const text = `📖 Chaîne de Tehilim : ${chain.title}${chain.dedication ? `\n🙏 ${chain.dedication}` : ""}\n\n${totalClaimed}/150 réservés • ${totalCompleted} terminés\n\nChoisissez un psaume :\n${shareUrl}`;
-    await shareText(text, `📖 ${chain.title}`);
+    const text = `📖 Chaîne de Tehilim — Chabbat Chalom\n\n${chain.title}${chain.dedication ? `\n🙏 ${chain.dedication}` : ""}\n\n${totalClaimed}/150 réservés • ${totalCompleted} terminés\n\nChoisissez un psaume :`;
+    await shareText(text, `📖 ${chain.title} — Chabbat Chalom`, shareUrl);
   };
 
   // Unique participants

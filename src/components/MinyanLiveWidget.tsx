@@ -8,6 +8,7 @@ import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 import { useCity } from "@/hooks/useCity";
 import { fetchMinhaTime } from "@/lib/hebcal";
 import { toast } from "sonner";
+import { shareText, buildShareUrl } from "@/lib/shareUtils";
 import GuestNamePrompt, { getGuestName } from "@/components/GuestNamePrompt";
 import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
 
@@ -252,14 +253,10 @@ const MinyanLiveWidget = () => {
   const shareMinyan = async () => {
     if (!currentSession || !selectedSession) return;
     const label = OFFICE_LABELS[currentSession.office_type] || currentSession.office_type;
-    const joinUrl = `${window.location.origin}/minyan/${selectedSession}`;
+    const joinUrl = buildShareUrl(`/minyan/${selectedSession}`);
     const dateStr = new Date(currentSession.office_date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-    const text = `🕍 Minyan ${label}\n📅 ${dateStr} à ${currentSession.office_time?.slice(0, 5)}\n👥 ${count}/${target}\n${isFull ? "✅ Minyan atteint !" : `⚠️ Encore ${needed} personne(s)`}\n\n📲 Inscrivez-vous ici :\n${joinUrl}`;
-    if (navigator.share) {
-      try { await navigator.share({ text }); return; } catch {}
-    }
-    await navigator.clipboard?.writeText(text);
-    toast.success("Lien copié dans le presse-papier !");
+    const text = `🚨 Urgence Minyan — Chabbat Chalom\n\n🕍 ${label}\n📅 ${dateStr} à ${currentSession.office_time?.slice(0, 5)}\n👥 ${count}/${target} inscrits\n${isFull ? "✅ Minyan atteint, Baroukh Hashem !" : `⚠️ Encore ${needed} personne(s) pour compléter`}\n\n📲 Rejoignez-nous :`;
+    await shareText(text, "🚨 Urgence Minyan — Chabbat Chalom", joinUrl);
   };
 
   if (loading) return <div className="rounded-2xl bg-card p-8 text-center border border-border"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" /></div>;

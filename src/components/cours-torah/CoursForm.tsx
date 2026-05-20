@@ -315,7 +315,7 @@ const CoursForm = forwardRef<HTMLDivElement, CoursFormProps>(({ userId, synagogu
           </div>
 
           <button
-            onClick={() => void shareText(shareMsg, createdInfo.title)}
+            onClick={() => void shareText(shareMsg, `📚 ${createdInfo.title} — Chabbat Chalom`, createdInfo.zoomLink)}
             className="w-full py-2.5 rounded-xl text-xs font-medium cursor-pointer border border-border bg-card text-muted-foreground flex items-center justify-center gap-2"
           >
             <ExternalLink size={14} /> Autre partage
