@@ -364,7 +364,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { synagogue_id, title, body, sender_id, user_ids } = await req.json();
+    const payload = await req.json();
+    const { synagogue_id, title, body, user_ids } = payload;
+    let sender_id: string | null = payload.sender_id ?? null;
 
     if (!body) {
       return new Response(JSON.stringify({ error: "Missing fields" }), {
@@ -400,23 +402,8 @@ Deno.serve(async (req) => {
           status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Must be admin OR president/adjoint of the targeted synagogue
-      const { data: adminRow } = await supabase
-        .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-      let allowed = !!adminRow;
-      if (!allowed && synagogue_id) {
-        const { data: sp } = await supabase
-          .from("synagogue_profiles")
-          .select("president_id, adjoint_id")
-          .eq("id", synagogue_id)
-          .maybeSingle();
-        allowed = !!sp && (sp.president_id === user.id || sp.adjoint_id === user.id);
-      }
-      if (!allowed) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      // Force sender_id to authenticated user to prevent impersonation
+      sender_id = user.id;
     }
 
     // Get push subscriptions — filter by synagogue_id, user_ids, or get ALL (broadcast mode)
