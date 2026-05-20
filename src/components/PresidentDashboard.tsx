@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import SynagogueFormSheet from "./SynagogueFormSheet";
 import FirstTimeHint from "./FirstTimeHint";
+import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 
 // Lazy components
 const AfficheChabbatWidget = lazy(() => import("./AfficheChabbatWidget"));
@@ -130,10 +131,11 @@ interface PresidentDashboardProps {
 
 const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboardProps) => {
   const { user, isPresident } = useAuth();
+  const { synagogues, loading: managedLoading } = useManagedSynagogues();
   const [activeFeature, setActiveFeature] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreateSyna, setShowCreateSyna] = useState(false);
-  const canManage = !!user && isPresident;
+  const canManage = !!user && isPresident && synagogues.length > 0;
 
   const selectFeature = (id: string) => {
     if (!user) {
@@ -141,8 +143,8 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
       onLoginClick?.();
       return;
     }
-    if (!isPresident) {
-      toast.error("Rôle Président requis.");
+    if (!canManage) {
+      toast.error("Affiliez-vous d'abord à une synagogue.");
       return;
     }
     setActiveFeature(id);
@@ -171,6 +173,10 @@ const PresidentDashboard = ({ onLoginClick, onSwitchToFidele }: PresidentDashboa
       default: return <StatsDashboard />;
     }
   };
+
+  if (user && isPresident && managedLoading) {
+    return <div className="flex justify-center py-12"><div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
+  }
 
   if (!canManage) {
     return (
