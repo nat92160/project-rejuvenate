@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePendingRequests } from "@/hooks/usePendingRequests";
-import { getAvailableTabs, type BottomNavMode } from "@/lib/navigation";
+import { type BottomNavMode } from "@/lib/navigation";
 import { clearAllCaches } from "@/lib/cacheUtils";
 import { toast } from "sonner";
 import AuthModal from "@/components/AuthModal";
@@ -12,16 +12,86 @@ interface MoreMenuProps {
   isOpen: boolean;
   mode: BottomNavMode;
   onClose: () => void;
-  onCustomize: () => void;
   onNavigate: (tab: string) => void;
 }
 
-const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuProps) => {
+/** Catégorisation pro des fonctions secondaires de l'app. */
+const CATEGORIES: Array<{
+  id: string;
+  title: string;
+  icon: string;
+  items: Array<{ id: string; icon: string; label: string; keywords?: string }>;
+}> = [
+  {
+    id: "priere",
+    title: "Prière",
+    icon: "🙏",
+    items: [
+      { id: "siddour", icon: "📖", label: "Siddour", keywords: "prière office tefila" },
+      { id: "tehilimlibre", icon: "📜", label: "Tehilim", keywords: "psaumes" },
+      { id: "refoua", icon: "🙏", label: "Refoua", keywords: "guérison malade" },
+      { id: "brakhot", icon: "🙌", label: "Brakhot", keywords: "bénédictions" },
+    ],
+  },
+  {
+    id: "calendrier",
+    title: "Calendrier",
+    icon: "📅",
+    items: [
+      { id: "fetes", icon: "🎉", label: "Fêtes", keywords: "yom tov pessah pourim" },
+      { id: "roshhodesh", icon: "🌙", label: "Roch Hodech", keywords: "nouveau mois" },
+      { id: "shabbatspec", icon: "✨", label: "Chabbatot spéciaux" },
+      { id: "mariages", icon: "💍", label: "Mariages & Hazkara" },
+      { id: "convertisseur", icon: "🔄", label: "Convertir une date", keywords: "hébraïque civil" },
+    ],
+  },
+  {
+    id: "outils",
+    title: "Outils",
+    icon: "🛠️",
+    items: [
+      { id: "mizrah", icon: "🧭", label: "Mizra'h", keywords: "direction jérusalem boussole" },
+      { id: "reveil", icon: "🔔", label: "Réveil & Alarme" },
+    ],
+  },
+  {
+    id: "communaute",
+    title: "Communauté",
+    icon: "🤝",
+    items: [
+      { id: "annonces", icon: "📢", label: "Annonces" },
+      { id: "evenements", icon: "📅", label: "Évènements" },
+      { id: "coursvirtuel", icon: "🎥", label: "Cours de Torah", keywords: "zoom vidéo" },
+      { id: "minyan", icon: "🚨", label: "Urgence Minyan", keywords: "quorum prière" },
+    ],
+  },
+  {
+    id: "perso",
+    title: "Mon espace",
+    icon: "👤",
+    items: [
+      { id: "perso", icon: "👤", label: "Espace personnel", keywords: "dates azkara anniversaire" },
+    ],
+  },
+];
+
+const MoreMenu = ({ isOpen, onClose, onNavigate }: MoreMenuProps) => {
   const { user, isAdmin, signOut } = useAuth();
   const pendingCount = usePendingRequests();
   const [authOpen, setAuthOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const navigate = useNavigate();
-  const menuItems = useMemo(() => getAvailableTabs(mode), [mode]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return CATEGORIES;
+    return CATEGORIES.map((cat) => ({
+      ...cat,
+      items: cat.items.filter((it) =>
+        (it.label + " " + (it.keywords || "")).toLowerCase().includes(q),
+      ),
+    })).filter((cat) => cat.items.length > 0);
+  }, [query]);
 
   const toggleAccount = (checked: boolean) => {
     if (checked) {
@@ -50,7 +120,7 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
               style={{
                 background: "hsl(var(--card))",
                 borderTop: "2px solid hsl(var(--gold) / 0.15)",
-                maxHeight: "75vh",
+                maxHeight: "85vh",
                 padding: "20px 20px calc(20px + env(safe-area-inset-bottom, 0px))",
                 boxShadow: "var(--shadow-elevated)",
               }}
@@ -63,7 +133,7 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
                 <div className="h-1 w-10 rounded-full bg-border" />
               </div>
 
-              <div className="mb-5 flex items-center justify-between border-b border-border pb-3">
+              <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
                 <h2 className="font-display text-lg font-bold text-foreground">Menu</h2>
                 <button
                   onClick={onClose}
@@ -73,30 +143,47 @@ const MoreMenu = ({ isOpen, mode, onClose, onCustomize, onNavigate }: MoreMenuPr
                 </button>
               </div>
 
-              <button
-                onClick={onCustomize}
-                className="mb-4 flex w-full items-center justify-between rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-left cursor-pointer transition-all hover:border-primary/25"
-              >
-                <div>
-                  <div className="text-sm font-bold text-foreground">Personnaliser le bandeau du bas</div>
-                  <div className="mt-1 text-[11px] text-muted-foreground">
-                    Choisissez vos 4 widgets favoris pour ce mode.
-                  </div>
-                </div>
-                <span className="text-xl">⭐</span>
-              </button>
+              {/* Recherche instantanée */}
+              <div className="mb-4 relative">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="🔎 Rechercher une fonction…"
+                  className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  style={{ fontSize: 16 }}
+                />
+              </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                {menuItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => onNavigate(item.id)}
-                    className="flex min-h-[96px] flex-col items-center justify-center gap-2.5 rounded-2xl border border-border bg-card px-3 py-4 text-center cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-muted active:scale-95"
-                  >
-                    <span className="text-2xl">{item.icon}</span>
-                    <span className="text-xs font-medium leading-tight text-foreground">{item.label}</span>
-                  </button>
-                ))}
+              {/* Sections catégorisées */}
+              <div className="space-y-5">
+                {filtered.length === 0 ? (
+                  <p className="text-center text-sm text-muted-foreground py-8">
+                    Aucune fonction ne correspond.
+                  </p>
+                ) : (
+                  filtered.map((cat) => (
+                    <div key={cat.id}>
+                      <div className="flex items-center gap-2 mb-2 px-1">
+                        <span className="text-base">{cat.icon}</span>
+                        <h3 className="text-[11px] uppercase tracking-[2px] font-bold text-muted-foreground">
+                          {cat.title}
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {cat.items.map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => onNavigate(item.id)}
+                            className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-card px-2 py-3 text-center cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-muted active:scale-95"
+                          >
+                            <span className="text-2xl">{item.icon}</span>
+                            <span className="text-[11px] font-medium leading-tight text-foreground">{item.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
               {/* Admin link */}
