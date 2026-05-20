@@ -721,10 +721,9 @@ const AdminDashboard = () => {
               key={t.id}
               onClick={() => setTab(t.id)}
               className="shrink-0 snap-start min-w-[78px] flex flex-col items-center justify-center gap-1 px-3 py-2.5 rounded-xl text-[11px] font-bold border cursor-pointer transition-all"
-              style={{ minHeight: 56 }}
               style={tab === t.id
-                ? { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", border: "none" }
-                : { background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
+                ? { minHeight: 56, background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", border: "none" }
+                : { minHeight: 56, background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
               }
             >
               <span className="text-base leading-none">{t.icon}</span>
