@@ -73,7 +73,7 @@ interface FideleSynagogueViewProps {
 }
 
 const FideleSynagogueView = ({ onSwitchToPresident }: FideleSynagogueViewProps = {}) => {
-  const { user, dbRole, isPresident: authIsPresident, isAdmin } = useAuth();
+  const { user } = useAuth();
   const { city, geolocate, isGeolocating, locationError } = useCity();
   const [tab, setTab] = useState<"wall" | "annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat" | "horaires" | "tehilim" | "minyan" | "mikve">("wall");
   const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
@@ -81,7 +81,7 @@ const FideleSynagogueView = ({ onSwitchToPresident }: FideleSynagogueViewProps =
   const [showCreateSyna, setShowCreateSyna] = useState(false);
   const [editSynaData, setEditSynaData] = useState<any | null>(null);
   const [mySynas, setMySynas] = useState<any[]>([]);
-  const isPresident = authIsPresident || isAdmin || dbRole === "president";
+  const canManageSynagogue = mySynas.length > 0;
 
   // Directory state
   const [directory, setDirectory] = useState<SynaDirectoryItem[]>([]);
@@ -353,8 +353,8 @@ const FideleSynagogueView = ({ onSwitchToPresident }: FideleSynagogueViewProps =
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      {/* HERO — Mode Président (uniquement pour présidents/admin) */}
-      {isPresident && onSwitchToPresident && (
+      {/* HERO — Mode Président (uniquement si une fiche est réellement gérée) */}
+      {canManageSynagogue && onSwitchToPresident && (
         <motion.button
           onClick={onSwitchToPresident}
           initial={{ opacity: 0, y: -8 }}
@@ -404,7 +404,7 @@ const FideleSynagogueView = ({ onSwitchToPresident }: FideleSynagogueViewProps =
             ? `Abonné à ${subscribedCount} synagogue${subscribedCount > 1 ? "s" : ""} — ${city.name}`
             : `${city.name} — Abonnez-vous à une synagogue pour recevoir ses actualités`}
         </p>
-        {isPresident && (
+        {canManageSynagogue && (
           <div className="flex flex-wrap justify-center gap-2">
             {mySynas.map((s) => (
               <button
