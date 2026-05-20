@@ -223,7 +223,7 @@ const DashboardHome = ({ setActiveTab }: { setActiveTab: (tab: string) => void }
       <FirstTimeHint
         storageKey="calj_hint_home_v1"
         title="Votre accueil en un coup d'œil 👋"
-        message="Ici vous trouvez vos zmanim du jour et le prochain Chabbat. Touchez 🏛️ Ma Syna pour votre communauté, et ⋯ Plus pour Refoua, Tehilim, Siddour, Fêtes et toutes les autres fonctions."
+        message="Ici vous trouvez vos zmanim du jour et le prochain Chabbat. Touchez 🏛️ Ma Syna pour votre communauté, et ☰ Menu pour Refoua, Tehilim, Siddour, Fêtes et toutes les autres fonctions."
         delay={1500}
       />
       <GreetingHeader />

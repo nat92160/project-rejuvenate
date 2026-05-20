@@ -22,7 +22,7 @@ const FIXED_TABS: Array<{ id: string; icon: string; label: string }> = [
   { id: "dashboard", icon: "🏠", label: "Accueil" },
   { id: "synagogue", icon: "🏛️", label: "Ma Syna" },
   { id: "chabbat", icon: "🕯️", label: "Chabbat" },
-  { id: "menu", icon: "⋯", label: "Plus" },
+  { id: "menu", icon: "☰", label: "Menu" },
 ];
 
 const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
