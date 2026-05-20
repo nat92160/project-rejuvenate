@@ -1123,6 +1123,51 @@ const AdminDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!promoteTarget} onOpenChange={(open) => !open && setPromoteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>👑 Nommer Président</DialogTitle>
+            <DialogDescription>
+              {promoteTarget?.email} sera promu Président. Choisissez la synagogue vérifiée qu'il/elle dirigera (optionnel).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-foreground">Synagogue vérifiée</label>
+            <select
+              value={promoteSynaId}
+              onChange={(e) => setPromoteSynaId(e.target.value)}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground"
+              style={{ fontSize: 16, minHeight: 48 }}
+            >
+              <option value="">— Aucune affectation (rôle seul) —</option>
+              {synas.filter((s) => s.verified).map((s) => (
+                <option key={s.id} value={s.id}>{s.name}{s.address ? ` — ${s.address.slice(0, 40)}` : ""}</option>
+              ))}
+            </select>
+            {synas.filter((s) => s.verified).length === 0 && (
+              <p className="text-xs text-muted-foreground">Aucune synagogue vérifiée. Vérifiez une fiche d'abord depuis l'onglet Synagogues.</p>
+            )}
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setPromoteTarget(null)}
+                className="flex-1 rounded-xl border border-border bg-background py-3 text-sm font-bold text-foreground cursor-pointer"
+                style={{ minHeight: 48 }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmPromote}
+                disabled={userProcessing === promoteTarget?.id}
+                className="flex-1 rounded-xl border-none py-3 text-sm font-bold text-primary-foreground cursor-pointer disabled:opacity-50"
+                style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)", minHeight: 48 }}
+              >
+                {userProcessing === promoteTarget?.id ? "⏳" : "👑 Confirmer"}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
