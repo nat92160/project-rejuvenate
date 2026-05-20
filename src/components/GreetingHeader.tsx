@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchHebrewDate } from "@/lib/hebcal";
 import { getHilloulaForDate, HilloulaEntry } from "@/lib/hilloula";
+import BottomNavCustomizer from "@/components/BottomNavCustomizer";
 
 /** Contextual greeting based on time of day */
 function getGreeting(): { text: string; emoji: string } {
@@ -17,6 +18,7 @@ const GreetingHeader = () => {
   const { user } = useAuth();
   const [hebrewDateFr, setHebrewDateFr] = useState("");
   const [hilloulot, setHilloulot] = useState<HilloulaEntry[]>([]);
+  const [customizerOpen, setCustomizerOpen] = useState(false);
   const greeting = getGreeting();
 
   const rawFirstName =
@@ -52,11 +54,25 @@ const GreetingHeader = () => {
       transition={{ duration: 0.5 }}
     >
       {/* Greeting */}
-      <div className="flex items-baseline gap-2 mb-1">
-        <span className="text-lg">{greeting.emoji}</span>
-        <h2 className="text-xl font-extrabold text-foreground font-display tracking-tight">
-          {firstName ? `${greeting.text}, ${firstName}` : greeting.text}
-        </h2>
+      <div className="flex items-start justify-between gap-3 mb-1">
+        <div className="flex items-baseline gap-2 min-w-0">
+          <span className="text-lg">{greeting.emoji}</span>
+          <h2 className="text-xl font-extrabold text-foreground font-display tracking-tight truncate">
+            {firstName ? `${greeting.text}, ${firstName}` : greeting.text}
+          </h2>
+        </div>
+        <button
+          onClick={() => setCustomizerOpen(true)}
+          className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all active:scale-95 border"
+          style={{
+            background: "hsl(var(--gold) / 0.08)",
+            borderColor: "hsl(var(--gold) / 0.25)",
+            color: "hsl(var(--gold-matte))",
+          }}
+          title="Personnaliser la barre du bas"
+        >
+          ✏️ Widgets
+        </button>
       </div>
 
       {/* Date line */}
@@ -82,6 +98,7 @@ const GreetingHeader = () => {
           </span>
         </div>
       )}
+      <BottomNavCustomizer open={customizerOpen} onClose={() => setCustomizerOpen(false)} />
     </motion.div>
   );
 };
