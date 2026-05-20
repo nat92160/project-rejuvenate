@@ -758,14 +758,14 @@ const FideleSynagogueView = () => {
         <div className="space-y-3">
           {contentLoading ? (
             <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
-          ) : cours.length === 0 ? (
+          ) : visibleCours.length === 0 ? (
             <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
               <span className="text-4xl">📚</span>
               <p className="mt-3 text-sm text-muted-foreground">
                 {subscribedCount > 0 ? "Aucun cours programmé par vos synagogues." : "Abonnez-vous à une synagogue pour voir ses cours."}
               </p>
             </div>
-          ) : cours.map((c, i) => {
+          ) : visibleCours.map((c, i) => {
             const dotColor = dayColors[c.day_of_week] || "#94a3b8";
             const href = c.zoom_link?.startsWith("http") ? c.zoom_link : `https://${c.zoom_link}`;
             return (
