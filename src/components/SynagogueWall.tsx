@@ -200,7 +200,7 @@ const SynagogueWall = () => {
         .select("id, title, content, priority, created_at")
         .eq("synagogue_id", synaId)
         .order("created_at", { ascending: false })
-        .limit(8),
+        .limit(3),
       supabase
         .from("cours_zoom")
         .select("id, title, rav, day_of_week, course_time, description, course_type, zoom_link, address")
