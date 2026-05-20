@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
-import MikveBookingWidget from "@/components/MikveBookingWidget";
+
 
 /**
  * SynagogueWall — Tableau de la synagogue, esthétique minimaliste & chic.
