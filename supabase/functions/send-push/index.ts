@@ -364,11 +364,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { synagogue_id, title, body, user_ids } = await req.json();
-    let sender_id: string | null = (await Promise.resolve(null)) as any;
-    {
-      // Will be overridden below for authenticated users; service role keeps original.
-    }
+    const payload = await req.json();
+    const { synagogue_id, title, body, user_ids } = payload;
+    let sender_id: string | null = payload.sender_id ?? null;
 
     if (!body) {
       return new Response(JSON.stringify({ error: "Missing fields" }), {
