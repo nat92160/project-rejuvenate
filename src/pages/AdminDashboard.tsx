@@ -720,14 +720,14 @@ const AdminDashboard = () => {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className="shrink-0 snap-start min-w-[88px] flex flex-col items-center gap-0.5 px-3 py-2.5 rounded-xl text-[11px] font-bold border cursor-pointer transition-all sm:flex-1 sm:flex-row sm:justify-center sm:text-sm sm:py-3"
+              className="shrink-0 snap-start min-w-[78px] flex flex-col items-center justify-center gap-1 px-3 py-2.5 rounded-xl text-[11px] font-bold border cursor-pointer transition-all"
               style={tab === t.id
-                ? { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", border: "none" }
-                : { background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
+                ? { minHeight: 56, background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))", border: "none" }
+                : { minHeight: 56, background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
               }
             >
-              <span className="text-base leading-none sm:text-sm">{t.icon}</span>
-              <span className="whitespace-nowrap">{t.label}{t.count > 0 ? ` (${t.count})` : ""}</span>
+              <span className="text-base leading-none">{t.icon}</span>
+              <span className="whitespace-nowrap leading-tight">{t.label}{t.count > 0 ? ` (${t.count})` : ""}</span>
             </button>
           ))}
         </div>
