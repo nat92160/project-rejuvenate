@@ -1781,6 +1781,21 @@ export type Database = {
         Args: { _fiscal_year: number; _synagogue_id: string }
         Returns: string
       }
+      request_synagogue_presidency: {
+        Args: {
+          _address?: string
+          _arvit_time?: string
+          _email?: string
+          _latitude?: number
+          _longitude?: number
+          _minha_time?: string
+          _name: string
+          _phone?: string
+          _shacharit_time?: string
+          _signature?: string
+        }
+        Returns: string
+      }
       step_down_from_synagogue: {
         Args: { _synagogue_id: string }
         Returns: undefined
