@@ -129,7 +129,13 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
       return;
     }
     if (!campaign) return;
-    const display_name = await getDisplayName();
+    const defaultName = await getDisplayName();
+    const input = window.prompt(
+      `Prénom de la personne qui s'engage pour ce créneau (jour ${dayNumber}) :`,
+      defaultName,
+    );
+    if (input === null) return; // cancelled
+    const display_name = (input.trim() || defaultName || "Anonyme").slice(0, 60);
     const { error } = await supabase.from("refoua_campaign_slots").insert({
       campaign_id: campaign.id,
       day_number: dayNumber,
@@ -138,7 +144,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
       display_name,
     } as any);
     if (error) toast.error("Créneau déjà pris");
-    else toast.success("✅ Créneau réservé");
+    else toast.success(`✅ Créneau réservé pour ${display_name}`);
   };
 
   const releaseSlot = async (slot: Slot) => {
@@ -410,7 +416,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName }: Props) => {
                     >
                       {taken ? (
                         <span className="block truncate">
-                          {mine ? "✓ Vous" : taken.display_name || "Anonyme"}
+                          {mine ? `✓ ${taken.display_name || "Vous"}` : taken.display_name || "Anonyme"}
                         </span>
                       ) : (
                         <span className="block text-muted-foreground">+ libre</span>
