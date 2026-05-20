@@ -327,12 +327,16 @@ const FideleSynagogueView = () => {
   const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 
   const subscribedSynas = directory.filter(d => d.isSubscribed);
+  const hasMikveSubscribed = subscribedSynas.some(s => s.mikve_enabled || s.mikve_reservation_enabled);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const visibleCours = cours.filter((c: any) => !c.specific_date || c.specific_date >= todayStr);
 
   const tabs = [
     { id: "wall" as const, icon: "📌", label: "Mur", count: 0 },
     { id: "synagogues" as const, icon: "🕍", label: "Proches", count: totalNearbyCount },
     { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
-    { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
+    { id: "cours" as const, icon: "🎥", label: "Cours", count: visibleCours.length },
+    ...(hasMikveSubscribed ? [{ id: "mikve" as const, icon: "💧", label: "Mikvé", count: 0 }] : []),
     { id: "tehilim" as const, icon: "📜", label: "Tehilim", count: tehilimChains.length },
     { id: "annuaire" as const, icon: "📋", label: "Annuaire", count: directory.length },
     { id: "minyan" as const, icon: "🚨", label: "Urgence", count: minyans.length },
