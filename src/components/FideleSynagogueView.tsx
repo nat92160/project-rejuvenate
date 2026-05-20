@@ -11,6 +11,7 @@ import PrayerTimeSuggestionForm from "./PrayerTimeSuggestionForm";
 import VerifiedSuggestionsDisplay from "./VerifiedSuggestionsDisplay";
 import SynagogueFormSheet from "./SynagogueFormSheet";
 import SynagogueWall from "./SynagogueWall";
+import MikveInfoView from "./MikveInfoView";
 
 interface SynaDirectoryItem {
   id: string;
@@ -29,9 +30,11 @@ interface SynaDirectoryItem {
   latitude: number | null;
   longitude: number | null;
   verified: boolean;
+  mikve_enabled?: boolean;
+  mikve_reservation_enabled?: boolean;
 }
 
-interface CoursItem { id: string; title: string; rav: string; day_of_week: string; course_time: string; zoom_link: string; description: string; synagogue_name?: string; }
+interface CoursItem { id: string; title: string; rav: string; day_of_week: string; course_time: string; zoom_link: string; description: string; synagogue_name?: string; specific_date?: string | null; }
 interface EventItem { id: string; title: string; description: string; event_date: string; event_time: string; location: string; event_type: string; zoom_link: string | null; synagogue_name?: string; }
 interface AnnonceItem { id: string; title: string; content: string; priority: string; created_at: string; synagogue_name?: string; }
 interface MinyanSessionView { id: string; office_type: string; office_date: string; office_time: string; target_count: number; current_count: number; synagogue_id: string | null; synagogue_name?: string; }
@@ -68,7 +71,7 @@ const getDistanceInMeters = (originLat: number, originLng: number, targetLat: nu
 const FideleSynagogueView = () => {
   const { user, dbRole } = useAuth();
   const { city, geolocate, isGeolocating, locationError } = useCity();
-  const [tab, setTab] = useState<"wall" | "annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat" | "horaires" | "tehilim" | "minyan">("wall");
+  const [tab, setTab] = useState<"wall" | "annuaire" | "synagogues" | "cours" | "events" | "annonces" | "chat" | "horaires" | "tehilim" | "minyan" | "mikve">("wall");
   const [chatSyna, setChatSyna] = useState<{ id: string; name: string } | null>(null);
   const [suggestingSynaId, setSuggestingSynaId] = useState<string | null>(null);
   const [showCreateSyna, setShowCreateSyna] = useState(false);
@@ -99,7 +102,7 @@ const FideleSynagogueView = () => {
     setDirLoading(true);
     const { data: allSynas } = await (supabase
       .from("synagogue_profiles")
-      .select("id, name, logo_url, primary_color, secondary_color, shacharit_time, minha_time, arvit_time, address, phone, email, latitude, longitude, verified, president_id, adjoint_id, signature") as any)
+      .select("id, name, logo_url, primary_color, secondary_color, shacharit_time, minha_time, arvit_time, address, phone, email, latitude, longitude, verified, president_id, adjoint_id, signature, mikve_enabled, mikve_reservation_enabled") as any)
       .neq("name", "")
       .order("name");
 
@@ -143,6 +146,8 @@ const FideleSynagogueView = () => {
           latitude: s.latitude || null,
           longitude: s.longitude || null,
           verified: s.verified ?? false,
+          mikve_enabled: !!s.mikve_enabled,
+          mikve_reservation_enabled: !!s.mikve_reservation_enabled,
         }))
     );
     // Store full synas managed by current user (president or adjoint) for "edit" button
@@ -322,12 +327,16 @@ const FideleSynagogueView = () => {
   const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 
   const subscribedSynas = directory.filter(d => d.isSubscribed);
+  const hasMikveSubscribed = subscribedSynas.some(s => s.mikve_enabled || s.mikve_reservation_enabled);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const visibleCours = cours.filter((c: any) => !c.specific_date || c.specific_date >= todayStr);
 
   const tabs = [
     { id: "wall" as const, icon: "📌", label: "Mur", count: 0 },
     { id: "synagogues" as const, icon: "🕍", label: "Proches", count: totalNearbyCount },
     { id: "horaires" as const, icon: "🕐", label: "Horaires", count: 0 },
-    { id: "cours" as const, icon: "🎥", label: "Cours", count: cours.length },
+    { id: "cours" as const, icon: "🎥", label: "Cours", count: visibleCours.length },
+    ...(hasMikveSubscribed ? [{ id: "mikve" as const, icon: "💧", label: "Mikvé", count: 0 }] : []),
     { id: "tehilim" as const, icon: "📜", label: "Tehilim", count: tehilimChains.length },
     { id: "annuaire" as const, icon: "📋", label: "Annuaire", count: directory.length },
     { id: "minyan" as const, icon: "🚨", label: "Urgence", count: minyans.length },
@@ -749,14 +758,14 @@ const FideleSynagogueView = () => {
         <div className="space-y-3">
           {contentLoading ? (
             <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
-          ) : cours.length === 0 ? (
+          ) : visibleCours.length === 0 ? (
             <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
               <span className="text-4xl">📚</span>
               <p className="mt-3 text-sm text-muted-foreground">
                 {subscribedCount > 0 ? "Aucun cours programmé par vos synagogues." : "Abonnez-vous à une synagogue pour voir ses cours."}
               </p>
             </div>
-          ) : cours.map((c, i) => {
+          ) : visibleCours.map((c, i) => {
             const dotColor = dayColors[c.day_of_week] || "#94a3b8";
             const href = c.zoom_link?.startsWith("http") ? c.zoom_link : `https://${c.zoom_link}`;
             return (
@@ -782,8 +791,16 @@ const FideleSynagogueView = () => {
         </div>
       )}
 
+      {/* Mikvé */}
+      {tab === "mikve" && (
+        <div className="space-y-3">
+          <MikveInfoView />
+        </div>
+      )}
+
       {/* Events */}
       {tab === "events" && (
+
         <div className="space-y-3">
           {contentLoading ? (
             <div className="py-10 text-center text-sm text-muted-foreground">Chargement…</div>
