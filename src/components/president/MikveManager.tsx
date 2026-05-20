@@ -52,7 +52,7 @@ const MikveManager = () => {
       const { data: rows } = await (supabase
         .from("synagogue_profiles")
         .select("id, mikve_enabled, mikve_winter_hours, mikve_summer_hours, mikve_phone, mikve_maps_link, mikve_reservation_enabled, mikve_slot_duration_min, mikve_slot_capacity, mikve_open_days, mikve_open_start, mikve_open_end") as any)
-        .eq("president_id", user.id)
+        .or(`president_id.eq.${user.id},adjoint_id.eq.${user.id}`)
         .order("created_at", { ascending: true })
         .limit(1);
       const data = rows && rows[0];
@@ -77,7 +77,8 @@ const MikveManager = () => {
   useEffect(() => {
     if (!profileId) return;
     (async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       const { data } = await (supabase
         .from("mikve_reservations")
         .select("id, slot_date, slot_time, display_name, phone, notes, user_id") as any)
