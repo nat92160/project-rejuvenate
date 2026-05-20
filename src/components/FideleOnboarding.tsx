@@ -30,6 +30,8 @@ const FideleOnboarding = ({ onDone }: Props) => {
         className="fixed inset-0 z-[400] flex flex-col"
         style={{
           background: "linear-gradient(160deg, hsl(var(--gold) / 0.10), hsl(var(--background)) 50%, hsl(var(--background)))",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -39,7 +41,8 @@ const FideleOnboarding = ({ onDone }: Props) => {
         <div className="flex justify-end p-4">
           <button
             onClick={finish}
-            className="text-xs font-bold text-muted-foreground bg-transparent border-none cursor-pointer"
+            className="text-sm font-bold text-muted-foreground bg-transparent border-none cursor-pointer"
+            style={{ minHeight: 44, minWidth: 64, padding: "8px 12px", WebkitTapHighlightColor: "transparent" }}
           >
             Passer →
           </button>
@@ -84,8 +87,8 @@ const FideleOnboarding = ({ onDone }: Props) => {
                 <button
                   onClick={() => geolocate()}
                   disabled={isGeolocating}
-                  className="mt-2 px-6 py-3 rounded-xl text-sm font-bold text-primary-foreground border-none cursor-pointer disabled:opacity-50"
-                  style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+                  className="mt-2 px-6 rounded-xl text-base font-bold text-primary-foreground border-none cursor-pointer disabled:opacity-50"
+                  style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)", minHeight: 52, WebkitTapHighlightColor: "transparent" }}
                 >
                   {isGeolocating ? "Localisation…" : `📍 Me localiser`}
                 </button>
@@ -134,8 +137,8 @@ const FideleOnboarding = ({ onDone }: Props) => {
           </div>
           <button
             onClick={next}
-            className="w-full py-4 rounded-2xl text-sm font-bold text-primary-foreground border-none cursor-pointer"
-            style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+            className="w-full rounded-2xl text-base font-bold text-primary-foreground border-none cursor-pointer"
+            style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)", minHeight: 56, WebkitTapHighlightColor: "transparent" }}
           >
             {step === STEPS - 1 ? "🚀 Découvrir l'app" : "Suivant →"}
           </button>
