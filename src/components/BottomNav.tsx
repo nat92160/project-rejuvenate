@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCity } from "@/hooks/useCity";
 import { fetchShabbatTimes, fetchZmanim } from "@/lib/hebcal";
 import { type BottomNavMode } from "@/lib/navigation";
+import { useCustomBottomTabs, getOption } from "@/lib/bottomNavCustomization";
 
 function isFridayOrShabbat(): boolean {
   const now = new Date();
@@ -17,13 +18,8 @@ interface BottomNavProps {
   onTabChange: (tab: string) => void;
 }
 
-/** 4 onglets universels, fixes — pas de personnalisation, simplicité maximale. */
-const FIXED_TABS: Array<{ id: string; icon: string; label: string }> = [
-  { id: "dashboard", icon: "🏠", label: "Accueil" },
-  { id: "synagogue", icon: "🏛️", label: "Ma Syna" },
-  { id: "chabbat", icon: "🕯️", label: "Chabbat" },
-  { id: "menu", icon: "☰", label: "Menu" },
-];
+/** Menu fixe en 4e position pour garantir l'accès à toutes les fonctions. */
+const MENU_TAB = { id: "menu", icon: "☰", label: "Menu" };
 
 const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
   const { dbRole } = useAuth();
@@ -31,6 +27,7 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
   const mode: BottomNavMode = "fidele";
   const [showMore, setShowMore] = useState(false);
   const [microInfo, setMicroInfo] = useState<Record<string, string>>({});
+  const { tabs: customIds } = useCustomBottomTabs();
 
   // Load micro-widget data with real next zman
   useEffect(() => {
@@ -88,7 +85,12 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
 
   const fridayMode = isFridayOrShabbat();
 
-  const visibleTabs = FIXED_TABS;
+  const visibleTabs = [
+    ...customIds
+      .map((id) => getOption(id))
+      .filter((o): o is { id: string; icon: string; label: string } => !!o),
+    MENU_TAB,
+  ];
 
   const handleTabClick = (id: string) => {
     if (id === "menu") {
