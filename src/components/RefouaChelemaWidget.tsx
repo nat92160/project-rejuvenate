@@ -301,8 +301,15 @@ const RefouaChelemaWidget = () => {
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                 <span className="text-xl">🕯️</span>
                 <div>
-                  <span className="font-hebrew text-base font-bold text-foreground" dir="rtl">
-                    {p.hebrew_name} {p.mother_name ? `${p.gender === "bat" ? "בת" : "בן"} ${p.mother_name}` : ""}
+                  <span className="font-hebrew text-base font-bold text-foreground" dir="ltr" style={{ unicodeBidi: "plaintext" }}>
+                    <bdi>{p.hebrew_name}</bdi>
+                    {p.mother_name ? (
+                      <>
+                        {" "}
+                        <span dir="rtl" className="font-hebrew">{p.gender === "bat" ? "בת" : "בן"}</span>{" "}
+                        <bdi>{p.mother_name}</bdi>
+                      </>
+                    ) : null}
                   </span>
                   <p className="text-[10px] text-muted-foreground mt-0.5">Ajouté le {formatDate(p.created_at)}</p>
                   {p.synagogue_ids && p.synagogue_ids.length > 0 && (
@@ -318,10 +325,10 @@ const RefouaChelemaWidget = () => {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => quickLaunchChain(p.id, p.hebrew_name)}
+                    onClick={() => setExpandedId(p.id)}
                     className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer text-primary-foreground"
                     style={{ background: "var(--gradient-gold)" }}
-                    title="Lancer une chaîne de prière (7 jours × 10 personnes)"
+                    title="Configurer une chaîne de prière (durée et nombre de participants au choix)"
                   >
                     🗓️ Lancer chaîne
                   </button>
