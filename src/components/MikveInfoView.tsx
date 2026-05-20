@@ -13,11 +13,12 @@ const MikveInfoView = () => {
   useEffect(() => {
     if (subLoading || subIds.length === 0) { setLoading(false); return; }
     (async () => {
-      const { data: d } = await (supabase
+      const { data: rows } = await (supabase
         .from("synagogue_profiles")
-        .select("id, name, mikve_winter_hours, mikve_summer_hours, mikve_phone, mikve_maps_link, mikve_reservation_enabled") as any)
-        .eq("id", subIds[0])
-        .maybeSingle();
+        .select("id, name, mikve_enabled, mikve_winter_hours, mikve_summer_hours, mikve_phone, mikve_maps_link, mikve_reservation_enabled") as any)
+        .in("id", subIds);
+      const list = (rows || []) as any[];
+      const d = list.find((r) => r.mikve_enabled || r.mikve_reservation_enabled) || list[0] || null;
       setData(d);
       setSynaId(d?.id || null);
       setLoading(false);
