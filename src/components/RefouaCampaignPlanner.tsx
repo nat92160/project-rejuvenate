@@ -59,6 +59,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
 
   // Form state
   const [prayerType, setPrayerType] = useState("tehilim_full");
+  const [customPrayer, setCustomPrayer] = useState("");
   const [daysCount, setDaysCount] = useState(7);
   const [slotsPerDay, setSlotsPerDay] = useState(10);
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -117,7 +118,15 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
       toast.error("Connectez-vous pour créer un programme");
       return;
     }
+    if (prayerType === "priere_libre" && !customPrayer.trim()) {
+      toast.error("Indiquez le nom de la prière");
+      return;
+    }
     setCreating(true);
+    const customTitle =
+      prayerType === "priere_libre"
+        ? `🙏 ${customPrayer.trim().slice(0, 80)} pour ${fullName}`
+        : `Refoua ${fullName}`;
     const { error } = await supabase.from("refoua_campaigns").insert({
       refoua_id: refouaId,
       created_by: user.id,
@@ -125,7 +134,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
       days_count: daysCount,
       slots_per_day: slotsPerDay,
       start_date: startDate,
-      title: `Refoua ${fullName}`,
+      title: customTitle,
     } as any);
     setCreating(false);
     if (error) {
@@ -280,7 +289,11 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
 
   const shareCampaign = async () => {
     const url = buildShareUrl(`/refoua/${refouaId}`);
-    const prayerLabel = PRAYER_TYPES.find((p) => p.value === campaign?.prayer_type)?.label || "";
+    const baseLabel = PRAYER_TYPES.find((p) => p.value === campaign?.prayer_type)?.label || "";
+    const prayerLabel =
+      campaign?.prayer_type === "priere_libre" && campaign?.title
+        ? `🙏 ${campaign.title.replace(/^🙏\s*/, "").split(" pour ")[0]}`
+        : baseLabel;
     const total = (campaign?.days_count || 0) * (campaign?.slots_per_day || 0);
     const text =
       `🙏 Refoua Chelema — Chabbat Chalom\n\n` +
@@ -334,6 +347,25 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
               ))}
             </select>
           </div>
+
+          {prayerType === "priere_libre" && (
+            <div>
+              <label className="block text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-1.5">
+                Nom / intitulé de la prière
+              </label>
+              <input
+                type="text"
+                value={customPrayer}
+                onChange={(e) => setCustomPrayer(e.target.value.slice(0, 80))}
+                placeholder="Ex: Ana Bekoah, Chir HaMaalot, Tikoun Haklali..."
+                className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground"
+                style={{ fontSize: "16px" }}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Cette prière sera affichée comme titre du programme.
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -418,7 +450,11 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
   const totalSlots = campaign.days_count * campaign.slots_per_day;
   const filledCount = slots.length;
   const isCreator = !!user && campaign.created_by === user.id;
-  const prayerLabel = PRAYER_TYPES.find((p) => p.value === campaign.prayer_type)?.label || campaign.prayer_type;
+  const baseLabel = PRAYER_TYPES.find((p) => p.value === campaign.prayer_type)?.label || campaign.prayer_type;
+  const prayerLabel =
+    campaign.prayer_type === "priere_libre" && campaign.title
+      ? `🙏 ${campaign.title.replace(/^🙏\s*/, "").split(" pour ")[0]}`
+      : baseLabel;
 
   return (
     <div className="space-y-3">
