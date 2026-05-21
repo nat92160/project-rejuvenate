@@ -42,7 +42,7 @@ const pilotageItems = [
   { id: "annonces", icon: Megaphone, label: "Annonces" },
   { id: "alerte", icon: Bell, label: "Alerte Push" },
   { id: "minyan", icon: Users, label: "Urgence Minyan" },
-  { id: "tehilim", icon: BookOpen, label: "Tehilim" },
+  { id: "affiche", icon: Image, label: "Affiche Chabbat" },
 ];
 
 const servicesItems = [
