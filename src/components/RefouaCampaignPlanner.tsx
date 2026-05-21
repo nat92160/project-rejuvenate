@@ -133,27 +133,25 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
   };
 
   const claimSlot = async (dayNumber: number, slotIndex: number) => {
-    if (!user) {
-      toast.error("Connectez-vous pour participer");
-      return;
-    }
     if (!campaign) return;
-    const defaultName = await getDisplayName();
+    const defaultName = user ? await getDisplayName() : "";
     const input = window.prompt(
-      `Prénom de la personne qui s'engage pour ce créneau (jour ${dayNumber}) :`,
+      `Votre prénom pour réserver cette place (jour ${dayNumber}).\nVous pouvez ajouter un ami : "Moché & David"`,
       defaultName,
     );
     if (input === null) return; // cancelled
     const display_name = (input.trim() || defaultName || "Anonyme").slice(0, 60);
+    const anonUserId = "00000000-0000-0000-0000-000000000000";
+    const effectiveUserId = user?.id || anonUserId;
     const { error } = await supabase.from("refoua_campaign_slots").insert({
       campaign_id: campaign.id,
       day_number: dayNumber,
       slot_index: slotIndex,
-      user_id: user.id,
+      user_id: effectiveUserId,
       display_name,
     } as any);
     if (error) {
-      toast.error("Créneau déjà pris");
+      toast.error("Place déjà prise");
       return;
     }
     // Lien avec le décompte du jour (refoua_actions)
@@ -162,7 +160,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
       d.setDate(d.getDate() + (dayNumber - 1));
       return d.toISOString().slice(0, 10);
     })();
-    if (campaign.prayer_type === "tehilim_full") {
+    if (user && campaign.prayer_type === "tehilim_full") {
       const perSlot = Math.ceil(150 / campaign.slots_per_day);
       const start = (slotIndex - 1) * perSlot + 1;
       const end = Math.min(slotIndex * perSlot, 150);
@@ -180,7 +178,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
       // Best-effort: insère ce qui peut l'être, ignore les conflits
       await supabase.from("refoua_actions").insert(rows as any);
       toast.success(`✅ ${display_name} — psaumes ${start} à ${end} comptabilisés`);
-    } else {
+    } else if (user) {
       await supabase.from("refoua_actions").insert({
         refoua_id: campaign.refoua_id,
         user_id: user.id,
@@ -188,7 +186,9 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
         action_type: "prayed",
         action_date: dayDate,
       } as any);
-      toast.success(`✅ Créneau réservé pour ${display_name}`);
+      toast.success(`✅ Place réservée pour ${display_name}`);
+    } else {
+      toast.success(`✅ Place réservée pour ${display_name}`);
     }
   };
 
@@ -198,7 +198,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
     const isCreator = campaign?.created_by === user.id;
     if (!isOwner && !isCreator) return;
     await supabase.from("refoua_campaign_slots").delete().eq("id", slot.id);
-    // Nettoyer les actions liées à ce créneau
+    // Nettoyer les actions liées à cette place
     if (campaign) {
       const dayDate = (() => {
         const d = new Date(campaign.start_date);
@@ -231,7 +231,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
 
   const deleteCampaign = async () => {
     if (!campaign || !user || campaign.created_by !== user.id) return;
-    if (!confirm("Supprimer ce programme et tous ses créneaux ?")) return;
+    if (!confirm("Supprimer ce programme et tous ses places ?")) return;
     const { error } = await supabase.from("refoua_campaigns").delete().eq("id", campaign.id);
     if (error) toast.error("Erreur");
     else toast.success("Programme supprimé");
@@ -253,7 +253,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
       `Programme de prières pour ${fullName}\n` +
       (prayerLabel ? `${prayerLabel}\n` : "") +
       `📅 ${campaign?.days_count} jours • 👥 ${campaign?.slots_per_day}/jour (${slots.length}/${total} réservés)\n\n` +
-      `Réservez votre créneau :`;
+      `Réservez votre place :`;
     await shareText(text, `🙏 Refoua Chelema pour ${fullName} — Chabbat Chalom`, url);
   };
 
@@ -280,7 +280,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
             🗓️ Organiser un programme de prière
           </p>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            Définissez la durée et le nombre de participants par jour. Chacun pourra ensuite réserver un créneau dans le tableau interactif.
+            Définissez la durée et le nombre de participants par jour. Chacun pourra ensuite réserver une place dans le tableau interactif.
           </p>
         </div>
 
@@ -364,7 +364,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
           </div>
 
           <div className="text-[11px] text-muted-foreground bg-muted/40 rounded-lg p-2">
-            Total : <strong className="text-foreground">{daysCount * slotsPerDay}</strong> créneaux disponibles
+            Total : <strong className="text-foreground">{daysCount * slotsPerDay}</strong> places disponibles
           </div>
 
           <button
