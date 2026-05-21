@@ -344,6 +344,25 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
             </select>
           </div>
 
+          {prayerType === "priere_libre" && (
+            <div>
+              <label className="block text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-1.5">
+                Nom / intitulé de la prière
+              </label>
+              <input
+                type="text"
+                value={customPrayer}
+                onChange={(e) => setCustomPrayer(e.target.value.slice(0, 80))}
+                placeholder="Ex: Ana Bekoah, Chir HaMaalot, Tikoun Haklali..."
+                className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground"
+                style={{ fontSize: "16px" }}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Cette prière sera affichée comme titre du programme.
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-1.5">
