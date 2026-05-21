@@ -9,12 +9,6 @@ export const PUBLIC_BASE_URL = "https://www.chabbat-chalom.com";
 
 export function buildShareUrl(path: string): string {
   const clean = path.startsWith("/") ? path : `/${path}`;
-  if (typeof window !== "undefined") {
-    const { origin, protocol } = window.location;
-    if (protocol === "http:" || protocol === "https:") {
-      return `${origin}${clean}`;
-    }
-  }
   return `${PUBLIC_BASE_URL}${clean}`;
 }
 
