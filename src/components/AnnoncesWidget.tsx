@@ -276,6 +276,17 @@ const AnnoncesWidget = () => {
                     </button>
                   )}
                 </div>
+                <InteractiveContent
+                  contentType="annonce"
+                  contentId={a.id}
+                  synagogueId={a.synagogue_id ?? synagogueId}
+                  fromPresident
+                  verified
+                  actions={{
+                    shareText: `📢 ${a.title}${a.content ? ` — ${a.content}` : ""}`,
+                    calendarTitle: a.title,
+                  }}
+                />
               </div>
             </motion.div>
           ))}
