@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { confirmDialog } from "@/components/ui/prompt-dialog";
+import { confirmDialog, promptDialog } from "@/components/ui/prompt-dialog";
 import GuestNamePrompt, { getGuestName, setGuestName } from "@/components/GuestNamePrompt";
 import { shareText, buildShareUrl } from "@/lib/shareUtils";
 
@@ -191,13 +191,31 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
 
   const claimSlot = async (dayNumber: number, slotIndex: number) => {
     if (!campaign) return;
-    let name = user ? await getDisplayName() : (getGuestName() || "");
-    if (!name) {
-      setPendingSlot({ day: dayNumber, idx: slotIndex });
-      setGuestPromptOpen(true);
+    const knownName = user ? await getDisplayName() : (getGuestName() || "");
+
+    // Tehilim complet : une seule personne par case, réutilise le nom connu sans redemander
+    if (campaign.prayer_type === "tehilim_full") {
+      if (!knownName) {
+        setPendingSlot({ day: dayNumber, idx: slotIndex });
+        setGuestPromptOpen(true);
+        return;
+      }
+      await performClaim(dayNumber, slotIndex, knownName);
       return;
     }
-    await performClaim(dayNumber, slotIndex, name);
+
+    // Autres prières : on peut réserver pour quelqu'un d'autre — demander le prénom à chaque clic
+    const input = await promptDialog({
+      title: "Réserver une place",
+      message: `Prénom de la personne qui réserve cette place (jour ${dayNumber}).`,
+      defaultValue: knownName,
+      placeholder: "Prénom",
+      okLabel: "Réserver",
+    });
+    if (input === null) return;
+    const finalName = (input.trim() || knownName || "Anonyme").slice(0, 60);
+    if (!user) setGuestName(finalName);
+    await performClaim(dayNumber, slotIndex, finalName);
   };
 
   const handleGuestNameSubmit = async (name: string) => {
