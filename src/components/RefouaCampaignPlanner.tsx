@@ -289,7 +289,11 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
 
   const shareCampaign = async () => {
     const url = buildShareUrl(`/refoua/${refouaId}`);
-    const prayerLabel = PRAYER_TYPES.find((p) => p.value === campaign?.prayer_type)?.label || "";
+    const baseLabel = PRAYER_TYPES.find((p) => p.value === campaign?.prayer_type)?.label || "";
+    const prayerLabel =
+      campaign?.prayer_type === "priere_libre" && campaign?.title
+        ? `🙏 ${campaign.title.replace(/^🙏\s*/, "").split(" pour ")[0]}`
+        : baseLabel;
     const total = (campaign?.days_count || 0) * (campaign?.slots_per_day || 0);
     const text =
       `🙏 Refoua Chelema — Chabbat Chalom\n\n` +
@@ -446,7 +450,11 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
   const totalSlots = campaign.days_count * campaign.slots_per_day;
   const filledCount = slots.length;
   const isCreator = !!user && campaign.created_by === user.id;
-  const prayerLabel = PRAYER_TYPES.find((p) => p.value === campaign.prayer_type)?.label || campaign.prayer_type;
+  const baseLabel = PRAYER_TYPES.find((p) => p.value === campaign.prayer_type)?.label || campaign.prayer_type;
+  const prayerLabel =
+    campaign.prayer_type === "priere_libre" && campaign.title
+      ? `🙏 ${campaign.title.replace(/^🙏\s*/, "").split(" pour ")[0]}`
+      : baseLabel;
 
   return (
     <div className="space-y-3">
