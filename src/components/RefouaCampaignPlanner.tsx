@@ -59,6 +59,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
 
   // Form state
   const [prayerType, setPrayerType] = useState("tehilim_full");
+  const [customPrayer, setCustomPrayer] = useState("");
   const [daysCount, setDaysCount] = useState(7);
   const [slotsPerDay, setSlotsPerDay] = useState(10);
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -117,7 +118,15 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
       toast.error("Connectez-vous pour créer un programme");
       return;
     }
+    if (prayerType === "priere_libre" && !customPrayer.trim()) {
+      toast.error("Indiquez le nom de la prière");
+      return;
+    }
     setCreating(true);
+    const customTitle =
+      prayerType === "priere_libre"
+        ? `🙏 ${customPrayer.trim().slice(0, 80)} pour ${fullName}`
+        : `Refoua ${fullName}`;
     const { error } = await supabase.from("refoua_campaigns").insert({
       refoua_id: refouaId,
       created_by: user.id,
@@ -125,7 +134,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
       days_count: daysCount,
       slots_per_day: slotsPerDay,
       start_date: startDate,
-      title: `Refoua ${fullName}`,
+      title: customTitle,
     } as any);
     setCreating(false);
     if (error) {
