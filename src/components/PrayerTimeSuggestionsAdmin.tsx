@@ -86,52 +86,28 @@ const PrayerTimeSuggestionsAdmin = ({ synagogueId, mode = "admin" }: Props) => {
 
   const handleDecision = async (id: string, decision: "approved" | "rejected") => {
     setProcessing(id);
-    const updateData: any = {
-      status: decision,
-      reviewed_by: user!.id,
-      reviewed_at: new Date().toISOString(),
-      verified: decision === "approved",
-    };
-
-    const { error } = await (supabase as any)
-      .from("prayer_time_suggestions")
-      .update(updateData)
-      .eq("id", id);
-
-    if (error) {
-      toast.error("Erreur lors de la mise à jour");
-      console.error(error);
-    } else {
-      // On approval: apply the new time to synagogue_profiles so fidèles see it live
-      if (decision === "approved") {
-        const sugg = suggestions.find((s) => s.id === id);
-        const officeColumn: Record<string, string> = {
-          shacharit: "shacharit_time",
-          minha: "minha_time",
-          arvit: "arvit_time",
-        };
-        const col = sugg?.office_name ? officeColumn[sugg.office_name] : null;
-        if (sugg?.synagogue_id && col && sugg.time_value) {
-          // Normalize HH:MM → HH:MM:00 for PG time column
-          const t = sugg.time_value.trim();
-          const normalized = /^\d{2}:\d{2}$/.test(t) ? `${t}:00` : t;
-          const { error: synaErr } = await (supabase as any)
-            .from("synagogue_profiles")
-            .update({ [col]: normalized })
-            .eq("id", sugg.synagogue_id);
-          if (synaErr) {
-            console.error("Apply time to synagogue failed:", synaErr);
-            toast.error("Approuvé, mais impossible d'appliquer l'horaire à la synagogue.");
-          } else {
-            toast.success("✅ Horaire approuvé et appliqué à la synagogue !");
-          }
-        } else {
-          toast.success("✅ Proposition approuvée et vérifiée !");
-        }
+    if (decision === "approved") {
+      // Atomic server-side: marks suggestion approved AND applies time to synagogue_profiles
+      const { error } = await (supabase as any).rpc("approve_prayer_time_suggestion", { _id: id });
+      if (error) {
+        console.error("Approve RPC failed:", error);
+        toast.error("Erreur : " + (error.message || "impossible d'appliquer"));
       } else {
-        toast.success("❌ Proposition rejetée");
+        toast.success("✅ Horaire approuvé et appliqué !");
+        await fetchSuggestions();
       }
-      await fetchSuggestions();
+    } else {
+      const { error } = await (supabase as any)
+        .from("prayer_time_suggestions")
+        .update({
+          status: "rejected",
+          reviewed_by: user!.id,
+          reviewed_at: new Date().toISOString(),
+          verified: false,
+        })
+        .eq("id", id);
+      if (error) { toast.error("Erreur lors de la mise à jour"); console.error(error); }
+      else { toast.success("❌ Proposition rejetée"); await fetchSuggestions(); }
     }
     setProcessing(null);
   };
