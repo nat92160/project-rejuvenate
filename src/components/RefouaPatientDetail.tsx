@@ -79,7 +79,14 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
     const fromProfile = user ? await getDisplayName() : "";
     const last = typeof window !== "undefined" ? localStorage.getItem("refoua_last_name") || "" : "";
     const def = fromProfile || last;
-    const input = window.prompt(label, def);
+    const { promptDialog } = await import("@/components/ui/prompt-dialog");
+    const input = await promptDialog({
+      title: "Votre prénom",
+      message: label,
+      defaultValue: def,
+      placeholder: "Prénom",
+      okLabel: "Valider",
+    });
     if (input === null) return null;
     const name = (input.trim() || def || "Anonyme").slice(0, 60);
     try { localStorage.setItem("refoua_last_name", name); } catch {}
