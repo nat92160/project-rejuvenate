@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import { sharePosterPng } from "@/components/poster/usePosterExport";
 import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
+import InteractiveContent from "@/components/interactive/InteractiveContent";
 
 interface Annonce {
   id: string;
@@ -17,6 +18,7 @@ interface Annonce {
   priority: string;
   created_at: string;
   creator_id: string;
+  synagogue_id?: string | null;
 }
 
 const AnnoncesWidget = () => {
@@ -41,7 +43,7 @@ const AnnoncesWidget = () => {
     const fetchAnnonces = async () => {
       let query = supabase
         .from("annonces")
-        .select("*")
+        .select("id, title, content, priority, created_at, creator_id, synagogue_id")
         .order("created_at", { ascending: false })
         .limit(20);
 
@@ -64,6 +66,29 @@ const AnnoncesWidget = () => {
     };
     fetchAnnonces();
   }, [subLoading, subIds, user, isPresident, synagogueId, synaLoading]);
+
+  // Realtime: refresh annonces when president posts/updates/deletes
+  useEffect(() => {
+    if (!user && subIds.length === 0) return;
+    const ch = supabase
+      .channel("annonces-feed")
+      .on("postgres_changes", { event: "*", schema: "public", table: "annonces" }, (payload: any) => {
+        const row = (payload.new || payload.old) as any;
+        const relevant = isPresident
+          ? row?.synagogue_id === synagogueId
+          : subIds.includes(row?.synagogue_id);
+        if (!relevant) return;
+        if (payload.eventType === "DELETE") {
+          setAnnonces((prev) => prev.filter((a) => a.id !== row.id));
+        } else if (payload.eventType === "INSERT") {
+          setAnnonces((prev) => prev.some((a) => a.id === row.id) ? prev : [row, ...prev]);
+        } else {
+          setAnnonces((prev) => prev.map((a) => (a.id === row.id ? { ...a, ...row } : a)));
+        }
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, [user, isPresident, synagogueId, subIds]);
 
   const handleAdd = async () => {
     if (!newTitle.trim()) { toast.error("Veuillez entrer un titre"); return; }
