@@ -102,7 +102,35 @@ const PrayerTimeSuggestionsAdmin = ({ synagogueId, mode = "admin" }: Props) => {
       toast.error("Erreur lors de la mise à jour");
       console.error(error);
     } else {
-      toast.success(decision === "approved" ? "✅ Horaire approuvé et vérifié !" : "❌ Proposition rejetée");
+      // On approval: apply the new time to synagogue_profiles so fidèles see it live
+      if (decision === "approved") {
+        const sugg = suggestions.find((s) => s.id === id);
+        const officeColumn: Record<string, string> = {
+          shacharit: "shacharit_time",
+          minha: "minha_time",
+          arvit: "arvit_time",
+        };
+        const col = sugg?.office_name ? officeColumn[sugg.office_name] : null;
+        if (sugg?.synagogue_id && col && sugg.time_value) {
+          // Normalize HH:MM → HH:MM:00 for PG time column
+          const t = sugg.time_value.trim();
+          const normalized = /^\d{2}:\d{2}$/.test(t) ? `${t}:00` : t;
+          const { error: synaErr } = await (supabase as any)
+            .from("synagogue_profiles")
+            .update({ [col]: normalized })
+            .eq("id", sugg.synagogue_id);
+          if (synaErr) {
+            console.error("Apply time to synagogue failed:", synaErr);
+            toast.error("Approuvé, mais impossible d'appliquer l'horaire à la synagogue.");
+          } else {
+            toast.success("✅ Horaire approuvé et appliqué à la synagogue !");
+          }
+        } else {
+          toast.success("✅ Proposition approuvée et vérifiée !");
+        }
+      } else {
+        toast.success("❌ Proposition rejetée");
+      }
       await fetchSuggestions();
     }
     setProcessing(null);
