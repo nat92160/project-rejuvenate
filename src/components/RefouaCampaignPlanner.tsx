@@ -527,6 +527,11 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
           <p className="text-[11px] text-muted-foreground mt-1">Que la guérison soit accordée à {fullName}</p>
         </div>
       )}
+      <GuestNamePrompt
+        open={guestPromptOpen}
+        onSubmit={handleGuestNameSubmit}
+        onClose={() => { setGuestPromptOpen(false); setPendingSlot(null); }}
+      />
     </div>
   );
 };
