@@ -60,14 +60,21 @@ const MySynagogueCard = ({ onNavigate }: Props) => {
 
   useEffect(() => {
     if (loading || subIds.length === 0) return;
-    (async () => {
+    const synaId = subIds[0];
+    const fetchSyna = async () => {
       const { data } = await supabase
         .from("synagogue_profiles")
         .select("id, name, shacharit_time, minha_time, arvit_time")
-        .eq("id", subIds[0])
+        .eq("id", synaId)
         .single();
       if (data) setSyna(data as SynaInfo);
-    })();
+    };
+    void fetchSyna();
+    const channel = supabase
+      .channel(`my-syna-card-${synaId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "synagogue_profiles", filter: `id=eq.${synaId}` }, () => void fetchSyna())
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
   }, [subIds, loading]);
 
   // Fetch nearby synagogue count when no subscription
