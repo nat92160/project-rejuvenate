@@ -194,6 +194,75 @@ export type Database = {
           },
         ]
       }
+      content_comments: {
+        Row: {
+          body: string
+          content_id: string
+          content_type: string
+          created_at: string
+          display_name: string
+          id: string
+          is_president: boolean
+          synagogue_id: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          content_id: string
+          content_type: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_president?: boolean
+          synagogue_id?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_president?: boolean
+          synagogue_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_reactions: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          display_name: string
+          emoji: string
+          id: string
+          synagogue_id: string | null
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string
+          display_name?: string
+          emoji: string
+          id?: string
+          synagogue_id?: string | null
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          display_name?: string
+          emoji?: string
+          id?: string
+          synagogue_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cours_zoom: {
         Row: {
           address: string | null
