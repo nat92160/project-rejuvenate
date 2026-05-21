@@ -241,6 +241,15 @@ const FideleSynagogueView = ({ onSwitchToPresident }: FideleSynagogueViewProps =
   useEffect(() => { fetchDirectory(); }, [user]);
   useEffect(() => { fetchContent(); }, [user]);
 
+  // Realtime: refresh directory when any synagogue profile changes (horaires, infos, etc.)
+  useEffect(() => {
+    const channel = supabase
+      .channel("fidele-syna-view-profiles")
+      .on("postgres_changes", { event: "*", schema: "public", table: "synagogue_profiles" }, () => { void fetchDirectory(); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [user]);
+
   // Fetch Google Maps nearby synagogues when GPS is active
   const fetchGoogleNearby = useCallback(async () => {
     if (!hasCoordinates(city.lat, city.lng)) return;
