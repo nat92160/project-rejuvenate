@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { promptDialog, confirmDialog } from "@/components/ui/prompt-dialog";
+import { confirmDialog } from "@/components/ui/prompt-dialog";
+import GuestNamePrompt, { getGuestName, setGuestName } from "@/components/GuestNamePrompt";
 import { shareText, buildShareUrl } from "@/lib/shareUtils";
 
 interface Campaign {
@@ -53,6 +54,8 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [guestPromptOpen, setGuestPromptOpen] = useState(false);
+  const [pendingSlot, setPendingSlot] = useState<{ day: number; idx: number } | null>(null);
 
   // Form state
   const [prayerType, setPrayerType] = useState("tehilim_full");
@@ -133,22 +136,8 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
     }
   };
 
-  const claimSlot = async (dayNumber: number, slotIndex: number) => {
+  const performClaim = async (dayNumber: number, slotIndex: number, display_name: string) => {
     if (!campaign) return;
-    const lastName = typeof window !== "undefined" ? localStorage.getItem("refoua_last_name") || "" : "";
-    const defaultName = user ? await getDisplayName() : lastName;
-    const input = await promptDialog({
-      title: "Réserver une place",
-      message: `Prénom de la personne qui réserve cette place (jour ${dayNumber}).\nVous pouvez réserver plusieurs places, une par personne.`,
-      defaultValue: defaultName,
-      placeholder: "Prénom",
-      okLabel: "Réserver",
-    });
-    if (input === null) return; // cancelled
-    const display_name = (input.trim() || defaultName || "Anonyme").slice(0, 60);
-    if (typeof window !== "undefined") {
-      try { localStorage.setItem("refoua_last_name", display_name); } catch {}
-    }
     const anonUserId = "00000000-0000-0000-0000-000000000000";
     const effectiveUserId = user?.id || anonUserId;
     const { error } = await supabase.from("refoua_campaign_slots").insert({
@@ -156,7 +145,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
       day_number: dayNumber,
       slot_index: slotIndex,
       user_id: effectiveUserId,
-      display_name,
+      display_name: display_name.slice(0, 60),
     } as any);
     if (error) {
       toast.error("Place déjà prise");
@@ -198,6 +187,25 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
     } else {
       toast.success(`✅ Place réservée pour ${display_name}`);
     }
+  };
+
+  const claimSlot = async (dayNumber: number, slotIndex: number) => {
+    if (!campaign) return;
+    let name = user ? await getDisplayName() : (getGuestName() || "");
+    if (!name) {
+      setPendingSlot({ day: dayNumber, idx: slotIndex });
+      setGuestPromptOpen(true);
+      return;
+    }
+    await performClaim(dayNumber, slotIndex, name);
+  };
+
+  const handleGuestNameSubmit = async (name: string) => {
+    setGuestName(name);
+    setGuestPromptOpen(false);
+    const slot = pendingSlot;
+    setPendingSlot(null);
+    if (slot) await performClaim(slot.day, slot.idx, name);
   };
 
   const releaseSlot = async (slot: Slot) => {
@@ -519,6 +527,11 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
           <p className="text-[11px] text-muted-foreground mt-1">Que la guérison soit accordée à {fullName}</p>
         </div>
       )}
+      <GuestNamePrompt
+        open={guestPromptOpen}
+        onSubmit={handleGuestNameSubmit}
+        onClose={() => { setGuestPromptOpen(false); setPendingSlot(null); }}
+      />
     </div>
   );
 };
