@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { promptDialog, confirmDialog } from "@/components/ui/prompt-dialog";
 import { shareText, buildShareUrl } from "@/lib/shareUtils";
 
 interface Campaign {
@@ -136,10 +137,13 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
     if (!campaign) return;
     const lastName = typeof window !== "undefined" ? localStorage.getItem("refoua_last_name") || "" : "";
     const defaultName = user ? await getDisplayName() : lastName;
-    const input = window.prompt(
-      `Prénom de la personne qui réserve cette place (jour ${dayNumber}).\nVous pouvez réserver plusieurs places, une par personne.`,
-      defaultName,
-    );
+    const input = await promptDialog({
+      title: "Réserver une place",
+      message: `Prénom de la personne qui réserve cette place (jour ${dayNumber}).\nVous pouvez réserver plusieurs places, une par personne.`,
+      defaultValue: defaultName,
+      placeholder: "Prénom",
+      okLabel: "Réserver",
+    });
     if (input === null) return; // cancelled
     const display_name = (input.trim() || defaultName || "Anonyme").slice(0, 60);
     if (typeof window !== "undefined") {
@@ -235,7 +239,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
 
   const deleteCampaign = async () => {
     if (!campaign || !user || campaign.created_by !== user.id) return;
-    if (!confirm("Supprimer ce programme et tous ses places ?")) return;
+    if (!(await confirmDialog({ message: "Supprimer ce programme et toutes ses places ?", destructive: true, okLabel: "Supprimer" }))) return;
     const { error } = await supabase.from("refoua_campaigns").delete().eq("id", campaign.id);
     if (error) toast.error("Erreur");
     else toast.success("Programme supprimé");
