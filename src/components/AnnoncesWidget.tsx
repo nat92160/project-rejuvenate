@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import CardPosterTemplate, { type CardPosterContent } from "@/components/poster/CardPosterTemplate";
 import { sharePosterPng } from "@/components/poster/usePosterExport";
 import ManagedSynagogueSelector from "@/components/president/ManagedSynagogueSelector";
-import InteractiveContent from "@/components/interactive/InteractiveContent";
 
 interface Annonce {
   id: string;
@@ -276,17 +275,6 @@ const AnnoncesWidget = () => {
                     </button>
                   )}
                 </div>
-                <InteractiveContent
-                  contentType="annonce"
-                  contentId={a.id}
-                  synagogueId={a.synagogue_id ?? synagogueId}
-                  fromPresident
-                  verified
-                  actions={{
-                    shareText: `📢 ${a.title}${a.content ? ` — ${a.content}` : ""}`,
-                    calendarTitle: a.title,
-                  }}
-                />
               </div>
             </motion.div>
           ))}

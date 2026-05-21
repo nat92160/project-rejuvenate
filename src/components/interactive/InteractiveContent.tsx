@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,15 +12,6 @@ import { shareText } from "@/lib/shareUtils";
  */
 
 export type ContentType = "annonce" | "horaire" | "evenement";
-
-const EMOJIS = ["❤️", "🙏", "✅", "👏", "🔥"] as const;
-type Emoji = (typeof EMOJIS)[number];
-
-interface Reaction {
-  id: string;
-  emoji: string;
-  user_id: string;
-}
 
 interface Comment {
   id: string;
@@ -86,7 +77,6 @@ const buildIcs = (title: string, dateISO: string, time?: string, address?: strin
 
 const InteractiveContent = ({ contentType, contentId, synagogueId, verified, fromPresident, actions }: Props) => {
   const { user } = useAuth();
-  const [reactions, setReactions] = useState<Reaction[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -97,17 +87,11 @@ const InteractiveContent = ({ contentType, contentId, synagogueId, verified, fro
   useEffect(() => {
     let cancelled = false;
     const fetchAll = async () => {
-      const [{ data: r }, { data: c }] = await Promise.all([
-        (supabase as any)
-          .from("content_reactions").select("id, emoji, user_id")
-          .eq("content_type", contentType).eq("content_id", contentId),
-        (supabase as any)
-          .from("content_comments").select("id, user_id, display_name, body, is_president, created_at")
-          .eq("content_type", contentType).eq("content_id", contentId)
-          .order("created_at", { ascending: true }).limit(50),
-      ]);
+      const { data: c } = await (supabase as any)
+        .from("content_comments").select("id, user_id, display_name, body, is_president, created_at")
+        .eq("content_type", contentType).eq("content_id", contentId)
+        .order("created_at", { ascending: true }).limit(50);
       if (cancelled) return;
-      setReactions((r as Reaction[]) || []);
       setComments((c as Comment[]) || []);
     };
     void fetchAll();
@@ -115,40 +99,11 @@ const InteractiveContent = ({ contentType, contentId, synagogueId, verified, fro
     const ch = supabase
       .channel(`ic-${contentType}-${contentId}`)
       .on("postgres_changes",
-        { event: "*", schema: "public", table: "content_reactions", filter: `content_id=eq.${contentId}` },
-        () => void fetchAll())
-      .on("postgres_changes",
         { event: "*", schema: "public", table: "content_comments", filter: `content_id=eq.${contentId}` },
         () => void fetchAll())
       .subscribe();
     return () => { cancelled = true; void supabase.removeChannel(ch); };
   }, [contentType, contentId]);
-
-  const counts = useMemo(() => {
-    const m: Record<string, number> = {};
-    for (const r of reactions) m[r.emoji] = (m[r.emoji] || 0) + 1;
-    return m;
-  }, [reactions]);
-
-  const myReactions = useMemo(
-    () => new Set(reactions.filter((r) => r.user_id === user?.id).map((r) => r.emoji)),
-    [reactions, user]
-  );
-
-  const toggleReact = async (emoji: Emoji) => {
-    if (!user) { toast.error("Connectez-vous pour réagir"); return; }
-    const existing = reactions.find((r) => r.user_id === user.id && r.emoji === emoji);
-    if (existing) {
-      await (supabase as any).from("content_reactions").delete().eq("id", existing.id);
-    } else {
-      const display_name = (user.user_metadata?.full_name || user.email?.split("@")[0] || "Fidèle").slice(0, 80);
-      const { error } = await (supabase as any).from("content_reactions").insert({
-        content_type: contentType, content_id: contentId, synagogue_id: synagogueId ?? null,
-        user_id: user.id, display_name, emoji,
-      });
-      if (error) toast.error("Impossible de réagir");
-    }
-  };
 
   const postComment = async () => {
     if (!user) { toast.error("Connectez-vous pour commenter"); return; }
@@ -250,31 +205,16 @@ const InteractiveContent = ({ contentType, contentId, synagogueId, verified, fro
         )}
       </div>
 
-      {/* Reactions bar */}
+      {/* Actions bar */}
       <div className="flex items-center gap-1 flex-wrap">
-        {EMOJIS.map((e) => {
-          const mine = myReactions.has(e);
-          const n = counts[e] || 0;
-          return (
-            <button
-              key={e}
-              onClick={() => toggleReact(e)}
-              className={`min-h-[36px] px-2.5 py-1 rounded-full text-sm border cursor-pointer transition-all active:scale-95 ${mine ? "border-primary/40 bg-primary/10" : "border-border bg-card hover:bg-muted"}`}
-              aria-pressed={mine}
-            >
-              <span>{e}</span>
-              {n > 0 && <span className="ml-1 text-[11px] font-bold text-foreground">{n}</span>}
-            </button>
-          );
-        })}
         <button
           onClick={() => setShowComments((v) => !v)}
-          className="min-h-[36px] px-2.5 py-1 rounded-full text-sm border border-border bg-card hover:bg-muted cursor-pointer transition-all active:scale-95 ml-auto"
+          className="min-h-[36px] px-2.5 py-1 rounded-full text-sm border border-border bg-card hover:bg-muted cursor-pointer transition-all active:scale-95"
         >
           💬 {comments.length > 0 && <span className="text-[11px] font-bold">{comments.length}</span>}
         </button>
         {hasActions && (
-          <div className="relative">
+          <div className="relative ml-auto">
             <button
               onClick={() => setShowMenu((v) => !v)}
               className="min-h-[36px] w-9 rounded-full text-base border border-border bg-card hover:bg-muted cursor-pointer transition-all active:scale-95 flex items-center justify-center"

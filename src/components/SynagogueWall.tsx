@@ -646,17 +646,6 @@ const SynagogueWall = () => {
                     >
                       {formatRelative(a.created_at)}
                     </p>
-                    <InteractiveContent
-                      contentType="annonce"
-                      contentId={a.id}
-                      synagogueId={activeId}
-                      fromPresident
-                      verified
-                      actions={{
-                        shareText: `📢 ${a.title}${a.content ? ` — ${a.content}` : ""}`,
-                        calendarTitle: a.title,
-                      }}
-                    />
                   </Card>
                 ))}
               </div>
@@ -873,20 +862,6 @@ const SynagogueWall = () => {
                         {ev.description}
                       </p>
                     )}
-                    <InteractiveContent
-                      contentType="evenement"
-                      contentId={ev.id}
-                      synagogueId={activeId}
-                      fromPresident
-                      verified
-                      actions={{
-                        shareText: `🎉 ${ev.title} — ${formatDate(ev.event_date)} ${ev.event_time}${ev.location ? ` · ${ev.location}` : ""}`,
-                        calendarTitle: ev.title,
-                        eventDate: ev.event_date,
-                        eventTime: ev.event_time,
-                        address: ev.location || undefined,
-                      }}
-                    />
                   </Card>
                 ))}
               </div>
