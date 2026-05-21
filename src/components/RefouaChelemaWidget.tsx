@@ -125,40 +125,48 @@ const RefouaChelemaWidget = () => {
 
   const synaNameById = (id: string) => synaOptions.find(s => s.id === id)?.name || "Synagogue";
 
-  // Quick-launch a default prayer chain in 1 click (Tehilim complet · 7 jours · 10 personnes)
-  const quickLaunchChain = async (patientId: string, patientName: string) => {
+  // Inscrire le nom pour les prières dans une synagogue de l'utilisateur
+  const registerAtSynagogue = async (p: Patient) => {
     if (!user) {
-      toast.error("Connectez-vous pour lancer une chaîne");
+      toast.error("Connectez-vous pour inscrire un nom à la synagogue");
       return;
     }
-    // If a campaign already exists for this patient, just open the detail
-    const { data: existing } = await supabase
-      .from("refoua_campaigns")
-      .select("id")
-      .eq("refoua_id", patientId)
-      .limit(1);
-    if (existing && existing.length > 0) {
-      toast.success("Chaîne déjà active — ouverture du tableau");
-      setExpandedId(patientId);
+    if (synaOptions.length === 0) {
+      toast.error("Abonnez-vous d'abord à une synagogue pour y inscrire des noms");
       return;
     }
-    const today = new Date().toISOString().slice(0, 10);
-    const { error } = await supabase.from("refoua_campaigns").insert({
-      refoua_id: patientId,
-      created_by: user.id,
-      prayer_type: "tehilim_full",
-      days_count: 7,
-      slots_per_day: 10,
-      start_date: today,
-      title: `Refoua ${patientName}`,
-    } as any);
-    if (error) {
-      toast.error("Erreur lors du lancement");
-      console.error(error);
+    const current = p.synagogue_ids || [];
+    let targetId: string | null = null;
+    if (synaOptions.length === 1) {
+      targetId = synaOptions[0].id;
     } else {
-      toast.success("🗓️ Chaîne lancée — invitez vos proches à réserver un créneau");
-      setExpandedId(patientId);
+      const list = synaOptions
+        .map((s, idx) => `${idx + 1}. ${s.name}${current.includes(s.id) ? " ✓" : ""}`)
+        .join("\n");
+      const ans = window.prompt(`Inscrire ce nom pour les prières à la synagogue.\nEntrez le numéro :\n\n${list}`);
+      if (!ans) return;
+      const idx = parseInt(ans, 10) - 1;
+      if (isNaN(idx) || idx < 0 || idx >= synaOptions.length) {
+        toast.error("Choix invalide");
+        return;
+      }
+      targetId = synaOptions[idx].id;
     }
+    if (!targetId) return;
+    const already = current.includes(targetId);
+    const next = already ? current.filter((id) => id !== targetId) : [...current, targetId];
+    const { error } = await supabase
+      .from("refoua_chelema")
+      .update({ synagogue_ids: next.length > 0 ? next : null } as any)
+      .eq("id", p.id);
+    if (error) {
+      toast.error("Erreur lors de l'inscription");
+      console.error(error);
+      return;
+    }
+    setPatients((prev) => prev.map((x) => (x.id === p.id ? { ...x, synagogue_ids: next.length > 0 ? next : null } : x)));
+    const synaName = synaOptions.find((s) => s.id === targetId)?.name || "la synagogue";
+    toast.success(already ? `Retiré de ${synaName}` : `🏛️ Inscrit à ${synaName} pour les prières`);
   };
 
   // Fidèle ne voit que les noms partagés dans ses synagogues (abonnées + gérées).
@@ -333,12 +341,12 @@ const RefouaChelemaWidget = () => {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => setExpandedId(p.id)}
+                    onClick={() => registerAtSynagogue(p)}
                     className="px-3 py-1.5 rounded-lg text-[10px] font-bold border-none cursor-pointer text-primary-foreground"
                     style={{ background: "var(--gradient-gold)" }}
-                    title="Configurer une chaîne de prière (durée et nombre de participants au choix)"
+                    title="Inscrire ce nom pour les prières à votre synagogue"
                   >
-                    🗓️ Lancer chaîne
+                    🏛️ Inscrire à la syna
                   </button>
                   <button
                     onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
