@@ -12,6 +12,7 @@ import VerifiedSuggestionsDisplay from "./VerifiedSuggestionsDisplay";
 import SynagogueFormSheet from "./SynagogueFormSheet";
 import SynagogueWall from "./SynagogueWall";
 import MikveInfoView from "./MikveInfoView";
+import InteractiveContent from "@/components/interactive/InteractiveContent";
 
 interface SynaDirectoryItem {
   id: string;
