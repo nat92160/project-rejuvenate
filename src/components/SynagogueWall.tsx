@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
+import InteractiveContent from "@/components/interactive/InteractiveContent";
 
 
 /**
@@ -464,6 +465,30 @@ const SynagogueWall = () => {
                     </div>
                   ))}
                 </div>
+                {/* Interactive per-office reactions + comments */}
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {[
+                    { key: "shacharit", label: "Cha'harit", time: activeSyna.shacharit_time },
+                    { key: "minha", label: "Min'ha", time: activeSyna.minha_time },
+                    { key: "arvit", label: "Arvit", time: activeSyna.arvit_time },
+                  ].filter((o) => !!o.time).map((o) => (
+                    <div key={o.key}>
+                      <InteractiveContent
+                        contentType="horaire"
+                        contentId={`${activeSyna.id}:${o.key}`}
+                        synagogueId={activeSyna.id}
+                        fromPresident
+                        verified
+                        actions={{
+                          shareText: `🕐 ${o.label} ${formatTime(o.time)} — ${activeSyna.name}`,
+                          calendarTitle: `${o.label} — ${activeSyna.name}`,
+                          eventDate: new Date().toISOString().slice(0, 10),
+                          eventTime: o.time ? o.time.slice(0, 5) : undefined,
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
               </Card>
             </section>
           )}
@@ -621,6 +646,17 @@ const SynagogueWall = () => {
                     >
                       {formatRelative(a.created_at)}
                     </p>
+                    <InteractiveContent
+                      contentType="annonce"
+                      contentId={a.id}
+                      synagogueId={activeId}
+                      fromPresident
+                      verified
+                      actions={{
+                        shareText: `📢 ${a.title}${a.content ? ` — ${a.content}` : ""}`,
+                        calendarTitle: a.title,
+                      }}
+                    />
                   </Card>
                 ))}
               </div>
@@ -837,6 +873,20 @@ const SynagogueWall = () => {
                         {ev.description}
                       </p>
                     )}
+                    <InteractiveContent
+                      contentType="evenement"
+                      contentId={ev.id}
+                      synagogueId={activeId}
+                      fromPresident
+                      verified
+                      actions={{
+                        shareText: `🎉 ${ev.title} — ${formatDate(ev.event_date)} ${ev.event_time}${ev.location ? ` · ${ev.location}` : ""}`,
+                        calendarTitle: ev.title,
+                        eventDate: ev.event_date,
+                        eventTime: ev.event_time,
+                        address: ev.location || undefined,
+                      }}
+                    />
                   </Card>
                 ))}
               </div>

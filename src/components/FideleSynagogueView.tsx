@@ -12,6 +12,7 @@ import VerifiedSuggestionsDisplay from "./VerifiedSuggestionsDisplay";
 import SynagogueFormSheet from "./SynagogueFormSheet";
 import SynagogueWall from "./SynagogueWall";
 import MikveInfoView from "./MikveInfoView";
+import InteractiveContent from "@/components/interactive/InteractiveContent";
 
 interface SynaDirectoryItem {
   id: string;
@@ -962,6 +963,31 @@ const FideleSynagogueView = ({ onSwitchToPresident }: FideleSynagogueViewProps =
               ) : (
                 <p className="text-xs text-muted-foreground text-center py-2">Aucun horaire renseigné par le président.</p>
               )}
+
+              {/* Interactive reactions/comments/actions per office */}
+              {[
+                { key: "shacharit", label: "Cha'harit", time: syna.shacharit_time },
+                { key: "minha", label: "Min'ha", time: syna.minha_time },
+                { key: "arvit", label: "Arvit", time: syna.arvit_time },
+              ].filter((o) => !!o.time).map((o) => (
+                <InteractiveContent
+                  key={o.key}
+                  contentType="horaire"
+                  contentId={`${syna.id}:${o.key}`}
+                  synagogueId={syna.id}
+                  fromPresident
+                  verified={!!syna.verified}
+                  actions={{
+                    shareText: `🕐 ${o.label} ${o.time!.slice(0, 5)} — ${syna.name}`,
+                    calendarTitle: `${o.label} — ${syna.name}`,
+                    eventDate: new Date().toISOString().slice(0, 10),
+                    eventTime: o.time!.slice(0, 5),
+                    address: syna.address || undefined,
+                    lat: syna.latitude ?? undefined,
+                    lng: syna.longitude ?? undefined,
+                  }}
+                />
+              ))}
 
               {/* Verified community suggestions */}
               <VerifiedSuggestionsDisplay synagogueId={syna.id} />
