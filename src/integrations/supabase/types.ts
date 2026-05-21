@@ -1751,6 +1751,10 @@ export type Database = {
       }
     }
     Functions: {
+      approve_prayer_time_suggestion: {
+        Args: { _id: string }
+        Returns: undefined
+      }
       assign_cerfa_number: { Args: { _donation_id: string }; Returns: string }
       get_mikve_availability: {
         Args: { _from: string; _synagogue_id: string; _to: string }
