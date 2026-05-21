@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { NICHMAT_PRAYER } from "@/lib/nichmat-prayer";
 import RefouaCampaignPlanner from "./RefouaCampaignPlanner";
+import GuestNamePrompt, { getGuestName, setGuestName } from "@/components/GuestNamePrompt";
 
 interface Action {
   id: string;
@@ -30,6 +31,8 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNichmat, setShowNichmat] = useState(false);
+  const [guestPromptOpen, setGuestPromptOpen] = useState(false);
+  const [pendingPsalm, setPendingPsalm] = useState<number | null>(null);
   const today = todayISO();
 
   useEffect(() => {
@@ -77,7 +80,7 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
 
   const promptName = async (label: string): Promise<string | null> => {
     const fromProfile = user ? await getDisplayName() : "";
-    const last = typeof window !== "undefined" ? localStorage.getItem("refoua_last_name") || "" : "";
+    const last = getGuestName() || (typeof window !== "undefined" ? localStorage.getItem("refoua_last_name") || "" : "");
     const def = fromProfile || last;
     const { promptDialog } = await import("@/components/ui/prompt-dialog");
     const input = await promptDialog({
@@ -90,6 +93,7 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
     if (input === null) return null;
     const name = (input.trim() || def || "Anonyme").slice(0, 60);
     try { localStorage.setItem("refoua_last_name", name); } catch {}
+    if (!user) setGuestName(name);
     return name;
   };
 
@@ -98,8 +102,12 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
       toast.error(`Psaume ${n} déjà pris aujourd'hui`);
       return;
     }
-    const display_name = await promptName(`Votre prénom pour réserver le psaume ${n} :`);
-    if (!display_name) return;
+    let display_name = user ? await getDisplayName() : getGuestName();
+    if (!display_name) {
+      setPendingPsalm(n);
+      setGuestPromptOpen(true);
+      return;
+    }
     const { error } = await supabase.from("refoua_actions").insert({
       refoua_id: refouaId,
       user_id: user?.id || ANON_USER_ID,
@@ -109,6 +117,14 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
     } as any);
     if (error) toast.error("Psaume déjà pris");
     else toast.success(`✅ Tehilim ${n} réservé pour ${display_name}`);
+  };
+
+  const handleGuestNameSubmit = async (name: string) => {
+    setGuestName(name);
+    setGuestPromptOpen(false);
+    const psalm = pendingPsalm;
+    setPendingPsalm(null);
+    if (psalm !== null) await claimPsalm(psalm);
   };
 
   const releasePsalm = async (action: Action) => {
