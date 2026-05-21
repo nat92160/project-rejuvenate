@@ -6,6 +6,7 @@ import { useSubscribedSynaIds } from "@/hooks/useSubscribedSynaIds";
 import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
 import { toast } from "sonner";
 import RefouaPatientDetail from "./RefouaPatientDetail";
+import { promptDialog, confirmDialog, chooseDialog } from "@/components/ui/prompt-dialog";
 
 interface Patient {
   id: string;
@@ -110,7 +111,7 @@ const RefouaChelemaWidget = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Retirer ce nom de la liste ?")) return;
+    if (!(await confirmDialog({ message: "Retirer ce nom de la liste ?", destructive: true, okLabel: "Retirer" }))) return;
     const { error } = await supabase.from("refoua_chelema").delete().eq("id", id);
     if (error) {
       toast.error("Erreur lors de la suppression");
@@ -140,17 +141,12 @@ const RefouaChelemaWidget = () => {
     if (synaOptions.length === 1) {
       targetId = synaOptions[0].id;
     } else {
-      const list = synaOptions
-        .map((s, idx) => `${idx + 1}. ${s.name}${current.includes(s.id) ? " ✓" : ""}`)
-        .join("\n");
-      const ans = window.prompt(`Inscrire ce nom pour les prières à la synagogue.\nEntrez le numéro :\n\n${list}`);
-      if (!ans) return;
-      const idx = parseInt(ans, 10) - 1;
-      if (isNaN(idx) || idx < 0 || idx >= synaOptions.length) {
-        toast.error("Choix invalide");
-        return;
-      }
-      targetId = synaOptions[idx].id;
+      targetId = await chooseDialog({
+        title: "Inscrire à la synagogue",
+        message: "Sélectionnez la synagogue où ce nom sera récité pendant les prières.",
+        options: synaOptions.map((s) => ({ id: s.id, label: s.name, selected: current.includes(s.id) })),
+      });
+      if (!targetId) return;
     }
     if (!targetId) return;
     const already = current.includes(targetId);
