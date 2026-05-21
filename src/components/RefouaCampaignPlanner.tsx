@@ -134,13 +134,17 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
 
   const claimSlot = async (dayNumber: number, slotIndex: number) => {
     if (!campaign) return;
-    const defaultName = user ? await getDisplayName() : "";
+    const lastName = typeof window !== "undefined" ? localStorage.getItem("refoua_last_name") || "" : "";
+    const defaultName = user ? await getDisplayName() : lastName;
     const input = window.prompt(
-      `Votre prénom pour réserver cette place (jour ${dayNumber}).\nVous pouvez ajouter un ami : "Moché & David"`,
+      `Prénom de la personne qui réserve cette place (jour ${dayNumber}).\nVous pouvez réserver plusieurs places, une par personne.`,
       defaultName,
     );
     if (input === null) return; // cancelled
     const display_name = (input.trim() || defaultName || "Anonyme").slice(0, 60);
+    if (typeof window !== "undefined") {
+      try { localStorage.setItem("refoua_last_name", display_name); } catch {}
+    }
     const anonUserId = "00000000-0000-0000-0000-000000000000";
     const effectiveUserId = user?.id || anonUserId;
     const { error } = await supabase.from("refoua_campaign_slots").insert({
