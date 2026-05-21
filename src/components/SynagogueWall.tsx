@@ -646,6 +646,17 @@ const SynagogueWall = () => {
                     >
                       {formatRelative(a.created_at)}
                     </p>
+                    <InteractiveContent
+                      contentType="annonce"
+                      contentId={a.id}
+                      synagogueId={activeId}
+                      fromPresident
+                      verified
+                      actions={{
+                        shareText: `📢 ${a.title}${a.content ? ` — ${a.content}` : ""}`,
+                        calendarTitle: a.title,
+                      }}
+                    />
                   </Card>
                 ))}
               </div>
