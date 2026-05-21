@@ -67,13 +67,7 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
   const userPrayedToday = !!user && actions.some((a) => a.action_type === "prayed" && a.user_id === user.id);
   const userNichmatToday = !!user && actions.some((a) => a.action_type === "nichmat" && a.user_id === user.id);
 
-  const ensureUser = () => {
-    if (!user) {
-      toast.error("Connectez-vous pour participer");
-      return false;
-    }
-    return true;
-  };
+  const ANON_USER_ID = "00000000-0000-0000-0000-000000000000";
 
   const getDisplayName = async () => {
     if (!user) return "";
@@ -81,22 +75,33 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
     return (data?.first_name || data?.display_name || "Anonyme").toString();
   };
 
+  const promptName = async (label: string): Promise<string | null> => {
+    const fromProfile = user ? await getDisplayName() : "";
+    const last = typeof window !== "undefined" ? localStorage.getItem("refoua_last_name") || "" : "";
+    const def = fromProfile || last;
+    const input = window.prompt(label, def);
+    if (input === null) return null;
+    const name = (input.trim() || def || "Anonyme").slice(0, 60);
+    try { localStorage.setItem("refoua_last_name", name); } catch {}
+    return name;
+  };
+
   const claimPsalm = async (n: number) => {
-    if (!ensureUser()) return;
     if (psalmsTaken.has(n)) {
       toast.error(`Psaume ${n} déjà pris aujourd'hui`);
       return;
     }
-    const display_name = await getDisplayName();
+    const display_name = await promptName(`Votre prénom pour réserver le psaume ${n} :`);
+    if (!display_name) return;
     const { error } = await supabase.from("refoua_actions").insert({
       refoua_id: refouaId,
-      user_id: user!.id,
+      user_id: user?.id || ANON_USER_ID,
       display_name,
       action_type: "tehilim",
       psalm_number: n,
     } as any);
     if (error) toast.error("Psaume déjà pris");
-    else toast.success(`✅ Tehilim ${n} réservé pour vous`);
+    else toast.success(`✅ Tehilim ${n} réservé pour ${display_name}`);
   };
 
   const releasePsalm = async (action: Action) => {
@@ -105,15 +110,15 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
   };
 
   const markPrayed = async () => {
-    if (!ensureUser()) return;
-    if (userPrayedToday) {
+    if (user && userPrayedToday) {
       toast.info("Vous avez déjà prié aujourd'hui 🙏");
       return;
     }
-    const display_name = await getDisplayName();
+    const display_name = await promptName("Votre prénom :");
+    if (!display_name) return;
     const { error } = await supabase.from("refoua_actions").insert({
       refoua_id: refouaId,
-      user_id: user!.id,
+      user_id: user?.id || ANON_USER_ID,
       display_name,
       action_type: "prayed",
     } as any);
@@ -122,11 +127,11 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
   };
 
   const markNichmat = async () => {
-    if (!ensureUser()) return;
-    const display_name = await getDisplayName();
+    const display_name = await promptName("Votre prénom :");
+    if (!display_name) return;
     const { error } = await supabase.from("refoua_actions").insert({
       refoua_id: refouaId,
-      user_id: user!.id,
+      user_id: user?.id || ANON_USER_ID,
       display_name,
       action_type: "nichmat",
     } as any);
