@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useManagedSynagogues } from "@/hooks/useManagedSynagogues";
+import InteractiveContent from "@/components/interactive/InteractiveContent";
 
 
 /**
