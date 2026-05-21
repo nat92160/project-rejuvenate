@@ -102,7 +102,7 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
       toast.error(`Psaume ${n} déjà pris aujourd'hui`);
       return;
     }
-    let display_name = user ? await getDisplayName() : getGuestName();
+    const display_name = user ? await getDisplayName() : getGuestName();
     if (!display_name) {
       setPendingPsalm(n);
       setGuestPromptOpen(true);
@@ -393,9 +393,8 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
             <p className="text-[10px] text-muted-foreground">
               {nichmatCount} {nichmatCount > 1 ? "personnes l'ont récitée" : "personne l'a récitée"} aujourd'hui
             </p>
-            <button
-              onClick={markNichmat}
-              disabled={!user}
+          <button
+            onClick={markNichmat}
               className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-primary-foreground border-none cursor-pointer disabled:opacity-50"
               style={{ background: "var(--gradient-gold)" }}
             >
@@ -446,7 +445,7 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
           </p>
           <button
             onClick={markPrayed}
-            disabled={!user || userPrayedToday}
+            disabled={userPrayedToday}
             className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer disabled:opacity-50"
             style={{ background: "var(--gradient-gold)" }}
           >
@@ -465,6 +464,11 @@ const RefouaPatientDetail = ({ refouaId, hebrewName, motherName, gender = "ben" 
           )}
         </div>
       )}
+      <GuestNamePrompt
+        open={guestPromptOpen}
+        onSubmit={handleGuestNameSubmit}
+        onClose={() => { setGuestPromptOpen(false); setPendingPsalm(null); }}
+      />
     </div>
   );
 };
