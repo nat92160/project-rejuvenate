@@ -261,9 +261,10 @@ const SynagogueWall = () => {
       .on("postgres_changes", { event: "*", schema: "public", table: "annonces", filter: `synagogue_id=eq.${activeId}` }, () => fetchWallContent(activeId))
       .on("postgres_changes", { event: "*", schema: "public", table: "cours_zoom", filter: `synagogue_id=eq.${activeId}` }, () => fetchWallContent(activeId))
       .on("postgres_changes", { event: "*", schema: "public", table: "evenements", filter: `synagogue_id=eq.${activeId}` }, () => fetchWallContent(activeId))
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "synagogue_profiles", filter: `id=eq.${activeId}` }, () => fetchSynas())
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [activeId, fetchWallContent]);
+  }, [activeId, fetchWallContent, fetchSynas]);
 
   const activeSyna = useMemo(
     () => synas.find((s) => s.id === activeId) ?? null,
