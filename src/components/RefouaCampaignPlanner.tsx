@@ -198,7 +198,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
     const isCreator = campaign?.created_by === user.id;
     if (!isOwner && !isCreator) return;
     await supabase.from("refoua_campaign_slots").delete().eq("id", slot.id);
-    // Nettoyer les actions liées à ce créneau
+    // Nettoyer les actions liées à ce place
     if (campaign) {
       const dayDate = (() => {
         const d = new Date(campaign.start_date);
@@ -231,7 +231,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
 
   const deleteCampaign = async () => {
     if (!campaign || !user || campaign.created_by !== user.id) return;
-    if (!confirm("Supprimer ce programme et tous ses créneaux ?")) return;
+    if (!confirm("Supprimer ce programme et tous ses placex ?")) return;
     const { error } = await supabase.from("refoua_campaigns").delete().eq("id", campaign.id);
     if (error) toast.error("Erreur");
     else toast.success("Programme supprimé");
@@ -253,7 +253,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
       `Programme de prières pour ${fullName}\n` +
       (prayerLabel ? `${prayerLabel}\n` : "") +
       `📅 ${campaign?.days_count} jours • 👥 ${campaign?.slots_per_day}/jour (${slots.length}/${total} réservés)\n\n` +
-      `Réservez votre créneau :`;
+      `Réservez votre place :`;
     await shareText(text, `🙏 Refoua Chelema pour ${fullName} — Chabbat Chalom`, url);
   };
 
@@ -280,7 +280,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
             🗓️ Organiser un programme de prière
           </p>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            Définissez la durée et le nombre de participants par jour. Chacun pourra ensuite réserver un créneau dans le tableau interactif.
+            Définissez la durée et le nombre de participants par jour. Chacun pourra ensuite réserver un place dans le tableau interactif.
           </p>
         </div>
 
@@ -364,7 +364,7 @@ const RefouaCampaignPlanner = ({ refouaId, hebrewName, motherName, gender = "ben
           </div>
 
           <div className="text-[11px] text-muted-foreground bg-muted/40 rounded-lg p-2">
-            Total : <strong className="text-foreground">{daysCount * slotsPerDay}</strong> créneaux disponibles
+            Total : <strong className="text-foreground">{daysCount * slotsPerDay}</strong> placex disponibles
           </div>
 
           <button
