@@ -113,7 +113,9 @@ export function useOmerVisibility({ isDirectLink = false }: { isDirectLink?: boo
     return () => clearInterval(interval);
   }, []);
 
-  const visible = isDirectLink || isAdmin || (masterEnabled && inOmerPeriod);
+  // Admin bypass also requires being in the Omer period — outside of it, the
+  // widget must stay hidden for everyone (only direct /omer link can force it).
+  const visible = isDirectLink || (inOmerPeriod && (isAdmin || masterEnabled));
 
   return { visible, masterEnabled, loading, inOmerPeriod, isBeforeCountingTime };
 }
