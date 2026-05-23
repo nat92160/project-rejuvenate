@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useCity } from "@/hooks/useCity";
-import { ComplexZmanimCalendar, GeoLocation, JewishCalendar } from "kosher-zmanim";
+import { getTodayOmerDay } from "@/components/omer/omerData";
+import { ComplexZmanimCalendar, GeoLocation } from "kosher-zmanim";
 
 /**
  * Determines whether the Omer widget should be visible.
  *
- * Visible when ANY of these is true:
- *  A) User arrived via /omer (direct link) — bypasses ALL restrictions
- *  B) User is admin — always visible
- *  C) Master switch ON + currently in Omer period + within 2h before Shkiya or after
+ * Visible only during the Omer period when enabled/admin, except direct /omer link.
  */
 export function useOmerVisibility({ isDirectLink = false }: { isDirectLink?: boolean } = {}) {
   const { isAdmin } = useAuth();
@@ -78,10 +75,9 @@ export function useOmerVisibility({ isDirectLink = false }: { isDirectLink?: boo
         } catch { /* use Jerusalem default */ }
 
         const now = new Date();
-        const jCal = new JewishCalendar(now);
-        const omerDay = jCal.getDayOfOmer();
+        const omerDay = getTodayOmerDay();
 
-        if (omerDay <= 0) {
+        if (!omerDay) {
           setInOmerPeriod(false);
           setIsBeforeCountingTime(false);
           return;
@@ -103,7 +99,7 @@ export function useOmerVisibility({ isDirectLink = false }: { isDirectLink?: boo
         const sunsetDate = sunset instanceof Date ? sunset : (sunset as any).toJSDate?.() ?? new Date(sunset as any);
         setIsBeforeCountingTime(now.getTime() < sunsetDate.getTime());
       } catch {
-        setInOmerPeriod(true);
+        setInOmerPeriod(false);
         setIsBeforeCountingTime(false);
       }
     };
