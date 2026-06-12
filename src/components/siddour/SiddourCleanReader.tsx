@@ -191,7 +191,7 @@ export default function SiddourCleanReader({
                   Cette section ne contient pas de texte affichable.
                 </p>
               ) : (
-                <div>
+                <div className="siddour-flow">
                   {blocks.map((b, i) => {
                     if (b.kind === "rubric") {
                       return (
