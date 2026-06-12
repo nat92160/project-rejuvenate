@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -43,6 +44,7 @@ const GOLD = "hsl(var(--gold-matte))";
 
 export default function ZoharBritWidget() {
   const { user } = useAuth();
+  const { code: routeCode } = useParams<{ code?: string }>();
   const [mode, setMode] = useState<"home" | "solo" | "session">("home");
   const [version, setVersion] = useState<ZoharVersion>("court");
   const [fontSize, setFontSize] = useState(22);
@@ -168,7 +170,7 @@ export default function ZoharBritWidget() {
 
   const shareCode = async () => {
     if (!session) return;
-    const url = buildShareUrl(`/?zohar-brit=${session.code}`);
+    const url = buildShareUrl(`/zohar-brit/${session.code}`);
     const text = `Rejoins la lecture du Zohar de la veille de Brit\nCode : ${session.code}\n${url}`;
     await shareText(text, "Zohar de la Brit", url);
   };
@@ -176,10 +178,10 @@ export default function ZoharBritWidget() {
   // Auto-join via URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const code = params.get("zohar-brit");
+    const code = routeCode || params.get("zohar-brit");
     if (code && !session) { setJoinCode(code); void joinByCode(code); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [routeCode]);
 
   // ─── Rendering ───
   const totalSections = sections.length;
