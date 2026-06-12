@@ -38,6 +38,15 @@ function getAnonName(): string {
     return v;
   } catch { return "Invité"; }
 }
+function setAnonName(name: string) {
+  try { localStorage.setItem("zohar_brit_anon_name", name.trim().slice(0, 40)); } catch {}
+}
+function hasCustomAnonName(): boolean {
+  try {
+    const v = localStorage.getItem("zohar_brit_anon_name");
+    return !!v && !/^Invité \d+$/.test(v);
+  } catch { return false; }
+}
 
 const NAVY = "hsl(var(--primary))";
 const GOLD = "hsl(var(--gold-matte))";
@@ -56,6 +65,8 @@ export default function ZoharBritWidget() {
   const [joinCode, setJoinCode] = useState("");
   const [creating, setCreating] = useState(false);
   const [customCount, setCustomCount] = useState<number>(4);
+  const [guestName, setGuestName] = useState<string>(() => (hasCustomAnonName() ? getAnonName() : ""));
+  const [pendingJoin, setPendingJoin] = useState<null | { code?: string; create?: number }>(null);
 
   useWakeLock(mode !== "home" && activeIdx !== null);
 
@@ -82,6 +93,8 @@ export default function ZoharBritWidget() {
 
   // ─── Actions ───
   const createSession = async (count: number) => {
+    if (!user && !guestName.trim()) { setPendingJoin({ create: count }); return; }
+    if (!user) setAnonName(guestName);
     setCreating(true);
     const secs = getZoharSections(version);
     const split = splitSections(secs, count);
@@ -115,6 +128,8 @@ export default function ZoharBritWidget() {
   };
 
   const joinByCode = async (codeOverride?: string) => {
+    if (!user && !guestName.trim()) { setPendingJoin({ code: codeOverride || joinCode }); return; }
+    if (!user) setAnonName(guestName);
     const code = (codeOverride || joinCode).trim().toUpperCase();
     const normalized = code.startsWith("BRIT-") ? code : `BRIT-${code}`;
     const { data } = await supabase.from("zohar_brit_sessions").select("*").eq("code", normalized).maybeSingle();
@@ -179,9 +194,16 @@ export default function ZoharBritWidget() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = routeCode || params.get("zohar-brit");
-    if (code && !session) { setJoinCode(code); void joinByCode(code); }
+    if (code && !session) {
+      setJoinCode(code);
+      if (!user && !hasCustomAnonName()) {
+        setPendingJoin({ code });
+      } else {
+        void joinByCode(code);
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeCode]);
+  }, [routeCode, user]);
 
   // ─── Rendering ───
   const totalSections = sections.length;
