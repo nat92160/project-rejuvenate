@@ -222,6 +222,21 @@ select {
     line-height: inherit;
   }
 
+  /* Consistoire-style inline rubrics inside Hebrew flow (e.g. "(On embrasse les tefilin)") */
+  .siddour-flow small {
+    font-family: 'Lora', 'Cormorant Garamond', Georgia, serif;
+    font-size: 0.5em;
+    font-style: italic;
+    color: #666;
+    font-weight: 400;
+    vertical-align: baseline;
+    padding: 0 0.2em;
+  }
+  .siddour-flow b, .siddour-flow strong {
+    font-weight: 700;
+    color: #000;
+  }
+
   .hebrew-reading-block b {
     font-weight: 700;
   }
