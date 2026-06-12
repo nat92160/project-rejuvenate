@@ -292,7 +292,7 @@ export default function ZoharBritWidget() {
           </div>
           <div className="flex gap-2 items-center">
             <Input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="Code session (ex: A4F2)" className="text-base" style={{ fontSize: 16 }} />
-            <button onClick={joinByCode} className="px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap" style={{ background: NAVY, color: "#fff" }}>
+            <button onClick={() => joinByCode()} className="px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap" style={{ background: NAVY, color: "#fff" }}>
               Rejoindre
             </button>
           </div>
