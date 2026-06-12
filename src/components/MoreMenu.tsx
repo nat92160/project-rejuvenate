@@ -32,6 +32,7 @@ const CATEGORIES: Array<{
       { id: "tehilimlibre", icon: "📜", label: "Tehilim", keywords: "psaumes" },
       { id: "refoua", icon: "🙏", label: "Refoua", keywords: "guérison malade" },
       { id: "brakhot", icon: "🙌", label: "Brakhot", keywords: "bénédictions" },
+      { id: "zoharbrit", icon: "📖", label: "Zohar de la Brit", keywords: "zohar brit mila veille milah" },
     ],
   },
   {
