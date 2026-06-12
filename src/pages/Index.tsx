@@ -315,6 +315,15 @@ const IndexContent = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, [activeTab]);
 
+  // Deep link: ?zohar-brit=CODE opens the Zohar de la Brit widget directly
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("zohar-brit")) {
+      setActiveTab("zoharbrit");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, []);
+
   const goHome = useCallback(() => {
     setActiveTab("dashboard");
     window.scrollTo({ top: 0, behavior: "smooth" });
