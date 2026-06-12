@@ -34,6 +34,7 @@ export default function ZoharBritWidget() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [creating, setCreating] = useState(false);
+  const [customCount, setCustomCount] = useState<number>(4);
 
   useWakeLock(mode !== "home" && activeIdx !== null);
 
@@ -222,13 +223,34 @@ export default function ZoharBritWidget() {
             <div className="font-semibold text-sm" style={{ color: NAVY }}>Lecture partagée</div>
           </div>
           <p className="text-[11px] text-muted-foreground">Découpez parfaitement le Zohar entre plusieurs personnes — sections complètes, équilibre automatique.</p>
-          <div className="grid grid-cols-4 gap-1.5">
-            {[2, 4, 6, 10].map((n) => (
-              <button key={n} disabled={creating} onClick={() => createSession(n)} className="rounded-lg py-2 text-sm font-bold border transition-all active:scale-[0.97]"
-                style={{ borderColor: GOLD, color: NAVY, background: `${GOLD}10` }}>
-                {n}
-              </button>
-            ))}
+          <div>
+            <div className="text-[10px] uppercase tracking-wider mb-1.5 text-muted-foreground">Nombre de participants</div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => setCustomCount((n) => Math.max(2, n - 1))}
+                className="w-10 h-10 rounded-lg font-bold text-lg border" style={{ borderColor: GOLD, color: NAVY, background: `${GOLD}10` }}>−</button>
+              <Input type="number" inputMode="numeric" min={2} max={50} value={customCount}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  if (!isNaN(v)) setCustomCount(Math.min(50, Math.max(2, v)));
+                }}
+                className="text-center font-bold text-lg" style={{ fontSize: 18 }} />
+              <button type="button" onClick={() => setCustomCount((n) => Math.min(50, n + 1))}
+                className="w-10 h-10 rounded-lg font-bold text-lg border" style={{ borderColor: GOLD, color: NAVY, background: `${GOLD}10` }}>+</button>
+            </div>
+            <div className="flex gap-1.5 mt-2">
+              {[2, 4, 6, 10].map((n) => (
+                <button key={n} type="button" onClick={() => setCustomCount(n)}
+                  className="flex-1 rounded-md py-1 text-[11px] font-semibold border"
+                  style={{ borderColor: customCount === n ? GOLD : "hsl(var(--border))", color: NAVY, background: customCount === n ? `${GOLD}15` : "transparent" }}>
+                  {n}
+                </button>
+              ))}
+            </div>
+            <button disabled={creating} onClick={() => createSession(customCount)}
+              className="w-full mt-2.5 rounded-lg py-2.5 text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-60"
+              style={{ background: NAVY, color: "#fff" }}>
+              {creating ? "Création…" : `Créer la session à ${customCount}`}
+            </button>
           </div>
           <div className="flex gap-2 items-center">
             <Input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="Code session (ex: A4F2)" className="text-base" style={{ fontSize: 16 }} />
