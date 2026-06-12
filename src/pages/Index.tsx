@@ -274,6 +274,8 @@ const IndexContent = () => {
   const [authOpen, setAuthOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
+    const isZoharShareLink = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("zohar-brit");
+    if (isZoharShareLink) return false;
     try {
       return localStorage.getItem("calj_onboarded_fidele") !== "1";
     } catch {
@@ -319,6 +321,7 @@ const IndexContent = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("zohar-brit")) {
+      setShowOnboarding(false);
       setActiveTab("zoharbrit");
       window.scrollTo({ top: 0, behavior: "smooth" });
     }

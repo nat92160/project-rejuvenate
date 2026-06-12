@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -18,7 +18,7 @@ type Session = {
   completed: Record<string, number[]>;
   status: string;
 };
-type Participant = { id: string; user_id: string | null; display_name: string; slot_index: number | null };
+type Participant = { id: string; user_id: string | null; anon_id?: string | null; display_name: string; slot_index: number | null };
 
 // Stable per-device anon identity (no account required)
 function getAnonId(): string {
@@ -59,6 +59,12 @@ export default function ZoharBritWidget() {
 
   const sections = useMemo(() => getZoharSections(version), [version]);
 
+  const fetchParticipants = useCallback(async (sessionId: string) => {
+    const { data } = await supabase.from("zohar_brit_participants").select("*").eq("session_id", sessionId).order("slot_index");
+    if (data) setParticipants(data as Participant[]);
+    return (data || []) as Participant[];
+  }, []);
+
   // ─── Realtime ───
   useEffect(() => {
     if (!session) return;
@@ -66,13 +72,11 @@ export default function ZoharBritWidget() {
       .on("postgres_changes", { event: "*", schema: "public", table: "zohar_brit_sessions", filter: `id=eq.${session.id}` },
         (p: any) => { if (p.new) setSession(p.new as Session); })
       .on("postgres_changes", { event: "*", schema: "public", table: "zohar_brit_participants", filter: `session_id=eq.${session.id}` },
-        async () => {
-          const { data } = await supabase.from("zohar_brit_participants").select("*").eq("session_id", session.id).order("slot_index");
-          if (data) setParticipants(data as Participant[]);
-        })
+        async () => { await fetchParticipants(session.id); })
       .subscribe();
+    fetchParticipants(session.id);
     return () => { supabase.removeChannel(ch); };
-  }, [session?.id]);
+  }, [fetchParticipants, session?.id]);
 
   // ─── Actions ───
   const createSession = async (count: number) => {
@@ -88,9 +92,11 @@ export default function ZoharBritWidget() {
     }).select().single();
     setCreating(false);
     if (error || !data) { toast({ title: "Erreur création", duration: 2000 }); return; }
-    setSession(data as Session);
+    const created = data as Session;
+    setSession(created);
     setMode("session");
-    await joinAsSlot(data.id, 0);
+    await joinAsSlot(created.id, 0);
+    await fetchParticipants(created.id);
   };
 
   const joinAsSlot = async (sessionId: string, slotIndex: number) => {
@@ -106,15 +112,23 @@ export default function ZoharBritWidget() {
     } as any);
   };
 
-  const joinByCode = async () => {
-    const code = joinCode.trim().toUpperCase();
+  const joinByCode = async (codeOverride?: string) => {
+    const code = (codeOverride || joinCode).trim().toUpperCase();
     const normalized = code.startsWith("BRIT-") ? code : `BRIT-${code}`;
     const { data } = await supabase.from("zohar_brit_sessions").select("*").eq("code", normalized).maybeSingle();
     if (!data) { toast({ title: "Session introuvable", duration: 2000 }); return; }
     const sess = data as Session;
-    // Find free slot
-    const { data: parts } = await supabase.from("zohar_brit_participants").select("slot_index").eq("session_id", sess.id);
-    const taken = new Set((parts || []).map((p: any) => p.slot_index));
+    const parts = await fetchParticipants(sess.id);
+    const current = user
+      ? parts.find((p) => p.user_id === user.id)
+      : parts.find((p) => p.anon_id === getAnonId());
+    if (current) {
+      setSession(sess);
+      setVersion(sess.version);
+      setMode("session");
+      return;
+    }
+    const taken = new Set(parts.map((p) => p.slot_index));
     let slot = -1;
     for (let i = 0; i < sess.participants_count; i++) if (!taken.has(i)) { slot = i; break; }
     if (slot === -1) { toast({ title: "Session complète", duration: 2000 }); return; }
@@ -122,6 +136,7 @@ export default function ZoharBritWidget() {
     setVersion(sess.version);
     setMode("session");
     await joinAsSlot(sess.id, slot);
+    await fetchParticipants(sess.id);
   };
 
   const mySlot = useMemo(() => {
@@ -162,7 +177,7 @@ export default function ZoharBritWidget() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("zohar-brit");
-    if (code && !session) { setJoinCode(code); setTimeout(() => joinByCode(), 100); }
+    if (code && !session) { setJoinCode(code); void joinByCode(code); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -277,7 +292,7 @@ export default function ZoharBritWidget() {
           </div>
           <div className="flex gap-2 items-center">
             <Input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="Code session (ex: A4F2)" className="text-base" style={{ fontSize: 16 }} />
-            <button onClick={joinByCode} className="px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap" style={{ background: NAVY, color: "#fff" }}>
+            <button onClick={() => joinByCode()} className="px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap" style={{ background: NAVY, color: "#fff" }}>
               Rejoindre
             </button>
           </div>
