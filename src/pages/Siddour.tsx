@@ -1,301 +1,255 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, BookOpen, Minus, Plus, X } from "lucide-react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { useSiddourRite } from "@/hooks/useSiddourRite";
+import { ArrowLeft } from "lucide-react";
 import { useSiddourFullOffice } from "@/hooks/useSiddourFullOffice";
 import { detectOfficeNow, getOfficeMeta } from "@/lib/siddourCatalog";
-import SiddourBookSidebar from "@/components/siddour/SiddourBookSidebar";
-import SiddourBookReader from "@/components/siddour/SiddourBookReader";
-import LiturgicalContextBar from "@/components/siddour/LiturgicalContextBar";
-import { getLiturgicalContext, type LiturgicalPeriod } from "@/lib/liturgicalContext";
+import SiddourCleanReader from "@/components/siddour/SiddourCleanReader";
 
-const FONT_KEY = "siddour_book_font_v1";
+interface OfficeCard {
+  key: string;
+  label: string;
+  icon: string;
+  he: string;
+  desc: string;
+}
+interface OfficeGroup {
+  id: string;
+  label: string;
+  subtitle: string;
+  offices: OfficeCard[];
+}
+
+const GROUPS: OfficeGroup[] = [
+  {
+    id: "daily",
+    label: "Office quotidien",
+    subtitle: "Les trois prières du jour",
+    offices: [
+      { key: "shacharit", label: "Cha'harit", he: "שחרית", icon: "🌅", desc: "Prière du matin" },
+      { key: "minha",     label: "Min'ha",    he: "מנחה",   icon: "☀️", desc: "Prière de l'après-midi" },
+      { key: "arvit",     label: "Arvit",     he: "ערבית",  icon: "🌙", desc: "Prière du soir" },
+    ],
+  },
+  {
+    id: "brakhot",
+    label: "Brakhot & Bénédictions",
+    subtitle: "Repas, vie quotidienne et événements",
+    offices: [
+      { key: "birkat",          label: "Birkat HaMazone", he: "ברכת המזון", icon: "🍞", desc: "Bénédiction après le repas" },
+      { key: "berakhot",        label: "Brakhot",          he: "ברכות",       icon: "🙏", desc: "Mariage, Brit, Pidyon, Téfilat HaDérèkh" },
+      { key: "birkat_halevana", label: "Birkat HaLévana",  he: "ברכת הלבנה",  icon: "🌕", desc: "Bénédiction de la lune" },
+      { key: "tikoun_hatsot",   label: "Tikoun 'Hatsot",   he: "תיקון חצות",  icon: "🌑", desc: "Prière de minuit" },
+    ],
+  },
+  {
+    id: "fetes",
+    label: "Fêtes & jours spéciaux",
+    subtitle: "Roch 'Hodech, Chaloch Régalim, 'Hanouka, Pourim…",
+    offices: [
+      { key: "rosh_hodesh", label: "Roch 'Hodech",      he: "ראש חודש", icon: "🌙", desc: "Nouveau mois — Hallel & Moussaf" },
+      { key: "fetes",       label: "Chaloch Régalim",   he: "שלוש רגלים", icon: "🎺", desc: "Pessa'h, Chavouot, Soukot" },
+      { key: "hanukkah",    label: "'Hanouka",          he: "חנוכה",    icon: "🕎", desc: "Allumage de la Ménora & Hallel" },
+      { key: "purim",       label: "Pourim",            he: "פורים",    icon: "🎭", desc: "Méguila & Séder du jour" },
+      { key: "taanit",      label: "Jeûnes & Deuil",    he: "תענית",    icon: "🕊️", desc: "Sélihot & lois de deuil" },
+      { key: "nissan",      label: "Birkat HaIlanot",   he: "ברכת האילנות", icon: "🌸", desc: "Bénédiction des arbres — Nissan" },
+    ],
+  },
+];
 
 const Siddour = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { rite, setRite } = useSiddourRite();
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-
   const officeParam = params.get("office");
-  const initialOffice = (officeParam && officeParam !== "sommaire") ? officeParam : (detectOfficeNow() || "shacharit");
-  const [office, setOffice] = useState(initialOffice);
-  const [activeSection, setActiveSection] = useState(0);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [litContext, setLitContext] = useState<LiturgicalPeriod>(() => getLiturgicalContext());
 
-  const [fontSize, setFontSize] = useState<number>(() => {
-    try { return Number(localStorage.getItem(FONT_KEY)) || 22; } catch { return 22; }
-  });
-  useEffect(() => { try { localStorage.setItem(FONT_KEY, String(fontSize)); } catch { /* */ } }, [fontSize]);
-
-  // Sync URL
-  useEffect(() => {
-    setParams({ office, rite }, { replace: true });
-  }, [office, rite, setParams]);
-
-  const { data, loading, error } = useSiddourFullOffice(rite, office);
-  const sections = data?.sections || [];
-
-  // Refs des sections pour scrollspy
-  const sectionRefs = useRef<Map<number, HTMLElement>>(new Map());
-  const registerSectionRef = useCallback((index: number, el: HTMLElement | null) => {
-    if (el) sectionRefs.current.set(index, el);
-    else sectionRefs.current.delete(index);
-  }, []);
-
-  // Scrollspy via IntersectionObserver
-  useEffect(() => {
-    if (sections.length === 0) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => (a.target as HTMLElement).offsetTop - (b.target as HTMLElement).offsetTop);
-        if (visible.length > 0) {
-          const id = (visible[0].target as HTMLElement).id;
-          const idx = parseInt(id.replace("sec-", ""), 10);
-          if (!isNaN(idx)) setActiveSection(idx);
-        }
-      },
-      { rootMargin: "-30% 0px -60% 0px", threshold: 0 }
-    );
-    sectionRefs.current.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [sections]);
-
-  const handleSelectOffice = useCallback((newOffice: string) => {
-    if (newOffice === office) {
-      // scroll back to top
-      scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-      setDrawerOpen(false);
-      return;
-    }
-    setOffice(newOffice);
-    setActiveSection(0);
-    setDrawerOpen(false);
-    scrollContainerRef.current?.scrollTo({ top: 0 });
-  }, [office]);
-
-  const handleSelectSection = useCallback((idx: number) => {
-    const el = sectionRefs.current.get(idx);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-    setDrawerOpen(false);
-  }, []);
-
-  const officeMeta = useMemo(() => getOfficeMeta(office), [office]);
-
-  const sidebar = (
-    <SiddourBookSidebar
-      currentOffice={office}
-      onSelectOffice={handleSelectOffice}
-      sections={sections}
-      activeSectionIndex={activeSection}
-      onSelectSection={handleSelectSection}
-    />
+  const [openOffice, setOpenOffice] = useState<string | null>(
+    officeParam && officeParam !== "sommaire" ? officeParam : null
   );
+
+  // Auto-detect office only if no param
+  const suggested = useMemo(() => detectOfficeNow(), []);
+
+  // Sync URL with open office
+  useEffect(() => {
+    if (openOffice) {
+      setParams({ office: openOffice }, { replace: true });
+    } else if (officeParam) {
+      setParams({}, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openOffice]);
+
+  // Always load séfarade
+  const { data, loading, error } = useSiddourFullOffice("sefarade", openOffice ?? "shacharit");
+  const sections = openOffice ? (data?.sections || []) : [];
+
+  const openMeta = openOffice ? getOfficeMeta(openOffice) : null;
 
   return (
     <div
-      ref={scrollContainerRef}
-      className="h-[100dvh] overflow-y-auto overflow-x-hidden"
+      className="min-h-[100dvh]"
       style={{
-        background: "linear-gradient(180deg, hsl(38 70% 94%) 0%, hsl(38 65% 91%) 100%)",
+        background: "linear-gradient(180deg, #FEFCF7 0%, #FBF7EE 60%, #F6EFDE 100%)",
         color: "hsl(25 30% 18%)",
         WebkitTapHighlightColor: "transparent",
-        WebkitOverflowScrolling: "touch",
-        overscrollBehaviorY: "auto",
       }}
     >
-      {/* Header sticky */}
+      {/* Header */}
       <header
-        className="sticky top-0 z-30 backdrop-blur border-b"
+        className="sticky top-0 z-20 backdrop-blur border-b"
         style={{
           paddingTop: "env(safe-area-inset-top, 0px)",
-          background: "hsla(38, 70%, 94%, 0.92)",
-          borderColor: "hsl(var(--gold) / 0.3)",
+          background: "rgba(254, 252, 247, 0.94)",
+          borderColor: "hsl(var(--gold) / 0.25)",
         }}
       >
-        <div className="flex items-center gap-1.5 px-2 py-2 sm:px-6">
+        <div className="flex items-center gap-2 px-3 py-2.5 max-w-3xl mx-auto">
           <button
-            onClick={() => {
-              if (window.history.length > 1) {
-                navigate(-1);
-                // Fallback if navigate(-1) didn't actually change route (e.g. direct entry)
-                setTimeout(() => {
-                  if (window.location.pathname.startsWith("/siddour")) {
-                    navigate("/", { replace: true });
-                  }
-                }, 150);
-              } else {
-                navigate("/", { replace: true });
-              }
-            }}
-            aria-label="Retour"
-            className="p-2.5 rounded-lg hover:bg-muted active:scale-95 transition shrink-0"
+            onClick={() => navigate("/", { replace: true })}
+            aria-label="Retour à l'accueil"
+            className="p-2.5 rounded-lg hover:bg-black/5 active:scale-95 transition shrink-0"
             style={{ minWidth: 44, minHeight: 44 }}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-
-          <button
-            onClick={() => navigate("/", { replace: true })}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg active:scale-95 transition shrink-0"
-            style={{ minHeight: 36 }}
-            aria-label="Retour à l'accueil Chabbat Chalom"
-          >
-            <span
-              className="font-display font-bold text-[13px] sm:text-sm whitespace-nowrap tracking-wide"
-              style={{ color: "hsl(var(--primary))" }}
-            >
-              Chabbat Chalom
-            </span>
-          </button>
-
-          <button
-              onClick={() => setDrawerOpen(true)}
-              className="lg:hidden p-2.5 rounded-lg hover:bg-muted active:scale-95 transition shrink-0"
-              style={{ minWidth: 44, minHeight: 44 }}
-              aria-label="Ouvrir le sommaire de l'office"
-            >
-              <BookOpen className="w-5 h-5" style={{ color: "hsl(var(--gold-matte))" }} />
-          </button>
-
-          <div className="flex-1 min-w-0">
-            <h1 className="font-display font-bold text-sm sm:text-base truncate" style={{ color: "hsl(var(--primary))" }}>
-              {`${officeMeta?.icon || ""} ${officeMeta?.label || "Siddour"}`}
+          <div className="flex-1 min-w-0 text-center">
+            <h1 className="font-display font-bold text-base sm:text-lg" style={{ color: "hsl(var(--primary))" }}>
+              📖 Siddour Séfarade
             </h1>
-            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-              {sections[activeSection]?.title || "Livre des prières"}
+            <p className="text-[11px] sm:text-xs" style={{ color: "hsl(var(--gold-matte))", fontWeight: 600 }}>
+              Édot HaMizra'h
             </p>
           </div>
-
-          {/* Sélecteur de rite */}
-          <div className="flex rounded-lg p-0.5 bg-muted text-[11px] font-semibold shrink-0">
-            <button
-              onClick={() => setRite("sefarade")}
-              className="px-2.5 py-1.5 rounded-md transition-all"
-              style={{ minHeight: 32, ...(rite === "sefarade" ? {
-                background: "hsl(var(--background))",
-                color: "hsl(var(--gold-matte))",
-                boxShadow: "0 1px 3px hsl(var(--foreground) / 0.08)",
-              } : { color: "hsl(var(--muted-foreground))" }) }}
-            >
-              Séf.
-            </button>
-            <button
-              onClick={() => setRite("ashkenaz")}
-              className="px-2.5 py-1.5 rounded-md transition-all"
-              style={{ minHeight: 32, ...(rite === "ashkenaz" ? {
-                background: "hsl(var(--background))",
-                color: "hsl(var(--gold-matte))",
-                boxShadow: "0 1px 3px hsl(var(--foreground) / 0.08)",
-              } : { color: "hsl(var(--muted-foreground))" }) }}
-            >
-              Ashk.
-            </button>
-          </div>
-
-          {/* Taille de police — visible aussi sur mobile pour réglage rapide */}
-          <div className="flex items-center gap-0.5 ml-0.5 shrink-0">
-            <button onClick={() => setFontSize(s => Math.max(16, s - 2))}
-              className="p-2 rounded-md hover:bg-muted active:scale-95 transition"
-              style={{ minWidth: 36, minHeight: 36 }}
-              aria-label="Réduire police">
-              <Minus className="w-3.5 h-3.5" />
-            </button>
-            <button onClick={() => setFontSize(s => Math.min(36, s + 2))}
-              className="p-2 rounded-md hover:bg-muted active:scale-95 transition"
-              style={{ minWidth: 36, minHeight: 36 }}
-              aria-label="Augmenter police">
-              <Plus className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <div style={{ minWidth: 44 }} />
         </div>
       </header>
 
-      <div className="flex">
-        {/* Sidebar desktop */}
-        <aside className={`hidden lg:block w-72 shrink-0 border-r border-border/40 sticky top-[60px] self-start`}
-          style={{ height: "calc(100vh - 60px - env(safe-area-inset-top, 0px))" }}>
-          {sidebar}
-        </aside>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-32">
+        {/* Hero */}
+        <section className="text-center mb-10">
+          <h2
+            dir="rtl"
+            className="font-bold"
+            style={{
+              fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+              fontSize: "clamp(34px, 8vw, 52px)",
+              color: "hsl(var(--primary))",
+              lineHeight: 1.1,
+              letterSpacing: "0.02em",
+            }}
+          >
+            סדור עדות המזרח
+          </h2>
+          <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
+            Sélectionnez un office pour ouvrir le livre des prières en hébreu, avec un découpage section par section.
+          </p>
 
-        {/* Drawer mobile */}
-        <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-          <SheetContent side="left" className="w-[300px] p-0 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
-              <h2 className="font-display font-bold text-sm" style={{ color: "hsl(var(--primary))" }}>📖 Sommaire</h2>
-              <button onClick={() => setDrawerOpen(false)} className="p-1 rounded-md hover:bg-muted">
-                <X className="w-4 h-4" />
+          {/* Suggested office */}
+          {!openOffice && (() => {
+            const sug = getOfficeMeta(suggested);
+            if (!sug) return null;
+            return (
+              <button
+                onClick={() => setOpenOffice(suggested)}
+                className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold text-primary-foreground active:scale-[0.98] transition"
+                style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+              >
+                <span className="text-base">{sug.icon}</span>
+                Ouvrir maintenant — {sug.label}
               </button>
-            </div>
-            <div
-              className="overflow-y-auto"
-              style={{
-                height: "calc(100dvh - 50px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))",
-                WebkitOverflowScrolling: "touch",
-              }}
-            >
-              {sidebar}
-            </div>
-          </SheetContent>
-        </Sheet>
+            );
+          })()}
+        </section>
 
-        {/* Main content */}
-        <main className="flex-1 min-w-0">
-          <div className="max-w-3xl mx-auto px-4 sm:px-8 py-4 sm:py-8">
-            {/* Contexte liturgique du jour — scrolle avec la page pour libérer
-                l'écran sur mobile (sinon le bandeau bloquait l'accès aux prières) */}
-            <div className="mb-5">
-              <LiturgicalContextBar context={litContext} onContextChange={setLitContext} />
+        {/* Groups */}
+        {GROUPS.map((group) => (
+          <section key={group.id} className="mb-10">
+            <div className="mb-4 px-1">
+              <h3 className="font-display text-base sm:text-lg font-bold" style={{ color: "hsl(var(--primary))" }}>
+                {group.label}
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">{group.subtitle}</p>
             </div>
-            {loading && sections.length === 0 ? (
-              <div className="py-24 text-center">
-                <div className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full mx-auto"
-                  style={{ borderColor: "hsl(var(--gold)) transparent transparent transparent" }} />
-                <p className="text-sm mt-4 text-muted-foreground">
-                  Ouverture du livre… ({rite === "sefarade" ? "Édot HaMizrah" : "Nusach Ashkenaz"})
-                </p>
-              </div>
-            ) : error ? (
-              <div className="py-16 text-center">
-                <p className="text-sm text-destructive">Erreur : {error}</p>
-                <p className="text-xs mt-2 text-muted-foreground">
-                  Cet office n'est peut-être pas encore disponible pour le rite {rite === "sefarade" ? "Séfarade" : "Ashkénaze"}.
-                </p>
-              </div>
-            ) : (
-              <SiddourBookReader
-                sections={sections}
-                fontSize={fontSize}
-                registerSectionRef={registerSectionRef}
-                rite={rite}
-                office={office}
-                litContext={litContext}
-                onJumpToSection={handleSelectSection}
-              />
-            )}
-          </div>
-        </main>
-      </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {group.offices.map((o) => {
+                const isSuggested = o.key === suggested;
+                return (
+                  <button
+                    key={o.key}
+                    onClick={() => setOpenOffice(o.key)}
+                    className="group relative text-left p-4 rounded-2xl border transition active:scale-[0.98] hover:shadow-md"
+                    style={{
+                      background: "white",
+                      borderColor: isSuggested ? "hsl(var(--gold) / 0.55)" : "hsl(var(--gold) / 0.18)",
+                      boxShadow: isSuggested
+                        ? "0 6px 24px -8px hsl(var(--gold) / 0.35)"
+                        : "0 1px 2px hsl(var(--foreground) / 0.04)",
+                      minHeight: 88,
+                    }}
+                  >
+                    {isSuggested && (
+                      <span
+                        className="absolute -top-2 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide text-primary-foreground"
+                        style={{ background: "var(--gradient-gold)" }}
+                      >
+                        Maintenant
+                      </span>
+                    )}
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                        style={{
+                          background: "hsl(var(--gold) / 0.10)",
+                        }}
+                      >
+                        {o.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span
+                            className="font-display font-bold text-base"
+                            style={{ color: "hsl(var(--primary))" }}
+                          >
+                            {o.label}
+                          </span>
+                          <span
+                            dir="rtl"
+                            className="text-sm font-semibold shrink-0"
+                            style={{
+                              fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+                              color: "hsl(var(--gold-matte))",
+                            }}
+                          >
+                            {o.he}
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-[13px] text-muted-foreground mt-0.5 leading-snug">
+                          {o.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ))}
 
-      {/* FAB mobile pour rouvrir le sommaire */}
-      <button
-          onClick={() => setDrawerOpen(true)}
-          className="lg:hidden fixed right-5 z-30 w-14 h-14 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition"
-          style={{
-            background: "hsl(var(--primary))",
-            color: "hsl(var(--primary-foreground))",
-            bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))",
-          }}
-          aria-label="Sommaire du livre"
-        >
-          <BookOpen className="w-6 h-6" />
-      </button>
+        <p className="text-center text-[11px] text-muted-foreground mt-6">
+          Texte hébreu : Siddour Édot HaMizra'h (Sefaria) — version étude.
+        </p>
+      </main>
+
+      {/* Full-screen reader */}
+      <SiddourCleanReader
+        open={!!openOffice}
+        onClose={() => setOpenOffice(null)}
+        office={openOffice ?? ""}
+        officeLabel={openMeta?.label || ""}
+        officeIcon={openMeta?.icon || "📖"}
+        sections={sections}
+        loading={loading}
+        error={error}
+      />
     </div>
   );
 };
