@@ -19,10 +19,13 @@ interface Props {
 const FONT_KEY = "siddour_clean_font_v1";
 
 function cleanHtml(html: string): string {
-  // Remove instruction-only <small> wrappers
+  if (!html) return "";
   if (isInstructionOnly(html)) return "";
-  // Strip bare <small> annotations inside, keep main text
   return DOMPurify.sanitize(html, { ALLOWED_TAGS: ["b", "i", "em", "strong", "br", "sup", "sub"], ALLOWED_ATTR: [] });
+}
+
+function isEmpty(html: string): boolean {
+  return html.replace(/<[^>]+>/g, "").trim().length === 0;
 }
 
 export default function SiddourCleanReader({
@@ -40,9 +43,20 @@ export default function SiddourCleanReader({
   useEffect(() => { scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" }); }, [activeIdx]);
 
   const current = sections[activeIdx];
-  const cleanLines = useMemo(() => {
-    if (!current) return [] as string[];
-    return current.hebrew.map(cleanHtml).filter(s => s.replace(/<[^>]+>/g, "").trim().length > 0);
+  // Patah Eliyahou layout: pair each Hebrew verse with its French translation
+  const verses = useMemo(() => {
+    if (!current) return [] as Array<{ he: string; fr: string }>;
+    const out: Array<{ he: string; fr: string }> = [];
+    const heArr = current.hebrew || [];
+    const frArr = current.french || [];
+    const max = Math.max(heArr.length, frArr.length);
+    for (let i = 0; i < max; i++) {
+      const he = cleanHtml(heArr[i] || "");
+      const fr = cleanHtml(frArr[i] || "");
+      if (isEmpty(he) && isEmpty(fr)) continue;
+      out.push({ he, fr });
+    }
+    return out;
   }, [current]);
 
   if (!open) return null;
@@ -51,7 +65,7 @@ export default function SiddourCleanReader({
     <AnimatePresence>
       <motion.div
         className="fixed inset-0 z-[400] flex flex-col"
-        style={{ background: "linear-gradient(180deg, #FEFCF7 0%, #FBF7EE 100%)", color: "#1a1a1a" }}
+        style={{ background: "#FFFFFF", color: "#111" }}
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
       >
@@ -60,7 +74,7 @@ export default function SiddourCleanReader({
           className="shrink-0 border-b backdrop-blur"
           style={{
             paddingTop: "env(safe-area-inset-top, 0px)",
-            background: "rgba(254, 252, 247, 0.92)",
+            background: "rgba(255, 255, 255, 0.94)",
             borderColor: "hsl(var(--gold) / 0.25)",
           }}
         >
