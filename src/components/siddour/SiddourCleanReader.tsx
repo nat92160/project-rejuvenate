@@ -160,82 +160,98 @@ export default function SiddourCleanReader({
               <p className="text-xs mt-2 text-muted-foreground">{error}</p>
             </div>
           ) : current ? (
-            <article className="max-w-2xl mx-auto px-5 sm:px-8 py-8 sm:py-12">
-              {/* Title block */}
-              <div className="text-center mb-8">
-                <div
-                  className="inline-block px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-[2px]"
+            <article className="max-w-5xl mx-auto px-4 sm:px-10 py-8 sm:py-12">
+              {/* Title block — Consistoire style: French uppercase rubric + Hebrew title */}
+              <div className="text-center mb-10">
+                <p
+                  className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[4px]"
+                  style={{ color: "hsl(var(--gold-matte))" }}
+                >
+                  Rituel des prières — Section {toHebrewLetter(activeIdx + 1)}
+                </p>
+                <h2
+                  className="mt-3 font-bold"
                   style={{
-                    background: "hsl(var(--gold) / 0.12)",
-                    color: "hsl(var(--gold-matte))",
+                    fontFamily: "'Cormorant Garamond', 'Lora', Georgia, serif",
+                    fontSize: "clamp(22px, 4.5vw, 32px)",
+                    color: "hsl(var(--primary))",
+                    lineHeight: 1.2,
+                    letterSpacing: "0.02em",
                   }}
                 >
-                  Section {toHebrewLetter(activeIdx + 1)}
-                </div>
-                <h2
-                  className="mt-4 font-bold"
+                  {current.title}
+                </h2>
+                <h3
+                  className="mt-1 font-bold"
                   dir="rtl"
                   style={{
                     fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
-                    fontSize: `${Math.round(fontSize * 1.15)}px`,
+                    fontSize: `${Math.round(fontSize * 1.2)}px`,
                     color: "hsl(var(--primary))",
-                    lineHeight: 1.3,
+                    lineHeight: 1.25,
                   }}
                 >
                   {current.heTitle}
-                </h2>
-                <p className="mt-1 text-sm" style={{ color: "hsl(var(--gold-matte))", fontWeight: 600 }}>
-                  {current.title}
-                </p>
+                </h3>
                 {current.isHazara && (
-                  <p className="mt-2 text-[11px] italic text-muted-foreground">Répétition de la Amida — Hazarat HaChats</p>
+                  <p className="mt-2 text-[11px] italic" style={{ color: "hsl(var(--gold-matte))" }}>
+                    Répétition de la Amida — Hazarat HaChats
+                  </p>
                 )}
-                <div className="mt-5 mx-auto" style={{ width: 60, height: 1, background: "hsl(var(--gold) / 0.4)" }} />
+                <div className="mt-5 mx-auto flex items-center justify-center gap-3" aria-hidden>
+                  <div style={{ width: 50, height: 1, background: "hsl(var(--gold) / 0.45)" }} />
+                  <div style={{ width: 4, height: 4, borderRadius: "50%", background: "hsl(var(--gold) / 0.55)" }} />
+                  <div style={{ width: 50, height: 1, background: "hsl(var(--gold) / 0.45)" }} />
+                </div>
               </div>
 
-              {/* Patah Eliyahou style: Hebrew + French translation paired */}
+              {/* Consistoire-style two-column book layout */}
               {verses.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-12">
                   Cette section ne contient pas de texte affichable.
                 </p>
               ) : (
-                <div className="space-y-8">
+                <div className="space-y-7 md:space-y-5">
                   {verses.map((v, i) => (
                     <div
                       key={i}
-                      className="pb-6"
+                      className="md:grid md:grid-cols-2 md:gap-10 md:items-baseline pb-5 md:pb-4"
                       style={{
-                        borderBottom: i === verses.length - 1 ? "none" : "1px solid hsl(var(--gold) / 0.15)",
+                        borderBottom: i === verses.length - 1 ? "none" : "1px dashed hsl(var(--gold) / 0.22)",
                       }}
                     >
-                      {!isEmpty(v.he) && (
-                        <p
-                          dir="rtl"
-                          className="text-center"
-                          style={{
-                            fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
-                            fontSize: `${fontSize}px`,
-                            lineHeight: 2.0,
-                            fontWeight: 600,
-                            color: "#0a0a0a",
-                          }}
-                          dangerouslySetInnerHTML={{ __html: v.he }}
-                        />
-                      )}
-                      {!isEmpty(v.fr) && (
+                      {/* French — left column (LTR) */}
+                      {!isEmpty(v.fr) ? (
                         <p
                           dir="ltr"
-                          className="text-center mt-3"
+                          className="order-2 md:order-1 mt-3 md:mt-0 text-left md:pr-2"
                           style={{
-                            fontFamily: "'Lora', 'Cormorant Garamond', Georgia, serif",
-                            fontSize: `${Math.max(15, Math.round(fontSize * 0.62))}px`,
-                            lineHeight: 1.65,
-                            fontStyle: "italic",
-                            color: "#5a4a2a",
+                            fontFamily: "'Cormorant Garamond', 'Lora', Georgia, serif",
+                            fontSize: `${Math.max(15, Math.round(fontSize * 0.66))}px`,
+                            lineHeight: 1.7,
+                            color: "#2a2418",
+                            fontWeight: 500,
                           }}
                           dangerouslySetInnerHTML={{ __html: v.fr }}
                         />
-                      )}
+                      ) : <div className="order-2 md:order-1" />}
+
+                      {/* Hebrew — right column (RTL) */}
+                      {!isEmpty(v.he) ? (
+                        <p
+                          dir="rtl"
+                          className="order-1 md:order-2 text-right md:pl-2 md:border-r md:pr-6"
+                          style={{
+                            fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+                            fontSize: `${fontSize}px`,
+                            lineHeight: 1.95,
+                            fontWeight: 600,
+                            color: "#0a0a0a",
+                            borderColor: "hsl(var(--gold) / 0.25)",
+                          }}
+                          dangerouslySetInnerHTML={{ __html: v.he }}
+                        />
+                      ) : <div className="order-1 md:order-2" />}
                     </div>
                   ))}
                 </div>
