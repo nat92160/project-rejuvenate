@@ -46,6 +46,7 @@ const RefouaChelemaWidget = lazy(() => import("@/components/RefouaChelemaWidget"
 const MinyanLiveWidget = lazy(() => import("@/components/MinyanLiveWidget"));
 const EvenementsWidget = lazy(() => import("@/components/EvenementsWidget"));
 const CoursVirtuelWidget = lazy(() => import("@/components/CoursVirtuelWidget"));
+const ZoharBritWidget = lazy(() => import("@/components/zohar/ZoharBritWidget"));
 const FideleSynagogueView = lazy(() => import("@/components/FideleSynagogueView"));
 const SynagogueChooser = lazy(() => import("@/components/SynagogueChooser"));
 const SynaProfileManager = lazy(() => import("@/components/SynaProfileManager"));
