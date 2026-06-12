@@ -88,7 +88,7 @@ const Siddour = () => {
     <div
       className="min-h-[100dvh]"
       style={{
-        background: "linear-gradient(180deg, #FEFCF7 0%, #FBF7EE 60%, #F6EFDE 100%)",
+        background: "#FFFFFF",
         color: "hsl(25 30% 18%)",
         WebkitTapHighlightColor: "transparent",
       }}
@@ -98,7 +98,7 @@ const Siddour = () => {
         className="sticky top-0 z-20 backdrop-blur border-b"
         style={{
           paddingTop: "env(safe-area-inset-top, 0px)",
-          background: "rgba(254, 252, 247, 0.94)",
+          background: "rgba(255, 255, 255, 0.96)",
           borderColor: "hsl(var(--gold) / 0.25)",
         }}
       >

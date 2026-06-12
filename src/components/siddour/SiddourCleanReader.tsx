@@ -19,10 +19,13 @@ interface Props {
 const FONT_KEY = "siddour_clean_font_v1";
 
 function cleanHtml(html: string): string {
-  // Remove instruction-only <small> wrappers
+  if (!html) return "";
   if (isInstructionOnly(html)) return "";
-  // Strip bare <small> annotations inside, keep main text
   return DOMPurify.sanitize(html, { ALLOWED_TAGS: ["b", "i", "em", "strong", "br", "sup", "sub"], ALLOWED_ATTR: [] });
+}
+
+function isEmpty(html: string): boolean {
+  return html.replace(/<[^>]+>/g, "").trim().length === 0;
 }
 
 export default function SiddourCleanReader({
@@ -40,9 +43,20 @@ export default function SiddourCleanReader({
   useEffect(() => { scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" }); }, [activeIdx]);
 
   const current = sections[activeIdx];
-  const cleanLines = useMemo(() => {
-    if (!current) return [] as string[];
-    return current.hebrew.map(cleanHtml).filter(s => s.replace(/<[^>]+>/g, "").trim().length > 0);
+  // Patah Eliyahou layout: pair each Hebrew verse with its French translation
+  const verses = useMemo(() => {
+    if (!current) return [] as Array<{ he: string; fr: string }>;
+    const out: Array<{ he: string; fr: string }> = [];
+    const heArr = current.hebrew || [];
+    const frArr = current.french || [];
+    const max = Math.max(heArr.length, frArr.length);
+    for (let i = 0; i < max; i++) {
+      const he = cleanHtml(heArr[i] || "");
+      const fr = cleanHtml(frArr[i] || "");
+      if (isEmpty(he) && isEmpty(fr)) continue;
+      out.push({ he, fr });
+    }
+    return out;
   }, [current]);
 
   if (!open) return null;
@@ -51,7 +65,7 @@ export default function SiddourCleanReader({
     <AnimatePresence>
       <motion.div
         className="fixed inset-0 z-[400] flex flex-col"
-        style={{ background: "linear-gradient(180deg, #FEFCF7 0%, #FBF7EE 100%)", color: "#1a1a1a" }}
+        style={{ background: "#FFFFFF", color: "#111" }}
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
       >
@@ -60,7 +74,7 @@ export default function SiddourCleanReader({
           className="shrink-0 border-b backdrop-blur"
           style={{
             paddingTop: "env(safe-area-inset-top, 0px)",
-            background: "rgba(254, 252, 247, 0.92)",
+            background: "rgba(255, 255, 255, 0.94)",
             borderColor: "hsl(var(--gold) / 0.25)",
           }}
         >
@@ -179,30 +193,50 @@ export default function SiddourCleanReader({
                 <div className="mt-5 mx-auto" style={{ width: 60, height: 1, background: "hsl(var(--gold) / 0.4)" }} />
               </div>
 
-              {/* Hebrew lines */}
-              {cleanLines.length === 0 ? (
+              {/* Patah Eliyahou style: Hebrew + French translation paired */}
+              {verses.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-12">
                   Cette section ne contient pas de texte affichable.
                 </p>
               ) : (
-                <div
-                  dir="rtl"
-                  className="hebrew-reading-block space-y-5"
-                  style={{
-                    fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
-                    fontSize: `${fontSize}px`,
-                    lineHeight: 2.2,
-                    textAlign: "center",
-                    fontWeight: 600,
-                    color: "#1a1208",
-                  }}
-                >
-                  {cleanLines.map((html, i) => (
-                    <p
+                <div className="space-y-8">
+                  {verses.map((v, i) => (
+                    <div
                       key={i}
-                      className="px-1"
-                      dangerouslySetInnerHTML={{ __html: html }}
-                    />
+                      className="pb-6"
+                      style={{
+                        borderBottom: i === verses.length - 1 ? "none" : "1px solid hsl(var(--gold) / 0.15)",
+                      }}
+                    >
+                      {!isEmpty(v.he) && (
+                        <p
+                          dir="rtl"
+                          className="text-center"
+                          style={{
+                            fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+                            fontSize: `${fontSize}px`,
+                            lineHeight: 2.0,
+                            fontWeight: 600,
+                            color: "#0a0a0a",
+                          }}
+                          dangerouslySetInnerHTML={{ __html: v.he }}
+                        />
+                      )}
+                      {!isEmpty(v.fr) && (
+                        <p
+                          dir="ltr"
+                          className="text-center mt-3"
+                          style={{
+                            fontFamily: "'Lora', 'Cormorant Garamond', Georgia, serif",
+                            fontSize: `${Math.max(15, Math.round(fontSize * 0.62))}px`,
+                            lineHeight: 1.65,
+                            fontStyle: "italic",
+                            color: "#5a4a2a",
+                          }}
+                          dangerouslySetInnerHTML={{ __html: v.fr }}
+                        />
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
