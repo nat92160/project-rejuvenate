@@ -1748,6 +1748,86 @@ export type Database = {
         }
         Relationships: []
       }
+      zohar_brit_participants: {
+        Row: {
+          anon_id: string | null
+          display_name: string
+          id: string
+          joined_at: string
+          session_id: string
+          slot_index: number | null
+          user_id: string | null
+        }
+        Insert: {
+          anon_id?: string | null
+          display_name: string
+          id?: string
+          joined_at?: string
+          session_id: string
+          slot_index?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          anon_id?: string | null
+          display_name?: string
+          id?: string
+          joined_at?: string
+          session_id?: string
+          slot_index?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zohar_brit_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "zohar_brit_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zohar_brit_sessions: {
+        Row: {
+          assignments: Json
+          code: string
+          completed: Json
+          created_at: string
+          creator_id: string | null
+          id: string
+          participants_count: number
+          status: string
+          title: string | null
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          assignments?: Json
+          code: string
+          completed?: Json
+          created_at?: string
+          creator_id?: string | null
+          id?: string
+          participants_count: number
+          status?: string
+          title?: string | null
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          assignments?: Json
+          code?: string
+          completed?: Json
+          created_at?: string
+          creator_id?: string | null
+          id?: string
+          participants_count?: number
+          status?: string
+          title?: string | null
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       zoom_tokens: {
         Row: {
           access_token: string
