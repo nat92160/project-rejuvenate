@@ -8,6 +8,7 @@ import { ChevronLeft, Check, Share2, Users, BookOpen, Sparkles } from "lucide-re
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { getZoharSections, type ZoharVersion, sectionWeight } from "@/lib/zohar-brit-data";
 import { splitSections, generateSessionCode } from "@/lib/zoharSplit";
+import { buildShareUrl, shareText } from "@/lib/shareUtils";
 
 type Session = {
   id: string; code: string; creator_id: string | null;
@@ -18,6 +19,24 @@ type Session = {
   status: string;
 };
 type Participant = { id: string; user_id: string | null; display_name: string; slot_index: number | null };
+
+// Stable per-device anon identity (no account required)
+function getAnonId(): string {
+  try {
+    const k = "zohar_brit_anon_id";
+    let v = localStorage.getItem(k);
+    if (!v) { v = `anon_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`; localStorage.setItem(k, v); }
+    return v;
+  } catch { return `anon_${Math.random().toString(36).slice(2, 10)}`; }
+}
+function getAnonName(): string {
+  try {
+    const k = "zohar_brit_anon_name";
+    let v = localStorage.getItem(k);
+    if (!v) { v = `Invité ${Math.floor(Math.random() * 900 + 100)}`; localStorage.setItem(k, v); }
+    return v;
+  } catch { return "Invité"; }
+}
 
 const NAVY = "hsl(var(--primary))";
 const GOLD = "hsl(var(--gold-matte))";
@@ -57,7 +76,6 @@ export default function ZoharBritWidget() {
 
   // ─── Actions ───
   const createSession = async (count: number) => {
-    if (!user) { toast({ title: "Connexion requise pour créer une session", duration: 2000 }); return; }
     setCreating(true);
     const secs = getZoharSections(version);
     const split = splitSections(secs, count);
@@ -66,7 +84,7 @@ export default function ZoharBritWidget() {
 
     const code = generateSessionCode();
     const { data, error } = await supabase.from("zohar_brit_sessions").insert({
-      code, creator_id: user.id, version, participants_count: count, assignments, completed: {},
+      code, creator_id: user?.id ?? null, version, participants_count: count, assignments, completed: {},
     }).select().single();
     setCreating(false);
     if (error || !data) { toast({ title: "Erreur création", duration: 2000 }); return; }
@@ -76,15 +94,19 @@ export default function ZoharBritWidget() {
   };
 
   const joinAsSlot = async (sessionId: string, slotIndex: number) => {
-    if (!user) return;
-    const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Participant";
+    const name = user
+      ? (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Participant")
+      : getAnonName();
     await supabase.from("zohar_brit_participants").insert({
-      session_id: sessionId, user_id: user.id, display_name: name, slot_index: slotIndex,
-    });
+      session_id: sessionId,
+      user_id: user?.id ?? null,
+      anon_id: user ? null : getAnonId(),
+      display_name: name,
+      slot_index: slotIndex,
+    } as any);
   };
 
   const joinByCode = async () => {
-    if (!user) { toast({ title: "Connexion requise pour rejoindre", duration: 2000 }); return; }
     const code = joinCode.trim().toUpperCase();
     const normalized = code.startsWith("BRIT-") ? code : `BRIT-${code}`;
     const { data } = await supabase.from("zohar_brit_sessions").select("*").eq("code", normalized).maybeSingle();
@@ -103,8 +125,10 @@ export default function ZoharBritWidget() {
   };
 
   const mySlot = useMemo(() => {
-    if (!session || !user) return null;
-    const p = participants.find((x) => x.user_id === user.id);
+    if (!session) return null;
+    const p = user
+      ? participants.find((x) => x.user_id === user.id)
+      : participants.find((x: any) => x.anon_id === getAnonId());
     return p?.slot_index ?? null;
   }, [participants, session, user]);
 
@@ -129,10 +153,9 @@ export default function ZoharBritWidget() {
 
   const shareCode = async () => {
     if (!session) return;
-    const url = `${window.location.origin}/?zohar-brit=${session.code}`;
+    const url = buildShareUrl(`/?zohar-brit=${session.code}`);
     const text = `Rejoins la lecture du Zohar de la veille de Brit\nCode : ${session.code}\n${url}`;
-    if (navigator.share) { try { await navigator.share({ text, title: "Zohar de la Brit" }); return; } catch {} }
-    try { await navigator.clipboard.writeText(text); toast({ title: "Lien copié", duration: 2000 }); } catch {}
+    await shareText(text, "Zohar de la Brit", url);
   };
 
   // Auto-join via URL
