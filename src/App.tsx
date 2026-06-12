@@ -19,6 +19,7 @@ import TehilimJoin from "./pages/TehilimJoin.tsx";
 import RefouaJoin from "./pages/RefouaJoin.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import Install from "./pages/Install.tsx";
+import ZoharBritWidget from "@/components/zohar/ZoharBritWidget";
 
 const OmerLanding = lazy(() => import("./pages/OmerLanding.tsx"));
 const DonationPage = lazy(() => import("./pages/DonationPage.tsx"));
@@ -202,6 +203,7 @@ function AppInner() {
           <Route path="/minyan/:id" element={<MinyanJoin />} />
           <Route path="/tehilim/:id" element={<TehilimJoin />} />
           <Route path="/refoua/:id" element={<RefouaJoin />} />
+          <Route path="/zohar-brit/:code" element={<div className="min-h-screen bg-background px-4 py-6"><main className="max-w-md mx-auto"><ZoharBritWidget /></main></div>} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/install" element={<Install />} />
           <Route path="/omer" element={<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /></div>}><OmerLanding /></Suspense>} />
