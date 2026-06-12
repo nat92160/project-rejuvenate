@@ -378,19 +378,51 @@ export default function ZoharBritWidget() {
         )}
 
         <div className="rounded-xl border p-3 bg-card" style={{ borderColor: "hsl(var(--border))" }}>
-          <div className="text-[10px] uppercase tracking-wider mb-2" style={{ color: NAVY }}>Participants</div>
-          <div className="space-y-1">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[10px] uppercase tracking-wider" style={{ color: NAVY }}>Suivi des participants</div>
+            {session.creator_id && user?.id === session.creator_id && (
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${GOLD}20`, color: GOLD }}>Organisateur</span>
+            )}
+          </div>
+          <div className="space-y-2">
             {Array.from({ length: session.participants_count }).map((_, i) => {
               const p = participants.find((x) => x.slot_index === i);
               const slotSecs = session.assignments[`slot_${i}`] || [];
-              const slotDone = (session.completed[`slot_${i}`] || []).length;
+              const doneSet = new Set(session.completed[`slot_${i}`] || []);
+              const slotDone = doneSet.size;
+              const allDone = slotSecs.length > 0 && slotDone === slotSecs.length;
               return (
-                <div key={i} className="flex items-center gap-2 text-xs py-1">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background: `${NAVY}15`, color: NAVY }}>{i + 1}</span>
-                  <span className="flex-1 truncate" style={{ color: p ? NAVY : "hsl(var(--muted-foreground))" }}>
-                    {p ? p.display_name : "— en attente —"}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">{slotDone}/{slotSecs.length}</span>
+                <div key={i} className="rounded-lg border p-2" style={{ borderColor: allDone ? GOLD : "hsl(var(--border))", background: allDone ? `${GOLD}08` : "transparent" }}>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                      style={{ background: allDone ? GOLD : `${NAVY}15`, color: allDone ? "#fff" : NAVY }}>
+                      {allDone ? "✓" : i + 1}
+                    </span>
+                    <span className="flex-1 truncate font-semibold" style={{ color: p ? NAVY : "hsl(var(--muted-foreground))" }}>
+                      {p ? p.display_name : "— en attente —"}
+                    </span>
+                    <span className="text-[10px] font-bold" style={{ color: allDone ? GOLD : "hsl(var(--muted-foreground))" }}>
+                      {slotDone}/{slotSecs.length}
+                    </span>
+                  </div>
+                  {slotSecs.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1.5 pl-7">
+                      {slotSecs.map((sIdx) => {
+                        const done = doneSet.has(sIdx);
+                        return (
+                          <span key={sIdx} title={`Section ${sIdx + 1}`}
+                            className="text-[9px] font-bold rounded px-1.5 py-0.5"
+                            style={{
+                              background: done ? GOLD : "hsl(var(--muted))",
+                              color: done ? "#fff" : "hsl(var(--muted-foreground))",
+                              opacity: done ? 1 : 0.7,
+                            }}>
+                            {done ? "✓" : ""}{sIdx + 1}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
