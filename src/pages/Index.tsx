@@ -370,6 +370,7 @@ const IndexContent = () => {
       case "evenements": return <Lazy><EvenementsWidget /></Lazy>;
       case "courszoom":
       case "coursvirtuel": return <Lazy><CoursVirtuelWidget /></Lazy>;
+      case "zoharbrit": return <Lazy><ZoharBritWidget /></Lazy>;
       case "affiche": return <Lazy><AfficheChabbatWidget /></Lazy>;
       case "horaires": return <Lazy><PrayerTimesWidget /></Lazy>;
       case "infosyna": return <Lazy><SynaProfileManager /></Lazy>;
