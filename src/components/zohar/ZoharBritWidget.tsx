@@ -38,6 +38,15 @@ function getAnonName(): string {
     return v;
   } catch { return "Invité"; }
 }
+function setAnonName(name: string) {
+  try { localStorage.setItem("zohar_brit_anon_name", name.trim().slice(0, 40)); } catch {}
+}
+function hasCustomAnonName(): boolean {
+  try {
+    const v = localStorage.getItem("zohar_brit_anon_name");
+    return !!v && !/^Invité \d+$/.test(v);
+  } catch { return false; }
+}
 
 const NAVY = "hsl(var(--primary))";
 const GOLD = "hsl(var(--gold-matte))";
@@ -56,6 +65,8 @@ export default function ZoharBritWidget() {
   const [joinCode, setJoinCode] = useState("");
   const [creating, setCreating] = useState(false);
   const [customCount, setCustomCount] = useState<number>(4);
+  const [guestName, setGuestName] = useState<string>(() => (hasCustomAnonName() ? getAnonName() : ""));
+  const [pendingJoin, setPendingJoin] = useState<null | { code?: string; create?: number }>(null);
 
   useWakeLock(mode !== "home" && activeIdx !== null);
 
@@ -82,6 +93,8 @@ export default function ZoharBritWidget() {
 
   // ─── Actions ───
   const createSession = async (count: number) => {
+    if (!user && !guestName.trim()) { setPendingJoin({ create: count }); return; }
+    if (!user) setAnonName(guestName);
     setCreating(true);
     const secs = getZoharSections(version);
     const split = splitSections(secs, count);
@@ -115,6 +128,8 @@ export default function ZoharBritWidget() {
   };
 
   const joinByCode = async (codeOverride?: string) => {
+    if (!user && !guestName.trim()) { setPendingJoin({ code: codeOverride || joinCode }); return; }
+    if (!user) setAnonName(guestName);
     const code = (codeOverride || joinCode).trim().toUpperCase();
     const normalized = code.startsWith("BRIT-") ? code : `BRIT-${code}`;
     const { data } = await supabase.from("zohar_brit_sessions").select("*").eq("code", normalized).maybeSingle();
@@ -179,9 +194,16 @@ export default function ZoharBritWidget() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = routeCode || params.get("zohar-brit");
-    if (code && !session) { setJoinCode(code); void joinByCode(code); }
+    if (code && !session) {
+      setJoinCode(code);
+      if (!user && !hasCustomAnonName()) {
+        setPendingJoin({ code });
+      } else {
+        void joinByCode(code);
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeCode]);
+  }, [routeCode, user]);
 
   // ─── Rendering ───
   const totalSections = sections.length;
@@ -230,6 +252,43 @@ export default function ZoharBritWidget() {
 
   // ─── HOME ───
   if (mode === "home") {
+    if (pendingJoin && !user) {
+      const submit = () => {
+        const n = guestName.trim();
+        if (n.length < 2) { toast({ title: "Entre ton prénom (2 caractères min.)", duration: 2000 }); return; }
+        setAnonName(n);
+        const pj = pendingJoin;
+        setPendingJoin(null);
+        if (pj.code) void joinByCode(pj.code);
+        else if (typeof pj.create === "number") void createSession(pj.create);
+      };
+      return (
+        <div className="space-y-4">
+          <div className="rounded-2xl p-5 text-center" style={{ background: `linear-gradient(135deg, ${NAVY}, ${GOLD})`, color: "#fff" }}>
+            <Sparkles className="w-6 h-6 mx-auto mb-2 opacity-80" />
+            <h2 className="font-display text-xl font-bold">Ton prénom</h2>
+            <p className="text-xs opacity-90 mt-1">Pour que l'organisateur sache qui lit quelle section</p>
+          </div>
+          <div className="rounded-xl border-2 p-4 space-y-3" style={{ borderColor: GOLD }}>
+            <Input
+              autoFocus
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value.slice(0, 40))}
+              onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+              placeholder="Ex: David, Sarah…"
+              className="text-base"
+              style={{ fontSize: 16 }}
+            />
+            <button onClick={submit} className="w-full rounded-lg py-2.5 text-sm font-bold" style={{ background: NAVY, color: "#fff" }}>
+              Continuer
+            </button>
+            <button onClick={() => setPendingJoin(null)} className="w-full text-[11px] text-muted-foreground py-1">
+              Annuler
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="space-y-4">
         <div className="rounded-2xl p-5 text-center" style={{ background: `linear-gradient(135deg, ${NAVY}, ${GOLD})`, color: "#fff" }}>
