@@ -193,30 +193,50 @@ export default function SiddourCleanReader({
                 <div className="mt-5 mx-auto" style={{ width: 60, height: 1, background: "hsl(var(--gold) / 0.4)" }} />
               </div>
 
-              {/* Hebrew lines */}
-              {cleanLines.length === 0 ? (
+              {/* Patah Eliyahou style: Hebrew + French translation paired */}
+              {verses.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-12">
                   Cette section ne contient pas de texte affichable.
                 </p>
               ) : (
-                <div
-                  dir="rtl"
-                  className="hebrew-reading-block space-y-5"
-                  style={{
-                    fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
-                    fontSize: `${fontSize}px`,
-                    lineHeight: 2.2,
-                    textAlign: "center",
-                    fontWeight: 600,
-                    color: "#1a1208",
-                  }}
-                >
-                  {cleanLines.map((html, i) => (
-                    <p
+                <div className="space-y-8">
+                  {verses.map((v, i) => (
+                    <div
                       key={i}
-                      className="px-1"
-                      dangerouslySetInnerHTML={{ __html: html }}
-                    />
+                      className="pb-6"
+                      style={{
+                        borderBottom: i === verses.length - 1 ? "none" : "1px solid hsl(var(--gold) / 0.15)",
+                      }}
+                    >
+                      {!isEmpty(v.he) && (
+                        <p
+                          dir="rtl"
+                          className="text-center"
+                          style={{
+                            fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+                            fontSize: `${fontSize}px`,
+                            lineHeight: 2.0,
+                            fontWeight: 600,
+                            color: "#0a0a0a",
+                          }}
+                          dangerouslySetInnerHTML={{ __html: v.he }}
+                        />
+                      )}
+                      {!isEmpty(v.fr) && (
+                        <p
+                          dir="ltr"
+                          className="text-center mt-3"
+                          style={{
+                            fontFamily: "'Lora', 'Cormorant Garamond', Georgia, serif",
+                            fontSize: `${Math.max(15, Math.round(fontSize * 0.62))}px`,
+                            lineHeight: 1.65,
+                            fontStyle: "italic",
+                            color: "#5a4a2a",
+                          }}
+                          dangerouslySetInnerHTML={{ __html: v.fr }}
+                        />
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
