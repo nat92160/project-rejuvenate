@@ -1,9 +1,8 @@
 import DOMPurify from "dompurify";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, List, Minus, Plus, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, List, Minus, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FullSection } from "@/hooks/useSiddourFullOffice";
-import { isInstructionOnly, toHebrewLetter } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -18,14 +17,31 @@ interface Props {
 
 const FONT_KEY = "siddour_clean_font_v1";
 
+/**
+ * Consistoire-style cleanup:
+ *  - keep <small> blocks (rubrics) but they'll be styled as italic grey
+ *  - drop visually-empty entries
+ */
 function cleanHtml(html: string): string {
   if (!html) return "";
-  if (isInstructionOnly(html)) return "";
-  return DOMPurify.sanitize(html, { ALLOWED_TAGS: ["b", "i", "em", "strong", "br", "sup", "sub"], ALLOWED_ATTR: [] });
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ["b", "i", "em", "strong", "br", "sup", "sub", "small", "big"],
+    ALLOWED_ATTR: [],
+  });
 }
 
 function isEmpty(html: string): boolean {
   return html.replace(/<[^>]+>/g, "").trim().length === 0;
+}
+
+function isPureRubric(html: string): boolean {
+  const t = html.trim();
+  return /^<small>[\s\S]*<\/small>$/.test(t) || /^<i>[\s\S]*<\/i>$/.test(t) || /^<em>[\s\S]*<\/em>$/.test(t);
+}
+
+function isPureBoldTitle(html: string): boolean {
+  const t = html.trim();
+  return (/^<b>[\s\S]*<\/b>$/.test(t) || /^<big>\s*<b>[\s\S]*<\/b>\s*<\/big>$/.test(t)) && !t.includes("<small>");
 }
 
 export default function SiddourCleanReader({
@@ -43,20 +59,18 @@ export default function SiddourCleanReader({
   useEffect(() => { scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" }); }, [activeIdx]);
 
   const current = sections[activeIdx];
-  // Patah Eliyahou layout: pair each Hebrew verse with its French translation
-  const verses = useMemo(() => {
-    if (!current) return [] as Array<{ he: string; fr: string }>;
-    const out: Array<{ he: string; fr: string }> = [];
-    const heArr = current.hebrew || [];
-    const frArr = current.french || [];
-    const max = Math.max(heArr.length, frArr.length);
-    for (let i = 0; i < max; i++) {
-      const he = cleanHtml(heArr[i] || "");
-      const fr = cleanHtml(frArr[i] || "");
-      if (isEmpty(he) && isEmpty(fr)) continue;
-      out.push({ he, fr });
-    }
-    return out;
+  // Consistoire-style: Hebrew-only flow with embedded rubric/title classification
+  type Block = { kind: "rubric" | "title" | "text"; html: string };
+  const blocks = useMemo<Block[]>(() => {
+    if (!current) return [];
+    return (current.hebrew || [])
+      .map(cleanHtml)
+      .filter(h => !isEmpty(h))
+      .map<Block>(h => {
+        if (isPureBoldTitle(h)) return { kind: "title", html: h };
+        if (isPureRubric(h)) return { kind: "rubric", html: h };
+        return { kind: "text", html: h };
+      });
   }, [current]);
 
   if (!open) return null;
