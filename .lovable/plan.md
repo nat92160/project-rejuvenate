@@ -1,75 +1,70 @@
-## Objectif
-Sur l'onglet **Mur** (annonces) et **Horaires** (Cha'harit/Min'ha/Arvit + événements), les fidèles peuvent désormais :
-1. Voir les changements **en temps réel** dès qu'un président modifie un horaire ou poste une annonce
-2. **Réagir** (❤️ 🙏 ✅ 👏) et **commenter** sous chaque annonce/horaire vérifié
-3. Utiliser des **actions rapides** : "Ajouter au calendrier", "Partager", "Me rappeler avant", "Itinéraire"
+# Zohar de la veille de Brit Mila — Lecture partagée
 
-Restriction : ces interactions n'apparaissent **que** sur du contenu **émis par le président/adjoint** ou **marqué vérifié** (`verified = true`).
+Nouvelle fonctionnalité pour lire le Zohar la nuit précédant une Brit, avec partage équilibré entre plusieurs participants en temps réel (comme Tehilim).
+
+## Ce qu'on construit
+
+### 1. Contenu
+Deux versions du Zohar de la Brit (hébreu seul) embarquées dans l'app :
+- **Tikoun HaBrit complet** — extraits Vayera + Lekh Lekha (~30 sections)
+- **Tikoun HaBrit court** — version abrégée (~10 sections)
+
+Texte stocké statiquement dans `src/lib/zohar-brit-data.ts` (pas d'API externe → instantané, offline).
+
+### 2. Lecteur
+Page `/zohar-brit` :
+- Choix version (court / complet) au lancement
+- Lecteur hébreu Edot HaMizrach (même aesthetic que le Siddour, police Frank Ruhl Libre, RTL)
+- Slider taille de police, Wake Lock, marque-page local
+- Bouton "Marquer ma section comme terminée"
+
+### 3. Partage temps réel (style Tehilim)
+- Bouton "Créer une session" → code court (ex: BRIT-A4F2)
+- Créateur choisit N participants (2-30) et la version
+- Découpe automatique par **sections complètes**, équilibrée par poids de caractères (algo greedy)
+- Bouton "Rejoindre une session" → entrer code → reçoit automatiquement la prochaine part libre
+- Indicateur temps réel : qui a terminé, sections restantes, % global
+- Partage du code via Web Share (WhatsApp, etc.)
+
+### 4. Découpage intelligent
+Algo : tri sections par taille décroissante → assignation gourmande au lecteur le moins chargé. Garantit que chaque participant reçoit des **sections entières**, jamais coupées au milieu, avec l'écart de charge le plus faible possible.
+
+### 5. Accès
+- Widget sur l'accueil dans la catégorie "Outils spirituels" (icône 📖 + "Zohar de la Brit")
+- Route publique (guest-friendly, pas besoin de compte pour lire)
+- Création/jonction de session : compte requis pour identifier les participants
+
+## Détails techniques
+
+### Tables Supabase
+```
+zohar_brit_sessions
+  - code (text, unique, court)
+  - creator_id (uuid)
+  - version ('court' | 'complet')
+  - participants_count (int)
+  - assignments (jsonb)  -- { userId/anonId: [sectionIndexes] }
+  - completed (jsonb)    -- { userId: [sectionIndexes] }
+  - status ('active' | 'completed')
+
+zohar_brit_participants
+  - session_id, user_id (nullable), anon_id, display_name, joined_at
+```
+RLS : tout le monde authentifié peut lire/écrire les sessions actives ; mise à jour temps réel via Realtime.
+
+### Fichiers
+- `src/lib/zohar-brit-data.ts` — texte hébreu structuré
+- `src/lib/zoharSplit.ts` — algo de découpe équilibrée
+- `src/components/zohar/ZoharBritReader.tsx` — lecteur
+- `src/components/zohar/ZoharBritSessionHub.tsx` — créer/rejoindre
+- `src/components/zohar/ZoharBritLive.tsx` — vue session avec progression live
+- `src/pages/ZoharBrit.tsx` — page route
+- `src/pages/ZoharBritJoin.tsx` — `/zohar-brit/:code` page de jonction directe
+- Lien dans la home (catégorie Outils spirituels)
+
+### Realtime
+Channel `zohar-brit-{code}` avec `postgres_changes` sur `zohar_brit_sessions` (assignments, completed) et `zohar_brit_participants`.
 
 ---
 
-## 1. Base de données (migration)
-
-Deux nouvelles tables génériques (un seul système de réactions/commentaires utilisable partout) :
-
-**`content_reactions`**
-- `content_type` (`annonce` | `horaire` | `evenement`)
-- `content_id` (uuid de la cible — pour horaire = id de la synagogue + suffixe office côté client)
-- `user_id`, `display_name`, `emoji` (parmi : ❤️ 🙏 ✅ 👏 🔥)
-- Unique `(content_type, content_id, user_id, emoji)` → un seul ❤️ par user
-- RLS : tout le monde voit, authentifiés peuvent créer/supprimer les leurs
-
-**`content_comments`**
-- `content_type`, `content_id`, `user_id`, `display_name`, `content` (text), `is_president` (bool)
-- RLS : tout le monde voit, authentifiés écrivent leurs commentaires, président/adjoint de la synagogue peut modérer (supprimer)
-
-Realtime activé sur les deux tables (`ADD TABLE … supabase_realtime` + `REPLICA IDENTITY FULL`).
-
----
-
-## 2. Composant réutilisable `InteractiveContent`
-
-`src/components/interactive/InteractiveContent.tsx` — wrappe n'importe quel contenu vérifié et ajoute :
-- Barre de réactions (compteurs live via realtime, tap pour réagir, retirer en re-tappant)
-- Bouton 💬 qui ouvre une zone commentaires inline (chargée à la demande)
-- Menu actions rapides (3-dots) : Calendrier (.ics), Partage (Web Share), Rappel local (notification scheduled), Itinéraire (Apple/Google Maps)
-- Badge "✓ Vérifié" / "👑 Président" visible
-
-Props : `contentType`, `contentId`, `verified`, `synagogueId`, `eventDate?`, `eventTime?`, `address?`, `shareText`.
-
----
-
-## 3. Intégration
-
-- **`AnnoncesWidget.tsx`** : chaque annonce wrappée par `<InteractiveContent>` (toujours interactive car les annonces sont créées par président/adjoint via RLS).
-- **`SynagogueWall.tsx`** : ajoute `<InteractiveContent>` sous les 3 horaires (Cha'harit/Min'ha/Arvit) — un par office, avec `contentId = ${synagogueId}:${office}`. Affiché seulement si l'horaire est défini (donc vérifié par le président).
-- **`EvenementsWidget.tsx`** : actions rapides + réactions + commentaires sur les événements de la synagogue.
-
-Realtime UI : déjà en place pour `synagogue_profiles` (ajouts précédents). On ajoute la souscription aux deux nouvelles tables dans `InteractiveContent`.
-
----
-
-## 4. Actions rapides — détails techniques
-
-- **Calendrier** : génère un fichier `.ics` à la volée et `window.location.href = blob` (iOS ajoute au Calendar.app, Android idem).
-- **Partage** : utilise `shareUtils.ts` existant (Web Share API + fallback copie lien).
-- **Rappel** : si push natif autorisé → schedule local notification 30 min avant via Capacitor LocalNotifications ; sinon fallback `localStorage` + check au démarrage de l'app.
-- **Itinéraire** : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}` ou `maps://` sur iOS natif.
-
----
-
-## 5. Sécurité
-
-- Pas d'exposition de PII : on stocke `display_name` (déjà affiché publiquement) + `user_id`.
-- Anti-spam : trigger PG limite à 10 commentaires/h/user par contenu.
-- Modération : président/adjoint de la synagogue concernée peut supprimer commentaires abusifs.
-- Anonymous (guests) : peuvent **voir** mais doivent se connecter pour réagir/commenter (toast incitatif).
-
----
-
-## Hors-périmètre (non inclus)
-- Notifications push aux fidèles quand un président modifie (existe déjà via `shabbat-reminder` ; pas étendu ici).
-- Threads de réponses (commentaires nestés) — V2.
-- Édition d'un commentaire après envoi — V2.
-
-Une fois le plan validé, je crée la migration puis j'implémente le composant et l'intègre dans les 3 widgets.
+Confirme et je construis tout (migration + frontend + intégration accueil).
