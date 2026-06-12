@@ -29,6 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "minyan", icon: "🚨", label: "Urgence Minyan", modes: ["fidele", "president"] },
   { id: "evenements", icon: "📅", label: "Événements", modes: ["fidele", "president"] },
   { id: "coursvirtuel", icon: "🎥", label: "Cours", modes: ["fidele", "president"] },
+  { id: "zoharbrit", icon: "📖", label: "Zohar de la Brit", modes: ["fidele", "president"] },
   { id: "affiche", icon: "📋", label: "Affiche", modes: ["president"] },
   { id: "horaires", icon: "🕐", label: "Horaires", modes: ["president"] },
   { id: "infosyna", icon: "🏛️", label: "Infos Syna", modes: ["president"] },
