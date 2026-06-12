@@ -103,56 +103,66 @@ export default function SiddourCleanReader({
             </button>
 
             <div className="flex-1 min-w-0 text-center px-2">
-              <h1 className="font-display font-bold text-sm sm:text-base truncate" style={{ color: "hsl(var(--primary))" }}>
-                {officeIcon} {officeLabel}
+              <h1
+                className="font-bold text-sm sm:text-base truncate"
+                style={{
+                  fontFamily: "'Cormorant Garamond', 'Lora', Georgia, serif",
+                  color: "hsl(var(--primary))",
+                }}
+              >
+                {current ? (
+                  <>
+                    {current.title}
+                    <span className="mx-2 opacity-50">—</span>
+                    <span
+                      dir="rtl"
+                      style={{ fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif" }}
+                    >
+                      {current.heTitle}
+                    </span>
+                  </>
+                ) : `${officeLabel}`}
               </h1>
-              {current && (
-                <p
-                  className="text-[11px] sm:text-xs truncate"
-                  style={{ color: "hsl(var(--gold-matte))", fontWeight: 600 }}
-                  dir="rtl"
-                >
-                  {current.heTitle}
-                </p>
-              )}
             </div>
 
-            <button
-              onClick={() => setTocOpen(true)}
-              aria-label="Sommaire"
-              className="p-2.5 rounded-lg active:scale-95 transition shrink-0 hover:bg-black/5"
-              style={{ minWidth: 44, minHeight: 44 }}
-            >
-              <List className="w-5 h-5" style={{ color: "hsl(var(--gold-matte))" }} />
-            </button>
-          </div>
-
-          {/* Section progress + font */}
-          <div className="flex items-center gap-2 px-3 pb-2">
+            {/* Up / Down navigation (Consistoire-style arrows) */}
             <button
               onClick={() => setActiveIdx(i => Math.max(0, i - 1))}
               disabled={activeIdx === 0}
-              className="p-1.5 rounded-md hover:bg-black/5 disabled:opacity-30 active:scale-95"
               aria-label="Section précédente"
+              className="p-2 rounded-lg active:scale-95 transition shrink-0 hover:bg-black/5 disabled:opacity-30"
+              style={{ minWidth: 40, minHeight: 40 }}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronUp className="w-5 h-5" style={{ color: "hsl(var(--primary))" }} />
             </button>
-            <div className="flex-1 text-center text-[11px] font-semibold tracking-wide" style={{ color: "hsl(var(--gold-matte))" }}>
-              {sections.length > 0 ? `${activeIdx + 1} / ${sections.length} — ${current?.title || ""}` : "…"}
-            </div>
             <button
               onClick={() => setActiveIdx(i => Math.min(sections.length - 1, i + 1))}
               disabled={activeIdx >= sections.length - 1}
-              className="p-1.5 rounded-md hover:bg-black/5 disabled:opacity-30 active:scale-95"
               aria-label="Section suivante"
+              className="p-2 rounded-lg active:scale-95 transition shrink-0 hover:bg-black/5 disabled:opacity-30"
+              style={{ minWidth: 40, minHeight: 40 }}
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronDown className="w-5 h-5" style={{ color: "hsl(var(--primary))" }} />
             </button>
-            <div className="w-px h-5 bg-black/10 mx-1" />
-            <button onClick={() => setFontSize(s => Math.max(18, s - 2))} className="p-1.5 rounded-md hover:bg-black/5 active:scale-95" aria-label="A-">
+            <button
+              onClick={() => setTocOpen(true)}
+              aria-label="Sommaire"
+              className="p-2 rounded-lg active:scale-95 transition shrink-0 hover:bg-black/5"
+              style={{ minWidth: 40, minHeight: 40 }}
+            >
+              <List className="w-5 h-5" style={{ color: "hsl(var(--primary))" }} />
+            </button>
+          </div>
+
+          {/* Compact font controls bar */}
+          <div className="flex items-center justify-end gap-1 px-3 pb-1.5">
+            <span className="text-[10px] uppercase tracking-wider mr-1" style={{ color: "hsl(var(--muted-foreground))" }}>
+              {activeIdx + 1} / {sections.length || "…"}
+            </span>
+            <button onClick={() => setFontSize(s => Math.max(18, s - 2))} className="p-1 rounded hover:bg-black/5 active:scale-95" aria-label="A-">
               <Minus className="w-3.5 h-3.5" />
             </button>
-            <button onClick={() => setFontSize(s => Math.min(44, s + 2))} className="p-1.5 rounded-md hover:bg-black/5 active:scale-95" aria-label="A+">
+            <button onClick={() => setFontSize(s => Math.min(44, s + 2))} className="p-1 rounded hover:bg-black/5 active:scale-95" aria-label="A+">
               <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -174,100 +184,65 @@ export default function SiddourCleanReader({
               <p className="text-xs mt-2 text-muted-foreground">{error}</p>
             </div>
           ) : current ? (
-            <article className="max-w-5xl mx-auto px-4 sm:px-10 py-8 sm:py-12">
-              {/* Title block — Consistoire style: French uppercase rubric + Hebrew title */}
-              <div className="text-center mb-10">
-                <p
-                  className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[4px]"
-                  style={{ color: "hsl(var(--gold-matte))" }}
-                >
-                  Rituel des prières — Section {toHebrewLetter(activeIdx + 1)}
-                </p>
-                <h2
-                  className="mt-3 font-bold"
-                  style={{
-                    fontFamily: "'Cormorant Garamond', 'Lora', Georgia, serif",
-                    fontSize: "clamp(22px, 4.5vw, 32px)",
-                    color: "hsl(var(--primary))",
-                    lineHeight: 1.2,
-                    letterSpacing: "0.02em",
-                  }}
-                >
-                  {current.title}
-                </h2>
-                <h3
-                  className="mt-1 font-bold"
-                  dir="rtl"
-                  style={{
-                    fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
-                    fontSize: `${Math.round(fontSize * 1.2)}px`,
-                    color: "hsl(var(--primary))",
-                    lineHeight: 1.25,
-                  }}
-                >
-                  {current.heTitle}
-                </h3>
-                {current.isHazara && (
-                  <p className="mt-2 text-[11px] italic" style={{ color: "hsl(var(--gold-matte))" }}>
-                    Répétition de la Amida — Hazarat HaChats
-                  </p>
-                )}
-                <div className="mt-5 mx-auto flex items-center justify-center gap-3" aria-hidden>
-                  <div style={{ width: 50, height: 1, background: "hsl(var(--gold) / 0.45)" }} />
-                  <div style={{ width: 4, height: 4, borderRadius: "50%", background: "hsl(var(--gold) / 0.55)" }} />
-                  <div style={{ width: 50, height: 1, background: "hsl(var(--gold) / 0.45)" }} />
-                </div>
-              </div>
-
-              {/* Consistoire-style two-column book layout */}
-              {verses.length === 0 ? (
+            <article className="max-w-2xl mx-auto px-5 sm:px-8 py-6 sm:py-8">
+              {/* Hebrew-only flow, Consistoire style: rubrics in italic grey, bold inner titles, justified Hebrew */}
+              {blocks.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-12">
                   Cette section ne contient pas de texte affichable.
                 </p>
               ) : (
-                <div className="space-y-7 md:space-y-5">
-                  {verses.map((v, i) => (
-                    <div
-                      key={i}
-                      className="md:grid md:grid-cols-2 md:gap-10 md:items-baseline pb-5 md:pb-4"
-                      style={{
-                        borderBottom: i === verses.length - 1 ? "none" : "1px dashed hsl(var(--gold) / 0.22)",
-                      }}
-                    >
-                      {/* French — left column (LTR) */}
-                      {!isEmpty(v.fr) ? (
+                <div>
+                  {blocks.map((b, i) => {
+                    if (b.kind === "rubric") {
+                      return (
                         <p
-                          dir="ltr"
-                          className="order-2 md:order-1 mt-3 md:mt-0 text-left md:pr-2"
-                          style={{
-                            fontFamily: "'Cormorant Garamond', 'Lora', Georgia, serif",
-                            fontSize: `${Math.max(15, Math.round(fontSize * 0.66))}px`,
-                            lineHeight: 1.7,
-                            color: "#2a2418",
-                            fontWeight: 500,
-                          }}
-                          dangerouslySetInnerHTML={{ __html: v.fr }}
-                        />
-                      ) : <div className="order-2 md:order-1" />}
-
-                      {/* Hebrew — right column (RTL) */}
-                      {!isEmpty(v.he) ? (
-                        <p
+                          key={i}
                           dir="rtl"
-                          className="order-1 md:order-2 text-right md:pl-2 md:border-r md:pr-6"
+                          className="text-right my-5"
+                          style={{
+                            fontFamily: "'Lora', 'Cormorant Garamond', Georgia, serif",
+                            fontStyle: "italic",
+                            fontSize: `${Math.max(13, Math.round(fontSize * 0.55))}px`,
+                            color: "#555",
+                            lineHeight: 1.5,
+                          }}
+                          dangerouslySetInnerHTML={{ __html: b.html.replace(/<\/?small>/g, "") }}
+                        />
+                      );
+                    }
+                    if (b.kind === "title") {
+                      return (
+                        <h4
+                          key={i}
+                          dir="rtl"
+                          className="text-right mt-6 mb-3 font-bold"
                           style={{
                             fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
-                            fontSize: `${fontSize}px`,
-                            lineHeight: 1.95,
-                            fontWeight: 600,
-                            color: "#0a0a0a",
-                            borderColor: "hsl(var(--gold) / 0.25)",
+                            fontSize: `${Math.round(fontSize * 0.95)}px`,
+                            color: "#000",
                           }}
-                          dangerouslySetInnerHTML={{ __html: v.he }}
+                          dangerouslySetInnerHTML={{ __html: b.html.replace(/<\/?b>|<\/?big>/g, "") }}
                         />
-                      ) : <div className="order-1 md:order-2" />}
-                    </div>
-                  ))}
+                      );
+                    }
+                    return (
+                      <p
+                        key={i}
+                        dir="rtl"
+                        className="my-4"
+                        style={{
+                          fontFamily: "'Frank Ruhl Libre', 'Noto Serif Hebrew', serif",
+                          fontSize: `${fontSize}px`,
+                          lineHeight: 2.1,
+                          fontWeight: 500,
+                          color: "#0a0a0a",
+                          textAlign: "justify",
+                          textAlignLast: "right",
+                        }}
+                        dangerouslySetInnerHTML={{ __html: b.html }}
+                      />
+                    );
+                  })}
                 </div>
               )}
 
