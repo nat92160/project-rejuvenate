@@ -252,6 +252,43 @@ export default function ZoharBritWidget() {
 
   // ─── HOME ───
   if (mode === "home") {
+    if (pendingJoin && !user) {
+      const submit = () => {
+        const n = guestName.trim();
+        if (n.length < 2) { toast({ title: "Entre ton prénom (2 caractères min.)", duration: 2000 }); return; }
+        setAnonName(n);
+        const pj = pendingJoin;
+        setPendingJoin(null);
+        if (pj.code) void joinByCode(pj.code);
+        else if (typeof pj.create === "number") void createSession(pj.create);
+      };
+      return (
+        <div className="space-y-4">
+          <div className="rounded-2xl p-5 text-center" style={{ background: `linear-gradient(135deg, ${NAVY}, ${GOLD})`, color: "#fff" }}>
+            <Sparkles className="w-6 h-6 mx-auto mb-2 opacity-80" />
+            <h2 className="font-display text-xl font-bold">Ton prénom</h2>
+            <p className="text-xs opacity-90 mt-1">Pour que l'organisateur sache qui lit quelle section</p>
+          </div>
+          <div className="rounded-xl border-2 p-4 space-y-3" style={{ borderColor: GOLD }}>
+            <Input
+              autoFocus
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value.slice(0, 40))}
+              onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+              placeholder="Ex: David, Sarah…"
+              className="text-base"
+              style={{ fontSize: 16 }}
+            />
+            <button onClick={submit} className="w-full rounded-lg py-2.5 text-sm font-bold" style={{ background: NAVY, color: "#fff" }}>
+              Continuer
+            </button>
+            <button onClick={() => setPendingJoin(null)} className="w-full text-[11px] text-muted-foreground py-1">
+              Annuler
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="space-y-4">
         <div className="rounded-2xl p-5 text-center" style={{ background: `linear-gradient(135deg, ${NAVY}, ${GOLD})`, color: "#fff" }}>
