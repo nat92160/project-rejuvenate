@@ -144,9 +144,59 @@ const ResetPassword = () => {
           <p className="text-sm text-muted-foreground mt-1">
             {ready
               ? "Choisissez un nouveau mot de passe pour votre compte."
+              : linkError
+              ? "Le lien semble invalide."
               : "Vérification du lien de réinitialisation…"}
           </p>
         </div>
+
+        {!ready && linkError && (
+          <div className="flex flex-col gap-3">
+            <p className="text-xs text-destructive bg-destructive/10 p-3 rounded-lg leading-relaxed">
+              {linkError}
+            </p>
+            {resent ? (
+              <div
+                className="rounded-xl border-2 border-primary/40 bg-primary/10 p-4 text-center"
+                style={{ boxShadow: "var(--shadow-gold)" }}
+              >
+                <div className="text-3xl mb-2">📧</div>
+                <p className="text-sm font-bold text-primary leading-snug">
+                  Email envoyé ! Vérifiez votre boîte de réception (et vos spams).
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleResend} className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-foreground">
+                  Renvoyer un lien de réinitialisation
+                </label>
+                <input
+                  type="email"
+                  placeholder="Votre email"
+                  value={resendEmail}
+                  onChange={(e) => setResendEmail(e.target.value)}
+                  required
+                  className={inputClass}
+                />
+                <button
+                  type="submit"
+                  disabled={resending}
+                  className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50"
+                  style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+                >
+                  {resending ? "Envoi…" : "Envoyer un nouveau lien"}
+                </button>
+              </form>
+            )}
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="text-xs text-muted-foreground hover:text-foreground bg-transparent border-none cursor-pointer mt-1"
+            >
+              ← Retour à l'accueil
+            </button>
+          </div>
+        )}
 
         {ready && (
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
