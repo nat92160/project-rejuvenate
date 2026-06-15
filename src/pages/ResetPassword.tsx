@@ -15,18 +15,98 @@ const ResetPassword = () => {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [resendEmail, setResendEmail] = useState("");
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
 
   useEffect(() => {
-    // Supabase places recovery tokens in URL hash; the client picks them up
-    // automatically via detectSessionInUrl. We just wait for a session.
+    let cancelled = false;
+
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+        setReady(true);
+        setLinkError(null);
+      }
     });
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
-    return () => sub.subscription.unsubscribe();
+
+    const init = async () => {
+      // 1) Check hash for explicit errors (expired / invalid link)
+      const hash = window.location.hash.startsWith("#")
+        ? window.location.hash.slice(1)
+        : "";
+      const hashParams = new URLSearchParams(hash);
+      const hashError =
+        hashParams.get("error_description") || hashParams.get("error");
+      if (hashError) {
+        setLinkError(decodeURIComponent(hashError.replace(/\+/g, " ")));
+        return;
+      }
+
+      // 2) PKCE flow: ?code=... → exchange for a session
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      if (code) {
+        const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
+        if (cancelled) return;
+        if (exErr) {
+          setLinkError(
+            "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau ci-dessous."
+          );
+          return;
+        }
+        // Clean the URL
+        url.searchParams.delete("code");
+        window.history.replaceState({}, "", url.pathname + url.search);
+        setReady(true);
+        return;
+      }
+
+      // 3) Already have a session (hash tokens auto-detected)
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (data.session) {
+        setReady(true);
+        return;
+      }
+
+      // 4) After a short delay, if still nothing, show error
+      setTimeout(() => {
+        if (cancelled) return;
+        setReady((r) => {
+          if (!r) {
+            setLinkError(
+              "Lien de réinitialisation manquant ou expiré. Demandez un nouveau lien ci-dessous."
+            );
+          }
+          return r;
+        });
+      }, 2500);
+    };
+
+    init();
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
+
+  const handleResend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resendEmail.trim()) return;
+    setResending(true);
+    const { error: rErr } = await supabase.auth.resetPasswordForEmail(
+      resendEmail.trim(),
+      { redirectTo: `${window.location.origin}/reset-password` }
+    );
+    setResending(false);
+    if (rErr) {
+      toast.error(rErr.message);
+    } else {
+      setResent(true);
+      toast.success("Email envoyé ✅ Vérifiez votre boîte de réception.");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
