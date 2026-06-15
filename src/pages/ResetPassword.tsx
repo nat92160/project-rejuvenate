@@ -15,18 +15,98 @@ const ResetPassword = () => {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [resendEmail, setResendEmail] = useState("");
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
 
   useEffect(() => {
-    // Supabase places recovery tokens in URL hash; the client picks them up
-    // automatically via detectSessionInUrl. We just wait for a session.
+    let cancelled = false;
+
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+        setReady(true);
+        setLinkError(null);
+      }
     });
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
-    return () => sub.subscription.unsubscribe();
+
+    const init = async () => {
+      // 1) Check hash for explicit errors (expired / invalid link)
+      const hash = window.location.hash.startsWith("#")
+        ? window.location.hash.slice(1)
+        : "";
+      const hashParams = new URLSearchParams(hash);
+      const hashError =
+        hashParams.get("error_description") || hashParams.get("error");
+      if (hashError) {
+        setLinkError(decodeURIComponent(hashError.replace(/\+/g, " ")));
+        return;
+      }
+
+      // 2) PKCE flow: ?code=... → exchange for a session
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      if (code) {
+        const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
+        if (cancelled) return;
+        if (exErr) {
+          setLinkError(
+            "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau ci-dessous."
+          );
+          return;
+        }
+        // Clean the URL
+        url.searchParams.delete("code");
+        window.history.replaceState({}, "", url.pathname + url.search);
+        setReady(true);
+        return;
+      }
+
+      // 3) Already have a session (hash tokens auto-detected)
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (data.session) {
+        setReady(true);
+        return;
+      }
+
+      // 4) After a short delay, if still nothing, show error
+      setTimeout(() => {
+        if (cancelled) return;
+        setReady((r) => {
+          if (!r) {
+            setLinkError(
+              "Lien de réinitialisation manquant ou expiré. Demandez un nouveau lien ci-dessous."
+            );
+          }
+          return r;
+        });
+      }, 2500);
+    };
+
+    init();
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
+
+  const handleResend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resendEmail.trim()) return;
+    setResending(true);
+    const { error: rErr } = await supabase.auth.resetPasswordForEmail(
+      resendEmail.trim(),
+      { redirectTo: `${window.location.origin}/reset-password` }
+    );
+    setResending(false);
+    if (rErr) {
+      toast.error(rErr.message);
+    } else {
+      setResent(true);
+      toast.success("Email envoyé ✅ Vérifiez votre boîte de réception.");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,9 +144,59 @@ const ResetPassword = () => {
           <p className="text-sm text-muted-foreground mt-1">
             {ready
               ? "Choisissez un nouveau mot de passe pour votre compte."
+              : linkError
+              ? "Le lien semble invalide."
               : "Vérification du lien de réinitialisation…"}
           </p>
         </div>
+
+        {!ready && linkError && (
+          <div className="flex flex-col gap-3">
+            <p className="text-xs text-destructive bg-destructive/10 p-3 rounded-lg leading-relaxed">
+              {linkError}
+            </p>
+            {resent ? (
+              <div
+                className="rounded-xl border-2 border-primary/40 bg-primary/10 p-4 text-center"
+                style={{ boxShadow: "var(--shadow-gold)" }}
+              >
+                <div className="text-3xl mb-2">📧</div>
+                <p className="text-sm font-bold text-primary leading-snug">
+                  Email envoyé ! Vérifiez votre boîte de réception (et vos spams).
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleResend} className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-foreground">
+                  Renvoyer un lien de réinitialisation
+                </label>
+                <input
+                  type="email"
+                  placeholder="Votre email"
+                  value={resendEmail}
+                  onChange={(e) => setResendEmail(e.target.value)}
+                  required
+                  className={inputClass}
+                />
+                <button
+                  type="submit"
+                  disabled={resending}
+                  className="w-full py-3 rounded-xl font-bold text-sm text-primary-foreground border-none cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50"
+                  style={{ background: "var(--gradient-gold)", boxShadow: "var(--shadow-gold)" }}
+                >
+                  {resending ? "Envoi…" : "Envoyer un nouveau lien"}
+                </button>
+              </form>
+            )}
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="text-xs text-muted-foreground hover:text-foreground bg-transparent border-none cursor-pointer mt-1"
+            >
+              ← Retour à l'accueil
+            </button>
+          </div>
+        )}
 
         {ready && (
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
